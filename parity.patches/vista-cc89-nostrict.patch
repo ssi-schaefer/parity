@@ -1,0 +1,11 @@
+--- /bin/cc89.orig	Fri Sep  7 17:33:41 2007
++++ /bin/cc89	Fri Sep  7 17:32:44 2007
+@@ -822,7 +822,7 @@
+ # now gather up the operands
+ #
+ while true ; do
+-    if [ "$progname" = "cc" ]; then
++    if [ "$progname" = "cc" -o "$progname" = "cc89" ]; then
+         #
+         # special case for 'cc':
+         #   it can handle certain options anywhere in the command line

@@ -1,0 +1,3 @@
+ADD_EXTRA_DIST('parity.gnu.gcc.vcproj')
+
+PROVIDE_SYMBOL('parity.gnu.gcc.exe')

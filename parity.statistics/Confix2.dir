@@ -1,0 +1,1 @@
+ADD_EXTRA_DIST('parity.statistics.vcproj')

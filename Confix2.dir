@@ -1,0 +1,240 @@
+ADD_EXTRA_DIST('parity.sln')
+
+CONFIGURE_AC(
+	lines=['AC_CONFIG_FILES(parity.conf parity.loader/parity.conf parity.runtime/parity.conf)'],
+	order=AC_BOILERPLATE)
+
+acm4 = """
+
+AC_DEFUN([PARITY_DIR], [
+	prefix_NONE=
+	exec_prefix_NONE=
+	test "x$prefix" = xNONE && prefix_NONE=yes && prefix=$ac_default_prefix
+	test "x$exec_prefix" = xNONE && exec_prefix_NONE=yes && exec_prefix=$prefix
+	eval ac_define_dir="\"[$]$2\""
+	eval ac_define_dir="\"$ac_define_dir\""
+	AC_SUBST($1, "$ac_define_dir")
+	AC_DEFINE_UNQUOTED($1, "$ac_define_dir", [$3])
+	test "$prefix_NONE" && prefix=NONE
+	test "$exec_prefix_NONE" && exec_prefix=NONE
+])
+
+AC_DEFUN([PARITY_LOOKUP_EXE], [
+	LookupRoot=$1
+	LookupVar=$2
+	LookupFile=$3
+
+	LookedUp=
+
+	AC_MSG_CHECKING([for $LookupFile])
+
+	LookupIFS=$IFS
+	IFS=$PATH_SEPARATOR
+
+	for x in $LookupRoot; do
+		if test -f "$x/bin/$LookupFile"; then
+			LookedUp="$x/bin/$LookupFile"
+		fi
+		if test -f "$x/$LookupFile"; then
+			LookedUp="$x/$LookupFile"
+		fi
+
+		if test -n "$LookedUp"; then
+			break
+		fi
+	done
+
+	IFS=$LookupIFS
+
+	if test -z "$LookedUp" -o ! -f "$LookedUp"; then
+		AC_MSG_ERROR([cannot find $LookupFile])
+	fi
+
+	AC_MSG_RESULT([$LookedUp])
+
+	eval "$LookupVar=\\\"$LookedUp\\\""
+])
+
+AC_DEFUN([PARITY_LOOKUP_CRT],
+[
+	CrtPaths=$1
+	CrtIncVar=$2
+	CrtLibVar=$3
+	CrtLookedUpInc=
+	CrtLookedUpLib=
+
+	AC_MSG_CHECKING([for runtime dirs])
+
+	LookupIFS=$IFS
+	IFS=$PATH_SEPARATOR
+
+	for x in $CrtPaths; do
+		if test -z "$CrtLookedUpInc" -a -f "$x/include/stdio.h"; then
+			CrtLookedUpInc="$x/include"
+		fi
+
+		if test -z "$CrtLookedUpLib" -a -f "$x/lib/msvcrt.lib"; then
+			CrtLookedUpLib="$x/lib"
+		fi
+
+		if test -n "$CrtLookedUpInc" -a -n "$CrtLookedUpLib"; then
+			break
+		fi
+	done
+
+	IFS=$LookupIFS
+
+	if test -z "$CrtLookedUpInc" -o ! -d "$CrtLookedUpInc"; then
+		AC_MSG_ERROR([cannot find runtime include directory])
+	fi
+	if test -z "$CrtLookedUpLib" -o ! -d "$CrtLookedUpLib"; then
+		AC_MSG_ERROR([cannot find runtime library directory])
+	fi
+
+	AC_MSG_RESULT([$CrtLookedUpInc, $CrtLookedUpLib])
+
+	eval "$CrtIncVar=\\\"$CrtLookedUpInc\\\""
+	eval "$CrtLibVar=\\\"$CrtLookedUpLib\\\""
+])
+
+AC_DEFUN([PARITY_LOOKUP_SDK],
+[
+	SdkPaths=$1
+	SdkIncVar=$2
+	SdkLibVar=$3
+
+	SdkLookedUpInc=
+	SdkLookedUpLib=
+
+	AC_MSG_CHECKING([for platform sdk dirs])
+
+	LookupIFS=$IFS
+	IFS=$PATH_SEPARATOR
+
+	for x in $SdkPaths; do
+		if test -z "$SdkLookedUpInc" -a -f "$x/platformsdk/include/windows.h"; then
+			SdkLookedUpInc="$x/platformsdk/include"
+		fi
+		if test -z "$SdkLookedUpInc" -a -f "$x/include/windows.h"; then
+			SdkLookedUpInc="$x/include"
+		fi
+
+		if test -z "$SdkLookedUpLib" -a -f "$x/platformsdk/lib/kernel32.lib"; then
+			SdkLookedUpLib="$x/platformsdk/lib"
+		fi
+		if test -z "$SdkLookedUpLib" -a -f "$x/lib/kernel32.lib"; then
+			SdkLookedUpLib="$x/lib"
+		fi
+
+		if test -n "$SdkLookedUpInc" -a -n "$SdkLookedUpLib"; then
+			break
+		fi
+	done
+
+	IFS=$LookupIFS
+
+	if test -z "$SdkLookedUpInc" -o ! -d "$SdkLookedUpInc"; then
+		AC_MSG_ERROR([cannot find platform sdk include directory (maybe set MSSDK)!])
+	fi
+
+	if test -z "$SdkLookedUpInc" -o ! -d "$SdkLookedUpInc"; then
+		AC_MSG_ERROR([cannot find platform sdk library directory (maybe set MSSDK)!])
+	fi
+
+	AC_MSG_RESULT([$SdkLookedUpInc, $SdkLookedUpLib])
+
+	eval "$SdkIncVar=\\\"$SdkLookedUpInc\\\""
+	eval "$SdkLibVar=\\\"$SdkLookedUpLib\\\""
+])
+
+AC_DEFUN([PARITY_CONFIGURE],
+[
+
+	PARITY_DIR([PARITY_HOME], [prefix], [Path where parity is installed])
+
+	ParityCompiler=
+	ParityAssembler=
+	ParityLinker=
+	ParityManifest=
+
+	ParitySysIncludePaths="__parity.include"
+	ParitySysLibraryPaths="__parity.library"
+
+	#
+	# Lookup paths to visual studio installations
+	# need to use echo to preserve pahs with spaces correctly
+	#
+
+	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo `winpath2unix "$VS71COMNTOOLS"`)")")
+	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo `winpath2unix "$VS80COMNTOOLS"`)")")
+
+	MsvcRoot=
+
+	if test -n "$MsvcRoot71" -a -n "$MsvcRoot80"; then
+		AC_MSG_WARN([both visual studio .NET 2003 and 2005 where found! continuing with visual studio 2005])
+		MsvcRoot71=
+	fi
+
+	if test -n "$MsvcRoot71"; then
+		MsvcRoot="$MsvcRoot71/Vc7"
+	elif test -n "$MsvcRoot80"; then
+		MsvcRoot="$MsvcRoot80/VC"
+	fi
+
+	#
+	# Lookup executables
+	#
+
+	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityCompiler], [cl.exe])
+	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityAssembler], [ml.exe])
+	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityLinker], [link.exe])
+
+	if test -n "$MsvcRoot80"; then
+		# only if using visual studio 2005
+		PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityManifest], [mt.exe])
+	fi
+
+	#
+	# Lookup include and library paths
+	#
+	CrtIncludeDir=
+	CrtLibraryDir=
+	SdkIncludeDir=
+	SdkLibraryDir=
+
+	PARITY_LOOKUP_CRT([$MsvcRoot], [CrtIncludeDir], [CrtLibraryDir])
+	PARITY_LOOKUP_SDK([$MsvcRoot:$MSSDK], [SdkIncludeDir], [SdkLibraryDir])
+
+	rm -f $ParitySysIncludePaths > /dev/null 2>&1
+	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
+
+	echo "SysIncludePaths = $prefix/include/parity.runtime" >> $ParitySysIncludePaths
+	echo "SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
+	echo "SysIncludePaths = $SdkIncludeDir" >> $ParitySysIncludePaths
+
+	echo "SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
+	echo "SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
+
+	#
+	# Finally Substitute Variables
+	#
+
+	AC_SUBST(ParityCompiler)
+	AC_SUBST(ParityAssembler)
+	AC_SUBST(ParityLinker)
+	AC_SUBST(ParityManifest)
+
+	AC_SUBST_FILE(ParitySysIncludePaths)
+	AC_SUBST_FILE(ParitySysLibraryPaths)
+
+])
+
+"""
+
+ACINCLUDE_M4(lines=[acm4])
+
+CONFIGURE_AC(
+	lines=['PARITY_CONFIGURE'],
+	order=AC_PROGRAMS)
+
+MAKEFILE_AM(line='sysconf_DATA=parity.conf')
