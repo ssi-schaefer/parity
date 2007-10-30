@@ -172,7 +172,13 @@ static void LibCreatePathCache()
 					LoaderWriteLastWindowsError();
 					gPathCacheCount = 0;
 				} else {
-					gPathCache[gPathCacheCount].path = LoaderConvertPathToNative(start);
+					//
+					// buffer2 is never freed, this is intentionally!
+					//
+					const char * buffer1 = LoaderConvertPathToNative(start);
+					char * buffer2 = HeapAlloc(GetProcessHeap(), 0, sizeof(char) * (lstrlen(buffer1) + 1));
+					lstrcpy(buffer2, buffer1);
+					gPathCache[gPathCacheCount].path = buffer2;
 
 					LogDebug(" * %s\n", gPathCache[gPathCacheCount].path);
 

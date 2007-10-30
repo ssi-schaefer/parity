@@ -23,6 +23,8 @@
 #include "LoaderHelper.h"
 #include "LoaderLog.h"
 
+#define RING_SIZE 8
+
 void LoaderWriteLastWindowsError()
 {
 	char* ptrMsg = 0;
@@ -50,7 +52,7 @@ const char* LoaderConvertPathToNative(const char* ptr)
 	// either return the same string, or allocate another one and convert.
 	//
 #ifdef _WIN32
-	static char* pRing[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	static char* pRing[RING_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static int iRingNum = -1;
 
 	int szRoot = 0;
@@ -61,7 +63,7 @@ const char* LoaderConvertPathToNative(const char* ptr)
 	if(ptr[0] != '/')
 		return ptr;
 
-	++iRingNum;
+	iRingNum = ++iRingNum % RING_SIZE;
 
 	if(pRing[iRingNum])
 		HeapFree(GetProcessHeap(), 0, pRing[iRingNum]);
