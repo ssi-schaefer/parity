@@ -36,6 +36,9 @@
 // FIXXME: Hack to handle "#define ftime _ftime" from folks who
 // think to know how to handle windows. this should be fixed elsewhere!
 //
+#undef _ftime
+#undef _timeb
+
 #define _ftime ftime
 #define _timeb timeb
 
