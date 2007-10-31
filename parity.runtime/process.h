@@ -134,8 +134,7 @@ PCRT_BEGIN_C
 
 #define __PCRT_EXECL(func_name, file, first) \
 	intptr_t ret; \
-	char const * args[__PCRT_MAX_EXEC_ARGS]; \
-	memset(args, 0, sizeof(args)); \
+	char const * args[__PCRT_MAX_EXEC_ARGS] = { 0 }; \
 	va_list list; \
 	va_start(list, first); \
 	__PCRT_TRANSFORM_VAR(first, list, args); \
@@ -145,9 +144,8 @@ PCRT_BEGIN_C
 
 #define __PCRT_EXECLE(func_name, file, first) \
 	intptr_t ret; \
-	char const * args[__PCRT_MAX_EXEC_ARGS]; \
+	char const * args[__PCRT_MAX_EXEC_ARGS] = { 0 }; \
 	char const * const * env; \
-	memset(args, 0, sizeof(args)); \
 	va_list list; \
 	va_start(list, first); \
 	__PCRT_TRANSFORM_VAR(first, list, args); \
@@ -168,8 +166,7 @@ static PCRT_INLINE intptr_t execvpe(const char* f, const char* const* a, const c
 
 #define __PCRT_SPAWNL(func_name, mode, file, first) \
 	intptr_t ret; \
-	char const * args[__PCRT_MAX_EXEC_ARGS]; \
-	memset(args, 0, sizeof(args)); \
+	char const * args[__PCRT_MAX_EXEC_ARGS] = { 0 }; \
 	va_list list; \
 	va_start(list, first); \
 	__PCRT_TRANSFORM_VAR(first, list, args); \
@@ -179,9 +176,8 @@ static PCRT_INLINE intptr_t execvpe(const char* f, const char* const* a, const c
 
 #define __PCRT_SPAWNLE(func_name, mode, file, first) \
 	intptr_t ret; \
-	char const * args[__PCRT_MAX_EXEC_ARGS]; \
+	char const * args[__PCRT_MAX_EXEC_ARGS] = { 0 }; \
 	char const * const * env; \
-	memset(args, 0, sizeof(args)); \
 	va_list list; \
 	va_start(list, first); \
 	__PCRT_TRANSFORM_VAR(first, list, args); \
