@@ -203,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\direct.h"
+				>
+			</File>
+			<File
 				RelativePath=".\dirent.h"
 				>
 			</File>

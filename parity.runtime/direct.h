@@ -20,54 +20,44 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_UNISTD_H__
-#define __PCRT_UNISTD_H__
+#ifndef __PCRT_DIRECT_H__
+#define __PCRT_DIRECT_H__
 
 #include "internal/pcrt.h"
 
-#include "io.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "process.h"
-#include "sys/types.h"
-#include "direct.h"
-
-#include RUNTIME_INC(stdarg.h)
-
-#define STDIN_FILENO	0
-#define STDOUT_FILENO	1
-#define STDERR_FILENO	2
-
-//
-// mode values for access function. X_OK is the same as F_OK on
-// windows, since there is no separate execute permission.
-//
-#define F_OK 00
-#define W_OK 02
-#define R_OK 04
-#define X_OK 00
+#pragma push_macro("__STDC__")
+#  ifdef __STDC__
+#    undef __STDC__
+#  endif
+#  pragma push_macro("chdir")
+#  pragma push_macro("mkdir")
+#  pragma push_macro("rmdir")
+#    define chdir __crt_invalid_chdir
+#    define mkdir __crt_invalid_mkdir
+#    define rmdir __crt_invalid_rmdir
+#    include RUNTIME_INC(direct.h)
+#  pragma pop_macro("chdir")
+#  pragma pop_macro("mkdir")
+#  pragma pop_macro("rmdir")
+#pragma pop_macro("__STDC__")
 
 PCRT_BEGIN_C
 
-#pragma push_macro("sleep")
-#pragma push_macro("usleep")
+#pragma push_macro("chdir")
+#pragma push_macro("mkdir")
+#pragma push_macro("rmdir")
 
-#undef sleep
-#undef usleep
+#undef chdir
+#undef mkdir
+#undef rmdir
 
-//
-// TODO: The usleep implementation below is really bad, since
-// it doesn't really sleep the number of usec's given, but in
-// the worst case 1000 times longer (minnimum 1 ms)!
-//
+static PCRT_INLINE int chdir(const char* p) { return _chdir(PCRT_CONV(p)); }
+static PCRT_INLINE int mkdir(const char* p) { return _mkdir(PCRT_CONV(p)); }
+static PCRT_INLINE int rmdir(const char* p) { return _rmdir(PCRT_CONV(p)); }
 
-__declspec(dllimport) void __stdcall Sleep(unsigned long millis);
-
-static PCRT_INLINE unsigned int sleep(unsigned int secs) { Sleep((unsigned long)secs * 1000); return 0; }
-static PCRT_INLINE int usleep(int usec) { Sleep((unsigned long)usec / 1000); return 0; }
-
-#pragma pop_macro("sleep")
-#pragma pop_macro("usleep")
+#pragma pop_macro("chdir")
+#pragma pop_macro("mkdir")
+#pragma pop_macro("rmdir")
 
 PCRT_END_C
 
