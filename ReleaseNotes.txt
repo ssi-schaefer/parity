@@ -1,9 +1,21 @@
-parity 1.0.0
-
 parity is an open source project who's goal it is to ease porting applications from UNIX-like systems to Windows. It relies on the presence of a UNIX Layer for Windows such as Interix, Cygwin or MinGW. parity is most tested on Microsofts Subsystem for UNIX-based Applications, so it will work there best.
 
 parity uses Microsoft Tools - like cl.exe, link.exe, etc. - to mimic a GCC like interface, while really compiling natively for Windows. This results in pure and native Windows Libraries and Executables, which can be mixed freely with any existing Software pieces.
 
 The most effort has been put into shared library handling, which now behaves nearly the same as on common UNIX-like systems. There also is a patch for libtool, which makes it know about parity (which passes all tests of the libtool test-suite). Advanced Features like a working -rpath option have been added to improve the handling of DLLs on Windows.
 
+parity ships with a little runtime enhancement library called parity.runtime. This library abstracts away the need to take care of what kind of paths are used. This means you can now give a UNIX-style path to an executable built with parity, and it will understand it. Previously this was not possible, and all Windows executables would need Windows-style paths to work.
+
+
+parity 1.0.0
+------------
+
 This is the initial Release of parity, which offers feature completeness in regard to it's predecessor WGCC.
+
+
+parity 1.0.1
+------------
+
+This intermediate release fixes path conversion issues in the parity.runtime. now the functions chdir, mkdir, rmdir, all spawn and all exec support on-the-fly path conversion from Interix to Windows correctly.
+
+There is a new WIKI available on how to build parity at http://parity.wiki.sourceforge.net/Building+parity+from+Interix
