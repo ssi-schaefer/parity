@@ -26,7 +26,7 @@ int snprintf(char* b, size_t c, const char* fmt, ...) {
 	int ret;
 	va_list args;
 	va_start(args, fmt);
-	ret = vsnprintf(b, c, fmt, args);
+	ret = _vsnprintf(b, c, fmt, args);
 	va_end(args);
 	return ret;
 }
