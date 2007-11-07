@@ -35,12 +35,12 @@ namespace parity
 	{
 		typedef std::map<std::string, time_t> TimingMap;
 		typedef std::map<std::string, struct timeb> OpenTimingMap;
-		TimingMap timings_;
-		TimingMap avg_;
-		TimingMap counts_;
-		OpenTimingMap open_;
-		TimingMap invalids_;
-		std::string::size_type longest_ = 0;
+		static TimingMap timings_;
+		static TimingMap avg_;
+		static TimingMap counts_;
+		static OpenTimingMap open_;
+		static TimingMap invalids_;
+		static std::string::size_type longest_ = 0;
 
 		void HandleTiming(std::string const& key, std::string const& value, std::string const& type)
 		{
