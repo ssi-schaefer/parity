@@ -29,6 +29,13 @@
 #include <time.h>
 #include <sstream>
 
+#define STAT_START_STR	"parity.statistics {"
+#define STAT_END_STR	"} end"
+#define STAT_ITEM_OPEN	"{"
+#define STAT_ITEM_CLOSE	"}"
+#define STAT_TYPE_OPEN	"["
+#define STAT_TYPE_CLOSE	"]"
+
 namespace parity
 {
 	namespace utils
@@ -40,22 +47,34 @@ namespace parity
 		}
 
 		Statistics::Statistics()
+			: forked_(false)
 		{
+			start();
+		}
+
+		void Statistics::start()
+		{
+			if(file_.is_open()) {
+				utils::Log::verbose("Statistics already started, ignoring second request!");
+				return;
+			}
+
 			Context& ctx = Context::getContext();
 			Path f = ctx.getStatisticsFile();
 
 			if(!f.get().empty()) {
 				f.toNative();
 				file_.open(f.get().c_str(), std::ios_base::app | std::ios_base::out);
+				file_ << STAT_START_STR << std::endl;
 
-				file_ << "run @ " << ctime(0) << "{" << std::endl;
+				utils::Log::verbose("starting capture of statistics to %s\n", f.get().c_str());
 			}
 		}
 
 		Statistics::~Statistics()
 		{
-			if(file_.is_open()) {
-				file_ << "}" << std::endl;
+			if(!forked_ && file_.is_open()) {
+				file_ << STAT_END_STR << std::endl;
 				file_.close();
 			}
 		}
@@ -63,25 +82,25 @@ namespace parity
 		void Statistics::addInformation(std::string const& key, std::string const& text) {
 			if(!file_.is_open()) return;
 
-			file_ << "\t{" << "[text]" << key << "}{" << text << "}" << std::endl;
+			file_ << "\t" << STAT_ITEM_OPEN << STAT_TYPE_OPEN << "text" << STAT_TYPE_CLOSE << key << STAT_ITEM_CLOSE << STAT_ITEM_OPEN << text << STAT_ITEM_CLOSE << std::endl;
 		}
 
 		void Statistics::addInformation(std::string const& key, unsigned long number) {
 			if(!file_.is_open()) return;
 
-			file_ << "\t{" << "[number]" << key << "}{" << number << "}" << std::endl;
+			file_ << "\t" << STAT_ITEM_OPEN << STAT_TYPE_OPEN << "number" << STAT_TYPE_CLOSE << key << STAT_ITEM_CLOSE << STAT_ITEM_OPEN << number << STAT_ITEM_CLOSE << std::endl;
 		}
 
 		void Statistics::addInformation(std::string const& key, struct timeb const& time) {
 			if(!file_.is_open()) return;
 
-			file_ << "\t{" << "[time]" << key << "}{" << serializeTime(time) << "}" << std::endl;
+			file_ << "\t" << STAT_ITEM_OPEN << STAT_TYPE_OPEN << "time" << STAT_TYPE_CLOSE << key << STAT_ITEM_CLOSE << STAT_ITEM_OPEN << serializeTime(time) << STAT_ITEM_CLOSE << std::endl;
 		}
 
 		std::string Statistics::serializeTime(struct timeb const& tm)
 		{
 			std::ostringstream oss;
-			oss << "[" << tm.time << "|" << tm.millitm << "]" << std::endl;
+			oss << "[" << tm.time << "|" << tm.millitm << "]";
 			return oss.str();
 		}
 
@@ -113,6 +132,94 @@ namespace parity
 
 			return tm;
 		}
+
+		static inline void stripBackslashR(std::string& r)
+		{
+			std::string::size_type pos;
+			while((pos = r.find('\r')) != std::string::npos)
+				r.replace(pos, 1, "");
+		}
+
+		Statistics::StatisticFile Statistics::readStatistics(std::string const& fn)
+		{
+			StatisticFile stats;
+			std::ifstream istr(fn.c_str());
+
+			while(!istr.fail())
+			{
+				char buffer[1024];
+				istr.getline(buffer, 1024);
+				std::string line(buffer);
+				stripBackslashR(line);
+
+				if(line == STAT_START_STR)
+					stats.push_back(readStatisticsSection(istr));
+				else if(line != "")
+					utils::Log::warning("line not belonging to any statistics sections: %s\n", line.c_str());
+			}
+
+			return stats;
+		}
+
+		Statistics::StatisticCollection Statistics::readStatisticsSection(std::ifstream& ifs)
+		{
+			StatisticCollection stats;
+
+			while(!ifs.fail())
+			{
+				char buffer[1024];
+				ifs.getline(buffer, 1024);
+				std::string line(buffer);
+				stripBackslashR(line);
+
+				if(line == STAT_END_STR)
+					break;
+
+				try {
+					if(line != "")
+						stats.push_back(readStatisticsItem(line));
+				} catch(const utils::Exception& e) {
+					utils::Log::verbose("cannot parse statistic item: %s: %s\n", line.c_str(), e.what());
+				}
+			}
+
+			return stats;
+		}
+
+		Statistics::StatisticItem Statistics::readStatisticsItem(std::string const& str)
+		{
+			StatisticItem item;
+			std::string::size_type posStart	= std::string::npos;
+			std::string::size_type posEnd	= std::string::npos;
+
+			posStart = str.find(STAT_ITEM_OPEN);
+			posEnd	 = str.find(STAT_ITEM_CLOSE, ++posStart);
+
+			if(posStart == std::string::npos || posEnd == std::string::npos)
+				throw utils::Exception("cannot find key item boundaries!");
+
+			std::string raw_key(str, posStart, posEnd - posStart);
+
+			std::string::size_type posTStart = raw_key.find(STAT_TYPE_OPEN);
+			std::string::size_type posTEnd	 = raw_key.find(STAT_TYPE_CLOSE, ++posTStart);
+
+			if(posTStart == std::string::npos || posTEnd == std::string::npos)
+				throw utils::Exception("cannot find type boundaries!");
+
+			item.type = std::string(raw_key, posTStart, posTEnd - posTStart);
+			item.key  = std::string(raw_key, posTEnd + 1);
+
+			posStart = str.find(STAT_ITEM_OPEN, posEnd);
+			posEnd	 = str.find(STAT_ITEM_CLOSE, ++posStart);
+
+			if(posStart == std::string::npos || posEnd == std::string::npos)
+				throw utils::Exception("cannot find value item boundaries!");
+
+			item.value = std::string(str, posStart, posEnd - posStart);
+
+			return item;
+		}
+
 	}
 }
 

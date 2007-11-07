@@ -20,39 +20,18 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __STATISTICS_H__
-#define __STATISTICS_H__
+#ifndef __DEPENDENCYHANDLER_H__
+#define __DEPENDENCYHANDLER_H__
 
-#include <Path.h>
-
-#include <vector>
-#include <map>
 #include <string>
 
 namespace parity
 {
 	namespace statistics
 	{
-		typedef void (*StatisticHandler)(std::string const& key, std::string const& value, std::string const& type);
-		typedef void (*StatisticPrinter)();
-
-		typedef struct {
-			std::string key;
-			StatisticHandler handler;
-		} StatisticHandlerMapping;
-
-		typedef std::map<std::string, StatisticPrinter> StatisticPrinterVector;
-		typedef std::vector<StatisticHandlerMapping> StatisticMappingVector;
-
-		extern StatisticPrinterVector available_stats;
-		extern StatisticMappingVector available_mappings;
-
-		extern bool short_;
-
-		void DefaultHandler(std::string const& key, std::string const& value, std::string const& type);
-		void ProcessFile(const utils::Path& path);
+		void HandleDependency(std::string const& key, std::string const& value, std::string const& type);
+		void PrintDependency();
 	}
 }
 
 #endif
-

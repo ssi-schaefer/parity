@@ -24,6 +24,7 @@
 #include "Exception.h"
 #include "Log.h"
 #include "Timing.h"
+#include "Statistics.h"
 
 #include <errno.h>
 
@@ -138,6 +139,7 @@ namespace parity
 						throw Exception("cannot fork child: %s", ::strerror(errno));
 					case 0:
 						Timing::instance().forked();
+						Statistics::instance().forked();
 						exit(method(data));
 					default:
 						Log::verbose("created forked child with id %d.\n", threadID);

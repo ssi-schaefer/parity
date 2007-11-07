@@ -62,6 +62,7 @@ namespace parity
 			void setDefaultOutput(const Path& ref);
 			void setDefaultOutputString(const std::string& val) { setDefaultOutput(Path(val)); }
 			void setObjectsLibrariesString(const std::string& val);
+			void setStatisticsFileString(const std::string& val);
 
 			//
 			// Dumps all the values currently set in the Context

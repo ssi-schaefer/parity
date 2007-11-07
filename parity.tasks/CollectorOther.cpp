@@ -110,7 +110,6 @@ namespace parity
 			if(parityPath.exists())
 			{
 				utils::MappedFile config(parityPath, utils::ModeRead);
-				utils::Statistics::instance().addInformation("additional-config", parityPath.get());
 
 				try {
 					utils::Config::parseFile(context, config);
@@ -118,6 +117,8 @@ namespace parity
 					utils::Log::error("while parsing configuration: %s\n", e.what());
 					exit(1);
 				}
+
+				utils::Statistics::instance().addInformation("additional-config", parityPath.get());
 
 				bLoaded = true;
 			}

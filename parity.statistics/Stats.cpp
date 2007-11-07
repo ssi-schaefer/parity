@@ -21,6 +21,8 @@
 \****************************************************************/
 
 #include "Stats.h"
+#include "TimingHandler.h"
+#include "DependencyHandler.h"
 
 #include <Log.h>
 #include <Statistics.h>
@@ -41,6 +43,11 @@ int main(int argc, char** argv)
 			continue;
 		}
 
+		if(std::string(argv[i]) == "--short")
+		{
+
+		}
+
 		parity::utils::Path pth(argv[i]);
 		pth.toNative();
 		if(!pth.exists())
@@ -49,7 +56,20 @@ int main(int argc, char** argv)
 			exit(1);
 		}
 
+		//
+		// set-up mappings
+		//
+		parity::statistics::StatisticHandlerMapping timing_mapping = { "Timing", parity::statistics::HandleTiming };
+		parity::statistics::StatisticHandlerMapping depend_mapping = { "dependencies", parity::statistics::HandleDependency };
+		parity::statistics::available_mappings.push_back(timing_mapping);
+		parity::statistics::available_mappings.push_back(depend_mapping);
+
 		parity::statistics::ProcessFile(pth);
+
+		for(parity::statistics::StatisticPrinterVector::iterator it = parity::statistics::available_stats.begin(); it != parity::statistics::available_stats.end(); ++it)
+		{
+			it->second();
+		}
 	}
 }
 
@@ -57,9 +77,37 @@ namespace parity
 {
 	namespace statistics
 	{
+		StatisticPrinterVector available_stats;
+		StatisticMappingVector available_mappings;
+		bool short_ = false;
+
 		void ProcessFile(const utils::Path& path)
 		{
-			
+			utils::Statistics::StatisticFile file = utils::Statistics::readStatistics(path.get());
+
+			for(utils::Statistics::StatisticFile::iterator f = file.begin(); f != file.end(); ++f)
+			{
+				for(utils::Statistics::StatisticCollection::iterator col = f->begin(); col != f->end(); ++col)
+				{
+					bool proc = false;
+					for(StatisticMappingVector::const_iterator map = available_mappings.begin(); map != available_mappings.end(); ++map)
+					{
+						if(col->key.compare(0, map->key.length(), map->key) == 0)
+						{
+							map->handler(col->key, col->value, col->type);
+							proc = true;
+						}
+					}
+
+					if(!proc)
+						DefaultHandler(col->key, col->value, col->type);
+				}
+			}
+		}
+
+		void DefaultHandler(std::string const& key, std::string const& value, std::string const& type)
+		{
+			utils::Log::verbose("unhandled statistical information of type %s: %s: %s\n", type.c_str(), key.c_str(), value.c_str());
 		}
 	}
 }

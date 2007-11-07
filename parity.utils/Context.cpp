@@ -313,6 +313,12 @@ namespace parity
 			}
 		}
 
+		void Context::setStatisticsFileString(const std::string& val)
+		{
+			setStatisticsFile(utils::Path(val));
+			Statistics::instance().start();
+		}
+
 	}
 }
 

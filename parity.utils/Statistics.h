@@ -20,8 +20,8 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __STATISTICS_H__
-#define __STATISTICS_H__
+#ifndef __STATS_H__
+#define __STATS_H__
 
 #include <map>
 #include <vector>
@@ -42,13 +42,34 @@ namespace parity
 			void addInformation(std::string const& key, unsigned long number);
 			void addInformation(std::string const& key, struct timeb const& time);
 
-			std::string serializeTime(struct timeb const& tm);
-			struct timeb deserializeTime(std::string const& str);
+			static std::string serializeTime(struct timeb const& tm);
+			static struct timeb deserializeTime(std::string const& str);
+
+			void start();
+			void forked() { forked_ = true; }
+
+			//
+			// for reading.
+			//
+			typedef struct {
+				std::string key;
+				std::string value;
+				std::string type;
+			} StatisticItem;
+
+			typedef std::vector<StatisticItem> StatisticCollection;
+			typedef std::vector<StatisticCollection> StatisticFile;
+
+			static StatisticFile readStatistics(std::string const& fn);
 		private:
 			Statistics();
 			~Statistics();
 
+			static StatisticCollection readStatisticsSection(std::ifstream& ifs);
+			static StatisticItem readStatisticsItem(std::string const& str);
+
 			std::ofstream file_;
+			bool forked_;
 		};
 	}
 }

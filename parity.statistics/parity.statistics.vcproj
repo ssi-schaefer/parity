@@ -180,6 +180,18 @@
 				RelativePath=".\Stats.cpp"
 				>
 			</File>
+			<Filter
+				Name="Handler"
+				>
+				<File
+					RelativePath=".\DependencyHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\TimingHandler.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Headerdateien"
@@ -190,6 +202,18 @@
 				RelativePath=".\Stats.h"
 				>
 			</File>
+			<Filter
+				Name="Handler"
+				>
+				<File
+					RelativePath=".\DependencyHandler.h"
+					>
+				</File>
+				<File
+					RelativePath=".\TimingHandler.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
