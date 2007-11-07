@@ -33,26 +33,6 @@ namespace parity
 {
 	namespace statistics
 	{
-		typedef struct {
-			std::string name;
-			time_t start;
-			unsigned short start_milli;
-			time_t stop;
-			unsigned short stop_milli;
-			time_t time;
-		} TimingInfoStruct;
-
-		typedef struct {
-			time_t all;
-			time_t average;
-			unsigned int count;
-			time_t oldest;
-			time_t youngest;
-		} StatisticsStruct;
-
-		typedef std::vector<TimingInfoStruct> TimingInfoVector;
-		typedef std::map<std::string, StatisticsStruct> StatisticsMap;
-
 		void ProcessFile(const utils::Path& path);
 	}
 }

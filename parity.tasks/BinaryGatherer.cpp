@@ -27,6 +27,7 @@
 #include <MappedFileCache.h>
 #include <GenericFile.h>
 #include <Log.h>
+#include <Statistics.h>
 
 #include <CoffFile.h>
 #include <CoffImage.h>
@@ -196,6 +197,10 @@ namespace parity
 			// resolve all symbols
 			//
 			resolveSymbols();
+
+			utils::Statistics::instance().addInformation("symbols-unresolved", unresolved_.size());
+			utils::Statistics::instance().addInformation("symbols-local", local_.size());
+			utils::Statistics::instance().addInformation("symbols-import", imports_.size());
 
 			utils::Log::verbose("gathered %d unresolved symbols, %d local symbols and %d imports\n", unresolved_.size(), local_.size(), imports_.size());
 			utils::Log::verbose("prepared %d symbols for export and %d symbols for static import\n", exports_.size(), staticImports_.size());

@@ -22,6 +22,8 @@
 
 #include "Misc.h"
 
+#include <Statistics.h>
+
 #include <ctype.h>
 
 namespace parity
@@ -140,7 +142,11 @@ namespace parity
 				arg = argument;
 			}
 
-			ctx.setOutputFile(utils::Path(arg));
+			utils::Path pth(arg);
+	
+			utils::Statistics::instance().addInformation("file-output", pth.get());
+
+			ctx.setOutputFile(pth);
 			return true;
 		}
 

@@ -26,6 +26,7 @@
 #include "Exception.h"
 #include "Timing.h"
 #include "Environment.h"
+#include "Statistics.h"
 
 #include <iomanip>
 
@@ -304,6 +305,8 @@ namespace parity
 			try {
 				Path pth = lookupLibrary(arg, isMinusL);
 				ObjectsLibraries.push_back(pth);
+
+				Statistics::instance().addInformation("file-binary", pth.get());
 			} catch(const Exception& e) {
 				Log::error("lookup of %s failed: %s\n", arg.c_str(), e.what());
 				exit(1);

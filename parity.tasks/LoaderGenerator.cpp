@@ -30,6 +30,7 @@
 #include <MemoryFile.h>
 #include <Context.h>
 #include <Environment.h>
+#include <Statistics.h>
 
 #include <CoffObject.h>
 
@@ -266,6 +267,8 @@ namespace parity
 			std::map<std::string, unsigned int> stringMapping;
 			unsigned int stringIndex = 0;
 
+			utils::Statistics::instance().addInformation("loaded-libraries", items.size());
+
 			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
 			{
 				std::string libraryName   = it->first;
@@ -315,6 +318,8 @@ namespace parity
 
 				item.tableIndex = symTableStart.getIndex();
 				item.nameIndex = indexOfLibNameSym;
+
+				utils::Statistics::instance().addInformation("loaded-imports(" + libraryName + ")", item.imports.size());
 				
 				for(binary::Import::ImportVector::iterator import = item.imports.begin(); import != item.imports.end(); ++import)
 				{

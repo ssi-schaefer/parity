@@ -33,6 +33,7 @@
 #include <Log.h>
 #include <Environment.h>
 #include <Threading.h>
+#include <Statistics.h>
 
 #include <CoffFileHeader.h>
 
@@ -109,6 +110,7 @@ namespace parity
 			if(parityPath.exists())
 			{
 				utils::MappedFile config(parityPath, utils::ModeRead);
+				utils::Statistics::instance().addInformation("additional-config", parityPath.get());
 
 				try {
 					utils::Config::parseFile(context, config);

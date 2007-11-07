@@ -22,6 +22,7 @@
 
 #include "Linker.h"
 #include <Log.h>
+#include <Statistics.h>
 
 namespace parity
 {
@@ -44,27 +45,29 @@ namespace parity
 		bool addLibraryPath(const char* option, const char* argument, bool& used)
 		{
 			utils::Context& ctx = utils::Context::getContext();
-			
 			utils::PathVector& vect = ctx.getLibraryPaths();
+			utils::Path pth;
 
 			if(::strstr(option, "LIBPATH"))
 			{
-				const char* arg = ::strchr(option, ':');
+				char const *arg = ::strchr(option, ':');
 
 				if(*(++arg) == '\0')
 					throw utils::Exception("argument to %s must follow immediatly after ':'!", option);
 
-				vect.push_back(utils::Path(arg));
+				pth = utils::Path(arg);
 			} else {
-				const char* arg = ::strchr(option, 'L');
+				char const *arg = ::strchr(option, 'L');
 				
 				if(*(++arg) == '\0') {
 					arg = argument;
 					used = true;
 				}
-
-				vect.push_back(utils::Path(arg));
+				pth = utils::Path(arg);
 			}
+
+			utils::Statistics::instance().addInformation("path-library", pth.get());
+			vect.push_back(pth);
 			return true;
 
 		}
@@ -134,6 +137,7 @@ namespace parity
 				used = true;
 			}
 
+			utils::Statistics::instance().addInformation("path-runpath", utils::Path(arg).get());
 			ctx.setRunPathsString(arg);
 
 			return true;

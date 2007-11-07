@@ -26,6 +26,7 @@
 #include <CoffFileHeader.h>
 #include <CoffDirectiveSection.h>
 #include <Log.h>
+#include <Statistics.h>
 
 namespace parity
 {
@@ -89,6 +90,8 @@ namespace parity
 			//
 			utils::Path file = utils::Path::getTemporary(".parity.export.XXXXXX.o");
 			mem.save(file);
+
+			utils::Statistics::instance().addInformation("export-count", exports_.size());
 
 			//
 			// update context

@@ -22,6 +22,7 @@
 
 #include "Compiler.h"
 #include <Log.h>
+#include <Statistics.h>
 
 namespace parity
 {
@@ -91,6 +92,7 @@ namespace parity
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			const char * arg = option;
+			utils::Path pth;
 
 			if((option[0] == '-' || option[0] == '/') && option[1] == 'T')
 			{
@@ -100,15 +102,21 @@ namespace parity
 					used = true;
 				}
 
+				pth = utils::Path(arg);
+
 				if(option[2] == 'p')
-					ctx.getSources()[utils::Path(arg)] = utils::LanguageCpp;
+					ctx.getSources()[pth] = utils::LanguageCpp;
 				else if(option[2] == 'c')
-					ctx.getSources()[utils::Path(arg)] = utils::LanguageC;
+					ctx.getSources()[pth] = utils::LanguageC;
 				else
 					throw utils::Exception("wrong language specifier in %s!", option);
 			} else {
+				pth = utils::Path(arg);
 				ctx.setSourcesString(arg);
 			}
+
+			utils::Statistics::instance().addInformation("file-source", pth.get());
+
 			return true;
 		}
 

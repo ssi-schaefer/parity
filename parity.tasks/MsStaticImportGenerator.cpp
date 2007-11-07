@@ -23,6 +23,7 @@
 #include "MsStaticImportGenerator.h"
 
 #include <Log.h>
+#include <Statistics.h>
 
 #include <CoffObject.h>
 
@@ -83,6 +84,8 @@ namespace parity
 			//
 			utils::Path file = utils::Path::getTemporary(".parity.static.import.XXXXXX.o");
 			mem.save(file);
+
+			utils::Statistics::instance().addInformation("static-import-count", imports_.size());
 
 			//
 			// update context

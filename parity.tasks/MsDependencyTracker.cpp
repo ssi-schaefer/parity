@@ -24,6 +24,8 @@
 
 #include <Log.h>
 #include <MappedFile.h>
+#include <Threading.h>
+#include <Statistics.h>
 
 #include <iostream>
 
@@ -134,6 +136,14 @@ namespace parity
 				}
 
 				str.flush();
+
+#if defined(_WIN32) || (POSIX_THREADING_MODEL != POSIX_FORK)
+				//
+				// When forking we cannot do this, since we have no access to the main
+				// processes statistical data.
+				//
+				utils::Statistics::instance().addInformation("dependencies(" + file.get() + ")", converted.size());
+#endif
 			}
 		}
 

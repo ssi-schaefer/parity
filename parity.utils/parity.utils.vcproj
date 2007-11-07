@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Statistics.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Task.cpp"
 				>
 			</File>
@@ -263,6 +267,10 @@
 			</File>
 			<File
 				RelativePath=".\Pointer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Statistics.h"
 				>
 			</File>
 			<File

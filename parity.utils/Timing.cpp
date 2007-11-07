@@ -26,6 +26,8 @@
 #include "Context.h"
 #include "Color.h"
 
+#include "Statistics.h"
+
 #include <iomanip>
 #include <stdio.h>
 
@@ -58,6 +60,9 @@ namespace parity
 			entry.second = pair;
 
 			times_.push_back(entry);
+
+			if(key != "Timing")
+				Statistics::instance().addInformation("TimingS:" + key, entry.second.first);
 		}
 
 		void Timing::stop(const std::string &key)
@@ -67,6 +72,10 @@ namespace parity
 				if(it->first == key)
 				{
 					ftime(&it->second.second);
+
+					if(key != "Timing")
+						Statistics::instance().addInformation("TimingE:" + key, it->second.second);
+
 					break;
 				}
 			}
@@ -83,10 +92,10 @@ namespace parity
 			Log::profile(col.magenta("-----------\n").c_str());
 
 			time_t all = 0;
-			std::ofstream ofs;
+			//std::ofstream ofs;
 
-			if(!ctx.getStatisticsFile().get().empty())
-				ofs.open(ctx.getStatisticsFile().get().c_str(), std::ios_base::app | std::ios_base::out);
+			//if(!ctx.getStatisticsFile().get().empty())
+			//	ofs.open(ctx.getStatisticsFile().get().c_str(), std::ios_base::app | std::ios_base::out);
 
 			for(SortedTimingVector::iterator it = times_.begin(); it != times_.end(); ++it)
 			{
@@ -129,12 +138,12 @@ namespace parity
 				// Format of statistics file:
 				//  "item"|start s:start ms|stop s: stop ms|time\n
 				//
-				if(ofs.is_open())
-					ofs << it->first << "|" << it->second.first.time << ":" << it->second.first.millitm << "|" << it->second.second.time << ":" << it->second.second.millitm << "|" << tmp << std::endl;
+				//if(ofs.is_open())
+				//	ofs << it->first << "|" << it->second.first.time << ":" << it->second.first.millitm << "|" << it->second.second.time << ":" << it->second.second.millitm << "|" << tmp << std::endl;
 			}
 
-			if(ofs.is_open())
-				ofs.close();
+			//if(ofs.is_open())
+			//	ofs.close();
 
 			Log::profile("   ");
 			for(unsigned int i = 0; i < (longest_ + 2); ++i)

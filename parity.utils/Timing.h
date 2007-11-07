@@ -48,6 +48,7 @@ namespace parity
 
 			void forked() { forked_ = true; times_.clear(); longest_ = 0; }
 
+			const SortedTimingVector& getCurrentState() { return times_; }
 		private:
 			Timing() : longest_(0) { start("Timing"); }
 

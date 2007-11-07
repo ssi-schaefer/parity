@@ -36,19 +36,6 @@
 #  include <sys/wait.h>
 #endif
 
-#define POSIX_FORK 1
-#define POSIX_THREADS 2
-#define POSIX_NONE 3
-
-//
-// at least  on interix 3.5 pthread implementation is
-// extremely unstable and produces various strange results:
-//  * CTRL+C not working anymore.
-//  * unpredictable "Memory Fault (core dumped)"'s
-//  * slow as hell.
-//
-#define POSIX_THREADING_MODEL POSIX_FORK
-
 namespace parity
 {
 	namespace utils

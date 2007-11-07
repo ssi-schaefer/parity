@@ -22,6 +22,7 @@
 
 #include "Preprocessor.h"
 #include <Log.h>
+#include <Statistics.h>
 
 namespace parity
 {
@@ -145,6 +146,8 @@ namespace parity
 					return true;
 				}
 			}
+
+			utils::Statistics::instance().addInformation("path-include", pth.get());
 
 			vect.push_back(pth);
 			return true;

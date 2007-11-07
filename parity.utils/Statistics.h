@@ -20,47 +20,35 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __THREADING_H__
-#define __THREADING_H__
+#ifndef __STATISTICS_H__
+#define __STATISTICS_H__
 
 #include <map>
+#include <vector>
+#include <string>
+#include <fstream>
 
-#ifdef _WIN32
-#  include <windows.h>
-#  define THREADINGAPI __stdcall
-#else
-#  define THREADINGAPI
-#endif
-
-#define POSIX_FORK 1
-#define POSIX_THREADS 2
-#define POSIX_NONE 3
-
-//
-// at least  on interix 3.5 pthread implementation is
-// extremely unstable and produces various strange results:
-//  * CTRL+C not working anymore.
-//  * unpredictable "Memory Fault (core dumped)"'s
-//  * slow as hell.
-//
-#define POSIX_THREADING_MODEL POSIX_FORK
+#include <sys/timeb.h>
 
 namespace parity
 {
 	namespace utils
 	{
-		typedef unsigned int (THREADINGAPI *ThreadingFunction)(void*);
-
-		class Threading
-		{
+		class Statistics {
 		public:
-			void synchronize();
-			void synchronize(long id);
-			long run(ThreadingFunction method, void* data, bool allowDataSeparation);
+			static Statistics& instance();
+
+			void addInformation(std::string const& key, std::string const& text);
+			void addInformation(std::string const& key, unsigned long number);
+			void addInformation(std::string const& key, struct timeb const& time);
+
+			std::string serializeTime(struct timeb const& tm);
+			struct timeb deserializeTime(std::string const& str);
 		private:
-			typedef std::map<long, void*> HandleMap;
-			HandleMap handles_;	
-			void waitForOneThread(HandleMap::iterator it);
+			Statistics();
+			~Statistics();
+
+			std::ofstream file_;
 		};
 	}
 }
