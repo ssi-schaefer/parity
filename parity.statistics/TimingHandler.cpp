@@ -46,11 +46,14 @@ namespace parity
 		{
 			available_stats["timing"] = PrintTiming;
 			std::string::size_type posKey = key.find(':');
+			std::string k_new = key.substr(posKey + 1);
+
+			if(k_new[0] == '[') k_new = " -> " + k_new.substr(k_new.find(']') + 2);
 
 			if(key.substr(0, posKey) == "TimingS") {
-				open_[key.substr(posKey + 1)] = utils::Statistics::deserializeTime(value);
+				open_[k_new] = utils::Statistics::deserializeTime(value);
 			} else if(key.substr(0, posKey) == "TimingE") {
-				std::string k = key.substr(posKey + 1);
+				std::string k = k_new;
 				OpenTimingMap::iterator start = open_.find(k);
 
 				if(start == open_.end()) {
@@ -97,30 +100,18 @@ namespace parity
 
 			for(TimingMap::iterator it = invalids_.begin(); it != invalids_.end(); ++it)
 			{
-				if(it->first[0] == '[') {
-					std::cout << std::left << std::setw(longest_ + 1) << " -> " + it->first.substr(it->first.find(']') + 2) << std::setw(10) << "N/S" << "ms " << std::setw(10) << "N/S" << "ms " << std::setw(10) << std::right << invalids_[it->first] << std::endl;
-				} else {
-					std::cout << std::left << std::setw(longest_ + 1) << it->first << std::setw(10) << "N/S" << "ms " << std::setw(10) << "N/S" << "ms " << std::setw(10) << std::right << invalids_[it->first] << std::endl;
-				}
+				std::cout << std::left << std::setw(longest_ + 1) << it->first << std::setw(10) << "N/S" << "ms " << std::setw(10) << "N/S" << "ms " << std::setw(10) << std::right << invalids_[it->first] << std::endl;
 			}
 
 			for(TimingMap::iterator it = timings_.begin(); it != timings_.end(); ++it)
 			{
-				if(it->first[0] == '[') {
-					std::cout << std::left << std::setw(longest_ + 1) << " -> " + it->first.substr(it->first.find(']') + 2) << std::setw(10) << it->second << "ms " << std::setw(10) << avg_[it->first] << "ms " << std::setw(10) << std::right << counts_[it->first] << std::endl;
-				} else {
-					std::cout << std::left << std::setw(longest_ + 1) << it->first << std::setw(10) << it->second << "ms " << std::setw(10) << avg_[it->first] << "ms " << std::setw(10) << std::right << counts_[it->first] << std::endl;
-				}
+				std::cout << std::left << std::setw(longest_ + 1) << it->first << std::setw(10) << it->second << "ms " << std::setw(10) << avg_[it->first] << "ms " << std::setw(10) << std::right << counts_[it->first] << std::endl;
 				all += it->second;
 			}
 
 			for(OpenTimingMap::iterator it = open_.begin(); it != open_.end(); ++it)
 			{
-				if(it->first[0] == '[') {
-					std::cout << std::left << std::setw(longest_ + 1) << " -> " + it->first.substr(it->first.find(']') + 2) << std::setw(10) << "N/F" << "ms " << std::setw(10) << "N/F" << "ms " << std::setw(10) << std::right << "N/A" << std::endl;
-				} else {
-					std::cout << std::left << std::setw(longest_ + 1) << it->first << std::setw(10) << "N/F" << "ms " << std::setw(10) << "N/F" << "ms " << std::setw(10) << std::right << "N/A" << std::endl;
-				}
+				std::cout << std::left << std::setw(longest_ + 1) << it->first << std::setw(10) << "N/F" << "ms " << std::setw(10) << "N/F" << "ms " << std::setw(10) << std::right << "N/A" << std::endl;
 			}
 			
 			std::cout << std::setw(longest_ + 1 + 36) << std::setfill('-') << "-" << std::setfill(' ') << std::endl;
