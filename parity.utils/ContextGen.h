@@ -212,6 +212,10 @@ namespace parity
 				CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
 				CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
 				CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \
+				CTX_GETSET   (long			,StackReserve		,10485760		)  /* linker (default: 10MB) */ \
+				CTX_GETSET   (long			,StackCommit		,65536			)  /* linker (default: 64KB) */ \
+				CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \
+				CTX_GETSET   (long			,HeapCommit			,65536			)  /* linker (default: 64KB) */ \
 				CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
 				CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
 				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no"		)  /* linker */ \

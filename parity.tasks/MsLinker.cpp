@@ -32,6 +32,8 @@
 #include <CoffObject.h>
 #include <CoffDirectiveSection.h>
 
+#include <sstream>
+
 namespace parity
 {
 	namespace tasks
@@ -291,6 +293,16 @@ namespace parity
 			//
 			task.addFilter("LNK4049", false);
 			task.addFilter("LNK4217", false);
+
+			//
+			// set stack and heap sizes.
+			//
+			std::ostringstream oss;
+			oss << "/STACK:" << ctx.getStackReserve() << "," << ctx.getStackCommit();
+			vec.push_back(oss.str());
+			oss.str("");
+			oss << "/HEAP:" << ctx.getHeapReserve() << "," << ctx.getHeapCommit();
+			vec.push_back(oss.str());
 
 			//
 			// change manifest name
