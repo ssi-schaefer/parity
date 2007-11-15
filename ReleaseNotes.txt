@@ -19,3 +19,11 @@ parity 1.0.1
 This intermediate release fixes path conversion issues in the parity.runtime. now the functions chdir, mkdir, rmdir, all spawn and all exec support on-the-fly path conversion from Interix to Windows correctly.
 
 There is a new WIKI available on how to build parity at http://parity.wiki.sourceforge.net/Building+parity+from+Interix
+
+
+parity 1.0.2
+------------
+
+This release fixes minor issues with Visul Studio .NET 2003. It also introduces a brand new statistic collection mechanism, which allows for much more informations to be collected during a parity run. To enable statistics collection, simply add a line containing "StatisticsFile=/path/to/stat.file" to your parity.conf.
+
+parity now supports setting the Stack and Heap reserve and commit sizes via configuration.
