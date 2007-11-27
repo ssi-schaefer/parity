@@ -45,50 +45,60 @@ namespace parity
 {
 	namespace tasks
 	{
+		typedef std::pair<utils::Path, bool> ConfigFilePair;
+		typedef std::vector<ConfigFilePair> ConfigFileVector;
+
 		void runConfigurationLoading()
 		{
 			utils::Context& context = utils::Context::getContext();
 			utils::Timing::instance().start("Configuration loading");
+			ConfigFileVector files;
 
 			//
 			// On Win32:
-			//  1) try in current directory
-			//  2) try next to exe file
+			//  1) try next to exe file
 			//
 			// On All others (UNIX like):
-			//  1) try in current directory
-			//  2) try in configured PARITY_HOME/etc/
+			//  1) try in configured PARITY_HOME/etc/
 			//
 			// And everywhere:
-			//  3) in path set by envoironemtn variable PARITY_CONFIG
+			//  2) try in current directory
+			//  3) in path set by envoironment variable PARITY_CONFIG
 			//
-
 		#ifdef _WIN32
 			char fnBuffer[1024];
 			GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 
-			utils::Path locations[] = {
-				utils::Path("."),
-				utils::Path(fnBuffer)
-			};
-			locations[1] = locations[1].base();
+			files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
 		#else
-			utils::Path locations[] = {
-				utils::Path("."),
-				utils::Path(PARITY_HOME),
-			};
-			locations[1].append("etc");
-		#endif
-			
-			bool bLoaded = false;
-			for(int i = 0; i < 2; ++i)
-			{
-				locations[i].append("parity.conf");
-				locations[i].toNative();
+			utils::Path pth(PARITY_HOME);
+			pth.append("etc");
 
-				if(locations[i].exists())
+			files.push_back(ConfigFileVector::value_type(pth, true));
+		#endif
+
+			//
+			// all optional and partial configuration files need to go after
+			// the main configuration, so they don't get overridden by defaults.
+			//
+			files.push_back(ConfigFileVector::value_type(utils::Path("."), false));
+			files.push_back(ConfigFileVector::value_type(utils::Environment("PARITY_CONFIG").getPath(), false));
+			
+			//
+			// This is set to true if at least one of the required
+			// files has been loaded..
+			//
+			bool bLoaded = false;
+
+			for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
+			{
+				utils::Path pth = it->first;
+				pth.append("parity.conf");
+				pth.toNative();
+
+				if(pth.exists())
 				{
-					utils::MappedFile config(locations[i], utils::ModeRead);
+					utils::MappedFile config(pth, utils::ModeRead);
 
 					try {
 						utils::Config::parseFile(context, config);
@@ -97,35 +107,16 @@ namespace parity
 						exit(1);
 					}
 
-					bLoaded = true;
+					if(it->second)
+						bLoaded = true;
 
 					break;
 				}
 			}
 
-			utils::Environment parityConfig("PARITY_CONFIG");
-			utils::Path parityPath = parityConfig.getPath();
-			parityPath.toNative();
-
-			if(parityPath.exists())
-			{
-				utils::MappedFile config(parityPath, utils::ModeRead);
-
-				try {
-					utils::Config::parseFile(context, config);
-				} catch(const utils::Exception& e) {
-					utils::Log::error("while parsing configuration: %s\n", e.what());
-					exit(1);
-				}
-
-				utils::Statistics::instance().addInformation("additional-config", parityPath.get());
-
-				bLoaded = true;
-			}
-
 			if(!bLoaded)
 			{
-				utils::Log::error("cannot find any configuration. cannot continue!\n");
+				utils::Log::error("cannot find configuration. cannot continue!\n");
 				exit(1);
 			}
 
