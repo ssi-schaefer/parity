@@ -47,6 +47,7 @@ namespace parity
 	{
 		typedef std::pair<utils::Path, bool> ConfigFilePair;
 		typedef std::vector<ConfigFilePair> ConfigFileVector;
+		typedef std::map<utils::Path, bool> LoadedFileMap;
 
 		void runConfigurationLoading()
 		{
@@ -81,7 +82,7 @@ namespace parity
 			// all optional and partial configuration files need to go after
 			// the main configuration, so they don't get overridden by defaults.
 			//
-			files.push_back(ConfigFileVector::value_type(utils::Path("."), false));
+			files.push_back(ConfigFileVector::value_type(utils::Path("."), true));
 			files.push_back(ConfigFileVector::value_type(utils::Environment("PARITY_CONFIG").getPath(), false));
 			
 			//
@@ -89,12 +90,21 @@ namespace parity
 			// files has been loaded..
 			//
 			bool bLoaded = false;
+			LoadedFileMap loaded;
 
 			for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
 			{
 				utils::Path pth = it->first;
 				pth.append("parity.conf");
 				pth.toNative();
+
+				if(bLoaded && it->second)
+					continue;
+
+				if(loaded[it->first])
+					continue;
+
+				loaded[it->first] = true;
 
 				if(pth.exists())
 				{
