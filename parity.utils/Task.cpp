@@ -140,7 +140,7 @@ namespace parity
 					//
 					// maybe block a few milliseconds?
 					//
-					Sleep(100);
+					Sleep(2);
 
 					if(_eof(stdOutPipe[READ_FD]) == 0)
 					{
@@ -260,7 +260,7 @@ namespace parity
 						//
 						// maybe block a few milliseconds?
 						//
-						usleep(100000);
+						usleep(2000);
 
 						bFinishedLast = false;
 
