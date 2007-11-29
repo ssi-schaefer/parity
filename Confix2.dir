@@ -176,6 +176,16 @@ AC_DEFUN([PARITY_CONFIGURE],
 		MsvcRoot71=
 	fi
 
+	if test -n "$MsvcRoot80" -a -n "$MsvcRoot90"; then
+		AC_MSG_WARN([both visual studio 2005 and 2008 where found! continuing with visual studio 2008])
+		MsvcRoot80=
+	fi
+
+	if test -n "$MsvcRoot71" -a -n "$MsvcRoot90"; then
+		AC_MSG_WARN([both visual studio .NET 2003 and 2008 where found! continuing with visual studio 2008])
+		MsvcRoot71=
+	fi
+
 	if test -n "$MsvcRoot71"; then
 		MsvcRoot="$MsvcRoot71/Vc7"
 	elif test -n "$MsvcRoot80"; then
@@ -204,9 +214,20 @@ AC_DEFUN([PARITY_CONFIGURE],
 	CrtLibraryDir=
 	SdkIncludeDir=
 	SdkLibraryDir=
+	MsSdkDir=
+
+	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
+		if test -d "`unixpath2win $MSSDK`"; then
+			MsSdkDir="`unixpath2win $MSSDK`'"
+		else
+			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
+		fi
+	else
+		MsSdkDir=$MSSDK
+	fi
 
 	PARITY_LOOKUP_CRT([$MsvcRoot], [CrtIncludeDir], [CrtLibraryDir])
-	PARITY_LOOKUP_SDK([$MsvcRoot:$MSSDK], [SdkIncludeDir], [SdkLibraryDir])
+	PARITY_LOOKUP_SDK([$MsvcRoot:$MsSdkDir], [SdkIncludeDir], [SdkLibraryDir])
 
 	rm -f $ParitySysIncludePaths > /dev/null 2>&1
 	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
