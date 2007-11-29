@@ -194,6 +194,18 @@ AC_DEFUN([PARITY_CONFIGURE],
 		MsvcRoot="$MsvcRoot90/VC"
 	fi
 
+	MsSdkDir=
+
+	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
+		if test -d "`winpath2unix \"$MSSDK\"`"; then
+			MsSdkDir="`winpath2unix \"$MSSDK\"`"
+		else
+			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
+		fi
+	else
+		MsSdkDir=$MSSDK
+	fi
+
 	#
 	# Lookup executables
 	#
@@ -204,7 +216,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	if test -n "$MsvcRoot80" -o -n "$MsvcRoot90"; then
 		# only if using visual studio 2005 or 2008
-		PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityManifest], [mt.exe])
+		PARITY_LOOKUP_EXE([$MsvcRoot:$PATH:$MsSdkDir], [ParityManifest], [mt.exe])
 	fi
 
 	#
@@ -214,17 +226,6 @@ AC_DEFUN([PARITY_CONFIGURE],
 	CrtLibraryDir=
 	SdkIncludeDir=
 	SdkLibraryDir=
-	MsSdkDir=
-
-	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
-		if test -d "`unixpath2win $MSSDK`"; then
-			MsSdkDir="`unixpath2win $MSSDK`'"
-		else
-			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
-		fi
-	else
-		MsSdkDir=$MSSDK
-	fi
 
 	PARITY_LOOKUP_CRT([$MsvcRoot], [CrtIncludeDir], [CrtLibraryDir])
 	PARITY_LOOKUP_SDK([$MsvcRoot:$MsSdkDir], [SdkIncludeDir], [SdkLibraryDir])
