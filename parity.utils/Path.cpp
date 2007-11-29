@@ -73,6 +73,8 @@ namespace parity
 
 			if(!path_.empty())
 				expand();
+
+			resolveLink();
 		}
 
 		#ifdef _WIN32
@@ -131,6 +133,7 @@ namespace parity
 		void Path::set(const std::string& value)
 		{
 			path_ = value;
+			stated_ = false;
 
 			if(!path_.empty())
 				expand();
@@ -225,10 +228,11 @@ namespace parity
 				*(const_cast<bool*>(&stated_)) = true;
 			}
 
-			if(stat_.st_mode & S_IFREG)
-				return true;
-
-			return false;
+#ifdef _WIN32
+			return ((stat_.st_mode & S_IFREG) != 0);
+#else
+			return (S_ISREG(stat_.st_mode));
+#endif
 		}
 
 		bool Path::isDirectory() const
@@ -249,10 +253,11 @@ namespace parity
 				*(const_cast<bool*>(&stated_)) = true;
 			}
 
-			if(stat_.st_mode & S_IFDIR)
-				return true;
-
-			return false;
+#ifdef _WIN32
+			return ((stat_.st_mode & S_IFDIR) != 0);
+#else
+			return (S_ISDIR(stat_.st_mode));
+#endif
 		}
 
 		bool Path::exists() const
@@ -282,6 +287,8 @@ namespace parity
 			#  define unlink _unlink
 			#endif
 
+			*(const_cast<bool*>(&stated_)) = true;
+
 			if(unlink(path_.c_str()) == 0)
 				return true;
 
@@ -301,6 +308,8 @@ namespace parity
 			dest.toNative();
 
 			mode(0777);
+
+			stated_ = false;
 
 			if(rename(path_.c_str(), dest.path_.c_str()) != 0) {
 				utils::Log::verbose("Perfomance warning: doing slow full copy instead of move, crossing device boundary?\n"
@@ -322,6 +331,8 @@ namespace parity
 			dest.toNative();
 
 			mode(0777);
+
+			stated_ = false;
 
 			//
 			// do a full copy, and remove the old file.
@@ -447,6 +458,9 @@ namespace parity
 			#endif
 
 			path_.append(component);
+			stated_ = false;
+
+			resolveLink();
 		}
 
 		void Path::expand()
@@ -494,6 +508,81 @@ namespace parity
 			#endif
 
 			path_ = path;
+			resolveLink();
+		}
+
+		//
+		// WARNING: the following onlt reads links of the last
+		// path component, not of pieces in the middle! so the whole
+		// path set at call time must exist as file on disk!
+		//
+		void Path::resolveLink()
+		{
+			#ifdef _WIN32
+				#define LINK_MAX_PATH 260
+				//
+				// Take a quick look at the file and check wether it can be a path.
+				// If stat'ing failes, we simply return and do nothing, since the file
+				// doesn't exist...
+				//
+				if(!stated_)
+				{
+					if(stat(path_.c_str(), &stat_) == -1)
+						return;
+
+					stated_ = true;
+				}
+
+				//
+				// We make a simple assumption here: if the file is bigger than
+				// 8 bytes plus 260 (MAX_PATH) * sizeof(wchar_t) then it can't 
+				// be a valid link for us...
+				//
+				if(stat_.st_size > (8 + (LINK_MAX_PATH * sizeof(wchar_t))))
+					return;
+
+				if(isDirectory())
+					return;
+
+				//
+				// Read the contents of the link.
+				//
+				MappedFile mapped(*this, ModeRead);
+
+				const char signature[] = { 0x49, 0x6E, 0x74, 0x78, 0x4C, 0x4E, 0x4B, 0x01 };
+				if(memcmp(signature, mapped.getBase(), sizeof(signature)) != 0) {
+					return;
+				}
+
+				utils::Log::verbose("found softlink signature in %s\n", path_.c_str());
+
+				wchar_t* link = (wchar_t*)((char*)mapped.getBase() + sizeof(signature));
+				
+				if(wcslen(link) > LINK_MAX_PATH) {
+					return;
+				}
+
+				char buffer[LINK_MAX_PATH];
+				if(wcstombs(buffer, link, LINK_MAX_PATH) == (size_t)-1) {
+					return;
+				}
+
+				mapped.close();
+
+				utils::Log::verbose("resolved link to %s\n", buffer);
+
+				//
+				// absolute link contents replaces the whole path. Relative
+				// link contents replaces only the last part of the current value.
+				//
+				if(buffer[0] == '/')
+					path_ = buffer;
+				else
+					path_ = base() + "/" + buffer;
+
+				stated_ = false;
+				expand();
+			#endif
 		}
 
 		typedef char* (__stdcall * psx3_unixpath2win_func_t)(const char*, int, char*, size_t);

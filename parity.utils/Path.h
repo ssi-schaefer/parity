@@ -102,6 +102,8 @@ namespace parity
 			bool isBackendUnix() const;
 
 			char getSeperator() const;
+
+			void resolveLink();
 		};
 
 	}
