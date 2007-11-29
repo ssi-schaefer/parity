@@ -167,6 +167,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo `winpath2unix "$VS71COMNTOOLS"`)")")
 	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo `winpath2unix "$VS80COMNTOOLS"`)")")
+	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo `winpath2unix "$VS90COMNTOOLS"`)")")
 
 	MsvcRoot=
 
@@ -179,6 +180,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 		MsvcRoot="$MsvcRoot71/Vc7"
 	elif test -n "$MsvcRoot80"; then
 		MsvcRoot="$MsvcRoot80/VC"
+	elif test -n "$MsvcRoot90"; then
+		MsvcRoot="$MsvcRoot90/VC"
 	fi
 
 	#
@@ -189,8 +192,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityAssembler], [ml.exe])
 	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityLinker], [link.exe])
 
-	if test -n "$MsvcRoot80"; then
-		# only if using visual studio 2005
+	if test -n "$MsvcRoot80" -o -n "$MsvcRoot90"; then
+		# only if using visual studio 2005 or 2008
 		PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityManifest], [mt.exe])
 	fi
 
