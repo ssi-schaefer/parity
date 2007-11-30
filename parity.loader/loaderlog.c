@@ -30,21 +30,16 @@
 static LoaderLogLevel gLevel;
 static HANDLE gDebugStream;
 
-static void formattedOutput(HANDLE file, const char* fmt, va_list args)
+static void LogFormatString(char* buffer, const char* fmt, va_list args)
 {
-	//
-	// TODO: implement using WriteFile
-	//
 	static isNewLine = 1;
 	const char* ptr = fmt;
 	const char* end = ptr;
 
-	unsigned int iBytesWritten = 0;
-
 	if(isNewLine)
 	{
-		WriteFile(file, ParityLoaderGeneratedImageName, lstrlen(ParityLoaderGeneratedImageName), &iBytesWritten, 0);
-		WriteFile(file, ": ", 2, &iBytesWritten, 0);
+		lstrcat(buffer, ParityLoaderGeneratedImageName);
+		lstrcat(buffer, ": ");
 	}
 
 	while(end && *end != '\0')
@@ -52,7 +47,9 @@ static void formattedOutput(HANDLE file, const char* fmt, va_list args)
 		while(*end != '%' && *end != '\0')
 			++end;
 
-		WriteFile(file, ptr, end - ptr, &iBytesWritten, 0);
+		//WriteFile(file, ptr, end - ptr, &iBytesWritten, 0);
+		lstrcpyn(&buffer[lstrlen(buffer)], ptr, (end - ptr) + 1);
+
 		ptr = end+2;
 
 		if(*end == '%')
@@ -69,8 +66,8 @@ static void formattedOutput(HANDLE file, const char* fmt, va_list args)
 				// fall through
 			case 'd':
 				{
-					char buffer[64];
-					unsigned char* wh = buffer + 63;
+					char buf[64];
+					unsigned char* wh = buf + 63;
 
 					int num = va_arg(args, int);
 
@@ -90,19 +87,22 @@ static void formattedOutput(HANDLE file, const char* fmt, va_list args)
 					}
 					while(num != 0);
 
-					WriteFile(file, wh, lstrlen(wh), &iBytesWritten, 0);
+					//WriteFile(file, wh, lstrlen(wh), &iBytesWritten, 0);
+					lstrcat(buffer, wh);
 				}
 				break;
 			case 's':
 				{
 					const char* tmp = va_arg(args, const char*);
-					WriteFile(file, tmp, lstrlen(tmp), &iBytesWritten, 0);
+					//WriteFile(file, tmp, lstrlen(tmp), &iBytesWritten, 0);
+					lstrcat(buffer, tmp);
 				}
 				break;
 			default:
 				{
 					const char msgErrUnsupported[] = "<unsupported specifier>";
-					WriteFile(file, msgErrUnsupported, sizeof(msgErrUnsupported), &iBytesWritten, 0);
+					//WriteFile(file, msgErrUnsupported, sizeof(msgErrUnsupported), &iBytesWritten, 0);
+					lstrcat(buffer, msgErrUnsupported);
 				}
 			}
 		}
@@ -116,6 +116,38 @@ static void formattedOutput(HANDLE file, const char* fmt, va_list args)
 		isNewLine = 1;
 	else
 		isNewLine = 0;
+}
+
+static void LogOutputDebugString(char* buffer)
+{
+	//
+	// write line by line...
+	//
+	char* start = buffer;
+	char* end = start;
+
+	while(1)
+	{
+		int isEnd = 0;
+
+		if(*end == '\0' || *end == '\n')
+		{
+			char repl;
+
+			if(*end == '\0') isEnd = 1;
+			else { ++end; repl = *end; *end = '\0'; }
+
+			OutputDebugStringA(start);
+
+			if(isEnd)
+				return;
+
+			*end = repl;
+			start = end;
+		}
+
+		++end;
+	}
 }
 
 //
@@ -164,34 +196,47 @@ void LogInit()
 
 void LogWarning(const char* fmt, ...)
 {
+	char buffer[2048]; // hope it suffices.
+	unsigned int iBytesWritten = 0;
 	va_list args;
 	va_start(args, fmt);
 
-	formattedOutput(GetStdHandle(STD_ERROR_HANDLE), fmt, args);
+	memset(buffer, 0, sizeof(buffer));
+
+	LogFormatString(buffer, fmt, args);
+	LogOutputDebugString(buffer);
+	WriteFile(GetStdHandle(STD_ERROR_HANDLE), buffer, lstrlen(buffer), &iBytesWritten, 0);
 
 	va_end(args);
 }
 
 void LogDebug(const char* fmt, ...)
 {
+	char buffer[2048]; // hope it suffices.
+	unsigned int iBytesWritten = 0;
+
+	va_list args;
+	va_start(args, fmt);
+
+	memset(buffer, 0, sizeof(buffer));
+
+	LogFormatString(buffer, fmt, args);
+	LogOutputDebugString(buffer);
+
+	va_end(args);
+
 	if(gLevel == LevelDebug)
 	{
-		va_list args;
-		va_start(args, fmt);
-
 		//
 		// first seek to end of file.
 		//
 		SetFilePointer(gDebugStream, 0, 0, FILE_END);
-
-		formattedOutput(gDebugStream, fmt, args);
+		WriteFile(gDebugStream, buffer, lstrlen(buffer), &iBytesWritten, 0);
 
 		//
 		// flush immediatly
 		//
 		FlushFileBuffers(gDebugStream);
-
-		va_end(args);
 	}
 }
 
