@@ -83,8 +83,9 @@ namespace parity
 			// the main configuration, so they don't get overridden by defaults.
 			//
 			files.push_back(ConfigFileVector::value_type(utils::Path("."), true));
+			files.push_back(ConfigFileVector::value_type(utils::Path("."), false));
 			files.push_back(ConfigFileVector::value_type(utils::Environment("PARITY_CONFIG").getPath(), false));
-			
+
 			//
 			// This is set to true if at least one of the required
 			// files has been loaded..
@@ -94,8 +95,14 @@ namespace parity
 
 			for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
 			{
+				if(it->first.get().empty() || !it->first.exists())
+					continue;
+
 				utils::Path pth = it->first;
-				pth.append("parity.conf");
+
+				if(pth.isDirectory())
+					pth.append("parity.conf");
+
 				pth.toNative();
 
 				if(bLoaded && it->second)
@@ -119,8 +126,6 @@ namespace parity
 
 					if(it->second)
 						bLoaded = true;
-
-					break;
 				}
 			}
 
