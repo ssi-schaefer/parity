@@ -52,7 +52,7 @@ PCRT_BEGIN_C
 #undef rmdir
 
 static PCRT_INLINE int chdir(const char* p) { return _chdir(PCRT_CONV(p)); }
-static PCRT_INLINE int mkdir(const char* p) { return _mkdir(PCRT_CONV(p)); }
+static PCRT_INLINE int mkdir(const char* p, ... /* ignored */) { return _mkdir(PCRT_CONV(p)); }
 static PCRT_INLINE int rmdir(const char* p) { return _rmdir(PCRT_CONV(p)); }
 
 #pragma pop_macro("chdir")
