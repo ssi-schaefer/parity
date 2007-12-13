@@ -196,6 +196,7 @@ namespace parity
 			//
 			// resolve all symbols
 			//
+			utils::Log::verbose("resolving symbols from all data...\n");
 			resolveSymbols();
 
 			utils::Statistics::instance().addInformation("symbols-unresolved", unresolved_.size());
