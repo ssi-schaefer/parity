@@ -160,14 +160,20 @@ AC_DEFUN([PARITY_CONFIGURE],
 	ParitySysIncludePaths="__parity.include"
 	ParitySysLibraryPaths="__parity.library"
 
+	case $host in
+	*-*-interix*|*-*-winnt*) PathConversion='winpath2unix' ;;
+	*-*-cygwin*) PathConversion='cygpath -u' ;;
+	*) PathConversion='echo' ;;
+	esac
+
 	#
 	# Lookup paths to visual studio installations
 	# need to use echo to preserve pahs with spaces correctly
 	#
 
-	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo `winpath2unix "$VS71COMNTOOLS"`)")")
-	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo `winpath2unix "$VS80COMNTOOLS"`)")")
-	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo `winpath2unix "$VS90COMNTOOLS"`)")")
+	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo `$PathConversion "$VS71COMNTOOLS"`)")")
+	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo `$PathConversion "$VS80COMNTOOLS"`)")")
+	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo `$PathConversion "$VS90COMNTOOLS"`)")")
 
 	MsvcRoot=
 
@@ -197,8 +203,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	MsSdkDir=
 
 	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
-		if test -d "`winpath2unix \"$MSSDK\"`"; then
-			MsSdkDir="`winpath2unix \"$MSSDK\"`"
+		if test -d "`$PathConversion \"$MSSDK\"`"; then
+			MsSdkDir="`$PathConversion \"$MSSDK\"`"
 		else
 			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
 		fi

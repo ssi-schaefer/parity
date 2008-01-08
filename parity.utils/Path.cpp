@@ -160,8 +160,8 @@ namespace parity
 				/* same as interix */
 				char buf[PATH_MAX];
 
-				cygwin_conv_to_full_win32_path(path.c_str(), buf);
-				path = buf;
+				cygwin_conv_to_full_win32_path(path_.c_str(), buf);
+				path_ = buf;
 			#else
 				/* native:  windows style paths,
 				 * foreign: depends on backend */
@@ -194,11 +194,11 @@ namespace parity
 				char buf[PATH_MAX];
 
 				if(isBackendWindows()) {
-					cygwin_conv_to_full_win32_path(path.c_str(), buf);
+					cygwin_conv_to_full_win32_path(path_.c_str(), buf);
 				} else {
-					cygwin_conv_to_full_posix_path(path.c_str(), buf);
+					cygwin_conv_to_full_posix_path(path_.c_str(), buf);
 				}
-				path = buf;
+				path_ = buf;
 			#else
 				/* native:  windows style paths,
 				 * foreign: depends on backend */

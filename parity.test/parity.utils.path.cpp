@@ -32,12 +32,12 @@ namespace parity
 	{
 		bool TestSuite::testParityUtilsPath()
 		{
-			utils::Path unix("/dev");
+			utils::Path ux("/dev");
 			utils::Path win("/dev");
 
-			if(!unix.isNative())
+			if(!ux.isNative())
 			{
-				unix.toNative();
+				ux.toNative();
 			}
 
 			/* Foreign paths are allways Windows, so this is what we want here */
@@ -49,9 +49,9 @@ namespace parity
 				return false;
 			}
 
-			if(!unix.exists())
+			if(!ux.exists())
 			{
-				utils::Log::warning("UNIX path (%s) doesn't exist, although it is native, is SFU/SUA installed?\n", unix.get().c_str());
+				utils::Log::warning("ux path (%s) doesn't exist, although it is native, is SFU/SUA installed?\n", ux.get().c_str());
 				return false;
 			}
 
@@ -61,23 +61,23 @@ namespace parity
 				return false;
 			}
 
-			unix.append("file");
+			ux.append("file");
 			win.append("file");
 
-			if(unix.get().find("file") == std::string::npos
+			if(ux.get().find("file") == std::string::npos
 				|| win.get().find("file") == std::string::npos)
 			{
-				utils::Log::warning("Appending path components does not seem to work (UNIX: %s, Windows: %s)\n", unix.get().c_str(), win.get().c_str());
+				utils::Log::warning("Appending path components does not seem to work (ux: %s, Windows: %s)\n", ux.get().c_str(), win.get().c_str());
 				return false;
 			}
 
-			if(unix.file() != "file" || win.file() != "file")
+			if(ux.file() != "file" || win.file() != "file")
 			{
-				utils::Log::warning("Cannot retrieve filename from path (UNIX: %s, Windows: %s)\n", unix.get().c_str(), win.get().c_str());
+				utils::Log::warning("Cannot retrieve filename from path (ux: %s, Windows: %s)\n", ux.get().c_str(), win.get().c_str());
 				return false;
 			}
 
-			unix.set(unix.base());
+			ux.set(ux.base());
 			win.set(win.base());
 
 			return true;

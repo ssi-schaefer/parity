@@ -38,6 +38,8 @@
 #  include <windows.h>
 #  include <io.h>
 #  include <process.h>
+#else
+#  include <sys/wait.h>
 #endif
 
 #define READ_FD  0
@@ -482,6 +484,9 @@ namespace parity
 		void Task::filterLine(std::string& input)
 		{
 			if(input.empty())
+				return;
+
+			if(Context::getContext().getIgnoreOutputFilters())
 				return;
 
 			for(FilterMap::const_iterator it = filters_.begin(); it != filters_.end(); ++it)
