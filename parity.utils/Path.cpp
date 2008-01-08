@@ -47,11 +47,15 @@
 #  include <interix/interix.h>
 #endif
 
+#ifdef __CYGWIN__
+#  include <sys/cygwin.h>
+#endif
+
 #ifndef PATH_MAX
 #  ifdef MAX_PATH
 #    define PATH_MAX MAX_PATH
 #  else
-#    define PATH_MAX 1024
+#    define PATH_MAX 260
 #  endif
 #endif
 
@@ -152,6 +156,12 @@ namespace parity
 
 				if(winpath2unix(path_.c_str(), 0, buf, PATH_MAX) != -1)
 					path_ = buf;
+			#elif defined(__CYGWIN__)
+				/* same as interix */
+				char buf[PATH_MAX];
+
+				cygwin_conv_to_full_win32_path(path.c_str(), buf);
+				path = buf;
 			#else
 				/* native:  windows style paths,
 				 * foreign: depends on backend */
@@ -179,6 +189,16 @@ namespace parity
 					if(winpath2unix(path_.c_str(), 0, buf, PATH_MAX) != -1)
 						path_ = buf;
 				}
+			#elif defined(__CYGWIN__)
+				/* same as interix */
+				char buf[PATH_MAX];
+
+				if(isBackendWindows()) {
+					cygwin_conv_to_full_win32_path(path.c_str(), buf);
+				} else {
+					cygwin_conv_to_full_posix_path(path.c_str(), buf);
+				}
+				path = buf;
 			#else
 				/* native:  windows style paths,
 				 * foreign: depends on backend */
@@ -512,7 +532,7 @@ namespace parity
 		}
 
 		//
-		// WARNING: the following onlt reads links of the last
+		// WARNING: the following only reads links of the last
 		// path component, not of pieces in the middle! so the whole
 		// path set at call time must exist as file on disk!
 		//
