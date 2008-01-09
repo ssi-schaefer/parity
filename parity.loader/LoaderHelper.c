@@ -132,7 +132,7 @@ const char* LoaderConvertPathToNative(const char* ptr)
 			static cygwin_conv_func_t conv = NULL; 
 
 			if(!init)
-				init = (cygwin_init_func_t)GetProcAddress(hCygLib, "cygwin_init_dll");
+				init = (cygwin_init_func_t)GetProcAddress(hCygLib, "cygwin_dll_init");
 			if(!conv)
 				conv = (cygwin_conv_func_t)GetProcAddress(hCygLib, "cygwin_conv_to_full_win32_path");
 
@@ -148,10 +148,10 @@ const char* LoaderConvertPathToNative(const char* ptr)
 
 				return pRing[iRingNum];
 			} else {
-				LogWarning("Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!");
+				LogWarning("Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!\n");
 			}
 		} else {
-			LogWarning("Neither Interix Installation nor Cygwin DLL found, cannot convert absolute UNIX paths!");
+			LogWarning("Neither Interix Installation nor Cygwin DLL found, cannot convert absolute UNIX paths!\n");
 		}
 	}
 
