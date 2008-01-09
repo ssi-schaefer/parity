@@ -607,6 +607,9 @@ namespace parity
 
 		typedef char* (__stdcall * psx3_unixpath2win_func_t)(const char*, int, char*, size_t);
 		typedef int   (* psx5_unixpath2win_func_t)(const char*, int, char*, size_t);
+		typedef void  (*cygwin_init_func_t)();
+		typedef void  (*cygwin_conv_func_t)(const char*, char*);
+
 		bool Path::convert_ = true;
 
 		bool Path::convertGeneric(bool bWindows)
@@ -697,6 +700,40 @@ namespace parity
 						} else {
 							/* don't try again if both failed */
 							convert_ = false;
+						}
+					}
+
+					/* but wait.... what about cygwin? */
+					if(!convert_)
+					{
+						static HMODULE hCygLib = NULL;
+		
+						if(!hCygLib)
+							hCygLib = LoadLibrary("cygwin1.dll");
+
+						if(hCygLib)
+						{
+							static cygwin_init_func_t init = NULL; 
+							static cygwin_conv_func_t conv = NULL; 
+
+							if(!init)
+								init = (cygwin_init_func_t)GetProcAddress(hCygLib, "cygwin_dll_init");
+							if(!conv)
+								conv = (cygwin_conv_func_t)GetProcAddress(hCygLib, "cygwin_conv_to_full_win32_path");
+
+							if(init && conv)
+							{
+								//
+								// allocate a ring slot, and then convert using cygwin dll.
+								//
+								char buffer[_MAX_PATH];
+
+								init();
+								conv(path_.c_str(), buffer);
+
+								convert_ = true;
+								path_ = buffer;
+							}
 						}
 					}
 				} catch(...) {

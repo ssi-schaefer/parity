@@ -121,7 +121,7 @@ const char* LoaderConvertPathToNative(const char* ptr)
 			return pRing[iRingNum];
 		}
 	} else {
-		static HANDLE hCygLib = NULL;
+		static HMODULE hCygLib = NULL;
 		
 		if(!hCygLib)
 			hCygLib = LoadLibrary("cygwin1.dll");
