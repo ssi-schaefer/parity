@@ -89,7 +89,7 @@ namespace parity
 			utils::SubsystemType subsystem;
 		} InspectorPointerLayoutVA;
 
-		#if defined(_WIN32) || (defined(__INTERIX) && !defined(__GNUC__))
+		#if defined(_WIN32) || (defined(__INTERIX) && (!defined(__GNUC__) || __GNUC__ == 3 ))
 		#  pragma pack(pop)
 		#endif
 

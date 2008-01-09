@@ -46,6 +46,9 @@ void LoaderWriteLastWindowsError()
 	LocalFree(ptrMsg);
 }
 
+typedef void (*cygwin_init_func_t)();
+typedef void (*cygwin_conv_func_t)(const char*, char*);
+
 const char* LoaderConvertPathToNative(const char* ptr)
 {
 	//
@@ -118,13 +121,44 @@ const char* LoaderConvertPathToNative(const char* ptr)
 			return pRing[iRingNum];
 		}
 	} else {
-		LogWarning("Interix not installed, cannot convert paths!\n");
+		static HANDLE hCygLib = NULL;
+		
+		if(!hCygLib)
+			hCygLib = LoadLibrary("cygwin1.dll");
+
+		if(hCygLib)
+		{
+			static cygwin_init_func_t init = NULL; 
+			static cygwin_conv_func_t conv = NULL; 
+
+			if(!init)
+				init = (cygwin_init_func_t)GetProcAddress(hCygLib, "cygwin_init_dll");
+			if(!conv)
+				conv = (cygwin_conv_func_t)GetProcAddress(hCygLib, "cygwin_conv_to_full_win32_path");
+
+			if(init && conv)
+			{
+				//
+				// allocate a ring slot, and then convert using cygwin dll.
+				//
+				pRing[iRingNum] = HeapAlloc(GetProcessHeap(), 0, _MAX_PATH);
+
+				init();
+				conv(ptr, pRing[iRingNum]);
+
+				return pRing[iRingNum];
+			} else {
+				LogWarning("Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!");
+			}
+		} else {
+			LogWarning("Neither Interix Installation nor Cygwin DLL found, cannot convert absolute UNIX paths!");
+		}
 	}
 
 	//
 	// still around?
 	//
-	LogWarning("would need real path conversion for %s\n", ptr);
+	LogWarning("would need real path conversion for %s. Please report this!\n", ptr);
 
 	return ptr;
 #else
