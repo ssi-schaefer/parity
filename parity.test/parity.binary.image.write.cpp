@@ -40,16 +40,45 @@ namespace parity
 {
 	namespace testing
 	{
+		//
+		// the "" in the function name is to prevent confix from thinking that
+		// it should build this as executable.
+		//
+		static const char dataCFile[] = 
+			"int ma""in(void) {"
+			"	return 0;"
+			"}";
+
 		extern void testFileHeader(binary::FileHeader& hdr);
 
 		bool TestSuite::testParityBinaryImageWrite()
 		{
 			try {
-				utils::Path parity = getParityExecutable();
+				utils::Task::ArgumentVector arguments;
+				
+				utils::Path cfile = utils::Path::getTemporary(".parity.testsuite.link.XXXXXX.c");
+				utils::Path ofile = utils::Path::getTemporary(".parity.testsuite.link.XXXXXX.exe");
 
-				utils::Log::verbose("doing parsed copy of %s...\n", parity.get().c_str());
+				std::ofstream ofs(cfile.get().c_str());
+				ofs << dataCFile;
+				ofs.close();
 
-				utils::MappedFile mapping(parity, utils::ModeRead);
+				utils::Context::getContext().getTemporaryFiles().push_back(cfile);
+				utils::Context::getContext().getTemporaryFiles().push_back(ofile);
+
+				arguments.push_back(cfile.get());
+				arguments.push_back("-o");
+				arguments.push_back(ofile.get());
+				
+				if(!executeParity(arguments, false))
+					throw utils::Exception("cannot execute parity for test suite!");
+
+				if(!ofile.exists())
+					throw utils::Exception("missing executable file from compile!");
+
+				utils::Log::verbose("doing parsed copy of %s...\n", ofile.get().c_str());
+
+				utils::MappedFile mapping(ofile, utils::ModeRead);
 				//utils::MappedFile mapping(utils::Path("test.exe"), utils::ModeRead);
 				binary::Image img(&mapping);
 
