@@ -215,6 +215,10 @@ namespace parity
 				/* native:  unix style paths,
 				 * foreign: windows style paths */
 				return isUnix();
+			#elif defined(__CYGWIN__)
+				/* Theiretically cygwin understands both, so we could
+				 * use isWindows() here to save conversion time. */
+				return isUnix();
 			#else
 				/* native:  windows style paths,
 				 * foreign: windows style paths */
