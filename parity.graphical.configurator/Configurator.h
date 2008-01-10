@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Context.h>
+
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Collections;
@@ -25,9 +27,8 @@ namespace paritygraphicalconfigurator {
 		Configurator(void)
 		{
 			InitializeComponent();
-			//
-			//TODO: Konstruktorcode hier hinzufügen.
-			//
+			context_ = NULL;
+			initial_ = NULL;
 		}
 
 	protected:
@@ -51,6 +52,7 @@ namespace paritygraphicalconfigurator {
 	private: System::Windows::Forms::ColumnHeader^  colType;
 	private: System::Windows::Forms::ColumnHeader^  colValue;
 	private: System::Windows::Forms::ColumnHeader^  colDefaultValue;
+	private: System::Windows::Forms::OpenFileDialog^  dlgOpenFile;
 	private: System::ComponentModel::IContainer^  components;
 	protected: 
 
@@ -86,6 +88,7 @@ namespace paritygraphicalconfigurator {
 			this->colValue = (gcnew System::Windows::Forms::ColumnHeader());
 			this->colDefaultValue = (gcnew System::Windows::Forms::ColumnHeader());
 			this->ilImages = (gcnew System::Windows::Forms::ImageList(this->components));
+			this->dlgOpenFile = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->tsToolbar->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -192,9 +195,20 @@ namespace paritygraphicalconfigurator {
 
 		}
 #pragma endregion
-	private: System::Void EditItemDetails(System::Object^  sender, System::EventArgs^  e);
-	private: System::Void NewConfiguration(System::Object^  sender, System::EventArgs^  e);
-	private: System::Void OpenConfiguration(System::Object^  sender, System::EventArgs^  e);
-	private: System::Void SaveConfiguration(System::Object^  sender, System::EventArgs^  e);
+private:
+	System::Void EditItemDetails(System::Object^  sender, System::EventArgs^  e);
+	System::Void NewConfiguration(System::Object^  sender, System::EventArgs^  e);
+	System::Void OpenConfiguration(System::Object^  sender, System::EventArgs^  e);
+	System::Void SaveConfiguration(System::Object^  sender, System::EventArgs^  e);
+
+	System::Void UpdateConfigurationView(parity::utils::Context& ctx);
+
+	bool InitNewContext();
+
+	std::string MarshalSimpleStringToNative(String^ str);
+	String^ MarshalSimpleNativeToString(std::string& str);
+
+	parity::utils::Context* context_;
+	parity::utils::Context* initial_;
 };
 }

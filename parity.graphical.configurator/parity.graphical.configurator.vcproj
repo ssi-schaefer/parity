@@ -43,6 +43,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.utils&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG"
+				ExceptionHandling="2"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -61,6 +62,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="$(NoInherit)"
 				LinkIncremental="1"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="2"
@@ -206,11 +208,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Display.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Program.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Unmanaged.cpp"
+				RelativePath=".\Save.cpp"
 				>
 			</File>
 		</Filter>
@@ -230,7 +236,15 @@
 				</File>
 			</File>
 			<File
+				RelativePath=".\Display.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Save.h"
 				>
 			</File>
 			<File
