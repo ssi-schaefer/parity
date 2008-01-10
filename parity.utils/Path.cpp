@@ -754,7 +754,7 @@ namespace parity
 		bool Path::naiveInterixConverter(std::string& target, std::string& source, bool bWindows)
 		{
 			//
-			// try a very naive conversion from or to windows, which must onyl
+			// try a very naive conversion from or to windows, which must only
 			// succeed in very simple cases.
 			//
 
