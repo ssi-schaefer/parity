@@ -2,10 +2,10 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="parity.utils"
-	ProjectGUID="{28A9C092-E0E8-4E5E-A5BA-237BDB2BB159}"
-	RootNamespace="parityutils"
-	Keyword="Win32Proj"
+	Name="parity.graphical.configurator"
+	ProjectGUID="{86945419-B17E-4C64-BBD7-7797D5C671DB}"
+	RootNamespace="paritygraphicalconfigurator"
+	Keyword="ManagedCProj"
 	>
 	<Platforms>
 		<Platform
@@ -19,8 +19,9 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			CharacterSet="2"
+			ManagedExtensions="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -40,14 +41,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.binary&quot;;&quot;$(SolutionDir)/parity.utils&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.utils&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -60,10 +58,20 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				AdditionalDependencies="$(NoInherit)"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				AssemblyDebug="1"
+				SubSystem="2"
+				EntryPointSymbol="main"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -75,6 +83,12 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -82,8 +96,9 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			CharacterSet="2"
+			ManagedExtensions="1"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -103,15 +118,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.binary&quot;;&quot;$(SolutionDir)/parity.utils&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.utils&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -124,10 +135,19 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				AdditionalDependencies="$(NoInherit)"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				EntryPointSymbol="main"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -139,150 +159,96 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 	</Configurations>
 	<References>
+		<AssemblyReference
+			RelativePath="System.dll"
+			AssemblyName="System, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+		/>
+		<AssemblyReference
+			RelativePath="System.Data.dll"
+			AssemblyName="System.Data, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86"
+		/>
+		<AssemblyReference
+			RelativePath="System.Drawing.dll"
+			AssemblyName="System.Drawing, Version=2.0.0.0, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+		/>
+		<AssemblyReference
+			RelativePath="System.Windows.Forms.dll"
+			AssemblyName="System.Windows.Forms, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+		/>
+		<AssemblyReference
+			RelativePath="System.XML.dll"
+			AssemblyName="System.Xml, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+		/>
 	</References>
 	<Files>
 		<Filter
-			Name="Sources"
+			Name="Quelldateien"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Color.cpp"
+				RelativePath=".\AssemblyInfo.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Configuration.cpp"
+				RelativePath=".\Configurator.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Context.cpp"
+				RelativePath=".\Program.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ContextGen.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Environment.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Exception.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Log.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MappedFile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MappedFileCache.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MemoryFile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Path.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Statistics.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Task.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Threading.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Timing.cpp"
+				RelativePath=".\Unmanaged.cpp"
 				>
 			</File>
 		</Filter>
 		<Filter
-			Name="Headers"
+			Name="Headerdateien"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Color.h"
+				RelativePath=".\Configurator.h"
+				FileType="3"
+				>
+				<File
+					RelativePath=".\Configurator.resx"
+					SubType="Designer"
+					>
+				</File>
+			</File>
+			<File
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Configuration.h"
+				RelativePath=".\Unmanaged.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Ressourcendateien"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
+			<File
+				RelativePath=".\app.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\Context.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ContextGen.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Environment.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Exception.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GenericFile.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Log.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MappedFile.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MappedFileCache.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MemoryFile.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Path.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Pointer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Statistics.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Task.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Threading.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Timing.h"
+				RelativePath=".\app.rc"
 				>
 			</File>
 		</Filter>
