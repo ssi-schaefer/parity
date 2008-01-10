@@ -1,5 +1,5 @@
 #include "Configurator.h"
-#include "Display.h"
+#include "Mapping.h"
 
 #include <Context.h>
 #include <Configuration.h>
@@ -12,6 +12,21 @@ using namespace parity::utils;
 namespace paritygraphicalconfigurator {
 	System::Void Configurator::EditItemDetails(System::Object^  sender, System::EventArgs^  e)
 	{
+		MappingStruct* ptr = SettingMapping;
+		ListViewItem^ lvi = lvSettings->SelectedItems[0];
+
+		if(lvi)
+		{
+			while(ptr->Name)
+			{
+				if(lvi->SubItems[0]->Text == gcnew String(ptr->Name))
+				{
+					ptr->Edit(ptr, *context_);
+				}
+
+				++ptr;
+			}
+		}
 	}
 
 	System::Void Configurator::NewConfiguration(System::Object^  sender, System::EventArgs^  e)
@@ -57,7 +72,7 @@ namespace paritygraphicalconfigurator {
 
 	System::Void Configurator::UpdateConfigurationView(parity::utils::Context& ctx)
 	{
-		DisplayMappingStruct * ptr = DisplayMapping;
+		MappingStruct * ptr = SettingMapping;
 
 		lvSettings->Items->Clear();
 

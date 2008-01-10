@@ -34,9 +34,8 @@ namespace parity
 {
 	namespace utils
 	{
-		Context gContext;
+		static Context gContext;
 
-		// once for the whole file!
 		#undef  CTX_GETSET_C
 		#undef CTX_GETSET_I
 		#undef CTX_GETSET_CI
@@ -44,7 +43,6 @@ namespace parity
 		#define CTX_GETSET_I(type, name, init)
 		#define CTX_GETSET_CI(type, name, init)
 
-		// once for every different usage!
 		#undef	CTX_GETSET
 		#define CTX_GETSET(type, name, init) { #name, &Context::set##name##String },
 

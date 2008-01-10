@@ -48,6 +48,24 @@ namespace parity
 		{
 		}
 
+		#undef  CTX_GETSET
+		#define CTX_GETSET(type, name, init) if(name != other.name) return false;
+
+		bool ContextGen::operator==(const ContextGen& other)
+		{
+			CTX_MEMBERS;
+			return true;
+		}
+
+		#undef  CTX_GETSET
+		#define CTX_GETSET(type, name, init) name = other.name;
+
+		ContextGen& ContextGen::operator= (const ContextGen& other)
+		{
+			CTX_MEMBERS;
+			return *this;
+		}
+
 		void ContextGen::convert(bool& target, const std::string& val)
 		{
 			if(val == "1" || val == "yes" || val == "on" || val == "true")

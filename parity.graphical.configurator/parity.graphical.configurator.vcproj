@@ -208,15 +208,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Display.cpp"
+				RelativePath=".\Mapping.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Program.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Save.cpp"
 				>
 			</File>
 		</Filter>
@@ -236,19 +232,11 @@
 				</File>
 			</File>
 			<File
-				RelativePath=".\Display.h"
+				RelativePath=".\Mapping.h"
 				>
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Save.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Unmanaged.h"
 				>
 			</File>
 		</Filter>

@@ -32,6 +32,7 @@
 #include "MappedFile.h"
 
 #define CTX_GETSET_SETTER_GETTER(type, name)                                                  \
+		type& get##name() { return name; }													  \
 		const type& get##name() const { return name; }                                        \
 		void set##name(const type& val) { name = val; }                                       \
 
@@ -135,6 +136,10 @@ namespace parity
 			std::string printable(const SubsystemType& val);
 			std::string printable(const SourceMap& val);
 			std::string printable(const RuntimeType& val);
+
+			bool operator==(const ContextGen& other);
+			bool operator!=(const ContextGen& other) { return !operator ==(other); }
+			ContextGen& operator= (const ContextGen& other);
 
 		private:
 			ContextGen();
