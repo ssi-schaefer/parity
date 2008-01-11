@@ -78,9 +78,9 @@ namespace parity
 
 		void ContextGen::convert(Color::ColorMode &target, const std::string &val)
 		{
-			if(val == "bright")
+			if(_stricmp(val.c_str(), "bright") == 0)
 				target = Color::Bright;
-			else if(val == "dark")
+			else if(_stricmp(val.c_str(), "dark") == 0)
 				target = Color::Dark;
 			else
 				throw Exception("cannot convert %s to a valid ColorMode!", val.c_str());
@@ -231,7 +231,7 @@ namespace parity
 			switch(val)
 			{
 			case ToolchainInterixGNU:
-				return "GNU (GCC)";
+				return "GCC";
 			case ToolchainMicrosoft:
 				return "Microsoft";
 			case ToolchainInvalid:
@@ -347,7 +347,7 @@ namespace parity
 				//
 				// invalid, just because of GCC warning
 				//
-				return "INVALID!";
+				return "Invalid";
 			}
 
 			return "unknown";
