@@ -49,6 +49,7 @@ namespace paritygraphicalconfigurator {
 	private: System::Windows::Forms::ListBox^  lstDefines;
 	private: System::Windows::Forms::Button^  btnDelete;
 	private: System::Windows::Forms::Button^  btnNew;
+	private: System::Windows::Forms::Label^  label1;
 	protected: 
 
 
@@ -70,13 +71,14 @@ namespace paritygraphicalconfigurator {
 			this->lstDefines = (gcnew System::Windows::Forms::ListBox());
 			this->btnDelete = (gcnew System::Windows::Forms::Button());
 			this->btnNew = (gcnew System::Windows::Forms::Button());
+			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->SuspendLayout();
 			// 
 			// btnCancel
 			// 
 			this->btnCancel->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Right));
 			this->btnCancel->DialogResult = System::Windows::Forms::DialogResult::Cancel;
-			this->btnCancel->Location = System::Drawing::Point(341, 272);
+			this->btnCancel->Location = System::Drawing::Point(341, 324);
 			this->btnCancel->Name = L"btnCancel";
 			this->btnCancel->Size = System::Drawing::Size(75, 23);
 			this->btnCancel->TabIndex = 0;
@@ -87,7 +89,7 @@ namespace paritygraphicalconfigurator {
 			// 
 			this->btnOk->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Right));
 			this->btnOk->DialogResult = System::Windows::Forms::DialogResult::OK;
-			this->btnOk->Location = System::Drawing::Point(422, 272);
+			this->btnOk->Location = System::Drawing::Point(422, 324);
 			this->btnOk->Name = L"btnOk";
 			this->btnOk->Size = System::Drawing::Size(75, 23);
 			this->btnOk->TabIndex = 1;
@@ -96,15 +98,19 @@ namespace paritygraphicalconfigurator {
 			// 
 			// lstDefines
 			// 
+			this->lstDefines->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom) 
+				| System::Windows::Forms::AnchorStyles::Left) 
+				| System::Windows::Forms::AnchorStyles::Right));
 			this->lstDefines->FormattingEnabled = true;
-			this->lstDefines->Location = System::Drawing::Point(12, 12);
+			this->lstDefines->Location = System::Drawing::Point(12, 25);
 			this->lstDefines->Name = L"lstDefines";
-			this->lstDefines->Size = System::Drawing::Size(485, 251);
+			this->lstDefines->Size = System::Drawing::Size(485, 290);
 			this->lstDefines->TabIndex = 2;
 			// 
 			// btnDelete
 			// 
-			this->btnDelete->Location = System::Drawing::Point(12, 272);
+			this->btnDelete->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->btnDelete->Location = System::Drawing::Point(12, 324);
 			this->btnDelete->Name = L"btnDelete";
 			this->btnDelete->Size = System::Drawing::Size(75, 23);
 			this->btnDelete->TabIndex = 3;
@@ -114,7 +120,8 @@ namespace paritygraphicalconfigurator {
 			// 
 			// btnNew
 			// 
-			this->btnNew->Location = System::Drawing::Point(93, 272);
+			this->btnNew->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->btnNew->Location = System::Drawing::Point(93, 324);
 			this->btnNew->Name = L"btnNew";
 			this->btnNew->Size = System::Drawing::Size(75, 23);
 			this->btnNew->TabIndex = 4;
@@ -122,14 +129,23 @@ namespace paritygraphicalconfigurator {
 			this->btnNew->UseVisualStyleBackColor = true;
 			this->btnNew->Click += gcnew System::EventHandler(this, &DefineMapEditDialog::btnNew_Click);
 			// 
+			// label1
+			// 
+			this->label1->AutoSize = true;
+			this->label1->Location = System::Drawing::Point(12, 9);
+			this->label1->Name = L"label1";
+			this->label1->Size = System::Drawing::Size(456, 13);
+			this->label1->TabIndex = 5;
+			this->label1->Text = L"Use the \"New\" Button to create new Items, and the Delete Button to remove the sel" 
+				L"ected Item.";
+			// 
 			// DefineMapEditDialog
 			// 
-			this->AcceptButton = this->btnOk;
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->CancelButton = this->btnCancel;
-			this->ClientSize = System::Drawing::Size(509, 307);
+			this->ClientSize = System::Drawing::Size(509, 359);
 			this->ControlBox = false;
+			this->Controls->Add(this->label1);
 			this->Controls->Add(this->btnNew);
 			this->Controls->Add(this->btnDelete);
 			this->Controls->Add(this->lstDefines);
@@ -137,8 +153,10 @@ namespace paritygraphicalconfigurator {
 			this->Controls->Add(this->btnCancel);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedDialog;
 			this->Name = L"DefineMapEditDialog";
+			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterParent;
 			this->Text = L"Edit Define Collection";
 			this->ResumeLayout(false);
+			this->PerformLayout();
 
 		}
 #pragma endregion

@@ -119,7 +119,7 @@ namespace paritygraphicalconfigurator {
 							ptr->Formatter(ctx), 
 							gcnew String(ptr->Default)
 						}
-					, 1
+					, 0
 				);
 
 			if(ptr->IsDefault(ctx))

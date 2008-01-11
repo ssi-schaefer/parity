@@ -51,6 +51,7 @@ namespace paritygraphicalconfigurator {
 	private: System::Windows::Forms::ListBox^  lstPaths;
 	private: System::Windows::Forms::Button^  btnDelete;
 	private: System::Windows::Forms::Button^  btnNew;
+	private: System::Windows::Forms::Label^  label1;
 
 
 	private:
@@ -71,6 +72,7 @@ namespace paritygraphicalconfigurator {
 			this->lstPaths = (gcnew System::Windows::Forms::ListBox());
 			this->btnDelete = (gcnew System::Windows::Forms::Button());
 			this->btnNew = (gcnew System::Windows::Forms::Button());
+			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->SuspendLayout();
 			// 
 			// btnOK
@@ -96,9 +98,9 @@ namespace paritygraphicalconfigurator {
 			// lstPaths
 			// 
 			this->lstPaths->FormattingEnabled = true;
-			this->lstPaths->Location = System::Drawing::Point(12, 12);
+			this->lstPaths->Location = System::Drawing::Point(12, 25);
 			this->lstPaths->Name = L"lstPaths";
-			this->lstPaths->Size = System::Drawing::Size(471, 303);
+			this->lstPaths->Size = System::Drawing::Size(471, 290);
 			this->lstPaths->TabIndex = 2;
 			// 
 			// btnDelete
@@ -121,12 +123,23 @@ namespace paritygraphicalconfigurator {
 			this->btnNew->UseVisualStyleBackColor = true;
 			this->btnNew->Click += gcnew System::EventHandler(this, &PathVectorEditDialog::btnNew_Click);
 			// 
+			// label1
+			// 
+			this->label1->AutoSize = true;
+			this->label1->Location = System::Drawing::Point(12, 9);
+			this->label1->Name = L"label1";
+			this->label1->Size = System::Drawing::Size(456, 13);
+			this->label1->TabIndex = 6;
+			this->label1->Text = L"Use the \"New\" Button to create new Items, and the Delete Button to remove the sel" 
+				L"ected Item.";
+			// 
 			// PathVectorEditDialog
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(495, 354);
 			this->ControlBox = false;
+			this->Controls->Add(this->label1);
 			this->Controls->Add(this->btnNew);
 			this->Controls->Add(this->btnDelete);
 			this->Controls->Add(this->lstPaths);
@@ -134,8 +147,10 @@ namespace paritygraphicalconfigurator {
 			this->Controls->Add(this->btnOK);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedDialog;
 			this->Name = L"PathVectorEditDialog";
+			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterParent;
 			this->Text = L"Edit Path List";
 			this->ResumeLayout(false);
+			this->PerformLayout();
 
 		}
 #pragma endregion

@@ -119,6 +119,7 @@ namespace paritygraphicalconfigurator {
 			this->Controls->Add(this->label1);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedDialog;
 			this->Name = L"SimpleStringEditDialog";
+			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterParent;
 			this->Text = L"Edit Setting";
 			this->ResumeLayout(false);
 			this->PerformLayout();
