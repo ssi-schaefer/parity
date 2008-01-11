@@ -230,7 +230,7 @@ void DisplayEditDialog(const MappingStruct* mapping, parity::utils::DefineMap& v
 	DefineMap orig = val;
 	DefineMapEditDialog^ dlg = gcnew DefineMapEditDialog(val);
 
-	if(dlg->ShowModal() != DialogResult::OK)
+	if(dlg->ShowDialog() != DialogResult::OK)
 	{
 		val = orig;
 	}

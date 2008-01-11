@@ -24,7 +24,7 @@ namespace paritygraphicalconfigurator {
 	{
 	public:
 		DefineMapEditDialog(parity::utils::DefineMap& toEdit)
-			: defines_(toEdit), original_(toEdit)
+			: defines_(toEdit)
 		{
 			InitializeComponent();
 			//
@@ -109,6 +109,7 @@ namespace paritygraphicalconfigurator {
 			this->btnDelete->TabIndex = 3;
 			this->btnDelete->Text = L"Delete";
 			this->btnDelete->UseVisualStyleBackColor = true;
+			this->btnDelete->Click += gcnew System::EventHandler(this, &DefineMapEditDialog::btnDelete_Click);
 			// 
 			// btnNew
 			// 
@@ -118,6 +119,7 @@ namespace paritygraphicalconfigurator {
 			this->btnNew->TabIndex = 4;
 			this->btnNew->Text = L"New";
 			this->btnNew->UseVisualStyleBackColor = true;
+			this->btnNew->Click += gcnew System::EventHandler(this, &DefineMapEditDialog::btnNew_Click);
 			// 
 			// DefineMapEditDialog
 			// 
@@ -142,5 +144,10 @@ namespace paritygraphicalconfigurator {
 
 private:
 	parity::utils::DefineMap& defines_;
-	};
+
+	System::Void btnDelete_Click(System::Object^  sender, System::EventArgs^  e);
+	System::Void btnNew_Click(System::Object^  sender, System::EventArgs^  e);
+
+	System::Void CreateDefineList();
+};
 }
