@@ -121,6 +121,7 @@ namespace paritygraphicalconfigurator {
 			this->Name = L"SimpleStringEditDialog";
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterParent;
 			this->Text = L"Edit Setting";
+			this->Shown += gcnew System::EventHandler(this, &SimpleStringEditDialog::SimpleStringEditDialog_Shown);
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -133,5 +134,9 @@ public:
 		void set(String^ value) { txtValue->Text = value; }
 	}
 
-	};
+private:
+	System::Void SimpleStringEditDialog_Shown(System::Object^  sender, System::EventArgs^  e) {
+		txtValue->SelectAll();
+	}
+};
 }

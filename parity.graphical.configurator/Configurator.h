@@ -84,7 +84,7 @@ namespace paritygraphicalconfigurator {
 			this->tbtnOpen = (gcnew System::Windows::Forms::ToolStripButton());
 			this->tbtnSave = (gcnew System::Windows::Forms::ToolStripButton());
 			this->lvSettings = (gcnew System::Windows::Forms::ListView());
-			this->colName = (gcnew System::Windows::Forms::ColumnHeader());
+			this->colName = (gcnew System::Windows::Forms::ColumnHeader(0));
 			this->colType = (gcnew System::Windows::Forms::ColumnHeader());
 			this->colValue = (gcnew System::Windows::Forms::ColumnHeader());
 			this->colDefaultValue = (gcnew System::Windows::Forms::ColumnHeader());
@@ -136,15 +136,18 @@ namespace paritygraphicalconfigurator {
 			// 
 			// lvSettings
 			// 
-			this->lvSettings->Columns->AddRange(gcnew cli::array< System::Windows::Forms::ColumnHeader^  >(4) {this->colName, this->colType, 
-				this->colValue, this->colDefaultValue});
+			this->lvSettings->AllowColumnReorder = true;
+			this->lvSettings->Columns->AddRange(gcnew cli::array< System::Windows::Forms::ColumnHeader^  >(4) {this->colName, this->colValue, 
+				this->colType, this->colDefaultValue});
 			this->lvSettings->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->lvSettings->FullRowSelect = true;
+			this->lvSettings->GridLines = true;
 			listViewGroup1->Header = L"Changed Settings";
 			listViewGroup1->Name = L"lvgChanged";
 			listViewGroup2->Header = L"Unchanged Settings";
 			listViewGroup2->Name = L"lvgUnchanged";
 			this->lvSettings->Groups->AddRange(gcnew cli::array< System::Windows::Forms::ListViewGroup^  >(2) {listViewGroup1, listViewGroup2});
+			this->lvSettings->HideSelection = false;
 			this->lvSettings->Location = System::Drawing::Point(0, 25);
 			this->lvSettings->MultiSelect = false;
 			this->lvSettings->Name = L"lvSettings";
@@ -158,7 +161,7 @@ namespace paritygraphicalconfigurator {
 			// colName
 			// 
 			this->colName->Text = L"Name";
-			this->colName->Width = 250;
+			this->colName->Width = 200;
 			// 
 			// colType
 			// 
@@ -168,7 +171,7 @@ namespace paritygraphicalconfigurator {
 			// colValue
 			// 
 			this->colValue->Text = L"Value";
-			this->colValue->Width = 150;
+			this->colValue->Width = 350;
 			// 
 			// colDefaultValue
 			// 
@@ -208,7 +211,7 @@ private:
 	System::Void SaveConfiguration(System::Object^  sender, System::EventArgs^  e);
 
 	System::Void CreateConfigurationView(parity::utils::Context& ctx);
-	//System::Void UpdateViewGroups(parity::utils::Context& ctx);
+	System::Void UpdateConfigurationView(parity::utils::Context& ctx);
 
 	bool InitNewContext();
 

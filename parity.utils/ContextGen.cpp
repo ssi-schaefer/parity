@@ -105,7 +105,7 @@ namespace parity
 				|| _stricmp(val.c_str(), "gcc") == 0)
 				target = ToolchainInterixGNU;
 			else
-				target = ToolchainInvalid;
+				throw Exception("cannot convert %s to a valid ToolchainType!", val.c_str());
 		}
 
 		void ContextGen::convert(SubsystemType& target, const std::string& val)
@@ -120,7 +120,7 @@ namespace parity
 			else if(_stricmp(val.c_str(), "posix") == 0)
 				target = SubsystemPosixCui;
 			else
-				target = SubsystemUnknown;
+				throw Exception("cannot convert %s to a valid SubsystemType!", val.c_str());
 		}
 
 		#ifndef _WIN32
@@ -160,7 +160,7 @@ namespace parity
 			else if(ref == "static debug")
 				target = RuntimeStaticDebug;
 			else
-				target = RuntimeInvalid;
+				throw Exception("cannot convert %s to a valid RuntimeType!", ref.c_str());
 		}
 
 		void ContextGen::convert(LanguageType& target, const std::string& ref)
@@ -174,7 +174,7 @@ namespace parity
 			else if(ref == "c++" || ref == "C++")
 				target = LanguageCpp;
 			else
-				target = LanguageInvalid;
+				throw Exception("cannot convert %s to a valid LanguageType!", ref.c_str());
 		}
 
 		void ContextGen::convert(SourceMap& target, const std::string& ref)

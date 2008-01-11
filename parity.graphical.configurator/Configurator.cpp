@@ -20,17 +20,22 @@ namespace paritygraphicalconfigurator {
 		{
 			while(ptr->Name)
 			{
-				if(lvi->SubItems[0]->Text == gcnew String(ptr->Name))
+				if(lvi->SubItems[colName->Index]->Text == gcnew String(ptr->Name))
 				{
-					ptr->Edit(ptr, *context_);
+					try {
+						ptr->Edit(ptr, *context_);
+						UpdateConfigurationView(*context_);
+						
+						lvSettings->EnsureVisible(lvi->Index);
+					} catch(const parity::utils::Exception& e) {
+						MessageBox::Show("Error: " + gcnew String(e.what()), "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+					}
 					break;
 				}
 
 				++ptr;
 			}
 		}
-
-		CreateConfigurationView(*context_);
 	}
 
 	System::Void Configurator::NewConfiguration(System::Object^  sender, System::EventArgs^  e)
@@ -115,23 +120,54 @@ namespace paritygraphicalconfigurator {
 					gcnew array<String^>
 						{
 							gcnew String(ptr->Name), 
-							gcnew String(ptr->Type), 
 							ptr->Formatter(ctx), 
+							gcnew String(ptr->Type), 
 							gcnew String(ptr->Default)
 						}
 					, 0
 				);
+
+			lvi->UseItemStyleForSubItems = false;
+			lvi->SubItems[colType->Index]->ForeColor = System::Drawing::Color::Gray;
+			lvi->SubItems[colDefaultValue->Index]->ForeColor = System::Drawing::Color::Gray;
 
 			if(ptr->IsDefault(ctx))
 			{
 				lvi->Group = lvSettings->Groups[1];
 			} else {
 				lvi->Group = lvSettings->Groups[0];
+				lvi->SubItems[colValue->Index]->Font = gcnew System::Drawing::Font(lvi->SubItems[colValue->Index]->Font, System::Drawing::FontStyle::Bold);
 			}
 
+			lvi->Tag = (Object^)(long)ptr;
 			lvSettings->Items->Add(lvi);
 
 			++ptr;
+		}
+	}
+
+	System::Void Configurator::UpdateConfigurationView(parity::utils::Context& ctx)
+	{
+		IEnumerator^ e = lvSettings->Items->GetEnumerator();
+
+		while(e->MoveNext())
+		{
+			ListViewItem^ item = (ListViewItem^)e->Current;
+			MappingStruct* ptr = (MappingStruct*)(long)item->Tag;
+
+			item->SubItems[colValue->Index]->Text = ptr->Formatter(*context_);
+
+			if(ptr->IsDefault(*context_)) {
+				if(item->Group == lvSettings->Groups[0])
+					item->Group = lvSettings->Groups[1];
+
+				item->SubItems[colValue->Index]->Font = gcnew System::Drawing::Font(item->SubItems[colValue->Index]->Font, System::Drawing::FontStyle::Regular);
+			} else {
+				if(item->Group == lvSettings->Groups[1])
+					item->Group = lvSettings->Groups[0];
+
+				item->SubItems[colValue->Index]->Font = gcnew System::Drawing::Font(item->SubItems[colValue->Index]->Font, System::Drawing::FontStyle::Bold);
+			}
 		}
 	}
 
