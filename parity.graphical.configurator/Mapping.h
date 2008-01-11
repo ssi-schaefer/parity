@@ -34,17 +34,17 @@ System::String^ FormatForDisplay(const parity::utils::ToolchainType& val);
 System::String^ FormatForDisplay(const parity::utils::RuntimeType& val);
 System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val);
 
-void DisplayEditDialog(const MappingStruct* mapping, const bool& val);
-void DisplayEditDialog(const MappingStruct* mapping, const long& val);
-void DisplayEditDialog(const MappingStruct* mapping, const std::string& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::Path& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::DefineMap& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::PathVector& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::LanguageType& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::SubsystemType& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::ToolchainType& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::RuntimeType& val);
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::Color::ColorMode& val);
+void DisplayEditDialog(const MappingStruct* mapping, bool& val);
+void DisplayEditDialog(const MappingStruct* mapping, long& val);
+void DisplayEditDialog(const MappingStruct* mapping, std::string& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Path& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::DefineMap& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::PathVector& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::LanguageType& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::SubsystemType& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::ToolchainType& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RuntimeType& val);
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Color::ColorMode& val);
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const bool& val);
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const long& val);

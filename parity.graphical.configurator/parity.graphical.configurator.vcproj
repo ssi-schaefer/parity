@@ -208,11 +208,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DefineMapEditDialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Mapping.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Program.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SimpleStringEditDialog.cpp"
 				>
 			</File>
 		</Filter>
@@ -232,12 +240,32 @@
 				</File>
 			</File>
 			<File
+				RelativePath=".\DefineMapEditDialog.h"
+				FileType="3"
+				>
+				<File
+					RelativePath=".\DefineMapEditDialog.resx"
+					SubType="Designer"
+					>
+				</File>
+			</File>
+			<File
 				RelativePath=".\Mapping.h"
 				>
 			</File>
 			<File
 				RelativePath=".\resource.h"
 				>
+			</File>
+			<File
+				RelativePath=".\SimpleStringEditDialog.h"
+				FileType="3"
+				>
+				<File
+					RelativePath=".\SimpleStringEditDialog.resx"
+					SubType="Designer"
+					>
+				</File>
 			</File>
 		</Filter>
 		<Filter

@@ -53,6 +53,7 @@ namespace paritygraphicalconfigurator {
 	private: System::Windows::Forms::ColumnHeader^  colValue;
 	private: System::Windows::Forms::ColumnHeader^  colDefaultValue;
 	private: System::Windows::Forms::OpenFileDialog^  dlgOpenFile;
+	private: System::Windows::Forms::SaveFileDialog^  dlgSaveFile;
 	private: System::ComponentModel::IContainer^  components;
 	protected: 
 
@@ -89,6 +90,7 @@ namespace paritygraphicalconfigurator {
 			this->colDefaultValue = (gcnew System::Windows::Forms::ColumnHeader());
 			this->ilImages = (gcnew System::Windows::Forms::ImageList(this->components));
 			this->dlgOpenFile = (gcnew System::Windows::Forms::OpenFileDialog());
+			this->dlgSaveFile = (gcnew System::Windows::Forms::SaveFileDialog());
 			this->tsToolbar->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -179,6 +181,10 @@ namespace paritygraphicalconfigurator {
 			this->ilImages->TransparentColor = System::Drawing::Color::Magenta;
 			this->ilImages->Images->SetKeyName(0, L"Property");
 			// 
+			// dlgSaveFile
+			// 
+			this->dlgSaveFile->AddExtension = false;
+			// 
 			// Configurator
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -201,14 +207,16 @@ private:
 	System::Void OpenConfiguration(System::Object^  sender, System::EventArgs^  e);
 	System::Void SaveConfiguration(System::Object^  sender, System::EventArgs^  e);
 
-	System::Void UpdateConfigurationView(parity::utils::Context& ctx);
+	System::Void CreateConfigurationView(parity::utils::Context& ctx);
+	//System::Void UpdateViewGroups(parity::utils::Context& ctx);
 
 	bool InitNewContext();
 
-	std::string MarshalSimpleStringToNative(String^ str);
-	String^ MarshalSimpleNativeToString(std::string& str);
-
 	parity::utils::Context* context_;
 	parity::utils::Context* initial_;
+
+public:
+	static std::string MarshalSimpleStringToNative(String^ str);
+	static String^ MarshalSimpleNativeToString(std::string& str);
 };
 }

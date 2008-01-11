@@ -49,13 +49,19 @@ static MappingStruct mappingArray[] = {
 
 MappingStruct* SettingMapping = mappingArray;
 
+// hackish: need it after the CTX_MEMBERS stuff to work
+#include "SimpleStringEditDialog.h"
+#include "DefineMapEditDialog.h"
+#include "Configurator.h"
+using namespace paritygraphicalconfigurator;
+
 //
 // Formatter functions.
 //
 
 System::String^ FormatForDisplay(const bool& val) 
 { 
-	return val ? gcnew String("yes") : gcnew String("no"); 
+	return val ? gcnew String("true") : gcnew String("false"); 
 }
 
 System::String^ FormatForDisplay(const long& val) 
@@ -162,9 +168,9 @@ System::String^ FormatForDisplay(const parity::utils::RuntimeType& val)
 System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val)
 {
 	switch(val)	{
-	case Color::Bright:
+	case parity::utils::Color::Bright:
 		return "Bright";
-	case Color::Dark:
+	case parity::utils::Color::Dark:
 		return "Dark";
 	}
 
@@ -175,59 +181,119 @@ System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val)
 // Edit Dialog functions.
 //
 
-void DisplayEditDialog(const MappingStruct* mapping, const bool& val)
+void DisplayEditDialog(const MappingStruct* mapping, bool& val)
 {
-	MessageBox::Show("Edit Dialog for type bool to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const long& val)
+void DisplayEditDialog(const MappingStruct* mapping, long& val)
 {
-	MessageBox::Show("Edit Dialog for type long to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		val = Convert::ToInt32(dlg->Value);
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const std::string& val)
+void DisplayEditDialog(const MappingStruct* mapping, std::string& val)
 {
-	MessageBox::Show("Edit Dialog for type string to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		val = Configurator::MarshalSimpleStringToNative(dlg->Value);
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::Path& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Path& val)
 {
-	MessageBox::Show("Edit Dialog for type path to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		val = Path(Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::DefineMap& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::DefineMap& val)
 {
-	MessageBox::Show("Edit Dialog for type define map to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	DefineMap orig = val;
+	DefineMapEditDialog^ dlg = gcnew DefineMapEditDialog(val);
+
+	if(dlg->ShowModal() != DialogResult::OK)
+	{
+		val = orig;
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::PathVector& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::PathVector& val)
 {
 	MessageBox::Show("Edit Dialog for type path vector  to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::LanguageType& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::LanguageType& val)
 {
-	MessageBox::Show("Edit Dialog for type language type to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::SubsystemType& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::SubsystemType& val)
 {
-	MessageBox::Show("Edit Dialog for type subsystem type to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::ToolchainType& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::ToolchainType& val)
 {
-	MessageBox::Show("Edit Dialog for type toolchain type to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::RuntimeType& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RuntimeType& val)
 {
-	MessageBox::Show("Edit Dialog for type runtime type to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
-void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::Color::ColorMode& val)
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Color::ColorMode& val)
 {
-	MessageBox::Show("Edit Dialog for type color mode to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
 }
 
 //
@@ -236,47 +302,77 @@ void DisplayEditDialog(const MappingStruct* mapping, const parity::utils::Color:
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const bool& val)
 {
-	stream->Write("# Name: {0}, Default Value: {1}, Type {2}\n", gcnew String(mapping->Name), gcnew String(mapping->Default), gcnew String(mapping->Type));
 	stream->Write("{0} = {1}\n\n", gcnew String(mapping->Name), val ? "yes" : "no");
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const long& val)
 {
+	stream->Write("{0} = {1}\n\n", gcnew String(mapping->Name), val);
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const std::string& val)
 {
+	stream->Write("{0} = {1}\n\n", gcnew String(mapping->Name), gcnew String(val.c_str()));
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Path& val)
 {
+	if(gcnew String(mapping->Name) == "DefaultOutput")
+		stream->Write("{0} = {1}\n\n", gcnew String(mapping->Name), gcnew String(val.file().c_str()));
+	else
+		stream->Write("{0} = {1}\n\n", gcnew String(mapping->Name), gcnew String(val.get().c_str()));
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::DefineMap& val)
 {
+	for(DefineMap::const_iterator it = val.begin(); it != val.end(); ++it)
+	{
+		stream->Write("{0} = {1}", gcnew String(mapping->Name), gcnew String(it->first.c_str()));
+
+		if(!it->second.empty())
+			stream->Write("={0}", gcnew String(it->second.c_str()));
+
+		stream->Write("\n");
+	}
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::PathVector& val)
 {
+	bool fnOnly = false;
+
+	if(gcnew String(mapping->Name) == "ObjectsLibraries")
+		fnOnly = true;
+
+	for(PathVector::const_iterator it = val.begin(); it != val.end(); ++it)
+	{
+		stream->Write("{0} = {1}\n", gcnew String(mapping->Name), fnOnly ? gcnew String(it->file().c_str()) : gcnew String(it->get().c_str()));
+	}
+
+	stream->Write("\n");
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::LanguageType& val)
 {
+	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::SubsystemType& val)
 {
+	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::ToolchainType& val)
 {
+	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RuntimeType& val)
 {
+	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
 }
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Color::ColorMode& val)
 {
+	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
 }
 
