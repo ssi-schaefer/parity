@@ -76,6 +76,10 @@ namespace parity
 				throw Exception("cannot convert %s to a boolean value!", val.c_str());
 		}
 
+		#ifndef _WIN32
+		#  define _stricmp strcasecmp
+		#endif
+
 		void ContextGen::convert(Color::ColorMode &target, const std::string &val)
 		{
 			if(_stricmp(val.c_str(), "bright") == 0)
@@ -91,10 +95,6 @@ namespace parity
 			//
 			Log::setColor(Color(target));
 		}
-
-		#ifndef _WIN32
-		#  define _stricmp strcasecmp
-		#endif
 
 		void ContextGen::convert(ToolchainType& target, const std::string& val)
 		{
