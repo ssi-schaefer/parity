@@ -54,6 +54,11 @@ namespace paritygraphicalconfigurator {
 	private: System::Windows::Forms::ColumnHeader^  colDefaultValue;
 	private: System::Windows::Forms::OpenFileDialog^  dlgOpenFile;
 	private: System::Windows::Forms::SaveFileDialog^  dlgSaveFile;
+	private: System::Windows::Forms::MenuStrip^  msMainMenu;
+	private: System::Windows::Forms::ToolStripMenuItem^  mnuFile;
+	private: System::Windows::Forms::ToolStripMenuItem^  mnuNew;
+	private: System::Windows::Forms::ToolStripMenuItem^  mnuOpen;
+	private: System::Windows::Forms::ToolStripMenuItem^  mnuSaveAs;
 	private: System::ComponentModel::IContainer^  components;
 	protected: 
 
@@ -85,20 +90,26 @@ namespace paritygraphicalconfigurator {
 			this->tbtnSave = (gcnew System::Windows::Forms::ToolStripButton());
 			this->lvSettings = (gcnew System::Windows::Forms::ListView());
 			this->colName = (gcnew System::Windows::Forms::ColumnHeader(0));
-			this->colType = (gcnew System::Windows::Forms::ColumnHeader());
 			this->colValue = (gcnew System::Windows::Forms::ColumnHeader());
+			this->colType = (gcnew System::Windows::Forms::ColumnHeader());
 			this->colDefaultValue = (gcnew System::Windows::Forms::ColumnHeader());
 			this->ilImages = (gcnew System::Windows::Forms::ImageList(this->components));
 			this->dlgOpenFile = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->dlgSaveFile = (gcnew System::Windows::Forms::SaveFileDialog());
+			this->msMainMenu = (gcnew System::Windows::Forms::MenuStrip());
+			this->mnuFile = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->mnuNew = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->mnuOpen = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->mnuSaveAs = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->tsToolbar->SuspendLayout();
+			this->msMainMenu->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// tsToolbar
 			// 
 			this->tsToolbar->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->tbtnNew, this->tbtnOpen, 
 				this->tbtnSave});
-			this->tsToolbar->Location = System::Drawing::Point(0, 0);
+			this->tsToolbar->Location = System::Drawing::Point(0, 24);
 			this->tsToolbar->Name = L"tsToolbar";
 			this->tsToolbar->Size = System::Drawing::Size(815, 25);
 			this->tsToolbar->TabIndex = 0;
@@ -148,10 +159,10 @@ namespace paritygraphicalconfigurator {
 			listViewGroup2->Name = L"lvgUnchanged";
 			this->lvSettings->Groups->AddRange(gcnew cli::array< System::Windows::Forms::ListViewGroup^  >(2) {listViewGroup1, listViewGroup2});
 			this->lvSettings->HideSelection = false;
-			this->lvSettings->Location = System::Drawing::Point(0, 25);
+			this->lvSettings->Location = System::Drawing::Point(0, 49);
 			this->lvSettings->MultiSelect = false;
 			this->lvSettings->Name = L"lvSettings";
-			this->lvSettings->Size = System::Drawing::Size(815, 377);
+			this->lvSettings->Size = System::Drawing::Size(815, 353);
 			this->lvSettings->SmallImageList = this->ilImages;
 			this->lvSettings->TabIndex = 1;
 			this->lvSettings->UseCompatibleStateImageBehavior = false;
@@ -163,15 +174,15 @@ namespace paritygraphicalconfigurator {
 			this->colName->Text = L"Name";
 			this->colName->Width = 200;
 			// 
-			// colType
-			// 
-			this->colType->Text = L"Type";
-			this->colType->Width = 100;
-			// 
 			// colValue
 			// 
 			this->colValue->Text = L"Value";
 			this->colValue->Width = 350;
+			// 
+			// colType
+			// 
+			this->colType->Text = L"Type";
+			this->colType->Width = 100;
 			// 
 			// colDefaultValue
 			// 
@@ -188,6 +199,50 @@ namespace paritygraphicalconfigurator {
 			// 
 			this->dlgSaveFile->AddExtension = false;
 			// 
+			// msMainMenu
+			// 
+			this->msMainMenu->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->mnuFile});
+			this->msMainMenu->Location = System::Drawing::Point(0, 0);
+			this->msMainMenu->Name = L"msMainMenu";
+			this->msMainMenu->Size = System::Drawing::Size(815, 24);
+			this->msMainMenu->TabIndex = 2;
+			this->msMainMenu->Text = L"menuStrip1";
+			// 
+			// mnuFile
+			// 
+			this->mnuFile->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->mnuNew, this->mnuOpen, 
+				this->mnuSaveAs});
+			this->mnuFile->Name = L"mnuFile";
+			this->mnuFile->Size = System::Drawing::Size(35, 20);
+			this->mnuFile->Text = L"&File";
+			// 
+			// mnuNew
+			// 
+			this->mnuNew->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"mnuNew.Image")));
+			this->mnuNew->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->mnuNew->Name = L"mnuNew";
+			this->mnuNew->Size = System::Drawing::Size(152, 22);
+			this->mnuNew->Text = L"&New";
+			this->mnuNew->Click += gcnew System::EventHandler(this, &Configurator::NewConfiguration);
+			// 
+			// mnuOpen
+			// 
+			this->mnuOpen->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"mnuOpen.Image")));
+			this->mnuOpen->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->mnuOpen->Name = L"mnuOpen";
+			this->mnuOpen->Size = System::Drawing::Size(152, 22);
+			this->mnuOpen->Text = L"&Open";
+			this->mnuOpen->Click += gcnew System::EventHandler(this, &Configurator::OpenConfiguration);
+			// 
+			// mnuSaveAs
+			// 
+			this->mnuSaveAs->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"mnuSaveAs.Image")));
+			this->mnuSaveAs->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->mnuSaveAs->Name = L"mnuSaveAs";
+			this->mnuSaveAs->Size = System::Drawing::Size(152, 22);
+			this->mnuSaveAs->Text = L"&Save as ...";
+			this->mnuSaveAs->Click += gcnew System::EventHandler(this, &Configurator::SaveConfiguration);
+			// 
 			// Configurator
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -195,10 +250,15 @@ namespace paritygraphicalconfigurator {
 			this->ClientSize = System::Drawing::Size(815, 402);
 			this->Controls->Add(this->lvSettings);
 			this->Controls->Add(this->tsToolbar);
+			this->Controls->Add(this->msMainMenu);
+			this->Icon = (cli::safe_cast<System::Drawing::Icon^  >(resources->GetObject(L"$this.Icon")));
+			this->MainMenuStrip = this->msMainMenu;
 			this->Name = L"Configurator";
 			this->Text = L"Configurator";
 			this->tsToolbar->ResumeLayout(false);
 			this->tsToolbar->PerformLayout();
+			this->msMainMenu->ResumeLayout(false);
+			this->msMainMenu->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
