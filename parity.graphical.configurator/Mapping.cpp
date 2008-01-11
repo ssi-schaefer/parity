@@ -52,6 +52,7 @@ MappingStruct* SettingMapping = mappingArray;
 // hackish: need it after the CTX_MEMBERS stuff to work
 #include "SimpleStringEditDialog.h"
 #include "DefineMapEditDialog.h"
+#include "PathVectorEditDialog.h"
 #include "Configurator.h"
 using namespace paritygraphicalconfigurator;
 
@@ -238,7 +239,13 @@ void DisplayEditDialog(const MappingStruct* mapping, parity::utils::DefineMap& v
 
 void DisplayEditDialog(const MappingStruct* mapping, parity::utils::PathVector& val)
 {
-	MessageBox::Show("Edit Dialog for type path vector  to be implemented", "Not Implemented", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	PathVector orig = val;
+	PathVectorEditDialog^ dlg = gcnew PathVectorEditDialog(val);
+
+	if(dlg->ShowDialog() != DialogResult::OK)
+	{
+		val = orig;
+	}
 }
 
 void DisplayEditDialog(const MappingStruct* mapping, parity::utils::LanguageType& val)

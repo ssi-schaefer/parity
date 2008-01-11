@@ -216,11 +216,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Program.cpp"
+				RelativePath=".\PathVectorEditDialog.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SimpleStringEditDialog.cpp"
+				RelativePath=".\Program.cpp"
 				>
 			</File>
 		</Filter>
@@ -252,6 +252,16 @@
 			<File
 				RelativePath=".\Mapping.h"
 				>
+			</File>
+			<File
+				RelativePath=".\PathVectorEditDialog.h"
+				FileType="3"
+				>
+				<File
+					RelativePath=".\PathVectorEditDialog.resx"
+					SubType="Designer"
+					>
+				</File>
 			</File>
 			<File
 				RelativePath=".\resource.h"
