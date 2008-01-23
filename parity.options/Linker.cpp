@@ -135,6 +135,11 @@ namespace parity
 					throw utils::Exception("%s requires and argument!", option);
 
 				used = true;
+			} else {
+				//
+				// skip the ,
+				//
+				++arg;
 			}
 
 			utils::Statistics::instance().addInformation("path-runpath", utils::Path(arg).get());
