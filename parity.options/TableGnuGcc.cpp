@@ -57,7 +57,9 @@ namespace parity
 			{ "-fms-ext"	,setMsExtensions			},
 			{ "-fno-ms-"	,setMsExtensions			},
 			{ "-ansi"		,setAnsiMode				},
-			{ "-Werror"		,setWarningAsError			},	// must be before -W to match correctly
+			{ "-Wl,-rpath"	,addRunPath					},  // must be before -W to match correctly
+			{ "-Wl,-e"		,setEntryPoint				},  // -- " --
+			{ "-Werror"		,setWarningAsError			},	// -- " --
 			{ "-w"			,setWarningLevel			},
 			{ "-W"			,setWarningLevel			},
 			{ "-fsyntax"	,setSyntaxOnly				},
@@ -90,9 +92,7 @@ namespace parity
 			{ "-MG"			,setDependencyGenerated		},
 			{ "-MP"			,setDependencyPhony			},
 			{ "-M"			,setDependencyTracking		},	// must be after all other -M* to not match!
-			{ "-Wl,-rpath"	,addRunPath					},
 			{ "-rpath"		,addRunPath					},
-			{ "-Wl,-e"		,setEntryPoint				},
 			{ "-l"			,addObjectsLibraries		},
 			{ ".lib"		,addObjectsLibraries		},
 			{ ".Lib"		,addObjectsLibraries		},

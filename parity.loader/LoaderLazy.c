@@ -47,7 +47,7 @@ void ParityLoaderLazyLoadSymbol(ImportItem* item)
 	if(!item->import)
 	{
 		LogDebug("fail!\n");
-		LogWarning("cannot load symbol %s from %s, is it the wrong library version?\n");
+		LogWarning("cannot load symbol %s from %s, is it the wrong library version?\n", item->name, item->library);
 
 		ExitProcess(1);
 	}
