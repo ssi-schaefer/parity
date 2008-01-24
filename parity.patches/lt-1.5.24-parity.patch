@@ -1,6 +1,24 @@
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/demo/foo.c libtool-1.5.24/demo/foo.c
---- libtool-1.5.24.orig/demo/foo.c	Fri Jun  1 07:04:27 2007
-+++ libtool-1.5.24/demo/foo.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/config.guess libtool-1.5.24/config.guess
+--- libtool-1.5.24.orig/config.guess	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/config.guess	Wed Jan 23 14:03:12 2008
+@@ -794,7 +794,13 @@
+     *:Interix*:[3456]*)
+     	case ${UNAME_MACHINE} in
+ 	    x86) 
+-		echo i586-pc-interix${UNAME_RELEASE}
++			eval $set_cc_for_build
++			echo "__PARITY__" > $dummy.c
++			if $CC_FOR_BUILD -E $dummy.c | grep "__PARITY__" > /dev/null 2>&1; then
++				echo i586-pc-interix${UNAME_RELEASE}
++			else
++				echo i586-pc-winnt
++			fi
+ 		exit ;;
+ 	    EM64T | authenticamd)
+ 		echo x86_64-unknown-interix${UNAME_RELEASE}
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/demo/foo.c libtool-1.5.24/demo/foo.c
+--- libtool-1.5.24.orig/demo/foo.c	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/demo/foo.c	Wed Jan 23 12:02:16 2008
 @@ -18,6 +18,11 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  USA. */
@@ -13,22 +31,18 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  #include "foo.h"
  
  #include <stdio.h>
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/demo/foo.h libtool-1.5.24/demo/foo.h
---- libtool-1.5.24.orig/demo/foo.h	Fri Jun  1 07:04:27 2007
-+++ libtool-1.5.24/demo/foo.h	Tue Sep 25 09:51:48 2007
-@@ -58,6 +58,19 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/demo/foo.h libtool-1.5.24/demo/foo.h
+--- libtool-1.5.24.orig/demo/foo.h	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/demo/foo.h	Wed Jan 23 13:28:21 2008
+@@ -58,6 +58,15 @@
  # define lt_ptr_t     char*
  #endif
  
 +/* On Windows (with parity) we need to manually import data symbols.
 + * This can be done even when building static libraries, since parity
 + * handles those invalid imports correctly */
-+#ifdef __PARITY__
-+# ifndef FOO_EXPORTS
-+#  define FOO_IMPORT __declspec(dllimport)
-+# else
-+#  define FOO_IMPORT
-+# endif
++#if defined(__PARITY__) && !defined(FOO_EXPORTS)
++# define FOO_IMPORT __declspec(dllimport)
 +#else
 +# define FOO_IMPORT
 +#endif
@@ -36,7 +50,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  /* Silly constants that the functions return. */
  #define HELLO_RET 0xe110
  #define FOO_RET 0xf00
-@@ -67,7 +80,7 @@
+@@ -67,7 +76,7 @@
  __BEGIN_DECLS
  int foo LT_PARAMS((void));
  int hello LT_PARAMS((void));
@@ -45,9 +59,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  __END_DECLS
  
  #endif /* !_FOO_H_ */
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l1/l1.c libtool-1.5.24/depdemo/l1/l1.c
---- libtool-1.5.24.orig/depdemo/l1/l1.c	Fri Jun  1 07:04:34 2007
-+++ libtool-1.5.24/depdemo/l1/l1.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l1/l1.c libtool-1.5.24/depdemo/l1/l1.c
+--- libtool-1.5.24.orig/depdemo/l1/l1.c	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l1/l1.c	Wed Jan 23 12:02:16 2008
 @@ -17,6 +17,12 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  USA. */
@@ -61,22 +75,18 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  #include "l1/l1.h"
  #include <stdio.h>
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l1/l1.h libtool-1.5.24/depdemo/l1/l1.h
---- libtool-1.5.24.orig/depdemo/l1/l1.h	Fri Jun  1 07:04:34 2007
-+++ libtool-1.5.24/depdemo/l1/l1.h	Tue Sep 25 09:52:01 2007
-@@ -23,8 +23,21 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l1/l1.h libtool-1.5.24/depdemo/l1/l1.h
+--- libtool-1.5.24.orig/depdemo/l1/l1.h	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l1/l1.h	Wed Jan 23 13:28:55 2008
+@@ -23,8 +23,17 @@
  
  #include "sysdep.h"
  
 +/* On Windows (with parity) we need to manually import data symbols.
 + * This can be done even when building static libraries, since parity
 + * handles those invalid imports correctly */
-+#ifdef __PARITY__
-+# ifndef L1_EXPORTS
-+#  define L1_IMPORT __declspec(dllimport)
-+# else
-+#  define L1_IMPORT
-+# endif
++#if defined(__PARITY__) && !defined(L1_EXPORTS)
++# define L1_IMPORT __declspec(dllimport)
 +#else
 +# define L1_IMPORT
 +#endif
@@ -87,9 +97,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  int	func_l1 __P((int));
  __END_DECLS
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l2/l2.c libtool-1.5.24/depdemo/l2/l2.c
---- libtool-1.5.24.orig/depdemo/l2/l2.c	Fri Jun  1 07:04:35 2007
-+++ libtool-1.5.24/depdemo/l2/l2.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l2/l2.c libtool-1.5.24/depdemo/l2/l2.c
+--- libtool-1.5.24.orig/depdemo/l2/l2.c	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l2/l2.c	Wed Jan 23 12:02:16 2008
 @@ -17,6 +17,11 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  USA. */
@@ -102,22 +112,18 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  #include "l2/l2.h"
  
  #include "l1/l1.h"
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l2/l2.h libtool-1.5.24/depdemo/l2/l2.h
---- libtool-1.5.24.orig/depdemo/l2/l2.h	Fri Jun  1 07:04:35 2007
-+++ libtool-1.5.24/depdemo/l2/l2.h	Tue Sep 25 09:52:19 2007
-@@ -23,8 +23,23 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l2/l2.h libtool-1.5.24/depdemo/l2/l2.h
+--- libtool-1.5.24.orig/depdemo/l2/l2.h	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l2/l2.h	Wed Jan 23 13:29:36 2008
+@@ -23,8 +23,19 @@
  
  #include "sysdep.h"
  
 +/* On Windows (with parity) we need to manually import data symbols.
 + * This can be done even when building static libraries, since parity
 + * handles those invalid imports correctly */
-+#ifdef __PARITY__
-+# ifndef L2_EXPORTS
-+#  define L2_IMPORT __declspec(dllimport)
-+# else
-+#  define L2_IMPORT
-+# endif
++#if defined(__PARITY__) && !defined(L2_EXPORTS)
++# define L2_IMPORT __declspec(dllimport)
 +#else
 +# define L2_IMPORT
 +#endif
@@ -130,9 +136,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  int	func_l2 __P((int));
  __END_DECLS
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l3/l3.c libtool-1.5.24/depdemo/l3/l3.c
---- libtool-1.5.24.orig/depdemo/l3/l3.c	Fri Jun  1 07:04:35 2007
-+++ libtool-1.5.24/depdemo/l3/l3.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l3/l3.c libtool-1.5.24/depdemo/l3/l3.c
+--- libtool-1.5.24.orig/depdemo/l3/l3.c	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l3/l3.c	Wed Jan 23 12:02:16 2008
 @@ -17,6 +17,11 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  USA. */
@@ -145,22 +151,18 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  #include "l3/l3.h"
  
  #include "l1/l1.h"
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l3/l3.h libtool-1.5.24/depdemo/l3/l3.h
---- libtool-1.5.24.orig/depdemo/l3/l3.h	Fri Jun  1 07:04:36 2007
-+++ libtool-1.5.24/depdemo/l3/l3.h	Tue Sep 25 09:52:32 2007
-@@ -23,8 +23,23 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l3/l3.h libtool-1.5.24/depdemo/l3/l3.h
+--- libtool-1.5.24.orig/depdemo/l3/l3.h	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l3/l3.h	Wed Jan 23 13:30:05 2008
+@@ -23,8 +23,19 @@
  
  #include "sysdep.h"
  
 +/* On Windows (with parity) we need to manually import data symbols.
 + * This can be done even when building static libraries, since parity
 + * handles those invalid imports correctly */
-+#ifdef __PARITY__
-+# ifndef L3_EXPORTS
-+#  define L3_IMPORT __declspec(dllimport)
-+# else
-+#  define L3_IMPORT
-+# endif
++#if defined(__PARITY__) && !defined(L3_EXPORTS)
++# define L3_IMPORT __declspec(dllimport)
 +#else
 +# define L3_IMPORT
 +#endif
@@ -173,9 +175,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  int	func_l3 __P((int));
  __END_DECLS
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l4/l4.c libtool-1.5.24/depdemo/l4/l4.c
---- libtool-1.5.24.orig/depdemo/l4/l4.c	Fri Jun  1 07:04:36 2007
-+++ libtool-1.5.24/depdemo/l4/l4.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l4/l4.c libtool-1.5.24/depdemo/l4/l4.c
+--- libtool-1.5.24.orig/depdemo/l4/l4.c	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l4/l4.c	Wed Jan 23 12:02:16 2008
 @@ -17,6 +17,11 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  USA. */
@@ -188,22 +190,18 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  #include "l4/l4.h"
  
  #include "l3/l3.h"
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/depdemo/l4/l4.h libtool-1.5.24/depdemo/l4/l4.h
---- libtool-1.5.24.orig/depdemo/l4/l4.h	Fri Jun  1 07:04:36 2007
-+++ libtool-1.5.24/depdemo/l4/l4.h	Tue Sep 25 09:52:40 2007
-@@ -23,8 +23,23 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/depdemo/l4/l4.h libtool-1.5.24/depdemo/l4/l4.h
+--- libtool-1.5.24.orig/depdemo/l4/l4.h	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/depdemo/l4/l4.h	Wed Jan 23 13:30:26 2008
+@@ -23,8 +23,19 @@
  
  #include "sysdep.h"
  
 +/* On Windows (with parity) we need to manually import data symbols.
 + * This can be done even when building static libraries, since parity
 + * handles those invalid imports correctly */
-+#ifdef __PARITY__
-+# ifndef L4_EXPORTS
-+#  define L4_IMPORT __declspec(dllimport)
-+# else
-+#  define L4_IMPORT
-+# endif
++#if defined(__PARITY__) && !defined(L4_EXPORTS)
++# define L4_IMPORT __declspec(dllimport)
 +#else
 +# define L4_IMPORT
 +#endif
@@ -216,9 +214,27 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/d
  int	func_l4 __P((int));
  __END_DECLS
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/libltdl/ltdl.c libtool-1.5.24/libltdl/ltdl.c
---- libtool-1.5.24.orig/libltdl/ltdl.c	Fri Jun  1 07:04:54 2007
-+++ libtool-1.5.24/libltdl/ltdl.c	Wed Oct  3 16:57:39 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/libltdl/config.guess libtool-1.5.24/libltdl/config.guess
+--- libtool-1.5.24.orig/libltdl/config.guess	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/libltdl/config.guess	Wed Jan 23 14:03:26 2008
+@@ -794,7 +794,13 @@
+     *:Interix*:[3456]*)
+     	case ${UNAME_MACHINE} in
+ 	    x86) 
+-		echo i586-pc-interix${UNAME_RELEASE}
++			eval $set_cc_for_build
++			echo "__PARITY__" > $dummy.c
++			if $CC_FOR_BUILD -E $dummy.c | grep "__PARITY__" > /dev/null 2>&1; then
++				echo i586-pc-interix${UNAME_RELEASE}
++			else
++				echo i586-pc-winnt
++			fi
+ 		exit ;;
+ 	    EM64T | authenticamd)
+ 		echo x86_64-unknown-interix${UNAME_RELEASE}
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/libltdl/ltdl.c libtool-1.5.24/libltdl/ltdl.c
+--- libtool-1.5.24.orig/libltdl/ltdl.c	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/libltdl/ltdl.c	Wed Jan 23 12:02:16 2008
 @@ -247,7 +247,7 @@
  #define LT_DLMALLOC(tp, n)	((tp *) lt_dlmalloc ((n) * sizeof(tp)))
  #define LT_DLREALLOC(tp, p, n)	((tp *) lt_dlrealloc ((p), (n) * sizeof(tp)))
@@ -264,9 +280,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  
    if (!address)
      {
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/libltdl/ltdl.h libtool-1.5.24/libltdl/ltdl.h
---- libtool-1.5.24.orig/libltdl/ltdl.h	Fri Jun  1 07:04:54 2007
-+++ libtool-1.5.24/libltdl/ltdl.h	Wed Sep 19 13:42:45 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/libltdl/ltdl.h libtool-1.5.24/libltdl/ltdl.h
+--- libtool-1.5.24.orig/libltdl/ltdl.h	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/libltdl/ltdl.h	Wed Jan 23 12:02:16 2008
 @@ -142,7 +142,7 @@
  #endif
  
@@ -276,19 +292,23 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  #  define R_OK 4
  #endif
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/libtool.m4 libtool-1.5.24/libtool.m4
---- libtool-1.5.24.orig/libtool.m4	Sun Jun 24 04:19:11 2007
-+++ libtool-1.5.24/libtool.m4	Mon Oct  8 11:48:54 2007
-@@ -764,7 +764,7 @@
-     lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
-     ;;
- 
--  interix*)
-+  interix[[3-9]]* | winnt*)
-     # We know the value 262144 and hardcode it with a safety zone (like BSD)
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/libtool.m4 libtool-1.5.24/libtool.m4
+--- libtool-1.5.24.orig/libtool.m4	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/libtool.m4	Wed Jan 23 14:13:12 2008
+@@ -769,6 +769,12 @@
      lt_cv_sys_max_cmd_len=196608
      ;;
-@@ -1083,7 +1083,11 @@
+ 
++  winnt*)
++    # This can be any system underneath (interix or cygwin). For now handle
++    # this the same as on interix.
++    lt_cv_sys_max_cmd_len=196608
++    ;;
++
+   osf*)
+     # Dr. Hans Ekkehard Plesser reports seeing a kernel panic running configure
+     # due to this test when exec_disable_arg_limit is 1 on Tru64. It is not
+@@ -1083,7 +1089,11 @@
     test -d out/ii_files && $rm out/ii_files/* && rmdir out/ii_files
     $rm out/* && rmdir out
     cd ..
@@ -301,205 +321,155 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
     $rm conftest*
  ])
  ])# AC_LIBTOOL_PROG_CC_C_O
-@@ -1549,7 +1553,7 @@
-   postinstall_cmds='chmod 555 $lib'
-   ;;
- 
--interix[[3-9]]*)
-+interix[[3-9]]* | winnt*)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -1559,6 +1563,80 @@
-   shlibpath_var=LD_LIBRARY_PATH
-   shlibpath_overrides_runpath=no
+@@ -1561,6 +1571,89 @@
    hardcode_into_libs=yes
-+
-+  case "$LD" in
-+  parity*)
-+    #
-+    # the library name should not contain any minor version
-+    # numbers, since this would be too strict. Windows has
-+    # the library name hardcoded always, so it won't listen
-+    # to -soname's.
-+    #
-+    library_names_spec='${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-+    #
-+    # the real soname and dlname (which is set to soname)
-+    # contains the .dll extension that parity adds.
-+    #
-+    soname_spec='${libname}${release}${shared_ext}$major.dll'
-+    dynamic_linker='parity'
-+	sys_lib_search_path_spec=
-+	sys_lib_dlsearch_path_spec=
-+
-+	#
-+	# Calculate the system library directories, by asking
-+	# parity's configuration for it.
-+	# WARNING: does not work correctly with paths with spaces.
-+	# WARNING: this really *ugly* contruct, is because $() is
-+	# not understood by other shells...
-+	#
-+	save_IFS=$IFS
-+	IFS=$PATH_SEPARATOR
-+	parity_conf=
-+
-+	set dummy $PATH
-+	shift
-+
-+	IFS=$save_IFS
-+
-+	for p in "$[@]"; do
-+		if test -x "$p/$LD" && test -f "$p/../etc/parity.conf"; then
-+			parity_conf="$p/../etc/parity.conf"
-+			break
-+		fi
-+	done
-+
-+	library_paths=`grep -e ".*LibraryPaths.*=" $parity_conf | sed -e "s,.*LibraryPaths.*=[[ \t]]*\(.*\)\$,\1,g"`
-+	sys_lib_search_path_spec=`echo $library_paths`
-+
-+    #
-+    # we assume that parity's loader feature is enabled. this
-+    # enables us to use LD_LIBRARY_PATH, LD_RUN_PATH and -rpath
-+    #
-+    runpath_var=LD_RUN_PATH
-+	shlibpath_overrides_runpath=yes
-+
-+    #
-+    # we need seperate postinstall and postuninstall commands
-+    # to carry .dll and .pdb files with us.
-+	#
-+	# WARNING: the commands below (especially the ${x%..} variable
-+	# syntax) work perfectly on ksh (/bin/sh) and bash on interix.
-+	# Other shells have not been tested and may need some porting.
-+    #
-+    postinstall_cmds='
-+        $install_prog $dir/$dlname $destdir/$dlname~
-+        test ! -f $dir/${dlname%.dll}.pdb || $install_prog $dir/${dlname%.dll}.pdb $destdir/${dlname%.dll}.pdb~
-+        chmod 755 $destdir/$dlname~
-+        test ! -f $destdir/${dlname%.dll}.pdb || chmod 644 $destdir/${dlname%.dll}.pdb'
-+
-+    postuninstall_cmds='
-+        dll=`$SHELL 2>&1 -c '\''. $file;
-+            echo \${dlname}'\''`~
-+        pdb=\${dll%.dll}.pdb~
-+        $rm $dir/\$dll~
-+        $rm $dir/\$pdb'
-+    ;;
-+  esac
    ;;
  
++winnt*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  dynamic_linker='Interix 3.x ld.so.1 (PE, like ELF)'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++
++  #
++  # the library name should not contain any minor version
++  # numbers, since this would be too strict. Windows has
++  # the library name hardcoded always, so it won't listen
++  # to -soname's.
++  #
++  library_names_spec='${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
++
++  #
++  # the real soname and dlname (which is set to soname)
++  # contains the .dll extension that parity adds.
++  #
++  soname_spec='${libname}${release}${shared_ext}$major.dll'
++  dynamic_linker='parity'
++  sys_lib_search_path_spec=
++  sys_lib_dlsearch_path_spec=
++
++  #
++  # Calculate the system library directories, by asking
++  # parity's configuration for it.
++  # WARNING: does not work correctly with paths with spaces.
++  # WARNING: this really *ugly* contruct, is because $() is
++  # not understood by other shells...
++  #
++  save_IFS=$IFS
++  IFS=$PATH_SEPARATOR
++  parity_conf=
++
++  set dummy $PATH
++  shift
++
++  IFS=$save_IFS
++
++  for p in "$[@]"; do
++      if test -x "$p/$LD" && test -f "$p/../etc/parity.conf"; then
++          parity_conf="$p/../etc/parity.conf"
++          break
++      fi
++  done
++
++  library_paths=`grep -e ".*LibraryPaths.*=" $parity_conf | sed -e "s,.*LibraryPaths.*=[[ \t]]*\(.*\)\$,\1,g"`
++  sys_lib_search_path_spec=`echo $library_paths`
++
++  #
++  # we assume that parity's loader feature is enabled. this
++  # enables us to use LD_LIBRARY_PATH, LD_RUN_PATH and -rpath
++  #
++  runpath_var=LD_RUN_PATH
++  shlibpath_overrides_runpath=yes
++
++  #
++  # we need seperate postinstall and postuninstall commands
++  # to carry .dll and .pdb files with us.
++  #
++  # WARNING: the commands below (especially the ${x%..} variable
++  # syntax) work perfectly on ksh (/bin/sh) and bash on interix.
++  # Other shells have not been tested and may need some porting.
++  #
++  postinstall_cmds='
++      $install_prog $dir/$dlname $destdir/$dlname~
++      test ! -f $dir/${dlname%.dll}.pdb || $install_prog $dir/${dlname%.dll}.pdb $destdir/${dlname%.dll}.pdb~
++      chmod 755 $destdir/$dlname~
++      test ! -f $destdir/${dlname%.dll}.pdb || chmod 644 $destdir/${dlname%.dll}.pdb'
++
++  postuninstall_cmds='
++      dll=`$SHELL 2>&1 -c '\''. $file;
++          echo \${dlname}'\''`~
++      pdb=\${dll%.dll}.pdb~
++      $rm $dir/\$dll~
++      $rm $dir/\$pdb'
++  ;;
++
  irix5* | irix6* | nonstopux*)
-@@ -2387,9 +2465,22 @@
-   esac
-   ;;
- 
--interix[[3-9]]*)
-+interix[[3-9]]* | winnt*)
-   # PIC code is broken on Interix 3.x, that's why |\.a not |_pic\.a here
+   case $host_os in
+     nonstopux*) version_type=nonstopux ;;
+@@ -2392,6 +2485,16 @@
    lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so|\.a)$'
-+
-+  case "$LD" in 
-+  parity*)
-+    #
-+    # there is no suitable file_magic, and match_patter somehow
-+    # does not seem to work in all cases, namely if native windows
-+    # libraries are involved in linking, which - of course - don't
-+    # match the normal naming scheme.
-+    #
-+    lt_cv_deplibs_check_method=pass_all
-+    ;;
-+  esac
-+
    ;;
  
++winnt*)
++  #
++  # there is no suitable file_magic, and match_patter somehow
++  # does not seem to work in all cases, namely if native windows
++  # libraries are involved in linking, which - of course - don't
++  # match the normal naming scheme.
++  #
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
  irix5* | irix6* | nonstopux*)
-@@ -2550,7 +2641,13 @@
-   AC_CHECK_LIB(m, cos, LIBM="$LIBM -lm")
+   case $LD in
+   *-32|*"-32 ") libmagic=32-bit;;
+@@ -2542,7 +2645,7 @@
+ [AC_REQUIRE([AC_CANONICAL_HOST])dnl
+ LIBM=
+ case $host in
+-*-*-beos* | *-*-cygwin* | *-*-pw32* | *-*-darwin*)
++*-*-beos* | *-*-cygwin* | *-*-pw32* | *-*-darwin* | *-winnt*)
+   # These system don't have libm, or don't need it
    ;;
- *)
--  AC_CHECK_LIB(m, cos, LIBM="-lm")
-+  case "$LD" in
-+  #
-+  # parity may come on all platforms? ;o)
-+  #
-+  parity*) ;;
-+  *) AC_CHECK_LIB(m, cos, LIBM="-lm") ;;
-+  esac
-   ;;
- esac
- ])# AC_CHECK_LIBM
-@@ -3280,7 +3377,29 @@
- 	;;
-     esac
-     ;;
--  interix[[3-9]]*)
-+  interix[[3-9]]* | winnt*)
-+    case "$LD" in
-+    parity.gnu.ld*)
-+      #
-+      # ld like interface, so no -Wl, and so on
-+      #
-+      _LT_AC_TAGVAR(hardcode_direct, $1)=no
-+      _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
-+      _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='-rpath $libdir'
-+      _LT_AC_TAGVAR(archive_cmds, $1)='$LD -shared $libobjs $deplibs $linker_flags -o $lib'
-+	  _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
-+      ;;
-+    parity.gnu.gcc*)
-+      #
-+      # gcc like interface, so need -Wl, and so on
-+      #
-+      _LT_AC_TAGVAR(hardcode_direct, $1)=no
-+      _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
-+      _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}-rpath,$libdir'
-+      _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags -o $lib'
-+	  _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
-+      ;;
-+    *)
-     _LT_AC_TAGVAR(hardcode_direct, $1)=no
-     _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
-     _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}-rpath,$libdir'
-@@ -3294,6 +3413,8 @@
+ *-ncr-sysv4.3*)
+@@ -3294,6 +3397,13 @@
      _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
      _LT_AC_TAGVAR(archive_expsym_cmds, $1)='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
      ;;
-+    esac
++  winnt*)
++    _LT_AC_TAGVAR(hardcode_direct, $1)=no
++    _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
++    _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}-rpath,$libdir'
++    _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags -o $lib'
++    _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
 +    ;;
    irix5* | irix6*)
      case $cc_basename in
        CC*)
-@@ -3939,13 +4060,27 @@
- # PORTME: override above test on systems where it is broken
- ifelse([$1],[CXX],
- [case $host_os in
--interix[[3-9]]*)
-+interix[[3-9]]* | winnt*)
-+  case "$LD" in
-+  parity*)
-+    #
-+    # parity does not have verbose output like gcc/g++ have, so
-+    # most likely the above will result in nothing. But in worst case
-+    # libtool may find something it thinks is a library, so reset things.
-+    #
-+    _LT_AC_TAGVAR(predep_objects,$1)=
-+    _LT_AC_TAGVAR(postdep_objects,$1)=
-+    _LT_AC_TAGVAR(postdeps,$1)=
-+	;;
-+  *)
-   # Interix 3.5 installs completely hosed .la files for C++, so rather than
-   # hack all around it, let's just trust "g++" to DTRT.
-   _LT_AC_TAGVAR(predep_objects,$1)=
-   _LT_AC_TAGVAR(postdep_objects,$1)=
+@@ -3947,6 +4057,17 @@
    _LT_AC_TAGVAR(postdeps,$1)=
    ;;
-+  esac
-+  ;;
  
++winnt*)
++  #
++  # parity does not have verbose output like gcc/g++ have, so
++  # most likely the above will result in nothing. But in worst case
++  # libtool may find something it thinks is a library, so reset things.
++  #
++  _LT_AC_TAGVAR(predep_objects,$1)=
++  _LT_AC_TAGVAR(postdep_objects,$1)=
++  _LT_AC_TAGVAR(postdeps,$1)=
++  ;;
++
  linux*)
    case `$CC -V 2>&1 | sed 5q` in
-@@ -4457,7 +4592,7 @@
+   *Sun\ C*)
+@@ -4457,7 +4578,7 @@
  shrext_cmds='$shrext_cmds'
  
  # Executable file suffix (normally "").
@@ -508,34 +478,30 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  
  # Additional compiler flags for building library objects.
  pic_flag=$lt_[]_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)
-@@ -4793,6 +4928,26 @@
+@@ -4793,6 +4914,22 @@
  sysv4)
    symcode='[[DFNSTU]]'
    ;;
-+interix[[3-9]]* | winnt*)
-+  case "$LD" in
-+  parity*)
-+    #
-+	# parity knows how to handle dllimport declspecs when there is no
-+	# shared library in play.
-+    #
-+    lt_cv_sys_global_symbol_to_cdecl="awk '{ print \"extern __declspec\(dllimport\) int \" \$][3 \";\" }'"
++winnt*)
++  #
++  # parity knows how to handle dllimport declspecs when there is no
++  # shared library in play.
++  #
++  lt_cv_sys_global_symbol_to_cdecl="awk '{ print \"extern __declspec\(dllimport\) int \" \$][3 \";\" }'"
 +
-+    #
-+    # WARNING: since parity may use the Microsoft compiler as backend
-+    # symbol names could be mangled in MS style, which means, they are
-+    # not valid C identifiers, so we *cannot* generate C code that
-+    # tries to do something with those C++ variables, because it won't
-+    # compile!
-+    # This could be done in assembly which would solve this problem.
-+    #
-+    ;;
-+  esac
++  #
++  # WARNING: since parity may use the Microsoft compiler as backend
++  # symbol names could be mangled in MS style, which means, they are
++  # not valid C identifiers, so we *cannot* generate C code that
++  # tries to do something with those C++ variables, because it won't
++  # compile!
++  # This could be done in assembly which would solve this problem.
++  #
 +  ;;
  esac
  
  # Handle CRLF in mingw tool chain
-@@ -4888,6 +5043,18 @@
+@@ -4888,6 +5025,18 @@
  	  lt_save_CFLAGS="$CFLAGS"
  	  LIBS="conftstm.$ac_objext"
  	  CFLAGS="$CFLAGS$_LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)"
@@ -545,8 +511,8 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
 +    # because of variables beeing initialized with non-constant
 +    # values (variables from shared libraries)
 +    #
-+    case "$CC" in
-+    *parity*)
++    case "$host" in
++    *-winnt*)
 +      CFLAGS="${CFLAGS} -xc++"
 +      ;;
 +    esac
@@ -554,17 +520,31 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	  if AC_TRY_EVAL(ac_link) && test -s conftest${ac_exeext}; then
  	    pipe_works=yes
  	  fi
-@@ -5068,9 +5235,22 @@
- 	    ;;
- 	esac
- 	;;
--      interix*)
-+  interix[[3-9]]* | winnt*)
+@@ -5072,6 +5221,19 @@
  	# This is c89, which is MS Visual C++ (no shared libs)
  	# Anyone wants to do a port?
+ 	;;
 +
-+    case $cc_basename in
-+    parity*)
++  winnt*)
++    #
++    # -fPIC and -fpic have the same effect for parity: none
++    # this means it's of no danger to pass it in, since parity
++    # simply ignores it, still we save some command line parsing
++    # time, when not passing it :)
++    #
++    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=''
++    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
++    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
++	;;
++
+       irix5* | irix6* | nonstopux*)
+ 	case $cc_basename in
+ 	  CC*)
+@@ -5441,6 +5603,17 @@
+       _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+       ;;
+ 
++    winnt*)
 +      #
 +      # -fPIC and -fpic have the same effect for parity: none
 +      # this means it's of no danger to pass it in, since parity
@@ -574,98 +554,41 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
 +      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
 +      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
 +      ;;
-+    esac
- 	;;
-       irix5* | irix6* | nonstopux*)
- 	case $cc_basename in
-@@ -5441,6 +5621,26 @@
-       _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
-       ;;
- 
-+    interix[[3-9]]* | winnt*)
-+      # This is c89, which is MS Visual C++ (no shared libs)
-+      # Anyone wants to do a port?
 +
-+      case $cc_basename in
-+      parity*)
-+        #
-+        # -fPIC and -fpic have the same effect for parity: none
-+        # this means it's of no danger to pass it in, since parity
-+        # simply ignores it.
-+        #
-+        _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
-+        _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-+        _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
-+        ;;
-+      *)
-+        _LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no
-+        ;;
-+      esac
-+      ;;
      *)
        _LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no
        ;;
-@@ -5561,9 +5761,18 @@
-       with_gnu_ld=no
-     fi
-     ;;
--  interix*)
-+  interix[[3-9]]* | winnt*)
+@@ -5565,6 +5738,12 @@
      # we just hope/assume this is gcc and not c89 (= MSVC++)
      with_gnu_ld=yes
-+
-+    case "$LD" in
-+    parity*)
-+      #
-+      # parity linker or compiler. this means that we are not gnu ld.
-+      #
-+      with_gnu_ld=no
-+      ;;
-+    esac
      ;;
++  winnt*)
++    #
++    # parity linker or compiler. this means that we are not gnu ld.
++    #
++    with_gnu_ld=no
++    ;;
    openbsd*)
      with_gnu_ld=no
-@@ -6194,6 +6403,37 @@
+     ;;
+@@ -6194,6 +6373,14 @@
        else
  	_LT_AC_TAGVAR(ld_shlibs, $1)=no
        fi
 +      ;;
 +
-+    interix[[3-9]]* | winnt*)
-+      case "$LD" in
-+      parity.gnu.ld*)
-+        #
-+        # ld like interface, so no -Wl, and so on
-+        #
-+        _LT_AC_TAGVAR(hardcode_direct, $1)=no
-+        _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
-+        _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='-rpath $libdir'
-+        _LT_AC_TAGVAR(archive_cmds, $1)='$LD -shared $libobjs $deplibs $linker_flags -o $lib'
-+		_LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
-+        ;;
-+      parity.gnu.gcc*)
-+        #
-+        # gcc like interface, so need -Wl, and so on
-+        #
-+        _LT_AC_TAGVAR(hardcode_direct, $1)=no
-+        _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
-+        _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}-rpath,$libdir'
-+        _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags -o $lib'
-+		_LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
-+        ;;
-+      *)
-+		#
-+		# something not gnu ld and not parity...
-+		#
-+		_LT_AC_TAGVAR(ld_shlibs, $1)=no
-+        ;;
-+      esac
++    winnt*)
++      _LT_AC_TAGVAR(hardcode_direct, $1)=no
++      _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no
++      _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}-rpath,$libdir'
++      _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags -o $lib'
++      _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
        ;;
  
      os2*)
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/ltmain.in libtool-1.5.24/ltmain.in
---- libtool-1.5.24.orig/ltmain.in	Sun Jun 24 03:30:51 2007
-+++ libtool-1.5.24/ltmain.in	Mon Oct  8 14:09:30 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/ltmain.in libtool-1.5.24/ltmain.in
+--- libtool-1.5.24.orig/ltmain.in	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/ltmain.in	Wed Jan 23 12:02:16 2008
 @@ -1591,7 +1591,7 @@
        -l*)
  	if test "X$arg" = "X-lc" || test "X$arg" = "X-lm"; then
@@ -675,21 +598,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	    # These systems don't actually have a C or math library (as such)
  	    continue
  	    ;;
-@@ -1617,6 +1617,13 @@
- 	    test "X$arg" = "X-lc" && continue
- 	    ;;
- 	  esac
-+
-+	  case "$LD" in
-+      parity*)
-+		# parity does not need -lc or -lm
-+        continue
-+        ;;
-+      esac
- 	elif test "X$arg" = "X-lc_r"; then
- 	 case $host in
- 	 *-*-openbsd* | *-*-freebsd* | *-*-dragonfly*)
-@@ -3892,7 +3899,13 @@
+@@ -3892,7 +3892,13 @@
  	  hardcode_libdirs=
  	  dep_rpath=
  	  rpath="$finalize_rpath"
@@ -703,25 +612,25 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	  for libdir in $rpath; do
  	    if test -n "$hardcode_libdir_flag_spec"; then
  	      if test -n "$hardcode_libdir_separator"; then
-@@ -4071,7 +4084,7 @@
+@@ -4071,7 +4077,7 @@
  	   len=`expr "X$test_cmds" : ".*" 2>/dev/null` &&
  	   test "$len" -le "$max_cmd_len" || test "$max_cmd_len" -le -1; then
  	  :
 -	else
-+	elif { case $host in *-*-interix* | *-*-winnt*) false;; *) true;; esac ; }; then
++	elif { case $host in *-*-winnt*) false;; *) true;; esac ; }; then
  	  # The command line is too long to link in one step, link piecewise.
  	  $echo "creating reloadable object files..."
  
-@@ -4667,7 +4680,7 @@
+@@ -4667,7 +4673,7 @@
  "
  
  	    case $host in
 -	    *cygwin* | *mingw* )
-+	    *cygwin* | *mingw* | *interix* | *winnt*)
++	    *cygwin* | *mingw* | *winnt*)
  	  $echo >> "$output_objdir/$dlsyms" "\
  /* DATA imports from DLLs on WIN32 can't be const, because
     runtime relocations are performed -- see ld's documentation
-@@ -4729,9 +4742,20 @@
+@@ -4729,9 +4735,20 @@
  	    esac
  	  esac
  
@@ -744,12 +653,12 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  
  	  # Clean up the generated files.
  	  $show "$rm $output_objdir/$dlsyms $nlist ${nlist}S ${nlist}T"
-@@ -4911,11 +4935,19 @@
+@@ -4911,11 +4928,19 @@
  
        # Only actually do things if our run command is non-null.
        if test -z "$run"; then
 +  # test for cygwin and/or mingw, since on interix, we still want the
-+  # .exe so that the makefiles from aren't confused (the makefile target
++  # .exe so that the makefiles aren't confused (the makefile target
 +  # still is progname$(EXEEXT), so it will always link if we remove
 +  # the .exe here).
 +  case $host in
@@ -764,7 +673,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	# test for cygwin because mv fails w/o .exe extensions
  	case $host in
  	  *cygwin*)
-@@ -5645,7 +5677,10 @@
+@@ -5645,7 +5670,10 @@
        # Quote the link command for shipping.
        relink_command="(cd `pwd`; $SHELL $progpath $preserve_args --mode=relink $libtool_args @inst_prefix_dir@)"
        relink_command=`$echo "X$relink_command" | $SP2NL | $Xsed -e "$sed_quote_subst" | $NL2SP`
@@ -776,7 +685,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	relink_command=
        fi
  
-@@ -6124,6 +6158,12 @@
+@@ -6124,6 +6152,12 @@
  	# because it is most likely a libtool script we actually want to
  	# install
  	stripped_ext=""
@@ -789,7 +698,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	case $file in
  	  *.exe)
  	    if test ! -f "$file"; then
-@@ -6132,6 +6172,8 @@
+@@ -6132,6 +6166,8 @@
  	    fi
  	    ;;
  	esac
@@ -798,7 +707,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  
  	# Do a test to see if this is really a libtool program.
  	case $host in
-@@ -6644,6 +6686,11 @@
+@@ -6644,6 +6680,11 @@
        *)
  	if test "$mode" = clean ; then
  	  noexename=$name
@@ -810,7 +719,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	  case $file in
  	  *.exe)
  	    file=`$echo $file|${SED} 's,.exe$,,'`
-@@ -6653,6 +6700,8 @@
+@@ -6653,6 +6694,8 @@
  	    rmfiles="$rmfiles $file"
  	    ;;
  	  esac
@@ -819,9 +728,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/l
  	  # Do a test to see if this is a libtool program.
  	  if (${SED} -e '4q' $file | grep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
  	    relink_command=
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/mdemo/foo1.c libtool-1.5.24/mdemo/foo1.c
---- libtool-1.5.24.orig/mdemo/foo1.c	Fri Jun  1 07:05:07 2007
-+++ libtool-1.5.24/mdemo/foo1.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/mdemo/foo1.c libtool-1.5.24/mdemo/foo1.c
+--- libtool-1.5.24.orig/mdemo/foo1.c	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/mdemo/foo1.c	Wed Jan 23 12:02:16 2008
 @@ -30,7 +30,11 @@
  #define hello	foo1_LTX_hello
  
@@ -835,9 +744,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/m
  
  /* private function */
  int
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/mdemo/foo2.c libtool-1.5.24/mdemo/foo2.c
---- libtool-1.5.24.orig/mdemo/foo2.c	Fri Jun  1 07:05:07 2007
-+++ libtool-1.5.24/mdemo/foo2.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/mdemo/foo2.c libtool-1.5.24/mdemo/foo2.c
+--- libtool-1.5.24.orig/mdemo/foo2.c	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/mdemo/foo2.c	Wed Jan 23 12:02:16 2008
 @@ -30,7 +30,11 @@
  #define hello	libfoo2_LTX_hello
  
@@ -851,22 +760,18 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/m
  
  /* private function */
  int
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/pdemo/foo.h libtool-1.5.24/pdemo/foo.h
---- libtool-1.5.24.orig/pdemo/foo.h	Fri Jun  1 07:05:22 2007
-+++ libtool-1.5.24/pdemo/foo.h	Tue Sep 25 09:50:54 2007
-@@ -75,6 +75,21 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/pdemo/foo.h libtool-1.5.24/pdemo/foo.h
+--- libtool-1.5.24.orig/pdemo/foo.h	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/pdemo/foo.h	Wed Jan 23 13:31:04 2008
+@@ -75,6 +75,17 @@
  #  define EXTERN extern
  #endif
  
 +/* On Windows (with parity) we need to manually import data symbols.
 + * This can be done even when building static libraries, since parity
 + * handles those invalid imports correctly */
-+#ifdef __PARITY__
-+# ifndef FOO_EXPORTS
-+#  define FOO_IMPORT __declspec(dllimport)
-+# else
-+#  define FOO_IMPORT
-+# endif
++#if defined(__PARITY__) && !defined(FOO_EXPORTS)
++# define FOO_IMPORT __declspec(dllimport)
 +#else
 +# define FOO_IMPORT
 +#endif
@@ -876,7 +781,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/p
  /* Silly constants that the functions return. */
  #define HELLO_RET 0xe110
  #define FOO_RET 0xf00
-@@ -84,7 +99,7 @@
+@@ -84,7 +95,7 @@
  __BEGIN_DECLS
  int foo LT_PARAMS((void));
  int hello LT_PARAMS((void));
@@ -885,9 +790,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/p
  __END_DECLS
  
  #endif /* !_FOO_H_ */
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/pdemo/longer_file_name_foo.c libtool-1.5.24/pdemo/longer_file_name_foo.c
---- libtool-1.5.24.orig/pdemo/longer_file_name_foo.c	Fri Jun  1 07:05:23 2007
-+++ libtool-1.5.24/pdemo/longer_file_name_foo.c	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/pdemo/longer_file_name_foo.c libtool-1.5.24/pdemo/longer_file_name_foo.c
+--- libtool-1.5.24.orig/pdemo/longer_file_name_foo.c	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/pdemo/longer_file_name_foo.c	Wed Jan 23 12:02:16 2008
 @@ -18,6 +18,11 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  USA. */
@@ -900,9 +805,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/p
  #define _LIBFOO_COMPILATION_
  #include "foo.h"
  #undef _LIBFOO_COMPILATION_
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tagdemo/foo.cpp libtool-1.5.24/tagdemo/foo.cpp
---- libtool-1.5.24.orig/tagdemo/foo.cpp	Fri Jun  1 07:05:31 2007
-+++ libtool-1.5.24/tagdemo/foo.cpp	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tagdemo/foo.cpp libtool-1.5.24/tagdemo/foo.cpp
+--- libtool-1.5.24.orig/tagdemo/foo.cpp	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tagdemo/foo.cpp	Wed Jan 23 12:02:16 2008
 @@ -20,7 +20,14 @@
  // USA.
  
@@ -919,9 +824,9 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  
  #ifdef HAVE_MATH_H
  #include <math.h>
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tagdemo/main.cpp libtool-1.5.24/tagdemo/main.cpp
---- libtool-1.5.24.orig/tagdemo/main.cpp	Fri Jun  1 07:05:32 2007
-+++ libtool-1.5.24/tagdemo/main.cpp	Fri Sep 21 10:15:31 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tagdemo/main.cpp libtool-1.5.24/tagdemo/main.cpp
+--- libtool-1.5.24.orig/tagdemo/main.cpp	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tagdemo/main.cpp	Wed Jan 23 12:02:16 2008
 @@ -22,8 +22,14 @@
  
  #include "foo.h"
@@ -938,70 +843,72 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  
  int
  main (int, char *[])
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/build-relink.test libtool-1.5.24/tests/build-relink.test
---- libtool-1.5.24.orig/tests/build-relink.test	Fri Jun  1 07:05:32 2007
-+++ libtool-1.5.24/tests/build-relink.test	Mon Oct  8 15:57:24 2007
-@@ -66,12 +66,13 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/build-relink.test libtool-1.5.24/tests/build-relink.test
+--- libtool-1.5.24.orig/tests/build-relink.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/build-relink.test	Wed Jan 23 13:20:33 2008
+@@ -65,13 +65,13 @@
+   exit 1
  fi
  
- ./hell # so that it links on-demand if needed
-+./hell$EXEEXT
+-./hell # so that it links on-demand if needed
++./hell$EXEEXT # so that it links on-demand if needed
  
  echo "removing libhello.la from ../demo"
  rm -f libhello.la $objdir/libhello.*
  
  echo "running ../demo/hell"
 -if ./hell; then
-+if ./hell || ./hell$EXEEXT; then
++if ./hell$EXEEXT; then
    :
  elif test "x,$hardcode_action,$hardcode_direct" = x,relink,yes; then
    echo "Ok, uninstalled programs fail after uninstalled libraries are removed"
-@@ -91,7 +92,7 @@
+@@ -91,7 +91,7 @@
  rm -f libhello.la
  
  echo "running ../demo/hell with broken libhello.la"
 -if (./hell) 2>&1; then
-+if (./hell || ./hell$EXEEXT) 2>&1; then
++if (./hell$EXEEXT) 2>&1; then
    echo "= Exiting: ../demo/hell runs even though libhello.la is incomplete"
    echo "shlibpath_overrides_runpath should be set to no"
    exit 1
-@@ -108,7 +109,7 @@
+@@ -108,7 +108,7 @@
    rm -f $objdir/lt-hell$EXEEXT || exit 1
    cp $objdir/hell$EXEEXT $objdir/lt-hell$EXEEXT || exit 1
    echo "running ../demo/hell with installed libhello.la"
 -  if ./hell; then
-+  if ./hell || ./hell$EXEEXT; then
++  if ./hell$EXEEXT; then
      echo "Worked, as expected"
    else
      echo "shlibpath_overrides_runpath should be set to yes"
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/build-relink2.test libtool-1.5.24/tests/build-relink2.test
---- libtool-1.5.24.orig/tests/build-relink2.test	Fri Jun  1 07:05:32 2007
-+++ libtool-1.5.24/tests/build-relink2.test	Mon Oct  8 15:58:20 2007
-@@ -67,12 +67,13 @@
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/build-relink2.test libtool-1.5.24/tests/build-relink2.test
+--- libtool-1.5.24.orig/tests/build-relink2.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/build-relink2.test	Wed Jan 23 13:21:26 2008
+@@ -66,13 +66,13 @@
+   exit 1
  fi
  
- ./depdemo # so that it links on-demand if needed
-+./depdemo$EXEEXT
+-./depdemo # so that it links on-demand if needed
++./depdemo$EXEEXT # so that it links on-demand if needed
  
  echo "removing libl3.la from ../depdemo/l3"
  rm -rf l3/libl3.la l3/$objdir
  
  echo "running ../depdemo/depdemo"
 -if ./depdemo ||
-+if ./depdemo || ./depdemo$EXEEXT ||
++if ./depdemo$EXEEXT ||
     # On AIX 4.1, when the installed copy of libl3 is loaded, it brings
     # with it the installed copies of libl1 and libl2, with disjoint
     # counters var_l1 and var_l2.  This is arguably acceptable behavior,
-@@ -97,7 +98,7 @@
+@@ -97,7 +97,7 @@
  rm -f l3/libl3.la
  
  echo "running ../depdemo/depdemo with broken libl3.la"
 -if (./depdemo) 2>&1; then
-+if (./depdemo || ./depdemo$EXEEXT) 2>&1; then
++if (./depdemo$EXEEXT) 2>&1; then
    echo "= Exiting: ../depdemo/depdemo runs even though libl3.la is incomplete"
    echo "shlibpath_overrides_runpath should be set to no"
    exit 1
-@@ -112,9 +113,9 @@
+@@ -112,9 +112,9 @@
  
  if test "$shlibpath_overrides_runpath" != yes; then
    rm -f $objdir/lt-depdemo || exit 1
@@ -1009,91 +916,64 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
 +  cp $objdir/depdemo$EXEEXT $objdir/lt-depdemo$EXEEXT || exit 1
    echo "running ../depdemo/depdemo with installed libl3.la"
 -  if ./depdemo; then
-+  if ./depdemo || ./depdemo$EXEEXT; then
++  if ./depdemo$EXEEXT; then
      echo "Worked, as expected"
    else
      echo "shlibpath_overrides_runpath should be set to yes"
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/cdemo-exec.test libtool-1.5.24/tests/cdemo-exec.test
---- libtool-1.5.24.orig/tests/cdemo-exec.test	Fri Jun  1 07:05:33 2007
-+++ libtool-1.5.24/tests/cdemo-exec.test	Fri Sep 21 11:42:50 2007
-@@ -10,7 +10,7 @@
- fi
- . $srcdir/defs || exit 1
- 
--if test -f ../cdemo/cdemo$EXEEXT; then :
-+if test -f ../cdemo/cdemo$EXEEXT -o -f ../cdemo/cdemo; then :
- else
-   echo "You must run cdemo-make.test before running $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/cdemo-exec.test libtool-1.5.24/tests/cdemo-exec.test
+--- libtool-1.5.24.orig/tests/cdemo-exec.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/cdemo-exec.test	Wed Jan 23 13:21:41 2008
 @@ -19,7 +19,7 @@
  # Check to see if the programs really run.
  echo "Executing uninstalled programs in ../cdemo"
  
 -if ../cdemo/cdemo; then :
-+if ../cdemo/cdemo || ../cdemo/cdemo$EXEEXT; then :
++if ../cdemo/cdemo$EXEEXT; then :
  else
    echo "$0: cannot execute ../cdemo/cdemo" 1>&2
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/demo-exec.test libtool-1.5.24/tests/demo-exec.test
---- libtool-1.5.24.orig/tests/demo-exec.test	Fri Jun  1 07:05:33 2007
-+++ libtool-1.5.24/tests/demo-exec.test	Fri Sep 21 11:43:02 2007
-@@ -10,7 +10,7 @@
- fi
- . $srcdir/defs || exit 1
- 
--if test -f ../demo/hell$EXEEXT; then :
-+if test -f ../demo/hell$EXEEXT -o -f ../demo/hell; then :
- else
-   echo "You must run demo-make.test before running $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/demo-exec.test libtool-1.5.24/tests/demo-exec.test
+--- libtool-1.5.24.orig/tests/demo-exec.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/demo-exec.test	Wed Jan 23 13:22:21 2008
 @@ -20,19 +20,19 @@
  echo "Executing uninstalled programs in ../demo"
  
  status=0
 -if ../demo/hell_static| grep 'Welcome to GNU Hell'; then :
-+if ../demo/hell_static| grep 'Welcome to GNU Hell' || ../demo/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if ../demo/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute ../demo/hell_static" 1>&2
    status=1
  fi
  
 -if ../demo/hell | grep 'Welcome to GNU Hell'; then :
-+if ../demo/hell | grep 'Welcome to GNU Hell' || ../demo/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if ../demo/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute ../demo/hell" 1>&2
    status=1
  fi
  
 -if ../demo/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
-+if ../demo/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)' || ../demo/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
++if ../demo/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
  else
    echo "$0: cannot execute ../demo/helldl" 1>&2
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/demo-inst.test libtool-1.5.24/tests/demo-inst.test
---- libtool-1.5.24.orig/tests/demo-inst.test	Fri Jun  1 07:05:33 2007
-+++ libtool-1.5.24/tests/demo-inst.test	Fri Sep 21 11:44:58 2007
-@@ -11,7 +11,7 @@
- . $srcdir/defs || exit 1
- 
- # Check that things are built.
--if test -f ../demo/hell$EXEEXT; then :
-+if test -f ../demo/hell$EXEEXT -o -f ../demo/hell; then :
- else
-   echo "You must run demo-make.test before $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/demo-inst.test libtool-1.5.24/tests/demo-inst.test
+--- libtool-1.5.24.orig/tests/demo-inst.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/demo-inst.test	Wed Jan 23 13:23:03 2008
 @@ -25,13 +25,13 @@
  
  echo "= Executing installed programs"
  status=0
 -if $prefix/bin/hell_static | grep 'Welcome to GNU Hell'; then :
-+if $prefix/bin/hell_static | grep 'Welcome to GNU Hell' || $prefix/bin/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if $prefix/bin/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute $prefix/bin/hell_static" 1>&2
    status=1
  fi
  
 -if $prefix/bin/hell | grep 'Welcome to GNU Hell'; then :
-+if $prefix/bin/hell | grep 'Welcome to GNU Hell' || $prefix/bin/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if $prefix/bin/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute $prefix/bin/hell" 1>&2
  
@@ -1102,69 +982,51 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  fi
  
 -if $prefix/bin/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
-+if $prefix/bin/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)' || $prefix/bin/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
++if $prefix/bin/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
  else
    echo "$0: cannot execute $prefix/bin/helldl" 1>&2
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/depdemo-exec.test libtool-1.5.24/tests/depdemo-exec.test
---- libtool-1.5.24.orig/tests/depdemo-exec.test	Fri Jun  1 07:05:34 2007
-+++ libtool-1.5.24/tests/depdemo-exec.test	Fri Sep 21 11:43:14 2007
-@@ -10,7 +10,7 @@
- fi
- . $srcdir/defs || exit 1
- 
--if test -f ../depdemo/depdemo$EXEEXT; then :
-+if test -f ../depdemo/depdemo$EXEEXT -o -f ../depdemo/depdemo; then :
- else
-   echo "You must run depdemo-make.test before running $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/depdemo-exec.test libtool-1.5.24/tests/depdemo-exec.test
+--- libtool-1.5.24.orig/tests/depdemo-exec.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/depdemo-exec.test	Wed Jan 23 13:23:23 2008
 @@ -20,13 +20,13 @@
  echo "Executing uninstalled programs in ../depdemo"
  
  status=0
 -if ../depdemo/depdemo_static; then :
-+if ../depdemo/depdemo_static || ../depdemo/depdemo_static$EXEEXT; then :
++if ../depdemo/depdemo_static$EXEEXT; then :
  else
    echo "$0: cannot execute ../depdemo/depdemo_static" 1>&2
    status=1
  fi
  
 -if ../depdemo/depdemo; then :
-+if ../depdemo/depdemo || ../depdemo/depdemo$EXEEXT; then :
++if ../depdemo/depdemo$EXEEXT; then :
  else
    echo "$0: cannot execute ../depdemo/depdemo" 1>&2
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/depdemo-inst.test libtool-1.5.24/tests/depdemo-inst.test
---- libtool-1.5.24.orig/tests/depdemo-inst.test	Fri Jun  1 07:05:34 2007
-+++ libtool-1.5.24/tests/depdemo-inst.test	Fri Sep 21 11:45:11 2007
-@@ -11,7 +11,7 @@
- . $srcdir/defs || exit 1
- 
- # Check that things are built.
--if test -f ../depdemo/depdemo$EXEEXT; then :
-+if test -f ../depdemo/depdemo$EXEEXT -o -f ../depdemo/depdemo; then :
- else
-   echo "You must run depdemo-make.test before $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/depdemo-inst.test libtool-1.5.24/tests/depdemo-inst.test
+--- libtool-1.5.24.orig/tests/depdemo-inst.test	Wed Jan 23 11:08:40 2008
++++ libtool-1.5.24/tests/depdemo-inst.test	Wed Jan 23 13:23:41 2008
 @@ -26,13 +26,13 @@
  echo "= Executing installed programs"
  
  status=0
 -if $prefix/bin/depdemo_static; then :
-+if $prefix/bin/depdemo_static || $prefix/bin/depdemo_static$EXEEXT; then :
++if $prefix/bin/depdemo_static$EXEEXT; then :
  else
    echo "$0: cannot execute $prefix/bin/depdemo_static" 1>&2
    status=1
  fi
  
 -if $prefix/bin/depdemo; then :
-+if $prefix/bin/depdemo || $prefix/bin/depdemo$EXEEXT; then :
++if $prefix/bin/depdemo$EXEEXT; then :
  else
    echo "$0: cannot execute $prefix/bin/depdemo" 1>&2
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/deplibs.test libtool-1.5.24/tests/deplibs.test
---- libtool-1.5.24.orig/tests/deplibs.test	Fri Jun  1 07:05:34 2007
-+++ libtool-1.5.24/tests/deplibs.test	Mon Oct  8 15:53:25 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/deplibs.test libtool-1.5.24/tests/deplibs.test
+--- libtool-1.5.24.orig/tests/deplibs.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/deplibs.test	Wed Jan 23 13:23:56 2008
 @@ -13,19 +13,19 @@
  # Check that things are built.
  if test -f ../demo/libhello.la && cd ../demo; then :
@@ -1176,7 +1038,7 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  
  echo "linking a shared library against a static library"
 -if $make deplibs-check && test -f hell0; then :
-+if $make deplibs-check && test -f hell0 -o -f hell0$EXEEXT; then :
++if $make deplibs-check && test -f hell0$EXEEXT; then :
  else
    echo "= cannot build the test program, check your deplibs_check_method"
    status=1
@@ -1184,13 +1046,13 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  
  echo "executing the test program"
 -if ./hell0; then :
-+if ./hell0 || ./hell0$EXEEXT; then :
++if ./hell0$EXEEXT; then :
  else
    echo "= cannot execute the test program, check your deplibs_check_method"
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/link-order.test libtool-1.5.24/tests/link-order.test
---- libtool-1.5.24.orig/tests/link-order.test	Fri Jun  1 07:05:35 2007
-+++ libtool-1.5.24/tests/link-order.test	Mon Sep 24 14:34:35 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/link-order.test libtool-1.5.24/tests/link-order.test
+--- libtool-1.5.24.orig/tests/link-order.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/link-order.test	Wed Jan 23 12:02:16 2008
 @@ -38,13 +38,31 @@
    mkdir $srcdir
  
@@ -1225,71 +1087,53 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  int b_$i() { return 1 + c; }
  EOF
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/mdemo-exec.test libtool-1.5.24/tests/mdemo-exec.test
---- libtool-1.5.24.orig/tests/mdemo-exec.test	Fri Jun  1 07:05:35 2007
-+++ libtool-1.5.24/tests/mdemo-exec.test	Fri Sep 21 11:43:30 2007
-@@ -10,7 +10,7 @@
- fi
- . $srcdir/defs || exit 1
- 
--if test -f ../mdemo/mdemo$EXEEXT; then :
-+if test -f ../mdemo/mdemo$EXEEXT -o -f ../mdemo/mdemo; then :
- else
-   echo "You must run mdemo-make.test before running $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/mdemo-exec.test libtool-1.5.24/tests/mdemo-exec.test
+--- libtool-1.5.24.orig/tests/mdemo-exec.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/mdemo-exec.test	Wed Jan 23 13:24:50 2008
 @@ -20,13 +20,13 @@
  echo "Executing uninstalled programs in ../mdemo"
  
  status=0
 -if ../mdemo/mdemo_static ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
-+if ../mdemo/mdemo_static ../mdemo/foo1.la ../mdemo/libfoo2.la || ../mdemo/mdemo_static$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
++if ../mdemo/mdemo_static$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
  else
    echo "$0: execution of ../mdemo/mdemo_static failed" 1>&2
    status=1
  fi
  
 -if ../mdemo/mdemo ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
-+if ../mdemo/mdemo ../mdemo/foo1.la ../mdemo/libfoo2.la || ../mdemo/mdemo$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
++if ../mdemo/mdemo$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
  else
    echo "$0: execution of ../mdemo/mdemo failed" 1>&2
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/mdemo-inst.test libtool-1.5.24/tests/mdemo-inst.test
---- libtool-1.5.24.orig/tests/mdemo-inst.test	Fri Jun  1 07:05:35 2007
-+++ libtool-1.5.24/tests/mdemo-inst.test	Fri Sep 21 11:45:21 2007
-@@ -11,7 +11,7 @@
- . $srcdir/defs || exit 1
- 
- # Check that things are built.
--if test -f ../mdemo/mdemo$EXEEXT; then :
-+if test -f ../mdemo/mdemo$EXEEXT -o -f ../mdemo/mdemo; then :
- else
-   echo "You must run mdemo-make.test before $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/mdemo-inst.test libtool-1.5.24/tests/mdemo-inst.test
+--- libtool-1.5.24.orig/tests/mdemo-inst.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/mdemo-inst.test	Wed Jan 23 13:25:16 2008
 @@ -28,13 +28,13 @@
  PATH=$prefix/lib:$PATH
  
  status=0
 -if $prefix/bin/mdemo_static $prefix/lib/foo1.la $prefix/lib/libfoo2.la; then :
-+if $prefix/bin/mdemo_static $prefix/lib/foo1.la $prefix/lib/libfoo2.la || $prefix/bin/mdemo_static$EXEEXT $prefix/lib/foo1.la $prefix/lib/libfoo2.la; then :
++if $prefix/bin/mdemo_static$EXEEXT $prefix/lib/foo1.la $prefix/lib/libfoo2.la; then :
  else
    echo "$0: cannot execute $prefix/bin/mdemo_static" 1>&2
    status=1
  fi
  
 -if $prefix/bin/mdemo $prefix/lib/foo1.la $prefix/lib/libfoo2.la; then :
-+if $prefix/bin/mdemo $prefix/lib/foo1.la $prefix/lib/libfoo2.la || $prefix/bin/mdemo$EXEEXT $prefix/lib/foo1.la $prefix/lib/libfoo2.la; then :
++if $prefix/bin/mdemo$EXEEXT $prefix/lib/foo1.la $prefix/lib/libfoo2.la; then :
  else
    echo "$0: cannot execute $prefix/bin/mdemo" 1>&2
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/mdemo2-exec.test libtool-1.5.24/tests/mdemo2-exec.test
---- libtool-1.5.24.orig/tests/mdemo2-exec.test	Fri Jun  1 07:05:36 2007
-+++ libtool-1.5.24/tests/mdemo2-exec.test	Fri Sep 21 11:43:45 2007
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/mdemo2-exec.test libtool-1.5.24/tests/mdemo2-exec.test
+--- libtool-1.5.24.orig/tests/mdemo2-exec.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/mdemo2-exec.test	Wed Jan 23 13:25:39 2008
 @@ -10,7 +10,7 @@
  fi
  . $srcdir/defs || exit 1
  
 -if test -f ../mdemo2/mdemo2; then :
-+if test -f ../mdemo2/mdemo2 -o -f ../mdemo2/mdemo2$EXEEXT; then :
++if test -f ../mdemo2/mdemo2$EXEEXT; then :
  else
    echo "You must run mdemo2-make.test before running $0" 1>&2
    exit 77
@@ -1298,77 +1142,59 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  
  status=0
 -if ../mdemo2/mdemo2_static ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
-+if ../mdemo2/mdemo2_static ../mdemo/foo1.la ../mdemo/libfoo2.la || ../mdemo2/mdemo2_static$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
++if ../mdemo2/mdemo2_static$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
  else
    echo "$0: execution of ../mdemo2/mdemo2_static failed" 1>&2
    status=1
  fi
  
 -if ../mdemo2/mdemo2 ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
-+if ../mdemo2/mdemo2 ../mdemo/foo1.la ../mdemo/libfoo2.la || ../mdemo2/mdemo2$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
++if ../mdemo2/mdemo2$EXEEXT ../mdemo/foo1.la ../mdemo/libfoo2.la; then :
  else
    echo "$0: execution of ../mdemo2/mdemo2 failed" 1>&2
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/pdemo-exec.test libtool-1.5.24/tests/pdemo-exec.test
---- libtool-1.5.24.orig/tests/pdemo-exec.test	Fri Jun  1 07:05:36 2007
-+++ libtool-1.5.24/tests/pdemo-exec.test	Fri Sep 21 11:43:59 2007
-@@ -10,7 +10,7 @@
- fi
- . $srcdir/defs || exit 1
- 
--if test -f ../pdemo/hell$EXEEXT; then :
-+if test -f ../pdemo/hell$EXEEXT -o -f ../pdemo/hell; then :
- else
-   echo "You must run pdemo-make.test before running $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/pdemo-exec.test libtool-1.5.24/tests/pdemo-exec.test
+--- libtool-1.5.24.orig/tests/pdemo-exec.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/pdemo-exec.test	Wed Jan 23 13:26:54 2008
 @@ -20,19 +20,19 @@
  echo "Executing uninstalled programs in ../pdemo"
  
  status=0
 -if ../pdemo/hell_static| grep 'Welcome to GNU Hell'; then :
-+if ../pdemo/hell_static| grep 'Welcome to GNU Hell' || ../pdemo/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if ../pdemo/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute ../pdemo/hell_static" 1>&2
    status=1
  fi
  
 -if ../pdemo/hell | grep 'Welcome to GNU Hell'; then :
-+if ../pdemo/hell | grep 'Welcome to GNU Hell' || ../pdemo/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if ../pdemo/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute ../pdemo/hell" 1>&2
    status=1
  fi
  
 -if ../pdemo/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
-+if ../pdemo/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)' || ../pdemo/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
++if ../pdemo/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
  else
    echo "$0: cannot execute ../pdemo/helldl" 1>&2
    status=1
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/pdemo-inst.test libtool-1.5.24/tests/pdemo-inst.test
---- libtool-1.5.24.orig/tests/pdemo-inst.test	Fri Jun  1 07:05:36 2007
-+++ libtool-1.5.24/tests/pdemo-inst.test	Fri Sep 21 11:45:45 2007
-@@ -11,7 +11,7 @@
- . $srcdir/defs || exit 1
- 
- # Check that things are built.
--if test -f ../pdemo/hell$EXEEXT; then :
-+if test -f ../pdemo/hell$EXEEXT -o -f ../pdemo/hell; then :
- else
-   echo "You must run pdemo-make.test before $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/pdemo-inst.test libtool-1.5.24/tests/pdemo-inst.test
+--- libtool-1.5.24.orig/tests/pdemo-inst.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/pdemo-inst.test	Wed Jan 23 13:27:20 2008
 @@ -25,13 +25,13 @@
  
  echo "= Executing installed programs"
  status=0
 -if $prefix/bin/hell_static | grep 'Welcome to GNU Hell'; then :
-+if $prefix/bin/hell_static | grep 'Welcome to GNU Hell' || $prefix/bin/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if $prefix/bin/hell_static$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute $prefix/bin/hell_static" 1>&2
    status=1
  fi
  
 -if $prefix/bin/hell | grep 'Welcome to GNU Hell'; then :
-+if $prefix/bin/hell | grep 'Welcome to GNU Hell' || $prefix/bin/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
++if $prefix/bin/hell$EXEEXT | grep 'Welcome to GNU Hell'; then :
  else
    echo "$0: cannot execute $prefix/bin/hell" 1>&2
  
@@ -1377,28 +1203,19 @@ diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/t
  fi
  
 -if $prefix/bin/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
-+if $prefix/bin/helldl | $EGREP -e '(Welcome to .*GNU Hell|unsupported)' || $prefix/bin/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
++if $prefix/bin/helldl$EXEEXT | $EGREP -e '(Welcome to .*GNU Hell|unsupported)'; then :
  else
    echo "$0: cannot execute $prefix/bin/helldl" 1>&2
  
-diff -rubB -x Makefile.* -x ac* -x configure* -x ltmain.sh libtool-1.5.24.orig/tests/tagdemo-exec.test libtool-1.5.24/tests/tagdemo-exec.test
---- libtool-1.5.24.orig/tests/tagdemo-exec.test	Fri Jun  1 07:05:36 2007
-+++ libtool-1.5.24/tests/tagdemo-exec.test	Fri Sep 21 11:44:23 2007
-@@ -10,7 +10,7 @@
- fi
- . $srcdir/defs || exit 1
- 
--if test -f ../tagdemo/tagdemo$EXEEXT; then :
-+if test -f ../tagdemo/tagdemo$EXEEXT -o -f ../tagdemo/tagdemo; then :
- else
-   echo "You must run tagdemo-make.test before running $0" 1>&2
-   exit 77
+diff -ru -x Makefile.in -x acinclude.m4 -x aclocal.m4 -x configure -x ltmain.sh -x *stamp* -x *.texi libtool-1.5.24.orig/tests/tagdemo-exec.test libtool-1.5.24/tests/tagdemo-exec.test
+--- libtool-1.5.24.orig/tests/tagdemo-exec.test	Wed Jan 23 11:08:41 2008
++++ libtool-1.5.24/tests/tagdemo-exec.test	Wed Jan 23 13:32:47 2008
 @@ -19,7 +19,7 @@
  # Check to see if the programs really run.
  echo "Executing uninstalled programs in ../tagdemo"
  
 -if ../tagdemo/tagdemo; then :
-+if ../tagdemo/tagdemo || ../tagdemo/tagdemo$EXEEXT; then :
++if ../tagdemo/tagdemo$EXEEXT; then :
  else
    echo "$0: cannot execute ../tagdemo/tagdemo" 1>&2
    status=1
