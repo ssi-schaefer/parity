@@ -27,3 +27,29 @@ parity 1.0.2
 This release fixes minor issues with Visul Studio .NET 2003. It also introduces a brand new statistic collection mechanism, which allows for much more informations to be collected during a parity run. To enable statistics collection, simply add a line containing "StatisticsFile=/path/to/stat.file" to your parity.conf.
 
 parity now supports setting the Stack and Heap reserve and commit sizes via configuration.
+
+parity 1.0.3
+------------
+
+Configuration File lookup and loading has been reviewed. now it is possible to load partial configuration files, which only contain additions to an allready loaded one.
+
+Fixed an issue, where parity would use a lot of CPU time, while waiting for external tasks.
+
+Added support for Visual Studio 2008 (allthough not throughout tested yet).
+
+The parity.loader allways logs to debug output (using OutputDebugStringA). This can be monitored using a tool like the DbgView utility from SysInternals.
+
+Minor improvements to parity.runtime made the whole package behave better with existing code.
+
+Added support for Cygwin (not throughout tested yes). See the wiki http://parity.wiki.sourceforge.net/Building+parity+from+Cygwin on how to install, and http://parity.wiki.sourceforge.net/HowTo+Use+parity+and+libtool+together on how to use parity.
+Cygwin support was also added to the native Windows build of parity. This means, that you can build parity using cl.exe (instead of gcc) and still be able to use parity inside cygwin with full patch conversion capabilities.
+
+Added a new graphical configuration editor, writte in managed C++. This has it's own configuration inside the solution, since it need to build parity.utils as managed code.
+
+Fixed an issue, where the -rpath option was not recognized correctly.
+
+Fixed an issue, where the loader would output junk to the console.
+
+Fixed an issue, where the order of option recognition made parity fail to recognize some options correctly
+
+The Libtool 1.5.24 patch (contained within the parity package in parity.patches) has been reviewed, and now only supports parity if the host is i586-pc-winnt (really *-*-winnt*).
