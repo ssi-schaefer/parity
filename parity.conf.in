@@ -17,6 +17,9 @@ LinkerExe = @ParityLinker@
 # ManifestExe (Path): Initial Value: ""
 ManifestExe = @ParityManifest@
 
+# AdditionalExecPaths (PathVector): Initial Value: PathVector()
+@ParityAdditionalExecPaths@
+
 # SysIncludePaths (PathVector): Initial Value: PathVector()
 @ParitySysIncludePaths@
 

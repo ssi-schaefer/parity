@@ -42,11 +42,15 @@ namespace parity
 			Path getPath();
 			PathVector getPathVector();
 
+			bool extend(const Path& path);
+			bool set(const std::string& value);
+
 			static Environment fromString(const std::string& value);
 
 		private:
 			Environment() {}
 			std::string value_;
+			std::string varname_;
 		};
 	}
 }

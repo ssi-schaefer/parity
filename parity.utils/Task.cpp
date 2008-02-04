@@ -26,6 +26,7 @@
 #include "Context.h"
 #include "Log.h"
 #include "Timing.h"
+#include "Environment.h"
 
 #include <iostream>
 #include <sstream>
@@ -51,11 +52,38 @@ namespace parity
 	{
 		unsigned int Task::taskCounter_;
 
+		bool Task::prepareEnvironment()
+		{
+			Environment pth("PATH");
+			PathVector& paths = Context::getContext().getAdditionalExecPaths();
+
+			for(PathVector::iterator it = paths.begin(); it != paths.end(); ++it)
+			{
+				// this converts all paths to native ones as a side-effect!
+				it->toNative();
+
+				if(!pth.extend(*it))
+					return false;
+
+				Log::verbose("extended PATH with: %s\n", it->get().c_str());
+			}
+
+			Environment tmp("TMP");
+			Path ptmp = tmp.getPath();
+			ptmp.toForeign();
+			tmp.set(ptmp.get());
+
+			return true;
+		}
+
 		bool Task::execute(const Path& executable, const ArgumentVector& arguments)
 		{
 			Color col(Context::getContext().getColorMode());
 			Path pth(executable);
 			pth.toNative();
+
+			if(!prepareEnvironment())
+				throw Exception("cannot prepare the environment for execution...");
 
 			std::ostringstream oss;
 			oss << "[" << ++taskCounter_ << "] " << executable.file();

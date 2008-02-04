@@ -16,6 +16,9 @@ AssemblerExe = @ParityAssembler@
 # LinkerExe (Path): Initial Value: ""
 LinkerExe = @ParityLinker@
 
+# AdditionalExecPaths (PathVector): Initial Value: PathVector()
+@ParityAdditionalExecPaths@
+
 # SysIncludePaths (PathVector): Initial Value: PathVector()
 @ParitySysIncludePaths@
 

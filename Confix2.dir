@@ -147,6 +147,38 @@ AC_DEFUN([PARITY_LOOKUP_SDK],
 	eval "$SdkLibVar=\\\"$SdkLookedUpLib\\\""
 ])
 
+AC_DEFUN([PARITY_FIND_ADDITIONAL_EXEC_PATHS],
+[
+	# WARNING: $1 must be an absolute path!
+	ExecutableRoot=$(dirname $1)
+	
+	AC_MSG_CHECKING([for paths required to execute $1])
+
+	RelPathsVs7=". ../../Common7/Tools ../../Common7/Tools/Bin ../../Common7/IDE"
+	# those are for now the same...
+	# RelPathsVs8=${RelPathsVs7}
+	# RelPathsVs9=${RelPathsVs8}
+
+	PathCount=0
+	AllPaths=
+	for path in ${RelPathsVs7} ${RelPathsVs8} ${RelPathsVs9}; do
+		if test -d "$ExecutableRoot/$path"; then
+			FullPath=$(cd "$ExecutableRoot/$path"; pwd)
+			case ":${AllPaths}:" in
+			*":${FullPath}:"*) ;;
+			*) 
+				AllPaths="${AllPaths}${AllPaths:+:}:${FullPath}" 
+				PathCount=$(($PathCount + 1))
+
+				echo "AdditionalExecPaths = $FullPath" >> ${$2}
+				;;
+			esac
+		fi
+	done
+
+	AC_MSG_RESULT([added $PathCount paths])
+])
+
 AC_DEFUN([PARITY_CONFIGURE],
 [
 
@@ -159,6 +191,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	ParitySysIncludePaths="__parity.include"
 	ParitySysLibraryPaths="__parity.library"
+	ParityAdditionalExecPaths="__parity.paths"
 
 	case $host in
 	*-*-interix*|*-*-winnt*) PathConversion='winpath2unix' ;;
@@ -238,6 +271,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	rm -f $ParitySysIncludePaths > /dev/null 2>&1
 	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
+	rm -f $ParityAdditionalExecPaths > /dev/null 2>&1
 
 	echo "SysIncludePaths = $prefix/include/parity.runtime" >> $ParitySysIncludePaths
 	echo "SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
@@ -245,6 +279,11 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	echo "SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
 	echo "SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
+
+	#
+	# Lookup required paths.
+	#
+	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
 
 	#
 	# Finally Substitute Variables
@@ -255,6 +294,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST(ParityLinker)
 	AC_SUBST(ParityManifest)
 
+	AC_SUBST_FILE(ParityAdditionalExecPaths)
 	AC_SUBST_FILE(ParitySysIncludePaths)
 	AC_SUBST_FILE(ParitySysLibraryPaths)
 

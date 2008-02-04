@@ -35,6 +35,8 @@ namespace parity
 
 			if(env)
 				value_ = env;
+
+			varname_ = value;
 		}
 
 		std::string Environment::getValue()
@@ -86,6 +88,46 @@ namespace parity
 			env.value_ = value;
 
 			return env;
+		}
+
+		bool Environment::extend(const Path& path)
+		{
+#ifdef _WIN32
+			char sep = ';';
+#else
+			char sep = ':';
+#endif
+
+			if(!path.isNative())
+				throw Exception("path must be in native format!");
+
+			//
+			// strip trailing seperators
+			//
+			while(value_[value_.length()] == sep)
+				value_ = value_.substr(0, value_.length() -1);
+
+			//
+			// Now append one seperator.
+			//
+			value_ += sep;
+
+			//
+			// now the value
+			//
+			value_.append(path.get());
+
+			return set(value_);
+		}
+
+		bool Environment::set(const std::string& value)
+		{
+			value_ = value;
+#ifdef _WIN32
+			return (SetEnvironmentVariableA(varname_.c_str(), value.c_str()) == TRUE);
+#else
+			return (setenv(varname_.c_str(), value.c_str(), 1) == 0);
+#endif
 		}
 	}
 }

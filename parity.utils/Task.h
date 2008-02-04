@@ -46,6 +46,8 @@ namespace parity
 			void addFilter(const std::string& filt, bool wholeLine) { filters_[filt] = wholeLine; }
 			bool execute(const Path& executable, const ArgumentVector& arguments);
 
+			bool prepareEnvironment();
+
 			void createCommandScript(ArgumentVector& vec);
 
 			void setOutStream(std::ostream& out) { out_ = &out; }
