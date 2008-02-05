@@ -150,7 +150,7 @@ AC_DEFUN([PARITY_LOOKUP_SDK],
 AC_DEFUN([PARITY_FIND_ADDITIONAL_EXEC_PATHS],
 [
 	# WARNING: $1 must be an absolute path!
-	ExecutableRoot=$(dirname $1)
+	ExecutableRoot="$(dirname "$1")"
 	
 	AC_MSG_CHECKING([for paths required to execute $1])
 
