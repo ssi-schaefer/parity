@@ -1,0 +1,19 @@
+diff -ru ./automake-1.5.orig/lib/config.guess ./automake-1.5/lib/config.guess
+--- ./automake-1.5.orig/lib/config.guess	2008-02-06 11:40:48 +0100
++++ ./automake-1.5/lib/config.guess	2008-02-06 11:50:36 +0100
+@@ -745,6 +745,15 @@
+     i*:PW*:*)
+ 	echo ${UNAME_MACHINE}-pc-pw32
+ 	exit 0 ;;
++    x86:Interix*:[3456]*)
++       eval $set_cc_for_build
++       echo "__PARITY__" > $dummy.c
++       if $CC_FOR_BUILD -E $dummy.c | grep "__PARITY__" > /dev/null 2>&1; then
++           echo i586-pc-interix${UNAME_RELEASE}
++       else
++           echo i586-pc-winnt
++       fi
++    exit 0;;
+     i*:Windows_NT*:* | Pentium*:Windows_NT*:*)
+ 	# How do we know it's Interix rather than the generic POSIX subsystem?
+ 	# It also conflicts with pre-2.0 versions of AT&T UWIN. Should we

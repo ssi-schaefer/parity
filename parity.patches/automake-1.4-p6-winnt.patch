@@ -1,0 +1,20 @@
+diff -ru ./automake-1.4-p6.orig/config.guess ./automake-1.4-p6/config.guess
+--- ./automake-1.4-p6.orig/config.guess	2008-02-06 11:40:47 +0100
++++ ./automake-1.4-p6/config.guess	2008-02-06 11:49:49 +0100
+@@ -765,8 +765,14 @@
+     i*:PW*:*)
+ 	echo ${UNAME_MACHINE}-pc-pw32
+ 	exit 0 ;;
+-    x86:Interix*:3*)
+-	echo i386-pc-interix3
++    x86:Interix*:[3456]*)
++       eval $set_cc_for_build
++       echo "__PARITY__" > $dummy.c
++       if $CC_FOR_BUILD -E $dummy.c | grep "__PARITY__" > /dev/null 2>&1; then
++           echo i586-pc-interix${UNAME_RELEASE}
++       else
++           echo i586-pc-winnt
++       fi
+ 	exit 0 ;;
+     i*:Windows_NT*:* | Pentium*:Windows_NT*:*)
+ 	# How do we know it's Interix rather than the generic POSIX subsystem?
