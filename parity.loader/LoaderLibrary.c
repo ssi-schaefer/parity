@@ -246,6 +246,48 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 
 	if(handle) {
 		LibAddToCache(name, handle);
+
+		if(iEnableRTL)
+		{
+			// Add this library to LD_PRELOAD, so that all children
+			// get my symbols...
+
+			int iLdPreloadSize = GetEnvironmentVariable("LD_RTL_LIBS", 0, 0);
+
+			if(!iLdPreloadSize)
+			{
+				if(GetLastError() != ERROR_ENVVAR_NOT_FOUND) {
+					LogWarning("cannot read environment for runtime linking!\n");
+					ExitProcess(1);
+				}
+
+				if(!SetEnvironmentVariable("LD_RTL_LIBS", name)) {
+					LogWarning("cannot write environment for runtime linking!\n");
+					ExitProcess(1);
+				}
+			} else {
+				int iBufSize = iLdPreloadSize + lstrlen(name) + 2;
+				char* pcBuffer = HeapAlloc(GetProcessHeap(), 0, iBufSize);
+
+				if(!pcBuffer) {
+					LogWarning("cannot allocate buffer for runtime linking\n");
+					ExitProcess(1);
+				}
+
+				if(!GetEnvironmentVariable("LD_RTL_LIBS", pcBuffer, iBufSize)) {
+					LogWarning("cannot read existing environment for runtime linking!\n");
+					ExitProcess(1);
+				}
+
+				lstrcat(pcBuffer, " ");
+				lstrcat(pcBuffer, name);
+
+				if(!SetEnvironmentVariable("LD_RTL_LIBS", pcBuffer)) {
+					LogWarning("cannot write environment for runtime linking!\n");
+				}
+			}
+		}
+
 		return handle;
 	} else if(strict) {
 		unsigned int i;

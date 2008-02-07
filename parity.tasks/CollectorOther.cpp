@@ -318,6 +318,7 @@ namespace parity
 			binary::Symbol::SymbolVector exportedSymbols;
 			binary::Symbol::SymbolVector staticImports;
 			tasks::BinaryGatherer::ImportHybridityMap loadedImports;
+			utils::PathVector origObjects = utils::Context::getContext().getObjectsLibraries();
 
 			try {
 				tasks::BinaryGatherer gatherer;
@@ -359,7 +360,10 @@ namespace parity
 			// code from parity.loader. this means that it must be present
 			// always, even if it's not required.
 			//
-			threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
+			TaskStubs::LoaderGeneratorData data;
+			data.imports = &loadedImports;
+			data.origcmdline = &origObjects;
+			threading.run(TaskStubs::runLoaderGenerator, &data, false);
 
 			//
 			// The last part finally is linking itself. Before doing this, all

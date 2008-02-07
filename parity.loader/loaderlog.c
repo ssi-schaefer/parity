@@ -47,7 +47,6 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 		while(*end != '%' && *end != '\0')
 			++end;
 
-		//WriteFile(file, ptr, end - ptr, &iBytesWritten, 0);
 		lstrcpyn(&buffer[lstrlen(buffer)], ptr, (end - ptr) + 1);
 
 		ptr = end+2;
@@ -87,21 +86,18 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 					}
 					while(num != 0);
 
-					//WriteFile(file, wh, lstrlen(wh), &iBytesWritten, 0);
 					lstrcat(buffer, wh);
 				}
 				break;
 			case 's':
 				{
 					const char* tmp = va_arg(args, const char*);
-					//WriteFile(file, tmp, lstrlen(tmp), &iBytesWritten, 0);
 					lstrcat(buffer, tmp);
 				}
 				break;
 			default:
 				{
 					const char msgErrUnsupported[] = "<unsupported specifier>";
-					//WriteFile(file, msgErrUnsupported, sizeof(msgErrUnsupported), &iBytesWritten, 0);
 					lstrcat(buffer, msgErrUnsupported);
 				}
 			}
@@ -171,9 +167,6 @@ void LogInit()
 	else
 		gLevel = LevelWarning;
 
-	//
-	// TODO: handle LD_DEBUG_OUTPUT
-	//
 	if((szOut = GetEnvironmentVariable("LD_DEBUG_OUTPUT", 0, 0)) != 0)
 	{
 		char * ptrOut = HeapAlloc(GetProcessHeap(), 0, szOut);

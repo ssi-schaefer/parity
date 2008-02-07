@@ -28,6 +28,29 @@
 #include <stdio.h>
 #include <windows.h>
 
+int iEnableRTL = 0;
+
+static char * ParityLoaderGetMangledRTLName(const char* name)
+{
+	static char buffer[256];
+	int i = 0;
+
+	lstrcpy(buffer, "LD_RTL_ENABLE_");
+
+	for(i = lstrlen(buffer); *name != '\0'; ++name)
+	{
+		char c = *name;
+		if((c >= 0x30 && c <= 0x39 || c >= 0x41 && c <= 0x5A 
+				|| c >= 0x61 && c <= 0x7A || c == '_'))
+			buffer[i++] = c;
+		else
+			buffer[i++] = '_';
+	}
+
+	buffer[i] = '\0';
+	return buffer;
+}
+
 LoaderStatus ParityLoaderInit()
 {
 	int isBindNow = 0;
@@ -36,6 +59,34 @@ LoaderStatus ParityLoaderInit()
 	LogInit();
 
 	LogDebug("=== ParityLoader intializing for %s. ===\n", ParityLoaderGeneratedImageName);
+
+	switch(ParityLoaderGeneratedRuntimeLinking)
+	{
+	case RuntimeLinkageDisabled:
+		iEnableRTL = 0;
+		break;
+	case RuntimeLinkageEnabled:
+		iEnableRTL = 1;
+		break;
+	case RuntimeLinkageInherit:
+		{
+			char * pcEnvVar = ParityLoaderGetMangledRTLName(ParityLoaderGeneratedImageName);
+			LogDebug("inheriting, trying %s\n", pcEnvVar);
+
+			if(!GetEnvironmentVariable(pcEnvVar, 0, 0)) {
+				LogDebug("inheriting, trying LD_RTL\n");
+				if(GetEnvironmentVariable("LD_RTL", 0, 0)) {
+					iEnableRTL = 1;
+				}
+			} else {
+				iEnableRTL = 1;
+			}
+		}
+
+		break;
+	}
+
+	LogDebug("runtime linking is %s\n", iEnableRTL ? "enabled" : "disabled");
 
 	ParityLoaderPreloadSymbols();
 
@@ -51,11 +102,36 @@ LoaderStatus ParityLoaderInit()
 		int			cntLazy = 0;
 		void*		handle = 0;
 		ImportItem*	import = libraries->imports;
+		char*		pcRtlVar = iEnableRTL ? ParityLoaderGetMangledRTLName(libraries->name) : 0;
+
+		//
+		// set runtime linkage flags accordingly...
+		//
+		if(pcRtlVar)
+		{
+			LogDebug("activating runtime linkage for %s (%s)\n", libraries->name, pcRtlVar);
+
+			if(!SetEnvironmentVariable(pcRtlVar, "on"))
+			{
+				LogWarning("cannot set environment for runtime linkage (target %s)\n!", ParityLoaderGeneratedImageName);
+			}
+
+			//
+			// Runtime link allready loaded stuff from children
+			//
+			ParityLoaderRuntimeLink(libraries);
+		}
 
 		//
 		// load library handle.
 		//
 		handle = LoaderLibraryGetHandle(libraries->name, 1);
+
+		//
+		// unset runtime linkage flags.
+		//
+		if(pcRtlVar)
+			SetEnvironmentVariable(pcRtlVar, 0);
 
 		//
 		// load all imports for that library.

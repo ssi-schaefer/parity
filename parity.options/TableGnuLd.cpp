@@ -51,6 +51,8 @@ namespace parity
 			{ "-subsys"		,setSubsystem				},
 			{ "-rpath"		,addRunPath					},
 			{ "-e"			,setEntryPoint				},
+			{ "-brtl"		,setRuntimeLinkage			},
+			{ "-bnortl"		,setRuntimeLinkage			},
 			{ "-l"			,addObjectsLibraries		},
 			{ ".lib"		,addObjectsLibraries		},
 			{ ".Lib"		,addObjectsLibraries		},

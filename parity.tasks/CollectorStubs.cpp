@@ -146,15 +146,16 @@ namespace parity
 			return 0;
 		}
 	
-		unsigned int THREADINGAPI TaskStubs::runLoaderGenerator(void* ptrMap)
+		unsigned int THREADINGAPI TaskStubs::runLoaderGenerator(void* data)
 		{
 			utils::Timing::instance().start("Loader Generator");
 
 			try {
-				if(!ptrMap)
+				if(!data || !((LoaderGeneratorData*)data)->imports || !((LoaderGeneratorData*)data)->origcmdline)
 					throw utils::Exception("pointer to imports invalid, cannot generate loader!");
 
-				parity::tasks::LoaderGenerator generator(*(tasks::BinaryGatherer::ImportHybridityMap*)ptrMap);
+				parity::tasks::LoaderGenerator generator(*(tasks::BinaryGatherer::ImportHybridityMap*)((LoaderGeneratorData*)data)->imports,
+					*(utils::PathVector*)((LoaderGeneratorData*)data)->origcmdline);
 				generator.doWork();
 			} catch(const utils::Exception& e) {
 				utils::Log::error("while generating loader: %s\n", e.what());

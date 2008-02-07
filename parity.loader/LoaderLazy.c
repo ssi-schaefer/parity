@@ -62,17 +62,17 @@ typedef struct {
 static PreloadCacheNode* gPreloadLibCache = 0;
 static unsigned int gPreloadLibCacheCount = 0;
 
-static void PreloadCreateCache()
+static void PreloadCreateCache(PreloadCacheNode** cache, unsigned int* count, const char * env)
 {
 	unsigned int szPreload = 0;
 
-	szPreload = GetEnvironmentVariable("LD_PRELOAD", 0, 0);
+	szPreload = GetEnvironmentVariable(env, 0, 0);
 
 	if(szPreload) {
 		char * ptrPreload = HeapAlloc(GetProcessHeap(), 0, szPreload);
 
-		if(GetEnvironmentVariable("LD_PRELOAD", ptrPreload, szPreload) == 0) {
-			LogWarning("cannot get environment variable LD_PRELOAD!\n");
+		if(GetEnvironmentVariable(env, ptrPreload, szPreload) == 0) {
+			LogWarning("cannot get environment variable %s!\n", env);
 		} else {
 			char* start = ptrPreload;
 			char* end = ptrPreload;
@@ -83,29 +83,29 @@ static void PreloadCreateCache()
 			{
 				int isSep = 0;
 
-				while(*end != ' ' && *end != '\0')
+				while(*end != ' ' && *end != ',' && *end != '\0')
 					++end;
 
-				if(*end == ' ')
+				if(*end != '\0')
 				{
 					isSep = 1;
 					*end = '\0';
 					++end;
 				}
 
-				if(!gPreloadLibCache)
-					gPreloadLibCache = HeapAlloc(GetProcessHeap(), 0, sizeof(PreloadCacheNode));
+				if(!*cache)
+					*cache = HeapAlloc(GetProcessHeap(), 0, sizeof(PreloadCacheNode));
 				else
-					gPreloadLibCache = HeapReAlloc(GetProcessHeap(), 0, gPreloadLibCache, sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
+					*cache = HeapReAlloc(GetProcessHeap(), 0, *cache, sizeof(PreloadCacheNode) * (*count + 1));
 
-				if(!gPreloadLibCache)
+				if(!*cache)
 				{
-					LogWarning("cannot allocate %d bytes for preload cache, this will break preloading!\n", sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
+					LogWarning("cannot allocate %d bytes for cache, this will break preloading!\n", sizeof(PreloadCacheNode) * (*count + 1));
 					LoaderWriteLastWindowsError();
-					gPreloadLibCacheCount = 0;
+					*count = 0;
 				} else {
-					gPreloadLibCache[gPreloadLibCacheCount].name = start;
-					++gPreloadLibCacheCount;
+					(*cache)[*count].name = start;
+					++(*count);
 				}
 
 				start = end;
@@ -113,6 +113,55 @@ static void PreloadCreateCache()
 				if(*end == '\0')
 					break;
 			}
+		}
+	}
+}
+
+void ParityLoaderRuntimeLink(const LibraryItem* library)
+{
+	unsigned int i;
+
+	static PreloadCacheNode* lRTLLibCache = 0;
+	static unsigned int lRTLLibCacheCount = 0;
+
+	if(GetEnvironmentVariable("LD_RTL_LIBS", 0, 0) == 0)
+		return;
+
+	if(!iEnableRTL)
+		return;
+
+	PreloadCreateCache(&lRTLLibCache, &lRTLLibCacheCount, "LD_RTL_LIBS");
+
+	if(lRTLLibCacheCount == 0)
+		return;
+
+	LogDebug("runtime linking %s\n", library->name);
+
+	for(i = 0; i < lRTLLibCacheCount; ++i)
+	{
+		void * handle = LoaderLibraryGetHandle(lRTLLibCache[i].name, 1);
+
+		ImportItem* item = library->imports;
+
+		while(item->name)
+		{
+			void* symbol = 0;
+			//
+			// try loading item from current preload library.
+			//
+
+			if(item->ordinal != 0)
+				symbol = (void*)GetProcAddress((HMODULE)handle, (char*)item->ordinal);
+			else
+				symbol = (void*)GetProcAddress((HMODULE)handle, item->name);
+
+			if(symbol)
+			{
+				LogDebug(" * %s: %s (0x%x).\n", lRTLLibCache[i].name, item->name, symbol);
+				item->import = symbol;
+			}
+
+			++item;
 		}
 	}
 }
@@ -125,7 +174,10 @@ void ParityLoaderPreloadSymbols()
 		return;
 
 	if(!gPreloadLibCache)
-		PreloadCreateCache();
+		PreloadCreateCache(&gPreloadLibCache, &gPreloadLibCacheCount, "LD_PRELOAD");
+
+	if(gPreloadLibCacheCount == 0)
+		return;
 
 	LogDebug("trying to preload symbols from %d preload libraries.\n", gPreloadLibCacheCount);
 

@@ -178,6 +178,11 @@ System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val)
 	return "Unknown";
 }
 
+System::String^ FormatForDisplay(const parity::utils::RtLinkage& val)
+{
+	return gcnew String(parity::utils::Context::getContext().printable(val).c_str());
+}
+
 //
 // Edit Dialog functions.
 //
@@ -303,6 +308,17 @@ void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Color::Color
 	}
 }
 
+void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RtLinkage& val)
+{
+	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
+	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
+
+	if(dlg->ShowDialog() == DialogResult::OK)
+	{
+		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
+	}
+}
+
 //
 // Saving Functions.
 //
@@ -383,3 +399,7 @@ void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, c
 	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
 }
 
+void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RtLinkage& val)
+{
+	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
+}

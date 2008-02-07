@@ -99,6 +99,13 @@ namespace parity
 			RuntimeDynamicDebug
 		} RuntimeType;
 
+		typedef enum {
+			RTLDisabled = 0,
+			RTLEnabled = 1,
+			RTLInherit = 2,
+			RTLUnknown = 3
+		} RtLinkage;
+
 		typedef std::map<std::string, std::string> DefineMap;
 		typedef std::map<Path, LanguageType> SourceMap;
 		typedef std::vector<Path> PathVector;
@@ -123,6 +130,7 @@ namespace parity
 			void convert(SubsystemType& target, const std::string& ref);
 			void convert(SourceMap& target, const std::string& ref);
 			void convert(RuntimeType& target, const std::string& ref);
+			void convert(RtLinkage& target, const std::string& ref);
 
 			std::string printable(const bool& val) { return (val ? "true" : "false"); }
 			std::string printable(const ToolchainType& val);
@@ -136,6 +144,7 @@ namespace parity
 			std::string printable(const SubsystemType& val);
 			std::string printable(const SourceMap& val);
 			std::string printable(const RuntimeType& val);
+			std::string printable(const RtLinkage& val);
 
 			bool operator==(const ContextGen& other);
 			bool operator!=(const ContextGen& other) { return !operator ==(other); }
@@ -224,6 +233,7 @@ namespace parity
 				CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \
 				CTX_GETSET   (long			,HeapCommit			,65536			)  /* linker (default: 64KB) */ \
 				CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
+				CTX_GETSET   (RtLinkage		,RuntimeLinkage		,RTLInherit		)  /* linker */ \
 				CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
 				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no"		)  /* linker */ \
 				CTX_GETSET   (Path			,LinkerExe			,""				)  /* linker */ \

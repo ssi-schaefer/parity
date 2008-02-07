@@ -103,6 +103,7 @@ namespace parity
 
 			const char*				genImageName	= 0;
 			utils::SubsystemType	genSubsystem	= utils::SubsystemUnknown;
+			utils::RtLinkage		genLinkage		= utils::RTLUnknown;
 			utils::PathVector		genRunPaths;
 			InspectorLibraryVector	genLibs;
 			bool					genSectionFound	= false;
@@ -122,6 +123,7 @@ namespace parity
 					genRunPathPtr	= (const char*)img.getHeader().getPointerFromVA(pointers->rpaths);
 					genTablePtr		= (unsigned int*)img.getHeader().getPointerFromVA(pointers->table);
 					genSubsystem	= pointers->subsystem;
+					genLinkage		= pointers->linkage;
 
 					if(*genTablePtr)
 						genLibs		= InspectorLayoutToLibraries((InspectorLibrariesPointerLayoutVA*)img.getHeader().getPointerFromVA(*genTablePtr), img.getHeader());
@@ -137,6 +139,7 @@ namespace parity
 						utils::Log::verbose("%s: image has no import dependencies!\n", pth.file().c_str());
 
 					utils::Log::verbose("%s: found subsystem type %d (%s)\n", pth.file().c_str(), genSubsystem, utils::Context::getContext().printable(genSubsystem).c_str());
+					utils::Log::verbose("%s: image runtime linkage: %d (%s)\n", pth.file().c_str(), genLinkage, utils::Context::getContext().printable(genLinkage).c_str());
 
 					break;
 				}

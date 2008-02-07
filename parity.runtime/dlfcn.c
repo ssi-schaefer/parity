@@ -60,15 +60,21 @@ void* dlopen(const char* name, int flags)
 {
 	void* handle = 0;
 	const char* conv = LoaderConvertPathToNative(name);
+	int unsetEnv = 0;
 	curError = tabErrors[0];
 
-	if(flags & RTLD_NOW && !GetEnvironmentVariable("LD_BIND_NOW", 0, 0))
+	if(flags & RTLD_NOW && !GetEnvironmentVariable("LD_BIND_NOW", 0, 0)) {
 		SetEnvironmentVariable("LD_BIND_NOW", "on");
+		unsetEnv = 1;
+	}
 
 	//
 	// TODO: implement handling of import libraries?
 	//
 	handle = LoaderLibraryGetHandle(conv, 0);
+
+	if(unsetEnv)
+		SetEnvironmentVariable("LD_BIND_NOW", 0);
 
 	if(!handle)
 		curError = tabErrors[1];
