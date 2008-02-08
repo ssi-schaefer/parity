@@ -60,7 +60,7 @@ namespace parity
 			//  1) try next to exe file
 			//
 			// On All others (UNIX like):
-			//  1) try in configured PARITY_HOME/etc/
+			//  1) try in configured PARITY_SYSCONFDIR/etc/
 			//
 			// And everywhere:
 			//  2) try in current directory
@@ -72,9 +72,7 @@ namespace parity
 
 			files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
 		#else
-			utils::Path pth(PARITY_HOME);
-			pth.append("etc");
-
+			utils::Path pth(PARITY_SYSCONFDIR);
 			files.push_back(ConfigFileVector::value_type(pth, true));
 		#endif
 
@@ -174,8 +172,7 @@ namespace parity
 						location.append("parity.runtime");
 					}
 				#else
-					location = utils::Path(PARITY_HOME);
-					location.append("include");
+					location = utils::Path(PARITY_INCLUDEDIR);
 					location.append("parity.runtime");
 				#endif
 
@@ -278,8 +275,7 @@ namespace parity
 					location = location.base();
 					location.append("parity.runtime.lib");
 				#else
-					location = utils::Path(PARITY_HOME);
-					location.append("lib");
+					location = utils::Path(PARITY_LIBDIR);
 					location.append("libparity_parity.runtime.a");
 
 					if(!location.exists())

@@ -181,8 +181,9 @@ AC_DEFUN([PARITY_FIND_ADDITIONAL_EXEC_PATHS],
 
 AC_DEFUN([PARITY_CONFIGURE],
 [
-
-	PARITY_DIR([PARITY_HOME], [prefix], [Path where parity is installed])
+	PARITY_DIR([PARITY_SYSCONFDIR], [sysconfdir], [Path where configuration is installed])
+	PARITY_DIR([PARITY_INCLUDEDIR], [includedir], [Path where header files are installed])
+	PARITY_DIR([PARITY_LIBDIR], [libdir], [Path where libraries are installed])
 
 	ParityCompiler=
 	ParityAssembler=

@@ -36,7 +36,7 @@
 
 #ifdef HAVE_CONFIG_H
 //
-// required for PARITY_HOME
+// required for PARITY_LIBDIR
 //
 #  include <config.h>
 #endif
@@ -175,8 +175,7 @@ namespace parity
 					location = location.base();
 					location.append("parity.loader.lib");
 				#else
-					location = utils::Path(PARITY_HOME);
-					location.append("lib");
+					location = utils::Path(PARITY_LIBDIR);
 					location.append("libparity_parity.loader.a");
 
 					if(!location.exists())
