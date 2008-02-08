@@ -1,0 +1,910 @@
+Index: parity.tasks/CollectorStubs.cpp
+===================================================================
+--- parity.tasks/CollectorStubs.cpp	(revision 73)
++++ parity.tasks/CollectorStubs.cpp	(working copy)
+@@ -146,15 +146,16 @@
+ 			return 0;
+ 		}
+ 	
+-		unsigned int THREADINGAPI TaskStubs::runLoaderGenerator(void* ptrMap)
++		unsigned int THREADINGAPI TaskStubs::runLoaderGenerator(void* data)
+ 		{
+ 			utils::Timing::instance().start("Loader Generator");
+ 
+ 			try {
+-				if(!ptrMap)
++				if(!data || !((LoaderGeneratorData*)data)->imports || !((LoaderGeneratorData*)data)->origcmdline)
+ 					throw utils::Exception("pointer to imports invalid, cannot generate loader!");
+ 
+-				parity::tasks::LoaderGenerator generator(*(tasks::BinaryGatherer::ImportHybridityMap*)ptrMap);
++				parity::tasks::LoaderGenerator generator(*(tasks::BinaryGatherer::ImportHybridityMap*)((LoaderGeneratorData*)data)->imports,
++					*(utils::PathVector*)((LoaderGeneratorData*)data)->origcmdline);
+ 				generator.doWork();
+ 			} catch(const utils::Exception& e) {
+ 				utils::Log::error("while generating loader: %s\n", e.what());
+Index: parity.tasks/CollectorStubs.h
+===================================================================
+--- parity.tasks/CollectorStubs.h	(revision 73)
++++ parity.tasks/CollectorStubs.h	(working copy)
+@@ -38,6 +38,11 @@
+ 			static unsigned int THREADINGAPI runMsExportGenerator(void*);
+ 			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
+ 			static unsigned int THREADINGAPI runLoaderGenerator(void*);
++
++			struct LoaderGeneratorData {
++				const void* imports;
++				const void* origcmdline;
++			};
+ 		};
+ 
+ 	}
+Index: parity.tasks/LoaderGenerator.cpp
+===================================================================
+--- parity.tasks/LoaderGenerator.cpp	(revision 73)
++++ parity.tasks/LoaderGenerator.cpp	(working copy)
+@@ -150,8 +150,8 @@
+ 			static const unsigned char dataLazyStubPart4[] = { 0x83, 0xC4, 0x04, 0x61, 0xFF, 0x25 };
+ 
+ 
+-		LoaderGenerator::LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports)
+-			: imports_(imports)
++			LoaderGenerator::LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports, const utils::PathVector& origcmdline)
++			: imports_(imports), sorted_objects_(origcmdline)
+ 		{
+ 			//
+ 			// lookup the loader library, and put it on the link line.
+@@ -251,7 +251,7 @@
+ 			for(tasks::BinaryGatherer::ImportHybridityMap::const_iterator it = imports_.begin(); it != imports_.end(); ++it)
+ 			{
+ 				std::string libraryName = it->first.second.getLibraryName();
+-				LoaderWorkingItem& item = items[libraryName];
++				LoaderWorkingItem& item = items[it->first.first];
+ 
+ 				if(item.name.empty())
+ 				{
+@@ -271,7 +271,7 @@
+ 
+ 			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
+ 			{
+-				std::string libraryName   = it->first;
++				std::string libraryName   = it->second.name;
+ 				LoaderWorkingItem& item	  = it->second;	
+ 				unsigned int& indexOfLibNameSym = stringMapping[libraryName];
+ 
+@@ -520,12 +520,17 @@
+ 			//
+ 			// generate table entry seperatly, so they are behind each other.
+ 			//
+-			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
++			for(utils::PathVector::const_iterator olib = sorted_objects_.begin(); olib != sorted_objects_.end(); ++olib)
+ 			{
++				LoaderWorkingMap::iterator it = items.find(*olib);
++
++				if(it == items.end())
++					continue;
++
+ 				//
+ 				// import table now known, so generate library record.
+ 				//
+-				std::string recordName = "$LIB_" + symbolifyName(it->first);
++				std::string recordName = "$LIB_" + symbolifyName(it->second.name);
+ 				binary::Symbol& symRecord = hdr.addSymbol(recordName);
+ 				sectData.markSymbol(symRecord);
+ 				symRecord.setStorageClass(binary::Symbol::ClassStatic);
+@@ -551,8 +556,13 @@
+ 			sectData.markSymbol(symLoaderTable);
+ 			symLoaderTable.setStorageClass(binary::Symbol::ClassExternal);
+ 
+-			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
++			for(utils::PathVector::const_iterator olib = sorted_objects_.begin(); olib != sorted_objects_.end(); ++olib)
+ 			{
++				LoaderWorkingMap::iterator it = items.find(*olib);
++
++				if(it == items.end())
++					continue;
++
+ 				//
+ 				// finally generate a table which contains pointers to all library tables
+ 				//
+@@ -796,7 +806,12 @@
+ 			binary::Symbol& symImageNameData = hdr.addSymbol("$START__ParityLoaderGeneratedImageName");
+ 			symImageNameData.setStorageClass(binary::Symbol::ClassStatic);
+ 			sectRData.markSymbol(symImageNameData);
+-			sectRData.addData(ctx.getOutputFile().file().c_str(), ctx.getOutputFile().file().length() + 1);
++			if(ctx.getSharedLink()) {
++				std::string imagename = ctx.getOutputFile().file() + ".dll";
++				sectRData.addData(imagename.c_str(), imagename.length() + 1);
++			} else {
++				sectRData.addData(ctx.getOutputFile().file().c_str(), ctx.getOutputFile().file().length() + 1);
++			}
+ 			sectRData.padSection();
+ 
+ 			binary::Symbol& symImageNamePtr = hdr.addSymbol("_ParityLoaderGeneratedImageName");
+@@ -808,6 +823,7 @@
+ 			binary::Symbol& symSubsystem = hdr.addSymbol("_ParityLoaderGeneratedSubsystem");
+ 			symSubsystem.setStorageClass(binary::Symbol::ClassExternal);
+ 			sectPtrs.markSymbol(symSubsystem);
++
+ 			//
+ 			// WARNING: since the loader cannot use parity::utils, it needs to
+ 			// define the subsystem values itself, and this must be kept in sync!
+@@ -815,7 +831,19 @@
+ 			int subsys = (int)ctx.getSubsystem();
+ 			sectPtrs.addData(&subsys, sizeof(int));
+ 
++			binary::Symbol& symRuntimeLinkage = hdr.addSymbol("_ParityLoaderGeneratedRuntimeLinking");
++			symRuntimeLinkage.setStorageClass(binary::Symbol::ClassExternal);
++			sectPtrs.markSymbol(symRuntimeLinkage);
++
+ 			//
++			// WARNING: this is to be kept in sync loader <-> utils too!
++			//
++			int rtl = (int)ctx.getRuntimeLinkage();
++			sectPtrs.addData(&rtl, sizeof(int));
++
++			utils::Log::verbose("%s runtime linkage is %d (%s)\n", ctx.getOutputFile().file().c_str(), rtl, ctx.printable(ctx.getRuntimeLinkage()).c_str());
++
++			//
+ 			// now save the object file to disk.
+ 			//
+ 			utils::MemoryFile mem;
+Index: parity.tasks/LoaderGenerator.h
+===================================================================
+--- parity.tasks/LoaderGenerator.h	(revision 73)
++++ parity.tasks/LoaderGenerator.h	(working copy)
+@@ -27,6 +27,7 @@
+ #include <string>
+ 
+ #include <Path.h>
++#include <Context.h>
+ 
+ #include <CoffImport.h>
+ #include <CoffSymbol.h>
+@@ -38,10 +39,11 @@
+ 	{
+ 		class LoaderGenerator {
+ 		public:
+-			LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports);
++			LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports, const utils::PathVector& origcmdline);
+ 			void doWork();
+ 		private:
+ 			const tasks::BinaryGatherer::ImportHybridityMap& imports_;
++			const utils::PathVector& sorted_objects_;
+ 
+ 			typedef struct {
+ 				std::string name;
+@@ -55,7 +57,7 @@
+ 				unsigned int tableIndex;
+ 			} LoaderWorkingItem;
+ 
+-			typedef std::map<std::string, LoaderWorkingItem> LoaderWorkingMap;
++			typedef std::map<utils::Path, LoaderWorkingItem> LoaderWorkingMap;
+ 		};
+ 	}
+ }
+Index: parity.tasks/CollectorOther.cpp
+===================================================================
+--- parity.tasks/CollectorOther.cpp	(revision 73)
++++ parity.tasks/CollectorOther.cpp	(working copy)
+@@ -318,6 +318,7 @@
+ 			binary::Symbol::SymbolVector exportedSymbols;
+ 			binary::Symbol::SymbolVector staticImports;
+ 			tasks::BinaryGatherer::ImportHybridityMap loadedImports;
++			utils::PathVector origObjects = utils::Context::getContext().getObjectsLibraries();
+ 
+ 			try {
+ 				tasks::BinaryGatherer gatherer;
+@@ -359,7 +360,10 @@
+ 			// code from parity.loader. this means that it must be present
+ 			// always, even if it's not required.
+ 			//
+-			threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
++			TaskStubs::LoaderGeneratorData data;
++			data.imports = &loadedImports;
++			data.origcmdline = &origObjects;
++			threading.run(TaskStubs::runLoaderGenerator, &data, false);
+ 
+ 			//
+ 			// The last part finally is linking itself. Before doing this, all
+Index: parity.options/TableGnuGcc.cpp
+===================================================================
+--- parity.options/TableGnuGcc.cpp	(revision 73)
++++ parity.options/TableGnuGcc.cpp	(working copy)
+@@ -59,6 +59,8 @@
+ 			{ "-ansi"		,setAnsiMode				},
+ 			{ "-Wl,-rpath"	,addRunPath					},  // must be before -W to match correctly
+ 			{ "-Wl,-e"		,setEntryPoint				},  // -- " --
++			{ "-Wl,-brtl"	,setRuntimeLinkage			},  // -- " --
++			{ "-Wl,-bnortl"	,setRuntimeLinkage			},  // -- " --
+ 			{ "-Werror"		,setWarningAsError			},	// -- " --
+ 			{ "-w"			,setWarningLevel			},
+ 			{ "-W"			,setWarningLevel			},
+Index: parity.options/TableGnuLd.cpp
+===================================================================
+--- parity.options/TableGnuLd.cpp	(revision 73)
++++ parity.options/TableGnuLd.cpp	(working copy)
+@@ -51,6 +51,8 @@
+ 			{ "-subsys"		,setSubsystem				},
+ 			{ "-rpath"		,addRunPath					},
+ 			{ "-e"			,setEntryPoint				},
++			{ "-brtl"		,setRuntimeLinkage			},
++			{ "-bnortl"		,setRuntimeLinkage			},
+ 			{ "-l"			,addObjectsLibraries		},
+ 			{ ".lib"		,addObjectsLibraries		},
+ 			{ ".Lib"		,addObjectsLibraries		},
+Index: parity.options/Linker.cpp
+===================================================================
+--- parity.options/Linker.cpp	(revision 73)
++++ parity.options/Linker.cpp	(working copy)
+@@ -175,6 +175,18 @@
+ 			return true;
+ 		}
+ 
++		bool setRuntimeLinkage(const char* option, const char* argument, bool& used)
++		{
++			if(strstr(option, "no"))
++				utils::Context::getContext().setRuntimeLinkage(utils::RTLDisabled);
++			else {
++				utils::Log::verbose("enabling runtime linkage!\n");
++				utils::Context::getContext().setRuntimeLinkage(utils::RTLEnabled);
++			}
++
++			return true;
++		}
++
+ 	}
+ }
+ 
+Index: parity.options/Linker.h
+===================================================================
+--- parity.options/Linker.h	(revision 73)
++++ parity.options/Linker.h	(working copy)
+@@ -40,6 +40,7 @@
+ 		bool setSubsystem(const char* option, const char* argument, bool& used);
+ 		bool addRunPath(const char* option, const char* argument, bool& used);
+ 		bool setEntryPoint(const char* option, const char* argument, bool& used);
++		bool setRuntimeLinkage(const char* option, const char* argument, bool& used);
+ 	}
+ }
+ 
+Index: parity.graphical.configurator/Mapping.h
+===================================================================
+--- parity.graphical.configurator/Mapping.h	(revision 73)
++++ parity.graphical.configurator/Mapping.h	(working copy)
+@@ -4,56 +4,59 @@
+ 
+ struct MappingStruct;
+ 
+-typedef System::String^ (*DisplayFormatFunction)(parity::utils::Context& ctx);
+-typedef void (*EditFunction)(const MappingStruct* mapping, parity::utils::Context& ctx);
+-typedef void (*SaveFunction)(System::IO::TextWriter^ stream, const MappingStruct* mapping, parity::utils::Context& ctx);
+-typedef bool (*IsDefaultFunction)(parity::utils::Context& ctx);
+-
+-struct MappingStruct
+-{
+-	char* Name;
+-	char* Type;
+-	char* Default;
+-	DisplayFormatFunction Formatter;
+-	IsDefaultFunction IsDefault;
+-	EditFunction Edit;
+-	SaveFunction Save;
+-};
+-
++typedef System::String^ (*DisplayFormatFunction)(parity::utils::Context& ctx);
++typedef void (*EditFunction)(const MappingStruct* mapping, parity::utils::Context& ctx);
++typedef void (*SaveFunction)(System::IO::TextWriter^ stream, const MappingStruct* mapping, parity::utils::Context& ctx);
++typedef bool (*IsDefaultFunction)(parity::utils::Context& ctx);
++
++struct MappingStruct
++{
++	char* Name;
++	char* Type;
++	char* Default;
++	DisplayFormatFunction Formatter;
++	IsDefaultFunction IsDefault;
++	EditFunction Edit;
++	SaveFunction Save;
++};
++
+ extern MappingStruct* SettingMapping;
+ 
+-System::String^ FormatForDisplay(const bool& val);
+-System::String^ FormatForDisplay(const long& val);
+-System::String^ FormatForDisplay(const std::string& val);
+-System::String^ FormatForDisplay(const parity::utils::Path& val);
+-System::String^ FormatForDisplay(const parity::utils::DefineMap& val);
+-System::String^ FormatForDisplay(const parity::utils::PathVector& val);
+-System::String^ FormatForDisplay(const parity::utils::LanguageType& val);
+-System::String^ FormatForDisplay(const parity::utils::SubsystemType& val);
+-System::String^ FormatForDisplay(const parity::utils::ToolchainType& val);
+-System::String^ FormatForDisplay(const parity::utils::RuntimeType& val);
+-System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val);
+-
+-void DisplayEditDialog(const MappingStruct* mapping, bool& val);
+-void DisplayEditDialog(const MappingStruct* mapping, long& val);
+-void DisplayEditDialog(const MappingStruct* mapping, std::string& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Path& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::DefineMap& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::PathVector& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::LanguageType& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::SubsystemType& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::ToolchainType& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RuntimeType& val);
+-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Color::ColorMode& val);
+-
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const bool& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const long& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const std::string& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Path& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::DefineMap& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::PathVector& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::LanguageType& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::SubsystemType& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::ToolchainType& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RuntimeType& val);
+-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Color::ColorMode& val);
++System::String^ FormatForDisplay(const bool& val);
++System::String^ FormatForDisplay(const long& val);
++System::String^ FormatForDisplay(const std::string& val);
++System::String^ FormatForDisplay(const parity::utils::Path& val);
++System::String^ FormatForDisplay(const parity::utils::DefineMap& val);
++System::String^ FormatForDisplay(const parity::utils::PathVector& val);
++System::String^ FormatForDisplay(const parity::utils::LanguageType& val);
++System::String^ FormatForDisplay(const parity::utils::SubsystemType& val);
++System::String^ FormatForDisplay(const parity::utils::ToolchainType& val);
++System::String^ FormatForDisplay(const parity::utils::RuntimeType& val);
++System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val);
++System::String^ FormatForDisplay(const parity::utils::RtLinkage& val);
++
++void DisplayEditDialog(const MappingStruct* mapping, bool& val);
++void DisplayEditDialog(const MappingStruct* mapping, long& val);
++void DisplayEditDialog(const MappingStruct* mapping, std::string& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Path& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::DefineMap& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::PathVector& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::LanguageType& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::SubsystemType& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::ToolchainType& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RuntimeType& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Color::ColorMode& val);
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RtLinkage& val);
++
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const bool& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const long& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const std::string& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Path& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::DefineMap& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::PathVector& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::LanguageType& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::SubsystemType& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::ToolchainType& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RuntimeType& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Color::ColorMode& val);
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RtLinkage& val);
+Index: parity.graphical.configurator/Mapping.cpp
+===================================================================
+--- parity.graphical.configurator/Mapping.cpp	(revision 73)
++++ parity.graphical.configurator/Mapping.cpp	(working copy)
+@@ -178,6 +178,11 @@
+ 	return "Unknown";
+ }
+ 
++System::String^ FormatForDisplay(const parity::utils::RtLinkage& val)
++{
++	return gcnew String(parity::utils::Context::getContext().printable(val).c_str());
++}
++
+ //
+ // Edit Dialog functions.
+ //
+@@ -303,6 +308,17 @@
+ 	}
+ }
+ 
++void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RtLinkage& val)
++{
++	SimpleStringEditDialog^ dlg = gcnew SimpleStringEditDialog();
++	dlg->Value = gcnew String(Context::getContext().printable(val).c_str());
++
++	if(dlg->ShowDialog() == DialogResult::OK)
++	{
++		Context::getContext().convert(val, Configurator::MarshalSimpleStringToNative(dlg->Value));
++	}
++}
++
+ //
+ // Saving Functions.
+ //
+@@ -383,3 +399,7 @@
+ 	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
+ }
+ 
++void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RtLinkage& val)
++{
++	stream->Write("{0} = {1}\n", gcnew String(mapping->Name), gcnew String(Context::getContext().printable(val).c_str()));
++}
+Index: parity.utils/ContextGen.cpp
+===================================================================
+--- parity.utils/ContextGen.cpp	(revision 73)
++++ parity.utils/ContextGen.cpp	(working copy)
+@@ -213,6 +213,16 @@
+ 				throw utils::Exception("cannot determine type of source file: %s\n", ref.c_str());
+ 		}
+ 
++		void ContextGen::convert(RtLinkage& target, const std::string& ref)
++		{
++			if(ref == "enabled" || ref == "1" || ref == "on" || ref == "yes" || ref == "true")
++				target = RTLEnabled;
++			else if(ref == "disabled" || ref == "0" || ref == "off" || ref == "no" || ref == "false")
++				target = RTLDisabled;
++			else
++				target = RTLInherit;
++		}
++
+ 		std::string ContextGen::printable(const long& val)
+ 		{
+ 			char buf[255];
+@@ -407,6 +417,24 @@
+ 			return ret;
+ 		}
+ 
++		std::string ContextGen::printable(const RtLinkage& val)
++		{
++			switch(val)
++			{
++			case RTLEnabled:
++				return "enabled";
++				break;
++			case RTLDisabled:
++				return "disabled";
++				break;
++			case RTLInherit:
++				return "inherit";
++				break;
++			}
++
++			return "unknown";
++		}
++
+ 	}
+ }
+ 
+Index: parity.utils/ContextGen.h
+===================================================================
+--- parity.utils/ContextGen.h	(revision 73)
++++ parity.utils/ContextGen.h	(working copy)
+@@ -99,6 +99,13 @@
+ 			RuntimeDynamicDebug
+ 		} RuntimeType;
+ 
++		typedef enum {
++			RTLDisabled = 0,
++			RTLEnabled = 1,
++			RTLInherit = 2,
++			RTLUnknown = 3
++		} RtLinkage;
++
+ 		typedef std::map<std::string, std::string> DefineMap;
+ 		typedef std::map<Path, LanguageType> SourceMap;
+ 		typedef std::vector<Path> PathVector;
+@@ -123,6 +130,7 @@
+ 			void convert(SubsystemType& target, const std::string& ref);
+ 			void convert(SourceMap& target, const std::string& ref);
+ 			void convert(RuntimeType& target, const std::string& ref);
++			void convert(RtLinkage& target, const std::string& ref);
+ 
+ 			std::string printable(const bool& val) { return (val ? "true" : "false"); }
+ 			std::string printable(const ToolchainType& val);
+@@ -136,6 +144,7 @@
+ 			std::string printable(const SubsystemType& val);
+ 			std::string printable(const SourceMap& val);
+ 			std::string printable(const RuntimeType& val);
++			std::string printable(const RtLinkage& val);
+ 
+ 			bool operator==(const ContextGen& other);
+ 			bool operator!=(const ContextGen& other) { return !operator ==(other); }
+@@ -224,6 +233,7 @@
+ 				CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \
+ 				CTX_GETSET   (long			,HeapCommit			,65536			)  /* linker (default: 64KB) */ \
+ 				CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
++				CTX_GETSET   (RtLinkage		,RuntimeLinkage		,RTLInherit		)  /* linker */ \
+ 				CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
+ 				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no"		)  /* linker */ \
+ 				CTX_GETSET   (Path			,LinkerExe			,""				)  /* linker */ \
+Index: parity.configurator/Configurator.cpp
+===================================================================
+--- parity.configurator/Configurator.cpp	(revision 73)
++++ parity.configurator/Configurator.cpp	(working copy)
+@@ -362,6 +362,11 @@
+ 	target << "# WARNING: this is a runtime only setting, and may not be set by configuration!" << std::endl;
+ }
+ 
++void saveSetting(std::ostringstream& target, const std::string& name, const RtLinkage& value)
++{
++	target << "name = " << Context::getContext().printable(value) << std::endl;
++}
++
+ void saveConfiguration()
+ {
+ 	std::ostringstream target;
+Index: parity.loader/LoaderInit.h
+===================================================================
+--- parity.loader/LoaderInit.h	(revision 73)
++++ parity.loader/LoaderInit.h	(working copy)
+@@ -81,15 +81,27 @@
+ 	SubsystemXbox					= 14
+ } LoaderSubsystemType;
+ 
++typedef enum {
++	RuntimeLinkageDisabled = 0,
++	RuntimeLinkageEnabled = 1,
++	RuntimeLinkageInherit = 2
++} LoaderRuntimeLinkage;
++
+ extern LoaderStatus ParityLoaderInit();
+ 
+ //
++// flag wether runtime linking behaviour is to be enabled
++//
++extern int iEnableRTL;
++
++//
+ // those are generated by the loader generator.
+ //
+ extern LoaderTable			ParityLoaderGeneratedTable;
+ extern const char*			ParityLoaderGeneratedRunPath;
+ extern LoaderSubsystemType	ParityLoaderGeneratedSubsystem;
+ extern const char*			ParityLoaderGeneratedImageName;
++extern LoaderRuntimeLinkage	ParityLoaderGeneratedRuntimeLinking;
+ 
+ #endif
+ 
+Index: parity.loader/LoaderLazy.c
+===================================================================
+--- parity.loader/LoaderLazy.c	(revision 73)
++++ parity.loader/LoaderLazy.c	(working copy)
+@@ -62,17 +62,17 @@
+ static PreloadCacheNode* gPreloadLibCache = 0;
+ static unsigned int gPreloadLibCacheCount = 0;
+ 
+-static void PreloadCreateCache()
++static void PreloadCreateCache(PreloadCacheNode** cache, unsigned int* count, const char * env)
+ {
+ 	unsigned int szPreload = 0;
+ 
+-	szPreload = GetEnvironmentVariable("LD_PRELOAD", 0, 0);
++	szPreload = GetEnvironmentVariable(env, 0, 0);
+ 
+ 	if(szPreload) {
+ 		char * ptrPreload = HeapAlloc(GetProcessHeap(), 0, szPreload);
+ 
+-		if(GetEnvironmentVariable("LD_PRELOAD", ptrPreload, szPreload) == 0) {
+-			LogWarning("cannot get environment variable LD_PRELOAD!\n");
++		if(GetEnvironmentVariable(env, ptrPreload, szPreload) == 0) {
++			LogWarning("cannot get environment variable %s!\n", env);
+ 		} else {
+ 			char* start = ptrPreload;
+ 			char* end = ptrPreload;
+@@ -83,29 +83,29 @@
+ 			{
+ 				int isSep = 0;
+ 
+-				while(*end != ' ' && *end != '\0')
++				while(*end != ' ' && *end != ',' && *end != '\0')
+ 					++end;
+ 
+-				if(*end == ' ')
++				if(*end != '\0')
+ 				{
+ 					isSep = 1;
+ 					*end = '\0';
+ 					++end;
+ 				}
+ 
+-				if(!gPreloadLibCache)
+-					gPreloadLibCache = HeapAlloc(GetProcessHeap(), 0, sizeof(PreloadCacheNode));
++				if(!*cache)
++					*cache = HeapAlloc(GetProcessHeap(), 0, sizeof(PreloadCacheNode));
+ 				else
+-					gPreloadLibCache = HeapReAlloc(GetProcessHeap(), 0, gPreloadLibCache, sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
++					*cache = HeapReAlloc(GetProcessHeap(), 0, *cache, sizeof(PreloadCacheNode) * (*count + 1));
+ 
+-				if(!gPreloadLibCache)
++				if(!*cache)
+ 				{
+-					LogWarning("cannot allocate %d bytes for preload cache, this will break preloading!\n", sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
++					LogWarning("cannot allocate %d bytes for cache, this will break preloading!\n", sizeof(PreloadCacheNode) * (*count + 1));
+ 					LoaderWriteLastWindowsError();
+-					gPreloadLibCacheCount = 0;
++					*count = 0;
+ 				} else {
+-					gPreloadLibCache[gPreloadLibCacheCount].name = start;
+-					++gPreloadLibCacheCount;
++					(*cache)[*count].name = start;
++					++(*count);
+ 				}
+ 
+ 				start = end;
+@@ -117,6 +117,55 @@
+ 	}
+ }
+ 
++void ParityLoaderRuntimeLink(const LibraryItem* library)
++{
++	unsigned int i;
++
++	static PreloadCacheNode* lRTLLibCache = 0;
++	static unsigned int lRTLLibCacheCount = 0;
++
++	if(GetEnvironmentVariable("LD_RTL_LIBS", 0, 0) == 0)
++		return;
++
++	if(!iEnableRTL)
++		return;
++
++	PreloadCreateCache(&lRTLLibCache, &lRTLLibCacheCount, "LD_RTL_LIBS");
++
++	if(lRTLLibCacheCount == 0)
++		return;
++
++	LogDebug("runtime linking %s\n", library->name);
++
++	for(i = 0; i < lRTLLibCacheCount; ++i)
++	{
++		void * handle = LoaderLibraryGetHandle(lRTLLibCache[i].name, 1);
++
++		ImportItem* item = library->imports;
++
++		while(item->name)
++		{
++			void* symbol = 0;
++			//
++			// try loading item from current preload library.
++			//
++
++			if(item->ordinal != 0)
++				symbol = (void*)GetProcAddress((HMODULE)handle, (char*)item->ordinal);
++			else
++				symbol = (void*)GetProcAddress((HMODULE)handle, item->name);
++
++			if(symbol)
++			{
++				LogDebug(" * %s: %s (0x%x).\n", lRTLLibCache[i].name, item->name, symbol);
++				item->import = symbol;
++			}
++
++			++item;
++		}
++	}
++}
++
+ void ParityLoaderPreloadSymbols()
+ {
+ 	unsigned int i;
+@@ -125,8 +174,11 @@
+ 		return;
+ 
+ 	if(!gPreloadLibCache)
+-		PreloadCreateCache();
++		PreloadCreateCache(&gPreloadLibCache, &gPreloadLibCacheCount, "LD_PRELOAD");
+ 
++	if(gPreloadLibCacheCount == 0)
++		return;
++
+ 	LogDebug("trying to preload symbols from %d preload libraries.\n", gPreloadLibCacheCount);
+ 
+ 	for(i = 0; i < gPreloadLibCacheCount; ++i)
+Index: parity.loader/LoaderInit.c
+===================================================================
+--- parity.loader/LoaderInit.c	(revision 73)
++++ parity.loader/LoaderInit.c	(working copy)
+@@ -28,6 +28,29 @@
+ #include <stdio.h>
+ #include <windows.h>
+ 
++int iEnableRTL = 0;
++
++static char * ParityLoaderGetMangledRTLName(const char* name)
++{
++	static char buffer[256];
++	int i = 0;
++
++	lstrcpy(buffer, "LD_RTL_ENABLE_");
++
++	for(i = lstrlen(buffer); *name != '\0'; ++name)
++	{
++		char c = *name;
++		if((c >= 0x30 && c <= 0x39 || c >= 0x41 && c <= 0x5A 
++				|| c >= 0x61 && c <= 0x7A || c == '_'))
++			buffer[i++] = c;
++		else
++			buffer[i++] = '_';
++	}
++
++	buffer[i] = '\0';
++	return buffer;
++}
++
+ LoaderStatus ParityLoaderInit()
+ {
+ 	int isBindNow = 0;
+@@ -37,6 +60,34 @@
+ 
+ 	LogDebug("=== ParityLoader intializing for %s. ===\n", ParityLoaderGeneratedImageName);
+ 
++	switch(ParityLoaderGeneratedRuntimeLinking)
++	{
++	case RuntimeLinkageDisabled:
++		iEnableRTL = 0;
++		break;
++	case RuntimeLinkageEnabled:
++		iEnableRTL = 1;
++		break;
++	case RuntimeLinkageInherit:
++		{
++			char * pcEnvVar = ParityLoaderGetMangledRTLName(ParityLoaderGeneratedImageName);
++			LogDebug("inheriting, trying %s\n", pcEnvVar);
++
++			if(!GetEnvironmentVariable(pcEnvVar, 0, 0)) {
++				LogDebug("inheriting, trying LD_RTL\n");
++				if(GetEnvironmentVariable("LD_RTL", 0, 0)) {
++					iEnableRTL = 1;
++				}
++			} else {
++				iEnableRTL = 1;
++			}
++		}
++
++		break;
++	}
++
++	LogDebug("runtime linking is %s\n", iEnableRTL ? "enabled" : "disabled");
++
+ 	ParityLoaderPreloadSymbols();
+ 
+ 	//
+@@ -51,13 +102,38 @@
+ 		int			cntLazy = 0;
+ 		void*		handle = 0;
+ 		ImportItem*	import = libraries->imports;
++		char*		pcRtlVar = iEnableRTL ? ParityLoaderGetMangledRTLName(libraries->name) : 0;
+ 
+ 		//
++		// set runtime linkage flags accordingly...
++		//
++		if(pcRtlVar)
++		{
++			LogDebug("activating runtime linkage for %s (%s)\n", libraries->name, pcRtlVar);
++
++			if(!SetEnvironmentVariable(pcRtlVar, "on"))
++			{
++				LogWarning("cannot set environment for runtime linkage (target %s)\n!", ParityLoaderGeneratedImageName);
++			}
++
++			//
++			// Runtime link allready loaded stuff from children
++			//
++			ParityLoaderRuntimeLink(libraries);
++		}
++
++		//
+ 		// load library handle.
+ 		//
+ 		handle = LoaderLibraryGetHandle(libraries->name, 1);
+ 
+ 		//
++		// unset runtime linkage flags.
++		//
++		if(pcRtlVar)
++			SetEnvironmentVariable(pcRtlVar, 0);
++
++		//
+ 		// load all imports for that library.
+ 		//
+ 		while(import->name)
+Index: parity.loader/LoaderLazy.h
+===================================================================
+--- parity.loader/LoaderLazy.h	(revision 73)
++++ parity.loader/LoaderLazy.h	(working copy)
+@@ -26,6 +26,7 @@
+ #include "LoaderInit.h"
+ 
+ extern void ParityLoaderLazyLoadSymbol(ImportItem* item);
++extern void ParityLoaderRuntimeLink(const LibraryItem* library);
+ extern void ParityLoaderPreloadSymbols();
+ 
+ #endif
+Index: parity.loader/LoaderLibrary.c
+===================================================================
+--- parity.loader/LoaderLibrary.c	(revision 73)
++++ parity.loader/LoaderLibrary.c	(working copy)
+@@ -246,6 +246,48 @@
+ 
+ 	if(handle) {
+ 		LibAddToCache(name, handle);
++
++		if(iEnableRTL)
++		{
++			// Add this library to LD_PRELOAD, so that all children
++			// get my symbols...
++
++			int iLdPreloadSize = GetEnvironmentVariable("LD_RTL_LIBS", 0, 0);
++
++			if(!iLdPreloadSize)
++			{
++				if(GetLastError() != ERROR_ENVVAR_NOT_FOUND) {
++					LogWarning("cannot read environment for runtime linking!\n");
++					ExitProcess(1);
++				}
++
++				if(!SetEnvironmentVariable("LD_RTL_LIBS", name)) {
++					LogWarning("cannot write environment for runtime linking!\n");
++					ExitProcess(1);
++				}
++			} else {
++				int iBufSize = iLdPreloadSize + lstrlen(name) + 2;
++				char* pcBuffer = HeapAlloc(GetProcessHeap(), 0, iBufSize);
++
++				if(!pcBuffer) {
++					LogWarning("cannot allocate buffer for runtime linking\n");
++					ExitProcess(1);
++				}
++
++				if(!GetEnvironmentVariable("LD_RTL_LIBS", pcBuffer, iBufSize)) {
++					LogWarning("cannot read existing environment for runtime linking!\n");
++					ExitProcess(1);
++				}
++
++				lstrcat(pcBuffer, " ");
++				lstrcat(pcBuffer, name);
++
++				if(!SetEnvironmentVariable("LD_RTL_LIBS", pcBuffer)) {
++					LogWarning("cannot write environment for runtime linking!\n");
++				}
++			}
++		}
++
+ 		return handle;
+ 	} else if(strict) {
+ 		unsigned int i;
+Index: parity.inspector/Inspector.cpp
+===================================================================
+--- parity.inspector/Inspector.cpp	(revision 73)
++++ parity.inspector/Inspector.cpp	(working copy)
+@@ -103,6 +103,7 @@
+ 
+ 			const char*				genImageName	= 0;
+ 			utils::SubsystemType	genSubsystem	= utils::SubsystemUnknown;
++			utils::RtLinkage		genLinkage		= utils::RTLUnknown;
+ 			utils::PathVector		genRunPaths;
+ 			InspectorLibraryVector	genLibs;
+ 			bool					genSectionFound	= false;
+@@ -122,6 +123,7 @@
+ 					genRunPathPtr	= (const char*)img.getHeader().getPointerFromVA(pointers->rpaths);
+ 					genTablePtr		= (unsigned int*)img.getHeader().getPointerFromVA(pointers->table);
+ 					genSubsystem	= pointers->subsystem;
++					genLinkage		= pointers->linkage;
+ 
+ 					if(*genTablePtr)
+ 						genLibs		= InspectorLayoutToLibraries((InspectorLibrariesPointerLayoutVA*)img.getHeader().getPointerFromVA(*genTablePtr), img.getHeader());
+@@ -137,6 +139,7 @@
+ 						utils::Log::verbose("%s: image has no import dependencies!\n", pth.file().c_str());
+ 
+ 					utils::Log::verbose("%s: found subsystem type %d (%s)\n", pth.file().c_str(), genSubsystem, utils::Context::getContext().printable(genSubsystem).c_str());
++					utils::Log::verbose("%s: image runtime linkage: %d (%s)\n", pth.file().c_str(), genLinkage, utils::Context::getContext().printable(genLinkage).c_str());
+ 
+ 					break;
+ 				}
+Index: parity.inspector/Inspector.h
+===================================================================
+--- parity.inspector/Inspector.h	(revision 73)
++++ parity.inspector/Inspector.h	(working copy)
+@@ -87,6 +87,7 @@
+ 			unsigned int rpaths;
+ 			unsigned int name;
+ 			utils::SubsystemType subsystem;
++			utils::RtLinkage linkage;
+ 		} InspectorPointerLayoutVA;
+ 
+ 		#if defined(_WIN32) || (defined(__INTERIX) && (!defined(__GNUC__) || __GNUC__ == 3 ))

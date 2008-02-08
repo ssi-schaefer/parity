@@ -33,7 +33,6 @@ System::String^ FormatForDisplay(const parity::utils::SubsystemType& val);
 System::String^ FormatForDisplay(const parity::utils::ToolchainType& val);
 System::String^ FormatForDisplay(const parity::utils::RuntimeType& val);
 System::String^ FormatForDisplay(const parity::utils::Color::ColorMode& val);
-System::String^ FormatForDisplay(const parity::utils::RtLinkage& val);
 
 void DisplayEditDialog(const MappingStruct* mapping, bool& val);
 void DisplayEditDialog(const MappingStruct* mapping, long& val);
@@ -46,7 +45,6 @@ void DisplayEditDialog(const MappingStruct* mapping, parity::utils::SubsystemTyp
 void DisplayEditDialog(const MappingStruct* mapping, parity::utils::ToolchainType& val);
 void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RuntimeType& val);
 void DisplayEditDialog(const MappingStruct* mapping, parity::utils::Color::ColorMode& val);
-void DisplayEditDialog(const MappingStruct* mapping, parity::utils::RtLinkage& val);
 
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const bool& val);
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const long& val);
@@ -59,4 +57,3 @@ void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, c
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::ToolchainType& val);
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RuntimeType& val);
 void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::Color::ColorMode& val);
-void SaveSetting(System::IO::TextWriter^ stream, const MappingStruct* mapping, const parity::utils::RtLinkage& val);

@@ -150,8 +150,8 @@ namespace parity
 			static const unsigned char dataLazyStubPart4[] = { 0x83, 0xC4, 0x04, 0x61, 0xFF, 0x25 };
 
 
-			LoaderGenerator::LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports, const utils::PathVector& origcmdline)
-			: imports_(imports), sorted_objects_(origcmdline)
+		LoaderGenerator::LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports)
+			: imports_(imports)
 		{
 			//
 			// lookup the loader library, and put it on the link line.
@@ -251,7 +251,7 @@ namespace parity
 			for(tasks::BinaryGatherer::ImportHybridityMap::const_iterator it = imports_.begin(); it != imports_.end(); ++it)
 			{
 				std::string libraryName = it->first.second.getLibraryName();
-				LoaderWorkingItem& item = items[it->first.first];
+				LoaderWorkingItem& item = items[libraryName];
 
 				if(item.name.empty())
 				{
@@ -271,7 +271,7 @@ namespace parity
 
 			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
 			{
-				std::string libraryName   = it->second.name;
+				std::string libraryName   = it->first;
 				LoaderWorkingItem& item	  = it->second;	
 				unsigned int& indexOfLibNameSym = stringMapping[libraryName];
 
@@ -520,17 +520,12 @@ namespace parity
 			//
 			// generate table entry seperatly, so they are behind each other.
 			//
-			for(utils::PathVector::const_iterator olib = sorted_objects_.begin(); olib != sorted_objects_.end(); ++olib)
+			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
 			{
-				LoaderWorkingMap::iterator it = items.find(*olib);
-
-				if(it == items.end())
-					continue;
-
 				//
 				// import table now known, so generate library record.
 				//
-				std::string recordName = "$LIB_" + symbolifyName(it->second.name);
+				std::string recordName = "$LIB_" + symbolifyName(it->first);
 				binary::Symbol& symRecord = hdr.addSymbol(recordName);
 				sectData.markSymbol(symRecord);
 				symRecord.setStorageClass(binary::Symbol::ClassStatic);
@@ -556,13 +551,8 @@ namespace parity
 			sectData.markSymbol(symLoaderTable);
 			symLoaderTable.setStorageClass(binary::Symbol::ClassExternal);
 
-			for(utils::PathVector::const_iterator olib = sorted_objects_.begin(); olib != sorted_objects_.end(); ++olib)
+			for(LoaderWorkingMap::iterator it = items.begin(); it != items.end(); ++it)
 			{
-				LoaderWorkingMap::iterator it = items.find(*olib);
-
-				if(it == items.end())
-					continue;
-
 				//
 				// finally generate a table which contains pointers to all library tables
 				//
@@ -806,12 +796,7 @@ namespace parity
 			binary::Symbol& symImageNameData = hdr.addSymbol("$START__ParityLoaderGeneratedImageName");
 			symImageNameData.setStorageClass(binary::Symbol::ClassStatic);
 			sectRData.markSymbol(symImageNameData);
-			if(ctx.getSharedLink()) {
-				std::string imagename = ctx.getOutputFile().file() + ".dll";
-				sectRData.addData(imagename.c_str(), imagename.length() + 1);
-			} else {
-				sectRData.addData(ctx.getOutputFile().file().c_str(), ctx.getOutputFile().file().length() + 1);
-			}
+			sectRData.addData(ctx.getOutputFile().file().c_str(), ctx.getOutputFile().file().length() + 1);
 			sectRData.padSection();
 
 			binary::Symbol& symImageNamePtr = hdr.addSymbol("_ParityLoaderGeneratedImageName");
@@ -823,25 +808,12 @@ namespace parity
 			binary::Symbol& symSubsystem = hdr.addSymbol("_ParityLoaderGeneratedSubsystem");
 			symSubsystem.setStorageClass(binary::Symbol::ClassExternal);
 			sectPtrs.markSymbol(symSubsystem);
-
 			//
 			// WARNING: since the loader cannot use parity::utils, it needs to
 			// define the subsystem values itself, and this must be kept in sync!
 			//
 			int subsys = (int)ctx.getSubsystem();
 			sectPtrs.addData(&subsys, sizeof(int));
-
-			binary::Symbol& symRuntimeLinkage = hdr.addSymbol("_ParityLoaderGeneratedRuntimeLinking");
-			symRuntimeLinkage.setStorageClass(binary::Symbol::ClassExternal);
-			sectPtrs.markSymbol(symRuntimeLinkage);
-
-			//
-			// WARNING: this is to be kept in sync loader <-> utils too!
-			//
-			int rtl = (int)ctx.getRuntimeLinkage();
-			sectPtrs.addData(&rtl, sizeof(int));
-
-			utils::Log::verbose("%s runtime linkage is %d (%s)\n", ctx.getOutputFile().file().c_str(), rtl, ctx.printable(ctx.getRuntimeLinkage()).c_str());
 
 			//
 			// now save the object file to disk.

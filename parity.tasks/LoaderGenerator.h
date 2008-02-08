@@ -27,7 +27,6 @@
 #include <string>
 
 #include <Path.h>
-#include <Context.h>
 
 #include <CoffImport.h>
 #include <CoffSymbol.h>
@@ -39,11 +38,10 @@ namespace parity
 	{
 		class LoaderGenerator {
 		public:
-			LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports, const utils::PathVector& origcmdline);
+			LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports);
 			void doWork();
 		private:
 			const tasks::BinaryGatherer::ImportHybridityMap& imports_;
-			const utils::PathVector& sorted_objects_;
 
 			typedef struct {
 				std::string name;
@@ -57,7 +55,7 @@ namespace parity
 				unsigned int tableIndex;
 			} LoaderWorkingItem;
 
-			typedef std::map<utils::Path, LoaderWorkingItem> LoaderWorkingMap;
+			typedef std::map<std::string, LoaderWorkingItem> LoaderWorkingMap;
 		};
 	}
 }

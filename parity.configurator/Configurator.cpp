@@ -362,11 +362,6 @@ void saveSetting(std::ostringstream& target, const std::string& name, const Sour
 	target << "# WARNING: this is a runtime only setting, and may not be set by configuration!" << std::endl;
 }
 
-void saveSetting(std::ostringstream& target, const std::string& name, const RtLinkage& value)
-{
-	target << "name = " << Context::getContext().printable(value) << std::endl;
-}
-
 void saveConfiguration()
 {
 	std::ostringstream target;

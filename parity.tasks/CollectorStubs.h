@@ -38,11 +38,6 @@ namespace parity
 			static unsigned int THREADINGAPI runMsExportGenerator(void*);
 			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
 			static unsigned int THREADINGAPI runLoaderGenerator(void*);
-
-			struct LoaderGeneratorData {
-				const void* imports;
-				const void* origcmdline;
-			};
 		};
 
 	}

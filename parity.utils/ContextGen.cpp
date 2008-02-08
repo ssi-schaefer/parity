@@ -213,16 +213,6 @@ namespace parity
 				throw utils::Exception("cannot determine type of source file: %s\n", ref.c_str());
 		}
 
-		void ContextGen::convert(RtLinkage& target, const std::string& ref)
-		{
-			if(ref == "enabled" || ref == "1" || ref == "on" || ref == "yes" || ref == "true")
-				target = RTLEnabled;
-			else if(ref == "disabled" || ref == "0" || ref == "off" || ref == "no" || ref == "false")
-				target = RTLDisabled;
-			else
-				target = RTLInherit;
-		}
-
 		std::string ContextGen::printable(const long& val)
 		{
 			char buf[255];
@@ -415,24 +405,6 @@ namespace parity
 			}
 
 			return ret;
-		}
-
-		std::string ContextGen::printable(const RtLinkage& val)
-		{
-			switch(val)
-			{
-			case RTLEnabled:
-				return "enabled";
-				break;
-			case RTLDisabled:
-				return "disabled";
-				break;
-			case RTLInherit:
-				return "inherit";
-				break;
-			}
-
-			return "unknown";
 		}
 
 	}

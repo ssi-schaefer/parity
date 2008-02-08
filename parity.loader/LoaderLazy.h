@@ -26,7 +26,6 @@
 #include "LoaderInit.h"
 
 extern void ParityLoaderLazyLoadSymbol(ImportItem* item);
-extern void ParityLoaderRuntimeLink(const LibraryItem* library);
 extern void ParityLoaderPreloadSymbols();
 
 #endif

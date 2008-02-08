@@ -175,18 +175,6 @@ namespace parity
 			return true;
 		}
 
-		bool setRuntimeLinkage(const char* option, const char* argument, bool& used)
-		{
-			if(strstr(option, "no"))
-				utils::Context::getContext().setRuntimeLinkage(utils::RTLDisabled);
-			else {
-				utils::Log::verbose("enabling runtime linkage!\n");
-				utils::Context::getContext().setRuntimeLinkage(utils::RTLEnabled);
-			}
-
-			return true;
-		}
-
 	}
 }
 
