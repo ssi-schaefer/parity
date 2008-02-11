@@ -23,6 +23,10 @@
 #include "Internal.h"
 #include "Version.h"
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <iostream>
 
 namespace parity
@@ -82,6 +86,14 @@ namespace parity
 
 			std::cout << PACKAGE_NAME << " comes with ABSOLUTELY NO WARRANTY; This is free software, and you are" << std::endl;
 			std::cout << "welcome to redistribute it under certain conditions; see COPYING.LESSER for details." << std::endl;
+
+			/* output some configuration values... */
+			#ifdef HAVE_CONFIG_H
+				std::cout << std::endl;
+				std::cout << "Sysconf Directory: " << PARITY_SYSCONFDIR << std::endl;
+				std::cout << "Include Directory: " << PARITY_INCLUDEDIR << std::endl;
+				std::cout << "Library Directory: " << PARITY_LIBDIR << std::endl;
+			#endif
 
 			exit(0);
 
