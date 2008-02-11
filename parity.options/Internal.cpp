@@ -23,10 +23,6 @@
 #include "Internal.h"
 #include "Version.h"
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
 #include <iostream>
 
 namespace parity
@@ -82,7 +78,7 @@ namespace parity
 		bool showParityVersion(const char* option, const char* argument, bool& used)
 		{
 			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ")" << std::endl;
-			std::cout << "Copyright (c) 2007 Markus Duft <markus.duft@salomon.at>" << std::endl;
+			std::cout << "Copyright (c) 2007, 2008 Markus Duft <markus.duft@salomon.at>" << std::endl;
 
 			std::cout << PACKAGE_NAME << " comes with ABSOLUTELY NO WARRANTY; This is free software, and you are" << std::endl;
 			std::cout << "welcome to redistribute it under certain conditions; see COPYING.LESSER for details." << std::endl;
