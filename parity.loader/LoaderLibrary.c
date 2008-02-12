@@ -158,7 +158,7 @@ static void LibCreatePathCache()
 			start = ptrLdLib;
 			end = ptrLdLib;
 
-			if(LibStrChr(ptrLdLib, ';'))
+			if(LibStrChr(ptrLdLib, ';') || LibStrChr(ptrLdLib, '\\'))
 				pSep = ';';
 
 			LogDebug("adding LD_LIBRARY_PATH to path cache (sep: %c)\n", pSep);

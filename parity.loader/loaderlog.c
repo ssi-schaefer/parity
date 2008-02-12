@@ -101,6 +101,7 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 					buf[1] = va_arg(args, char);
 					lstrcat(buffer, buf);
 				}
+				break;
 			default:
 				{
 					const char msgErrUnsupported[] = "<unsupported specifier>";
