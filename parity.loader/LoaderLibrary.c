@@ -122,9 +122,9 @@ static void LibAddToCache(const char* name, void* handle)
 
 static const char* LibStrChr(const char* ptr, char c)
 {
-	while(ptr != '\0' && ptr != c) ++ptr;
+	while(*ptr != '\0' && *ptr != c) ++ptr;
 
-	if(ptr == c)
+	if(*ptr == c)
 		return ptr;
 
 	return 0;
