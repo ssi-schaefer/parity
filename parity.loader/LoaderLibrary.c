@@ -120,7 +120,7 @@ static void LibAddToCache(const char* name, void* handle)
 	}
 }
 
-static char* LibStrChr(const char* ptr, char c)
+static const char* LibStrChr(const char* ptr, char c)
 {
 	while(ptr != '\0' && ptr != c) ++ptr;
 
@@ -160,7 +160,7 @@ static void LibCreatePathCache()
 			if(LibStrChr(ptrLdLib, ';'))
 				pSep = ';';
 
-			LogDebug("adding LD_LIBRARY_PATH to path cache\n");
+			LogDebug("adding LD_LIBRARY_PATH to path cache (sep: %c)\n", pSep);
 
 			while(end && *end != '\0')
 			{
