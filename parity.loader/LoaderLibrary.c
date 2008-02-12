@@ -139,7 +139,8 @@ static void LibCreatePathCache()
 	// first lookup from LD_LIBRARY_PATH!
 	// this has the effect, that LD_LIBRARY_PATH
 	// is searched before the runpaths. (for libtool:
-	// shlibpath_overrides_runpath = yes!)
+	// shlibpath_overrides_runpath = yes!). This saves
+	// us from relinking all the time.
 	//
 	szLdLib = GetEnvironmentVariable("LD_LIBRARY_PATH", 0, 0);
 
