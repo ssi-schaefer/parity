@@ -122,6 +122,7 @@ const char* LoaderConvertPathToNative(const char* ptr)
 		}
 	} else {
 		static HMODULE hCygLib = NULL;
+		static int inited = 0;
 		
 		if(!hCygLib)
 			hCygLib = LoadLibrary("cygwin1.dll");
@@ -143,7 +144,9 @@ const char* LoaderConvertPathToNative(const char* ptr)
 				//
 				pRing[iRingNum] = HeapAlloc(GetProcessHeap(), 0, _MAX_PATH);
 
-				init();
+				if(!inited++)
+					init();
+
 				conv(ptr, pRing[iRingNum]);
 
 				return pRing[iRingNum];

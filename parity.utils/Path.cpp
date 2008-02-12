@@ -711,6 +711,7 @@ namespace parity
 					if(!convert_)
 					{
 						static HMODULE hCygLib = NULL;
+						static int inited = 0;
 		
 						if(!hCygLib)
 							hCygLib = LoadLibrary("cygwin1.dll");
@@ -732,7 +733,9 @@ namespace parity
 								//
 								char buffer[_MAX_PATH];
 
-								init();
+								if(!inited++)
+									init();
+
 								conv(path_.c_str(), buffer);
 
 								convert_ = true;
