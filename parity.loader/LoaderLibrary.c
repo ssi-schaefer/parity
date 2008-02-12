@@ -120,6 +120,16 @@ static void LibAddToCache(const char* name, void* handle)
 	}
 }
 
+static char* LibStrChr(const char* ptr, char c)
+{
+	while(ptr != '\0' && ptr != c) ++ptr;
+
+	if(ptr == c)
+		return ptr;
+
+	return 0;
+}
+
 static void LibCreatePathCache()
 {
 	unsigned int szLdLib = 0;
@@ -143,8 +153,12 @@ static void LibCreatePathCache()
 		{
 			LogWarning("cannot get environment variable LD_LIBRARY_PATH!\n");
 		} else {
+			char pSep = ':';
 			start = ptrLdLib;
 			end = ptrLdLib;
+
+			if(LibStrChr(ptrLdLib, ';'))
+				pSep = ';';
 
 			LogDebug("adding LD_LIBRARY_PATH to path cache\n");
 
@@ -152,10 +166,10 @@ static void LibCreatePathCache()
 			{
 				int isSep = 0;
 
-				while(*end != ':' && *end != '\0')
+				while(*end != pSep && *end != '\0')
 					++end;
 
-				if(*end == ':') {
+				if(*end == pSep) {
 					*end = '\0';
 					isSep = 1;
 					++end;
