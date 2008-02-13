@@ -98,7 +98,7 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 			case 'c':
 				{
 					char buf[2] = { 0, 0 };
-					buf[1] = va_arg(args, char);
+					buf[0] = va_arg(args, char);
 					lstrcat(buffer, buf);
 				}
 				break;
