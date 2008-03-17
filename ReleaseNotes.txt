@@ -1,4 +1,4 @@
-parity is an open source project who's goal it is to ease porting applications from UNIX-like systems to Windows. It relies on the presence of a UNIX Layer for Windows such as Interix, Cygwin or MinGW. parity is most tested on Microsofts Subsystem for UNIX-based Applications, so it will work there best.
+parity is an open source project who's goal it is to ease porting applications from UNIX-like systems to Windows. It relies on the presence of a UNIX Layer for Windows such as Interix or Cygwin. parity is most tested on Microsofts Subsystem for UNIX-based Applications, so it will work there best.
 
 parity uses Microsoft Tools - like cl.exe, link.exe, etc. - to mimic a GCC like interface, while really compiling natively for Windows. This results in pure and native Windows Libraries and Executables, which can be mixed freely with any existing Software pieces.
 
