@@ -28,6 +28,7 @@ This release fixes minor issues with Visul Studio .NET 2003. It also introduces 
 
 parity now supports setting the Stack and Heap reserve and commit sizes via configuration.
 
+
 parity 1.0.3
 ------------
 
@@ -53,3 +54,15 @@ Fixed an issue, where the loader would output junk to the console.
 Fixed an issue, where the order of option recognition made parity fail to recognize some options correctly
 
 The Libtool 1.5.24 patch (contained within the parity package in parity.patches) has been reviewed, and now only supports parity if the host is i586-pc-winnt (really *-*-winnt*).
+
+
+parity 1.0.4
+------------
+
+added propper support for the RTLD_NOW flag in dlopen.
+
+added supporting patches for a lot of packages. these patches are not all required for a working environment, but make live easier. each of the patches need to be applied to the respective packages before building and installing them. some patches might require a re-bootstrap of the respective package.
+
+path conversion using the cygwin dll has been fixed to only initialize the dll once.
+
+fixed the parsing of PATH style environment variables while creating caches for the dynamic loader.
