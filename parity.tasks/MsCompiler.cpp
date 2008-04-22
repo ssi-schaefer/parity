@@ -301,10 +301,14 @@ namespace parity
 			{
 				it->toForeign();
 
+#if 0
 				if(!ctx.isBadCompilerPath(*it))
 					vec.push_back("/I" + it->get());
 				else
 					utils::Log::verbose("skipping bad include path %s\n", it->get().c_str());
+#else
+				vec.push_back("/I" + it->get());
+#endif
 			}
 
 			//
@@ -314,10 +318,14 @@ namespace parity
 			{
 				it->toForeign();
 
+#if 0
 				if(!ctx.isBadCompilerPath(*it))
 					vec.push_back("/I" + it->get());
 				else
 					utils::Log::verbose("skipping bad include path (from environment) %s\n", it->get().c_str());
+#else
+				vec.push_back("/I" + it->get());
+#endif
 			}
 
 			//

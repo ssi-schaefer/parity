@@ -181,6 +181,7 @@ namespace parity
 			DefaultOutput = val;
 		}
 
+#if 0
 		bool Context::isBadLinkerPath(const Path &pth)
 		{
 			const std::string& str = pth.get();
@@ -211,6 +212,7 @@ namespace parity
 
 			return false;
 		}
+#endif
 
 		Path Context::lookupLibrary(const std::string& name, bool isMinusL)
 		{
@@ -265,8 +267,11 @@ namespace parity
 
 						Path pth(*it);
 						pth.append(*lib);
-
+#if 0
 						if(pth.exists() && !isBadLinkerPath(pth))
+#else
+						if(pth.exists())
+#endif
 							return pth;
 					}
 				}

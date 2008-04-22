@@ -73,8 +73,10 @@ namespace parity
 			// FIXME: this is public, since the BinaryGatherer needs to lookup
 			// each files implicit dependencies.
 			//
+#if 0
 			bool isBadLinkerPath(const Path &pth);
 			bool isBadCompilerPath(const Path& pth);
+#endif
 			Path lookupLibrary(const std::string& name, bool isMinusL);
 
 		private:
