@@ -35,11 +35,11 @@
   #define PACKAGE "parity"
   #define PACKAGE_NAME "parity"
   #ifdef _WIN32
-	#define PACKAGE_STRING "parity 1.*-win32"
-    #define PACKAGE_VERSION " 1.*-win32"
+	#define PACKAGE_STRING "parity 1-win32"
+    #define PACKAGE_VERSION " 1-win32"
   #else
-    #define PACKAGE_STRING "parity 1.*-unknown"
-    #define PACKAGE_VERSION " 1.*-unknown"
+    #define PACKAGE_STRING "parity 1-unknown"
+    #define PACKAGE_VERSION " 1-unknown"
   #endif
 #endif
 

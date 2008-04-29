@@ -159,6 +159,7 @@ namespace parity
 				CTX_GETSET_I (ToolchainType	,FrontendType		,ToolchainInterixGNU) /* internal only */ \
 				CTX_GETSET   (ToolchainType	,BackendType		,ToolchainMicrosoft)/* internal only */ \
 				CTX_GETSET   (bool			,CtxDump			,false			)  /* internal only */ \
+				CTX_GETSET   (bool			,Colored			,true			)  /* internal only */ \
 				CTX_GETSET   (Color::ColorMode,ColorMode		,Color::Bright	)  /* internal only */ \
 				CTX_GETSET   (bool			,GatherSystem		,false			)  /* internal only */ \
 				CTX_GETSET   (bool			,GenerateLoader		,true			)  /* internal only */ \

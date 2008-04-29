@@ -21,25 +21,25 @@
 \****************************************************************/
 
 #include "Color.h"
+#include "Context.h"
 
 namespace parity
 {
 	namespace utils
 	{
-		#ifdef _WIN32
-			const Color::ColorValues Color::colors_[] = {
-				{ "", "", "", "", "", "", "" },
-				{ "", "", "", "", "", "", "" }
-			};
-		#else
-			const Color::ColorValues Color::colors_[] = {
-				{ "\033[01;31m", "\033[01;32m", "\033[01;33m", "\033[01;34m", "\033[01;35m", "\033[01;36m", "\033[00m" },
-				{ "\033[00;31m", "\033[00;32m", "\033[00;33m", "\033[00;34m", "\033[00;35m", "\033[00;36m", "\033[00m" }
-			};
-		#endif
+		//
+		// Color escapes for interix terminals (also xterm, mrxvt, ...)
+		//
+		const Color::ColorValues Color::colors_[] = {
+			{ "\033[01;31m", "\033[01;32m", "\033[01;33m", "\033[01;34m", "\033[01;35m", "\033[01;36m", "\033[00m" },
+			{ "\033[00;31m", "\033[00;32m", "\033[00;33m", "\033[00;34m", "\033[00;35m", "\033[00;36m", "\033[00m" }
+		};
 
 		std::string Color::color(const std::string& value, Color::ColorName color)
 		{
+			if(!Context::getContext().getColored())
+				return value;
+
 			std::string result = colors_[mode_].values[color];
 			result.append(value);
 			result.append(colors_[mode_].values[Color::Reset]);

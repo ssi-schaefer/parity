@@ -1,6 +1,15 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{244C46AE-9C21-4DA8-A4FD-DD768B63FC76}"
+	ProjectSection(SolutionItems) = preProject
+		Confix2.dir = Confix2.dir
+		Confix2.pkg = Confix2.pkg
+		COPYING.LESSER = COPYING.LESSER
+		parity.conf.in = parity.conf.in
+		ReleaseNotes.txt = ReleaseNotes.txt
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.options", "parity.options\parity.options.vcproj", "{47113F7B-E0B6-4522-943A-FA1AC30CD860}"
 	ProjectSection(ProjectDependencies) = postProject
 		{28A9C092-E0E8-4E5E-A5BA-237BDB2BB159} = {28A9C092-E0E8-4E5E-A5BA-237BDB2BB159}
@@ -79,15 +88,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.statistics", "parity.statistics\parity.statistics.vcproj", "{B33A342D-43F0-4DE0-973B-C45B3E6803EC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{28A9C092-E0E8-4E5E-A5BA-237BDB2BB159} = {28A9C092-E0E8-4E5E-A5BA-237BDB2BB159}
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{244C46AE-9C21-4DA8-A4FD-DD768B63FC76}"
-	ProjectSection(SolutionItems) = preProject
-		Confix2.dir = Confix2.dir
-		Confix2.pkg = Confix2.pkg
-		COPYING.LESSER = COPYING.LESSER
-		parity.conf.in = parity.conf.in
-		ReleaseNotes.txt = ReleaseNotes.txt
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.graphical.configurator", "parity.graphical.configurator\parity.graphical.configurator.vcproj", "{86945419-B17E-4C64-BBD7-7797D5C671DB}"

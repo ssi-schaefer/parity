@@ -66,3 +66,13 @@ added supporting patches for a lot of packages. these patches are not all requir
 path conversion using the cygwin dll has been fixed to only initialize the dll once.
 
 fixed the parsing of PATH style environment variables while creating caches for the dynamic loader.
+
+
+parity 1.0.5
+------------
+
+fixed support for Interix 6.0. Support for Visual Studio 2008 tested.
+
+Migrated Project Files and Solutions to Visual Studio 2008.
+
+Enabled color support for native windows builds, if it is built using autotools (i.e. build parity with itself).

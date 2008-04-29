@@ -5,6 +5,9 @@
 #  the parity configurator to edit.
 #
 
+# Colored (bool): Initial Value: "true"
+Colored = true
+
 # CompilerExe (Path): Initial Value: ""
 CompilerExe = @ParityCompiler@
 

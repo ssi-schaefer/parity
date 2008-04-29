@@ -118,7 +118,7 @@ namespace parity
 					try {
 						utils::Config::parseFile(context, config);
 					} catch(const utils::Exception& e) {
-						utils::Log::error("while parsing configuration: %s\n", e.what());
+						utils::Log::error("while parsing %s: %s\n", pth.get().c_str(), e.what());
 						exit(1);
 					}
 

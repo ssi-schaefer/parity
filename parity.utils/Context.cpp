@@ -61,6 +61,19 @@ namespace parity
 		Context::Context()
 			: ContextGen()
 		{
+			#if defined(_WIN32) && !defined(HAVE_CONFIG_H)
+				//
+				// on native windows disable color by default (can still
+				// be enabled by config (Color=on)) since it doesn't look
+				// too good on windows terminals...
+				//
+				// on native windows built with autotools (HAVE_CONFIG_H),
+				// we can enable color by default, since we can assume, that
+				// parity is installed in some interix (cygwin...) environment.
+				//
+
+				Colored = false;
+			#endif
 		}
 
 		Context::~Context()
