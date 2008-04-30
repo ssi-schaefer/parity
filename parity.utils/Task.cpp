@@ -46,6 +46,15 @@
 #define READ_FD  0
 #define WRITE_FD 1
 
+//
+// when building with parity itself, we need to be carfull, since
+// all MS header files are included with _POSIX_ defined, and thus
+// some things are different (fex. we need to use "old" POSIX names).
+//
+#ifdef __PARITY__
+# define _fileno fileno
+#endif
+
 namespace parity
 {
 	namespace utils
@@ -144,9 +153,9 @@ namespace parity
 				// Re-redirect output stream back to where they came from
 				//
 				
-				if(::_dup2(stdOutFd, _fileno(stdout)) == -1)
+				if(::_dup2(stdOutFd, ::_fileno(stdout)) == -1)
 					throw Exception("cannot restore stdout handle: %s", ::strerror(errno));
-				if(::_dup2(stdErrFd, _fileno(stderr)) == -1)
+				if(::_dup2(stdErrFd, ::_fileno(stderr)) == -1)
 					throw Exception("cannot restore stderr handle: %s", ::strerror(errno));
 
 				::_close(stdOutFd);

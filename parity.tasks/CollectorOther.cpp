@@ -66,13 +66,14 @@ namespace parity
 			//  2) try in current directory
 			//  3) in path set by envoironment variable PARITY_CONFIG
 			//
-		#ifdef _WIN32
+		#if defined(_WIN32) && !defined(PARITY_SYSCONFDIR)
 			char fnBuffer[1024];
 			GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 
 			files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
 		#else
 			utils::Path pth(PARITY_SYSCONFDIR);
+			pth.toNative();
 			files.push_back(ConfigFileVector::value_type(pth, true));
 		#endif
 
@@ -129,7 +130,12 @@ namespace parity
 
 			if(!bLoaded)
 			{
-				utils::Log::error("cannot find configuration. cannot continue!\n");
+				utils::Log::error("cannot find configuration in any of the following places. cannot continue!\n");
+				for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
+				{
+					if(!it->first.get().empty())
+						utils::Log::error(" * %s\n", it->first.get().c_str());
+				}
 				exit(1);
 			}
 
@@ -154,7 +160,7 @@ namespace parity
 			{
 				utils::Path location;
 
-				#ifdef _WIN32
+				#if defined(_WIN32) && !defined(PARITY_INCLUDEDIR)
 					//
 					// just try the default solution setup, and parallell to executable,
 					// then give up, if not found.
@@ -173,6 +179,7 @@ namespace parity
 					}
 				#else
 					location = utils::Path(PARITY_INCLUDEDIR);
+					location.toNative();
 					location.append("parity.runtime");
 				#endif
 
@@ -267,7 +274,7 @@ namespace parity
 				//
 				utils::Path location;
 
-				#ifdef _WIN32
+				#if defined(_WIN32) && !defined(PARITY_LIBDIR)
 					char fnBuffer[1024];
 					GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 					
@@ -276,6 +283,7 @@ namespace parity
 					location.append("parity.runtime.lib");
 				#else
 					location = utils::Path(PARITY_LIBDIR);
+					location.toNative();
 					location.append("libparity_parity.runtime.a");
 
 					if(!location.exists())

@@ -401,6 +401,23 @@ namespace parity
 
 				vec.push_back(def);
 			}
+
+			//
+			// Set optimization level.
+			//
+			switch(ctx.getOptimizeLevel()) {
+			case 0:
+				vec.push_back("/Od");
+				break;
+			case 1:
+				vec.push_back("/O1");
+				break;
+			case 2:
+				vec.push_back("/O2");
+				break;
+			case 3:
+				vec.push_back("/Ox");
+			}
 		}
 
 		void MsCompiler::vectorize(const std::string& str, utils::Task::ArgumentVector& vec)

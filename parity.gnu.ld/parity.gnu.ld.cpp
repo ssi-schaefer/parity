@@ -36,6 +36,15 @@
 #  include <fcntl.h>
 #endif
 
+//
+// when building with parity itself, we need to be carfull, since
+// all MS header files are included with _POSIX_ defined, and thus
+// some things are different (fex. we need to use "old" POSIX names).
+//
+#ifdef __PARITY__
+# define _fileno fileno
+#endif
+
 using namespace parity::utils;
 using namespace parity;
 

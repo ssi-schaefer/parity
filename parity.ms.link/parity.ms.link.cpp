@@ -47,14 +47,6 @@ using namespace parity;
 
 int main(int argc, char** argv)
 {
-#ifdef _WIN32
-	//
-	// set stream modes to binary to suppress the annoying \r
-	//
-	_setmode(_fileno(stdout), _O_BINARY);
-	_setmode(_fileno(stderr), _O_BINARY);
-#endif
-
 	parity::tasks::runConfigurationLoading();
 
 	//

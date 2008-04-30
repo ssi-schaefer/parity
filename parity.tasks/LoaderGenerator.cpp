@@ -167,7 +167,7 @@ namespace parity
 				//
 				utils::Path location;
 
-				#ifdef _WIN32
+				#if defined(_WIN32) && !defined(PARITY_LIBDIR)
 					char fnBuffer[1024];
 					GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 					
@@ -176,6 +176,7 @@ namespace parity
 					location.append("parity.loader.lib");
 				#else
 					location = utils::Path(PARITY_LIBDIR);
+					location.toNative();
 					location.append("libparity_parity.loader.a");
 
 					if(!location.exists())
@@ -826,7 +827,6 @@ namespace parity
 			ctx.getObjectsLibraries().push_back(pth);
 			ctx.getTemporaryFiles().push_back(pth);
 		}
-
 	}
 }
 
