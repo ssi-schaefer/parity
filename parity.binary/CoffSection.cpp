@@ -22,6 +22,7 @@
 
 #include "CoffSection.h"
 #include "CoffFileHeader.h"
+#include "CoffDecoder.h"
 
 #include <Log.h>
 
@@ -194,6 +195,270 @@ namespace parity
 			struct_.VirtualSize += len;
 		}
 
+		void Section::insert(FileHeader& hdr, const void *data, size_t len, size_t pos) {
+
+			//
+			// do the real insertion
+			//
+			insertData(hdr, data, len, pos);
+
+			while(1) {
+				//
+				// pos is updated if there was the need to insert bytes before pos!
+				//
+				if(updateOffsets(hdr, &pos, len) <= 0)
+					break;
+			}
+		}
+
+		//
+		// returns 1 if operation needs to be restarted!
+		//
+		int Section::updateOffsets(FileHeader& hdr, size_t* pos, size_t length) {
+			//
+			// Determine the symbol we are in and how long it is.
+			//
+			const Symbol* lower = 0;
+			const Symbol* upper = 0;
+
+			for(Symbol::IndexedSymbolMap::const_iterator it = hdr.getAllSymbols().begin(); it != hdr.getAllSymbols().end(); ++it)
+			{
+				if(it->second.getSectionNumber() == idx_)
+				{
+					if(it->second.getValue() <= *pos) {
+						if(!lower || (lower && it->second.getValue() >= lower->getValue()))
+							lower = &it->second;
+					} else if(it->second.getValue() >= *pos) {
+						if(!upper || (upper && it->second.getValue() <= upper->getValue()))
+							upper = &it->second;
+					}
+				}
+
+				if(lower && upper)
+					break;
+			}
+
+			if(!lower)
+				throw utils::Exception("not inside a symbol where insertion would be allowed");
+
+			size_t end = struct_.SizeOfRawData;
+
+			if(upper)
+				end = upper->getValue();
+
+			//
+			// Decode the "upper" symbol and fix all direct jumps inside it.
+			// WARNING: i don't really know, but _maybe_ we get an object where there
+			// are direct jumps crossing symbol boundaries. if this is encountered, the
+			// resulting code _will_ be broken, since only the changed symbol is fixed.
+			// If this is ever the case, this code has to be changed to decode the whole
+			// sections instead of just the affected symbol.
+			//
+			Decoder dec(MAKEPTR(void*, data_, lower->getValue()), end - lower->getValue());
+			Decoder::InstructionVector const& instructions = dec.getInstructions();
+
+			utils::Log::verbose("decoded content of section no. %d, %d instructions.\n", lower->getSectionNumber(), instructions.size());
+
+			//
+			// for fast lookup i prepare a map of addresses and booleans which indicate wether
+			// there is a relocation at a given address.
+			//
+			std::map<int, bool> relocationAt;
+			Relocation::RelocationVector const& relocations = hdr.getSection(lower->getSectionNumber()).getRelocations();
+
+			for(Relocation::RelocationVector::const_iterator crel = relocations.begin(); crel != relocations.end(); ++crel)
+			{
+				relocationAt[crel->getVirtualAddress()] = true;
+			}
+
+			//
+			// WARNING: this is quite slow in the case of an address overflow in a direct jump.
+			// In that case the instruction needs to be changed to one that recieves a longer
+			// operand, and thus an extra byte (or more) need to be inserted into the section
+			// data. this requires the whole process of updating to be restarted from the beginning
+			// (i.e. return 1).
+			//
+			int position = 0;
+			int symrel_isertionpoint = *pos - lower->getValue();
+
+			for(Decoder::InstructionVector::const_iterator insn = instructions.begin(); insn != instructions.end(); ++insn) {
+				//
+				// check wether the instruction has an address that needs fixing.
+				//
+				switch(insn->getOpcode()) {
+				case 0xE8:								// call rel16/32		-> may need patching.
+				case 0xE9:								// jmp rel16/32			-> may need patching.
+					{
+						if(relocationAt.find(position + 1) != relocationAt.end())
+							break;
+						//
+						// we assume that this fits in 32bits, so there are no safety nets here.
+						//
+						char* target = MAKEPTR(char*, data_, position + 1 /* offset for insn byte */);
+						
+						if(position < symrel_isertionpoint && (position + *target + insn->getLength()) >= symrel_isertionpoint) {
+							*target += length;
+						} else if(position > symrel_isertionpoint && (position + *target + insn->getLength()) <= symrel_isertionpoint) {
+							*target -= length;
+						}
+					}
+					break;
+				case 0x9A:								// call indir 16/32		-> indirect, so can't do anything anyway
+					break;
+				case 0xEA:								// jmp far abs.			-> same as 0xFF mod 0x18
+					utils::Log::warning("absolute address hardcoded for jump in unlinked object code!\n");
+					break;
+				case 0xFF:								// check mod R/M byte for insn group.
+					switch(insn->getModRm() & 0xC7) {	// check only mod field
+					case 0x10:							// call indir r/m16/32	-> indirect, can't change.
+						break;
+					case 0x18:							// call abs indir 16/32	-> indirect, but through hardcoded abs addr.
+						utils::Log::warning("absolute address hardcoded for call instruction in unlinked object code!\n");
+						break;
+					case 0x20:							// jmp r/m16/32			-> indirect, can't change.
+						break;
+					case 0x28:							// jmp abs indir 16/32	-> indirect, but through hardcoded abs addr.
+						utils::Log::warning("absolute address hardcoded for jump instruction in unlinked object code!\n");
+						break;
+					}
+					break;
+
+				case 0x70: case 0x71: case 0x72:
+				case 0x73: case 0x74: case 0x75:
+				case 0x76: case 0x77: case 0x78:
+				case 0x79: case 0x7A: case 0x7B:
+				case 0x7C: case 0x7D: case 0x7E:		// J??? rel8.
+				case 0x7F: case 0xE3:
+				case 0xEB:								// JMP rel8
+				case 0xE0: case 0xE1: case 0xE2:		// LOOP?? rel8
+					{
+						if(relocationAt.find(position + 1) != relocationAt.end())
+							break;
+
+						char* target = MAKEPTR(char*, data_, position + 1 /* offset for insn byte */);
+						int new_target = 0;
+
+						//
+						// check against symbol relative insertion point if jump crosses.
+						// no need to check for position == symrel_insertionpoint [+length], since at
+						// least one byte was added for which we don't have any responsability.
+						//
+						if(position < symrel_isertionpoint) {
+							if((position + *target + insn->getLength()) >= symrel_isertionpoint) {
+								// Jump forward that crosses.
+								// sanity check if the target is positive.
+								if(*target <= 0)
+									throw utils::Exception("forward jump with negative or zero offset value (%d)!", *target);
+
+								new_target = *target + length;
+							}
+						} else if(position > symrel_isertionpoint + (int)length) {
+							if((position + *target + insn->getLength()) <= symrel_isertionpoint) {
+								// Jump backward that crosses.
+								// sanity check if the target is negative.
+								if(*target >= 0)
+									throw utils::Exception("backward jump with positive or zero offset value (%d)!", *target);
+
+								new_target = *target - length;
+							}
+						}
+
+						if(new_target > CHAR_MAX || new_target < CHAR_MIN) {
+							//
+							// uh oh. need a bigger instruction.
+							// we need to insert exactly 4 bytes, growing the instruction
+							// from 2 to 6 bytes, 1 byte for the additional opcode, and 3 bytes
+							// for the bigger address.
+							//
+							switch(insn->getOpcode()) {
+							case 0xE0: case 0xE1: case 0xE2: case 0xE3:
+								//
+								// these can't grow!
+								//
+								throw utils::Exception("cannot grow JCXZ/JECXZ or LOOP instruction!");
+							default:
+								break;
+							}
+
+							utils::Log::verbose("growing jump instruction at %d, target offset: %d.\n", position, new_target);
+
+							unsigned char grow_data2[] = { 0x00, 0x00, 0x00, 0x00 };
+							unsigned char grow_data1[] = { 0x00, 0x00, 0x00, 0x00 };
+
+							if(insn->getOpcode() == 0xEB) // JMP rel8
+								insert(hdr, grow_data1, sizeof(grow_data1), position);
+							else
+								insert(hdr, grow_data2, sizeof(grow_data2), position);
+
+							unsigned char* insn_op = MAKEPTR(unsigned char*, data_, position);
+
+							//
+							// change the opcode to the 16/32 bit version of the instruction.
+							//
+							if(insn->getOpcode() == 0xEB) { // JMP rel8
+								insn_op[0] = 0xE9;
+							} else {
+								insn_op[0] = 0x0F;
+								insn_op[1] = insn->getOpcode() + 0x10;
+							}
+
+							int* insn_data = MAKEPTR(int*, insn_op, (insn->getOpcode() == 0xEB) ? 1 : 2);
+							*insn_data = new_target;
+
+							//
+							// need to restart processing here, since positions changed again!
+							// before restarting, update pos if it changed!
+							//
+							if(position < (int)*pos) {
+								*pos += (insn->getOpcode() == 0xEB) ? sizeof(grow_data1) : sizeof(grow_data2);
+							}
+
+							return 1;
+						} else {
+							*target = new_target;
+						}
+					}
+					break;
+
+				case 0x0F:
+					// 16/32 bit relative jump instructions
+					switch(insn->getOpcode2()) {
+					case 0x80: case 0x81: case 0x82:
+					case 0x83: case 0x84: case 0x85:
+					case 0x86: case 0x87: case 0x88:
+					case 0x89: case 0x8A: case 0x8B:
+					case 0x8C: case 0x8D: case 0x8E:		// J??? rel16/32.
+					case 0x8F:
+						{
+							if(relocationAt.find(position + 2) != relocationAt.end())
+								break;
+
+							//
+							// just like for the "big" call instructions, there are no safety nets here,
+							// and i just assume, that things fit in 32 bits.
+							//
+							char* target = MAKEPTR(char*, data_, position + 2 /* offset for (2!) insn bytes */);
+						
+							if(position < symrel_isertionpoint && (position + *target + insn->getLength()) >= symrel_isertionpoint) {
+								*target += length;
+							} else if(position > symrel_isertionpoint && (position + *target + insn->getLength()) <= symrel_isertionpoint) {
+								*target -= length;
+							}
+						}
+						break;
+					}
+					break;
+				}
+
+				position += insn->getLength();
+			}
+
+			//
+			// all done.
+			//
+			return 0;
+		}
+
 		void Section::insertData(FileHeader& hdr, const void *data, size_t len, size_t pos)
 		{
 			//
@@ -303,13 +568,6 @@ namespace parity
 						it->setVirtualAddress(it->getVirtualAddress() + len);
 					}
 				}
-
-				//
-				// TODO: FIXXME: need to look at all jump directives that are in
-				// the symbols code. Anyone that has no relocated address and jumps
-				// over the inserted data (forward or backward) needs to be fixed.
-				//
-				utils::Log::warning("TODO: relative jumps not patched!\n");
 			} else {
 				//
 				// No padding found, symbol will grow bigger than it was, and we
@@ -384,11 +642,9 @@ namespace parity
 				}
 
 				//
-				// TODO: FIXXME: need to look at all jump directives that are in
-				// the sections code. Anyone that has no relocated address and jumps
-				// over the inserted data (forward or backward) needs to be fixed.
+				// update symEnd to reflect the current value.
 				//
-				utils::Log::warning("TODO: relative jumps not patched!\n");
+				symEnd += (padPos - padOldPos) + len;
 			}
 		}
 

@@ -160,7 +160,7 @@ namespace parity
 			if(idx > sections_.size() + 1)
 				throw utils::Exception("section index out of bounds");
 
-			return sections_[idx - 1];
+			return sections_[idx];
 		}
 
 		Section& FileHeader::getSectionForRVA(unsigned int rva)

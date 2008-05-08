@@ -503,7 +503,7 @@ namespace parity
 						// when using inheritance in C++ it is possible that a
 						// function is requested as DATA symbol, i think this is
 						// because of it beeing in the vtable (seems to happen
-						// only for 
+						// only for virtuals...)
 						//
 
 						//if(it->second.first.getType() != binary::Symbol::ComplexFunction)

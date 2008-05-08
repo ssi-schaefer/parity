@@ -98,13 +98,16 @@ namespace parity
 
 				utils::Log::verbose("marking and adding data for txtSym1.\n");
 
-				const unsigned char txtSym1Data1[] = { 0x55, 0x8B, 0xEC, 0xA1 };
-				const unsigned char txtSym1Data2[] = { 0x00, 0x00, 0x00, 0x00, 0x5D, 0xC3 };
+				const unsigned char txtSym1Data1[] = { 0x55, 0x8B, 0xEC, 0xE8 };
+				const unsigned char txtSym1Data2[] = { 0x00, 0x00, 0x00, 0x00, 0x85, 0xC0, 0x75, 0x06, 0x0F, 0x84, 0x05, 0x00, 0x00, 0x00, 0xE8 };
+				const unsigned char txtSym1Data3[] = { 0x00, 0x00, 0x00, 0x00, 0x5D, 0xC3 };
 
 				textSection.markSymbol(txtSym1);
-				textSection.addData((void*)txtSym1Data1, 4);
-				textSection.markRelocation(extSym1, Relocation::i386Direct32);
-				textSection.addData((void*)txtSym1Data2, 6);
+				textSection.addData((void*)txtSym1Data1, sizeof(txtSym1Data1));
+				textSection.markRelocation(txtSym2, Relocation::i386Direct32);
+				textSection.addData((void*)txtSym1Data2, sizeof(txtSym1Data2));
+				textSection.markRelocation(txtSym2, Relocation::i386Direct32);
+				textSection.addData((void*)txtSym1Data3, sizeof(txtSym1Data3));
 				textSection.padSection();
 
 				textSection.markSymbol(txtSym2);
@@ -154,12 +157,15 @@ namespace parity
 				if(pth.exists())
 				{
 					utils::Log::verbose("trying to do a parsed copy with insertion of %s.\n", pth.get().c_str());
-					FileHeader tmph = obj2.getHeader();
+					FileHeader& tmph = obj2.getHeader();
 
 					Section& textSection = tmph.getSection(".text");
 
-					unsigned char txtInsertData[] = { 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3 };
-					textSection.insertData(tmph, txtInsertData, 6, 3);
+					unsigned char txtInsertData[] = { 0xE8, 0x00, 0x01, 0x02, 0x03 };
+					textSection.insert(tmph, txtInsertData, sizeof(txtInsertData), 18);
+					textSection.insert(tmph, txtInsertData, sizeof(txtInsertData), 18);
+					textSection.insert(tmph, txtInsertData, sizeof(txtInsertData), 18);
+					textSection.insert(tmph, txtInsertData, sizeof(txtInsertData), 18);
 
 					utils::MemoryFile tmpm;
 					obj2.update(tmpm);

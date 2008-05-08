@@ -130,7 +130,6 @@ namespace parity
 			// Complex Methods
 			//
 			int getIndex() { return idx_; }
-			Section getSection() const;
 
 			static unsigned short getSizeInFile() { return sizeof(SymStruct); }
 			void update(utils::MemoryFile& file);

@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 		{ "parity::utils::Task", &parity::testing::TestSuite::testParityUtilsTask, true },
 		{ "parity::options::CommandLine", &parity::testing::TestSuite::testParityOptionsCommandLine, true },
 		{ "parity::binary::Object", &parity::testing::TestSuite::testParityBinaryObject, true },
-		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite, true },
+		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite, false },
 		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite, true },
 		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile, true },
 		{ "parity.exe: link (and intermediate compile)", &parity::testing::TestSuite::testParityExeLink, true },

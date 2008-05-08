@@ -122,7 +122,7 @@ namespace parity
 			void markRelocation(Symbol& sym, Relocation::i386TypeFlags flags);		// only add relocation
 			void markSymbol(Symbol& sym);											// modifies sym to point at the current end of the data, and adds a Relocation
 			void addData(const void* data, size_t len);									// only add data without setting a marker.
-			void insertData(FileHeader& hdr, const void* data, size_t len, size_t pos);	// insert data at given position.
+			void insert(FileHeader& hdr, const void* data, size_t len, size_t pos);	// insert data at given position.
 			void padSection();
 			void padSection(unsigned int alignment);
 			void takeBufferControl();
@@ -173,6 +173,8 @@ namespace parity
 		private:
 			void calcName(const FileHeader* fh);
 			void lookupRelocations(const FileHeader* fh);
+			void insertData(FileHeader& hdr, const void* data, size_t len, size_t pos);
+			int updateOffsets(FileHeader& hdr, size_t* pos, size_t len);
 
 			//
 			// Attributes
