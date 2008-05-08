@@ -505,6 +505,29 @@ namespace parity
 						// because of it beeing in the vtable (seems to happen
 						// only for virtuals...)
 						//
+						// UPDATE: since svn revision 95 there is a binary decoder
+						// which enables binary data insertion into unlinked object
+						// data. This makes it possible to patch the accesses to
+						// global data, and make any unresolved data symbol point
+						// to a generated import pointer, which is appended to the
+						// corresponding object file.
+						// But still there are some problems:
+						//  *) if the object comes from a library, the whole library
+						//     must be unpacked somewhere, and after patching the
+						//     relevant objects, all objects that come from a library
+						//     have to be packed together again. If the file is an
+						//     object it has to be copied somewhere prior to patching
+						//     so that the original objects don't change...
+						//  *) detecting accesses to the relevant symbols is pretty
+						//     straight forward: simply look for relocations to data
+						//     symbols where there is no local, but only an __imp_
+						//     version.
+						//  *) patching has to be done depending on the instruction
+						//     that accesses the variable. also the accessing instruction
+						//     may has to be changed for things to work out again. This
+						//     would mean checking for every possible instruction taking
+						//     m16/32 operands
+						//
 
 						//if(it->second.first.getType() != binary::Symbol::ComplexFunction)
 						//{
