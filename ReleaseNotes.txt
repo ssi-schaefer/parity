@@ -76,3 +76,9 @@ fixed support for Interix 6.0. Support for Visual Studio 2008 tested.
 Migrated Project Files and Solutions to Visual Studio 2008.
 
 Enabled color support for native windows builds, if it is built using autotools (i.e. build parity with itself).
+
+Parity no longer decides wether certain paths are "bad", like /usr/local. This fixes issues with a Gentoo Prefix installation.
+
+Fixed the -O switches, which had no effect until now. Now proper optimizations are performed by the target compiler.
+
+Added an x86 binary decoder to support fixing certain instructions at link time. Insertion of instructions in unlinked code is now fully supported. This is the basic building block for beeing able to avoid the __declspec(dllimport)'s. The plan is, to fix every instruction that accesses a global data symbol to use a symbol that possibly comes from a DLL by adding an additional indirection. There is still lot of work to be done, since every x86 instruction that can access such a global data symbol (every instruction that can take an address as operand) needs to be recognized and patched.
