@@ -77,7 +77,14 @@ namespace parity
 
 		bool showParityVersion(const char* option, const char* argument, bool& used)
 		{
-			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ")" << std::endl;
+			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ") ";
+#ifdef _WIN32
+			std::cout << "native windows build" << std::endl;
+#elif defined(__INTERIX)
+			std::cout << "interix g++ build" << std::endl;
+#elif defined(__CYGWIN__)
+			std::cout << "cygwin g++ build" << std::endl;
+#endif
 			std::cout << "Copyright (c) 2007, 2008 Markus Duft <markus.duft@salomon.at>" << std::endl;
 
 			std::cout << PACKAGE_NAME << " comes with ABSOLUTELY NO WARRANTY; This is free software, and you are" << std::endl;

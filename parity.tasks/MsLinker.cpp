@@ -199,8 +199,8 @@ namespace parity
 			//
 			utils::PathVector envPaths;
 
-			utils::Environment envLdLibrary("LD_LIBRARY_PATHS");
-			utils::Environment envLibrary("LIBRARY_PATHS");
+			utils::Environment envLdLibrary("LD_LIBRARY_PATH");
+			utils::Environment envLibrary("LIBRARY_PATH");
 
 			utils::PathVector vecLd = envLdLibrary.getPathVector();
 			utils::PathVector vecLib = envLibrary.getPathVector();

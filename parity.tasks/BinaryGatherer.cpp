@@ -308,6 +308,13 @@ namespace parity
 				if(it->second.getName().compare(0, 4, "??_G") == 0 || it->second.getName().compare(0, 4, "??_E") == 0)
 					continue;
 
+				//
+				// These seem to be string constants. i saw one breaking the linker
+				// if it is exported... argh...
+				//
+				if(it->second.getName().compare(0, 4, "??_C") == 0)
+					continue;
+
 				if(it->second.getSectionNumber() == binary::Symbol::SymbolUndefined) {
 					static std::map<std::string, bool> unresolved_seen_;
 					bool& ref = unresolved_seen_[it->second.getName()];
