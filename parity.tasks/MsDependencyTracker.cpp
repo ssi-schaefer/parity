@@ -203,10 +203,7 @@ namespace parity
 				while(content < top && (*content == ' ' || *content == '\t' || *content == '\n' || *content == '\r'))
 					++content;
 
-				if(content >= top || content+1 >= top)
-					break;
-
-				if(*content == '\0' || content >= top)
+				if(content >= top || content+1 >= top || *content == '\0')
 					break;
 
 				if(*content++ == '#')
@@ -216,17 +213,32 @@ namespace parity
 
 					if(::strncmp(content, "include", 7) == 0)
 					{
+						/* WARNING: this strchr _may_ be dangerous if the memory mapped file
+						 * happens to just be (for example) exactly 4096 bytes long! In this
+						 * case, the string is _not_ zero terminated, and accessing one char
+						 * beyond the end may (or may not) page fault.
+						 *
+						 * After reviewing the code, the only situation where this is a prob
+						 * is, when the last line of the file is an include statement which
+						 * for some reason has no newline at the end of the line, _and_ also
+						 * happens to end at byte 4096 ... */
+
 						const char* end = ::strchr(content, '\n');
-						const char* open = ::strchr(content + 7, '<'); // + 7 to save compare for "#include"
+						const char* open = content + 7;
 						const char* close;
 
-						if(!open || open >= end)
-						{
-							open = ::strchr(content + 7, '"');
+						/* search for the beginning of the included filename */
+						while(open && *open != '\0') {
+							if(*open == '"' || *open == '<')
+								break;
 
-							if(!open)
+							if((*open != ' ' && *open != '\t') || open >= top )
 								continue;
 
+							++open;
+						}
+
+						if(*open == '"') {
 							close = ::strchr(open + 2, '"');
 						} else {
 							close = ::strchr(open + 2, '>');
@@ -268,10 +280,11 @@ namespace parity
 		void MsDependencyTracker::trackFile(const utils::Path& file)
 		{
 			bool& tracked = dependencies_[file];
-			bool& locked  = lock_[file];
 
 			if(tracked)
 				return;
+
+			bool& locked  = lock_[file];
 
 			if(locked)
 			{

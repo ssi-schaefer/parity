@@ -35,6 +35,8 @@ namespace parity
 		bool setDebugLevel(const char* option, const char* argument, bool& used);
 		bool setLinkerPassthrough(const char* option, const char* argument, bool& used);
 		bool setCompilerPassthrough(const char* option, const char* argument, bool& used);
+		bool setUnhandledSourceFilePassthrough(const char* option, const char* argument, bool& used);
+		bool setUnhandledObjectFilePassthrough(const char* option, const char* argument, bool& used);
 		bool showParityVersion(const char* option, const char* argument, bool& used);
 		bool setCtxDump(const char* option, const char* argument, bool& used);
 		bool setColorMode(const char* option, const char* argument, bool& used);

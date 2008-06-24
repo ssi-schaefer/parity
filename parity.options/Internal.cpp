@@ -75,6 +75,16 @@ namespace parity
 			return true;
 		}
 
+		bool setUnhandledSourceFilePassthrough(const char* option, const char* argument, bool& used)
+		{
+			return setCompilerPassthrough("-X", option, used);
+		}
+
+		bool setUnhandledObjectFilePassthrough(const char* option, const char* argument, bool& used)
+		{
+			return setLinkerPassthrough("-Y", option, used);
+		}
+
 		bool showParityVersion(const char* option, const char* argument, bool& used)
 		{
 			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ") ";

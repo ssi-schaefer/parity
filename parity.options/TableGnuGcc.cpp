@@ -113,6 +113,7 @@ namespace parity
 			{ ".asm"		,addSource					},
 			{ ".s"			,addSource					},
 			{ ".S"			,addSource					},
+			{ ".res"		,setUnhandledObjectFilePassthrough	},
 			// --- must be last ---
 			{ 0				,0							}
 		};
