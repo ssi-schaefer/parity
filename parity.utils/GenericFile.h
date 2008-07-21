@@ -40,6 +40,8 @@ namespace parity
 			virtual void* getBase() const = 0;
 			virtual void* getTop() const = 0;
 
+			virtual size_t getSize() { return (unsigned int)((unsigned int)getTop() - (unsigned int)getBase()); }
+
 			virtual bool isInRange(void* ptr) const = 0;
 
 			virtual bool isReadable() const = 0;
