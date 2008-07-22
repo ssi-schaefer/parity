@@ -270,11 +270,11 @@ namespace parity
 				pthLdLibPath,
 			};
 
-			for(std::vector<std::string>::iterator lib = names.begin(); lib != names.end(); ++lib)
+			for(int i = 0; i < 4; ++i)
 			{
-				for(int i = 0; i < 4; ++i)
+				for(PathVector::iterator it = vecArray[i].begin(); it != vecArray[i].end(); ++it)
 				{
-					for(PathVector::iterator it = vecArray[i].begin(); it != vecArray[i].end(); ++it)
+					for(std::vector<std::string>::iterator lib = names.begin(); lib != names.end(); ++lib)
 					{
 						it->toNative();
 
