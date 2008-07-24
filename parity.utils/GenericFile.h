@@ -23,6 +23,12 @@
 #ifndef __GENERICFILE_H__
 #define __GENERICFILE_H__
 
+#ifndef _WIN32
+#  include <unistd.h>
+#else
+#  include <windows.h>
+#endif
+
 namespace parity
 {
 	namespace utils
