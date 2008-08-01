@@ -75,7 +75,7 @@ static void* LibLoad(const char* name)
 
 	if(handle)
 	{
-		LogDebug("loaded %s through windows default lookup\n", name);
+		LogDebug("loaded %s through windows default lookup or absolute name\n", name);
 		return handle;
 	}
 
