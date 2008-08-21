@@ -28,8 +28,6 @@
 
 #include <iomanip>
 
-#define GENERAL_CONFIG_KEY "__general_config__"
-
 namespace parity
 {
 	namespace utils
@@ -57,7 +55,7 @@ namespace parity
 				}
 
 				for(ConfigSectionMap::iterator it = m.begin(); it != m.end(); ++it) {
-					for(int i = 1; i < argc; ++i) {
+					for(int i = 0; i < argc; ++i) {
 						std::string arg = "-";
 						arg.append(it->first);
 

@@ -280,6 +280,6 @@ private:
 
 public:
 	static std::string MarshalSimpleStringToNative(String^ str);
-	static String^ MarshalSimpleNativeToString(std::string& str);
+	static String^ MarshalSimpleNativeToString(const std::string& str);
 };
 }

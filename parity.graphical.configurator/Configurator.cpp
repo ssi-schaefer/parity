@@ -1,5 +1,6 @@
 #include "Configurator.h"
 #include "Mapping.h"
+#include "SectionChooser.h"
 
 #include <Context.h>
 #include <Configuration.h>
@@ -68,8 +69,44 @@ namespace paritygraphicalconfigurator {
 			std::string native = MarshalSimpleStringToNative(dlgOpenFile->FileName);
 			MappedFile file(parity::utils::Path(native), ModeRead);
 
-			Config::parseFile(*context_, file);
-			*initial_ = *context_;
+			ConfigSectionMap m = Config::getSections(file);
+
+			if(!m.empty()) {
+				SectionChooser^ chooser = gcnew SectionChooser();
+				std::string gen(GENERAL_CONFIG_KEY);
+
+				for(ConfigSectionMap::iterator it = m.begin(); it != m.end(); ++it) {
+					if(it->first != gen)
+						chooser->lstSections->Items->Add(MarshalSimpleNativeToString(it->first));
+				}
+
+				chooser->ShowDialog();
+
+				char ** a = (char**)malloc(sizeof(char*) * m.size() + 1);
+				int i = 0;
+
+				for(int x = 0; x < chooser->lstSections->Items->Count; ++x) {
+					if(chooser->lstSections->GetSelected(x)) {
+						std::string arg("-");
+						arg.append(MarshalSimpleStringToNative(chooser->lstSections->Items[x]->ToString()));
+						a[i++] = strdup(arg.c_str());
+					}
+				}
+
+				a[i] = NULL;
+
+				Config::parseFile(*context_, file, i, a);
+				*initial_ = *context_;
+
+				char ** b = a;
+				while(*b)
+					free(*b++);
+
+				free(a);
+			} else {
+				Config::parseFile(*context_, file, 0, NULL);
+				*initial_ = *context_;
+			}
 
 			CreateConfigurationView(*context_);
 		}
@@ -77,6 +114,8 @@ namespace paritygraphicalconfigurator {
 
 	System::Void Configurator::SaveConfiguration(System::Object^  sender, System::EventArgs^  e)
 	{
+		// TODO: implement writing to sections?
+
 		if(dlgSaveFile->ShowDialog() == System::Windows::Forms::DialogResult::OK)
 		{
 			MappingStruct* ptr = SettingMapping;
@@ -184,7 +223,7 @@ namespace paritygraphicalconfigurator {
 		return result;
 	}
 
-	String^ Configurator::MarshalSimpleNativeToString(std::string& str)
+	String^ Configurator::MarshalSimpleNativeToString(const std::string& str)
 	{
 		return gcnew String(str.c_str());
 	}

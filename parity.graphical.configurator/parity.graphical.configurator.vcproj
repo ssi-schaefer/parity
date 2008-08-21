@@ -425,6 +425,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SectionChooser.h"
+				FileType="3"
+				>
+				<File
+					RelativePath=".\SectionChooser.resx"
+					>
+				</File>
+			</File>
+			<File
 				RelativePath=".\SimpleStringEditDialog.h"
 				FileType="3"
 				>

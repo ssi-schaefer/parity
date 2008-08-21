@@ -29,6 +29,8 @@
 #include "MappedFile.h"
 #include "Context.h"
 
+#define GENERAL_CONFIG_KEY "__general_config__"
+
 namespace parity
 {
 	namespace utils
@@ -40,11 +42,11 @@ namespace parity
 		public:
 			static void parseFile(Context& ctx, const MappedFile& file, int argc, char * const * argv);
 			static bool parseString(Context& ctx, const char* line, size_t len);
+			static ConfigSectionMap getSections(const MappedFile& file);
 
 		private:
 			Config();
 
-			static ConfigSectionMap getSections(const MappedFile& file);
 
 			static bool parseLine(Context& ctx, const char* data, size_t len);
 		};
