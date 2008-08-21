@@ -36,13 +36,9 @@
 #endif
 
 PCRT_BEGIN_C
-//
-// parity.runtime already has a dependency to parity.loader,
-// so we can use it's path conversion too, to avoid reinventing
-// the wheel, and having many functions to synchronize.
-//
-extern const char* LoaderConvertPathToNative(const char*);
-#define PCRT_CONV(x) LoaderConvertPathToNative(x)
+
+extern const char* PcrtPathToNative(const char*);
+#define PCRT_CONV(x) PcrtPathToNative(x)
 
 PCRT_END_C
 

@@ -123,7 +123,7 @@ namespace parity
 
 				handles_[threadID] = (void*)handle;
 			#elif POSIX_THREADING_MODEL == POSIX_THREADS
-				if(pthread_create(&threadID, 0, (void*(*)(void*))method, data) != 0)
+				if(pthread_create((pthread_t*)&threadID, 0, (void*(*)(void*))method, data) != 0)
 					throw Exception("cannot create thread: %s", ::strerror(errno));
 
 				Log::verbose("created posix thread with ID %d.\n", threadID);

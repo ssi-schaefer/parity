@@ -43,6 +43,9 @@
 //  * unpredictable "Memory Fault (core dumped)"'s
 //  * slow as hell.
 //
+// another thing to consider with threads is shared memory, and
+// the various singletons used in parity!
+//
 #define POSIX_THREADING_MODEL POSIX_FORK
 
 namespace parity

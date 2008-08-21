@@ -72,11 +72,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.gnu.ld", "parity.gnu
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.loader", "parity.loader\parity.loader.vcproj", "{6A83A392-CC1A-43BB-B453-31416D0A1215}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3D03E8FC-8899-4F31-BDFD-FCF51661F7D2} = {3D03E8FC-8899-4F31-BDFD-FCF51661F7D2}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.runtime", "parity.runtime\parity.runtime.vcproj", "{3D03E8FC-8899-4F31-BDFD-FCF51661F7D2}"
-	ProjectSection(ProjectDependencies) = postProject
-		{6A83A392-CC1A-43BB-B453-31416D0A1215} = {6A83A392-CC1A-43BB-B453-31416D0A1215}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.inspector", "parity.inspector\parity.inspector.vcproj", "{AF5B4642-A02D-4D38-BEE6-CCEC55A0ED87}"
 	ProjectSection(ProjectDependencies) = postProject

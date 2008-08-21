@@ -70,7 +70,7 @@ namespace parity
 		{
 			try {
 				int argc = 6;
-				char * argv[] = {
+				char const * argv[] = {
 					"-o",
 					"markus.o",
 					"-fexceptions",
@@ -79,7 +79,7 @@ namespace parity
 					"something.cc"
 				};
 
-				if(parity::options::CommandLine::process(argc, argv, options, 0))
+				if(parity::options::CommandLine::process(argc, (char **)argv, options, 0))
 					return true;
 			} catch(const utils::Exception&)
 			{

@@ -33,13 +33,18 @@ namespace parity
 {
 	namespace utils
 	{
+		typedef std::pair<const char*, size_t> ConfigSection;
+		typedef std::map<std::string, ConfigSection> ConfigSectionMap;
+
 		class Config {
 		public:
-			static void parseFile(Context& ctx, const MappedFile& file);
+			static void parseFile(Context& ctx, const MappedFile& file, int argc, char * const * argv);
 			static bool parseString(Context& ctx, const char* line, size_t len);
 
 		private:
 			Config();
+
+			static ConfigSectionMap getSections(const MappedFile& file);
 
 			static bool parseLine(Context& ctx, const char* data, size_t len);
 		};

@@ -101,6 +101,8 @@ namespace parity
 			if(_stricmp(val.c_str(), "microsoft") == 0
 				|| _stricmp(val.c_str(), "ms") == 0)
 				target = ToolchainMicrosoft;
+			else if(_stricmp(val.c_str(), "interixmixed") == 0)
+				target = ToolchainInterixMixed;
 			else if(_stricmp(val.c_str(), "gnu") == 0
 				|| _stricmp(val.c_str(), "gcc") == 0)
 				target = ToolchainInterixGNU;
@@ -216,9 +218,9 @@ namespace parity
 		std::string ContextGen::printable(const long& val)
 		{
 			char buf[255];
-			::sprintf(buf, "%d", val);
+			::sprintf(buf, "%ld", val);
 			std::string ret(buf);
-			::sprintf(buf, "%x", val);
+			::sprintf(buf, "%lx", val);
 			ret.append(" (0x");
 			ret.append(buf);
 			ret.append(")");
@@ -234,6 +236,8 @@ namespace parity
 				return "GCC";
 			case ToolchainMicrosoft:
 				return "Microsoft";
+			case ToolchainInterixMixed:
+				return "Interix MixedMode";
 			case ToolchainInvalid:
 				return "Invalid";
 			}

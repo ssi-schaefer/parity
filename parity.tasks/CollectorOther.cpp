@@ -49,7 +49,7 @@ namespace parity
 		typedef std::vector<ConfigFilePair> ConfigFileVector;
 		typedef std::map<utils::Path, bool> LoadedFileMap;
 
-		void runConfigurationLoading()
+		void runConfigurationLoading(int argc, char * const * argv)
 		{
 			utils::Context& context = utils::Context::getContext();
 			utils::Timing::instance().start("Configuration loading");
@@ -117,7 +117,7 @@ namespace parity
 					utils::MappedFile config(pth, utils::ModeRead);
 
 					try {
-						utils::Config::parseFile(context, config);
+						utils::Config::parseFile(context, config, argc, argv);
 					} catch(const utils::Exception& e) {
 						utils::Log::error("while parsing %s: %s\n", pth.get().c_str(), e.what());
 						exit(1);
@@ -209,11 +209,13 @@ namespace parity
 			utils::Threading threading;
 			utils::Context& context = utils::Context::getContext();
 
-			try {
-				lookupParityRuntimeInclude();
-			} catch(const utils::Exception&) {
-				utils::Log::error("cannot find suitable parity.runtime include directory!\n");
-				exit(1);
+			if(context.getBackendType() == utils::ToolchainMicrosoft) {
+				try {
+					lookupParityRuntimeInclude();
+				} catch(const utils::Exception&) {
+					utils::Log::error("cannot find suitable parity.runtime include directory!\n");
+					exit(1);
+				}
 			}
 			//
 			// First task is the Dependency Tracker (in background)
@@ -306,6 +308,7 @@ namespace parity
 
 		void runLinkerStage()
 		{
+			utils::Context& ctx = utils::Context::getContext();
 			utils::Threading threading;
 			//
 			// The first part of linking is gathering all the symbols for all
@@ -317,71 +320,73 @@ namespace parity
 			// processing.
 			//
 
-			utils::Timing::instance().start("Symbol gathering");
+			if(ctx.getBackendType() == utils::ToolchainMicrosoft) {
+				utils::Timing::instance().start("Symbol gathering");
 
-			binary::Symbol::SymbolVector exportedSymbols;
-			binary::Symbol::SymbolVector staticImports;
-			tasks::BinaryGatherer::ImportHybridityMap loadedImports;
+				binary::Symbol::SymbolVector exportedSymbols;
+				binary::Symbol::SymbolVector staticImports;
+				tasks::BinaryGatherer::ImportHybridityMap loadedImports;
 
-			try {
-				tasks::BinaryGatherer gatherer;
-				gatherer.doWork();
+				try {
+					tasks::BinaryGatherer gatherer;
+					gatherer.doWork();
 
-				exportedSymbols	= gatherer.getExportedSymbols();
-				staticImports	= gatherer.getStaticImports();
-				loadedImports	= gatherer.getLoadedImports();
+					exportedSymbols	= gatherer.getExportedSymbols();
+					staticImports	= gatherer.getStaticImports();
+					loadedImports	= gatherer.getLoadedImports();
 
-			} catch(const utils::Exception& e) {
-				utils::Log::error("while gathering from binaries: %s\n", e.what());
-				exit(1);
-			}
+				} catch(const utils::Exception& e) {
+					utils::Log::error("while gathering from binaries: %s\n", e.what());
+					exit(1);
+				}
 
-			utils::Timing::instance().stop("Symbol gathering");
+				utils::Timing::instance().stop("Symbol gathering");
 
-			//
-			// The second part is generating the exports for symbol exports
-			// by a DLL (if linking shared). This can be done in background.
-			//
-			if(!exportedSymbols.empty())
-				threading.run(TaskStubs::runMsExportGenerator, &exportedSymbols, false);
+				//
+				// The second part is generating the exports for symbol exports
+				// by a DLL (if linking shared). This can be done in background.
+				//
+				if(!exportedSymbols.empty())
+					threading.run(TaskStubs::runMsExportGenerator, &exportedSymbols, false);
 
-			//
-			// The third part is generating the import symbols for all static
-			// libraries involved in linking. This can be done in Background too.
-			// This should only generate symbols for things requested from
-			// somewhere.
-			//
-			if(!staticImports.empty())
-				threading.run(TaskStubs::runMsStaticImportGenerator, &staticImports, false);
+				//
+				// The third part is generating the import symbols for all static
+				// libraries involved in linking. This can be done in Background too.
+				// This should only generate symbols for things requested from
+				// somewhere.
+				//
+				if(!staticImports.empty())
+					threading.run(TaskStubs::runMsStaticImportGenerator, &staticImports, false);
 
-			//
-			// The fourth part is generating the binaries for the shared library
-			// loader. This can be done in Background, since it does not require
-			// any information from the exports generator and the import generator.
-			//
-			// This is run *always* because parts of parity.runtime depend on
-			// code from parity.loader. this means that it must be present
-			// always, even if it's not required.
-			//
-			threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
+				//
+				// The fourth part is generating the binaries for the shared library
+				// loader. This can be done in Background, since it does not require
+				// any information from the exports generator and the import generator.
+				//
+				// This is run *always* because parts of parity.runtime depend on
+				// code from parity.loader. this means that it must be present
+				// always, even if it's not required.
+				//
+				threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
 
-			//
-			// The last part finally is linking itself. Before doing this, all
-			// background tasks must be synchronized, since the linker needs
-			// all created files and informations.
-			//
-			threading.synchronize();
+				//
+				// The last part finally is linking itself. Before doing this, all
+				// background tasks must be synchronized, since the linker needs
+				// all created files and informations.
+				//
+				threading.synchronize();
 
-			//
-			// need the parity.runtime library. for this to work, one need to set
-			// the system include directories to include the parity.runtime include
-			// directory as first one.
-			//
-			try {
-				lookupParityRuntimeLibrary();
-			} catch(const utils::Exception&) {
-				utils::Log::error("cannot find suitable parity.runtime library!\n");
-				exit(1);
+				//
+				// need the parity.runtime library. for this to work, one need to set
+				// the system include directories to include the parity.runtime include
+				// directory as first one.
+				//
+				try {
+					lookupParityRuntimeLibrary();
+				} catch(const utils::Exception&) {
+					utils::Log::error("cannot find suitable parity.runtime library!\n");
+					exit(1);
+				}
 			}
 
 			if(TaskStubs::runLinker(0) != 0)

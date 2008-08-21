@@ -196,7 +196,10 @@ namespace parity
 				ctx.getObjectsLibraries().push_back(ctx.getParityLoader());
 			}
 
-			utils::Log::verbose("Loader generator initialized for %d imports.\n", imports.size());
+			if(ctx.getGenerateLoader())
+				utils::Log::verbose("Loader generator initialized for %d imports.\n", imports.size());
+			else
+				utils::Log::verbose("Loader generator to be skipped (disabled). %d imports not loaded.\n", imports.size());
 		}
 
 		static std::string symbolifyName(std::string str)
@@ -219,6 +222,13 @@ namespace parity
 			//    *) keep hybrid libraries
 			//
 			utils::Context& ctx = utils::Context::getContext();
+
+			//
+			// We can exit here safely, since the library is added to the binary, which
+			// means all the things required from the loader lib can be resolved.
+			//
+			if(!ctx.getGenerateLoader())
+				return;
 
 			binary::Object obj;
 			binary::FileHeader& hdr = obj.getHeader();

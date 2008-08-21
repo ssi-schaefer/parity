@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 		if(arg == "--quiet")
 		{
 			bQuiet = true;
-			argv[i] = "";
+			argv[i] = (char*)"";
 		}
 
 		if(bConfig)
@@ -74,15 +74,15 @@ int main(int argc, char** argv)
 
 			utils::Path tmp(arg);
 			utils::MappedFile file(tmp, utils::ModeRead);
-			utils::Config::parseFile(utils::Context::getContext(), file);
+			utils::Config::parseFile(utils::Context::getContext(), file, argc, argv);
 
-			argv[i] = "";
+			argv[i] = (char*)"";
 		}
 
 		if(arg == "--config")
 		{
 			bConfig = true;
-			argv[i] = "";
+			argv[i] = (char*)"";
 		}
 
 		arguments.push_back(arg);
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 		{ "parity::options::CommandLine", &parity::testing::TestSuite::testParityOptionsCommandLine, true },
 		{ "parity::binary::Object", &parity::testing::TestSuite::testParityBinaryObject, true },
 		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite, true },
-		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite, false },
+		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite, true },
 		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile, true },
 		{ "parity.exe: link (and intermediate compile)", &parity::testing::TestSuite::testParityExeLink, true },
 		{ "parity.exe: static import", &parity::testing::TestSuite::testParityExeStaticImport, true },

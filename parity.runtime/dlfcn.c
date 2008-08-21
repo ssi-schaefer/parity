@@ -21,13 +21,14 @@
 \****************************************************************/
 
 #include "dlfcn.h"
+#include "internal/pcrt.h"
 
 //
 // code comes from parity.loader
+// to avoid circulars, we put an extern here.
 //
-#include "LoaderInit.h"
-#include "LoaderHelper.h"
-#include "LoaderLibrary.h"
+
+extern void* LoaderLibraryGetHandle(const char*, int);
 
 #include <windows.h>
 
@@ -59,7 +60,7 @@ char* dlerror()
 void* dlopen(const char* name, int flags)
 {
 	void* handle = 0;
-	const char* conv = LoaderConvertPathToNative(name);
+	const char* conv = PcrtPathToNative(name);
 	int unsetEnv = 0;
 	curError = tabErrors[0];
 

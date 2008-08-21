@@ -353,7 +353,7 @@ namespace parity
 				//
 				for(Symbol::IndexedSymbolMap::iterator sym = map_.begin(); sym != map_.end(); ++sym)
 				{
-					if(sym->second.getSectionNumber() == it->first
+					if(sym->second.getSectionNumber() == (short)it->first
 						&& sym->second.getStorageClass() == Symbol::ClassStatic
 						&& sym->second.getName() == it->second.getName())
 					{

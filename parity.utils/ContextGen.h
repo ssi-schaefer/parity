@@ -67,7 +67,8 @@ namespace parity
 		typedef enum {
 			ToolchainInvalid = -1,
 			ToolchainMicrosoft,
-			ToolchainInterixGNU
+			ToolchainInterixGNU,
+			ToolchainInterixMixed
 		} ToolchainType;
 
 		typedef enum {

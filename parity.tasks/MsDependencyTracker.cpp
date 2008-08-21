@@ -226,45 +226,51 @@ namespace parity
 						const char* end = ::strchr(content, '\n');
 						const char* open = content + 7;
 						const char* close;
+						int isComplex = 0;
 
 						/* search for the beginning of the included filename */
 						while(open && *open != '\0') {
 							if(*open == '"' || *open == '<')
 								break;
 
-							if((*open != ' ' && *open != '\t') || open >= top )
-								continue;
+							if((*open != ' ' && *open != '\t') || open >= top ) {
+								//
+								// this is triggered by the runtime includes (RUNTIME_INC)
+								//
+								isComplex = 1;
+								utils::Log::verbose("skipping complex include directive %s\n", std::string(open, end).c_str());
+								break;
+							}
 
 							++open;
 						}
 
-						if(*open == '"') {
-							close = ::strchr(open + 2, '"');
-						} else {
-							close = ::strchr(open + 2, '>');
-						}
+						if(!isComplex) {
+							if(*open == '"') {
+								close = ::strchr(open + 2, '"');
+							} else {
+								close = ::strchr(open + 2, '>');
+							}
 
-						if(open >= end)
-							continue;
+							if(open >= end)
+								continue;
 
-						std::string inc(open + 1, close - open - 1);
+							std::string inc(open + 1, close - open - 1);
 
-						if(*open == '"')
-						{
-							utils::Path chk(file.base());
-							chk.append(inc);
-							if(chk.exists())
-								target.push_back(chk);
-							else {
+							if(*open == '"')
+							{
+								utils::Path chk(file.base());
+								chk.append(inc);
+								if(chk.exists())
+									target.push_back(chk);
+								else {
+									target.push_back(lookupPath(inc));
+								}
+							} else {
 								target.push_back(lookupPath(inc));
 							}
-						} else {
-							target.push_back(lookupPath(inc));
 						}
 
-						//
-						// 7 for "include", 2 for open and close and 1 for minimum filename length
-						//
 						content = end + 1;
 					}
 				} else {

@@ -34,7 +34,6 @@ namespace parity
 	namespace statistics
 	{
 		static std::map<std::string, unsigned long> deps_f_;
-		static unsigned long all_deps;
 		static unsigned long longest_ = 0;
 
 		void HandleDependency(std::string const& key, std::string const& value, std::string const& type)

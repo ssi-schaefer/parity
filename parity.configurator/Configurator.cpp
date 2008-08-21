@@ -70,7 +70,7 @@ ComplexMapping gMapping[] = {
 void mainMenu();
 void displayContext();
 void changeSetting();
-void loadConfiguration();
+void loadConfiguration(int argc, char* const* argv);
 void saveConfiguration();
 
 using namespace parity;
@@ -123,7 +123,7 @@ void mainMenu()
 			changeSetting();
 			break;
 		case 3:
-			loadConfiguration();
+			loadConfiguration(0, NULL);
 			break;
 		case 4:
 			saveConfiguration();
@@ -193,7 +193,7 @@ void changeSetting()
 	std::cout << "New Value set to: " << ptr->getter() << std::endl;
 }
 
-void loadConfiguration()
+void loadConfiguration(int argc, char * const * argv)
 {
 	std::string filename;
 	Context& ctx = Context::getContext();
@@ -214,7 +214,7 @@ void loadConfiguration()
 			throw Exception("%s does not exist!", filename.c_str());
 
 		MappedFile map(path, ModeRead);
-		Config::parseFile(ctx, map);
+		Config::parseFile(ctx, map, argc, argv);
 	} catch(const Exception& e) {
 		std::cout << "error while loading " << filename << ": " << e.what() << std::endl;
 	}
@@ -278,6 +278,9 @@ void saveSetting(std::ostringstream& target, const std::string& name, const Tool
 		break;
 	case ToolchainMicrosoft:
 		target << "Microsoft";
+		break;
+	case ToolchainInterixMixed:
+		target << "Interix MixedMode";
 		break;
 	case ToolchainInvalid:
 		target << "<INVALID>";

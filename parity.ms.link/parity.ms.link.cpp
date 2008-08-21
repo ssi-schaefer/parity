@@ -47,7 +47,7 @@ using namespace parity;
 
 int main(int argc, char** argv)
 {
-	parity::tasks::runConfigurationLoading();
+	parity::tasks::runConfigurationLoading(argc, argv);
 
 	//
 	// Get out context which is needed for nearly every operation.

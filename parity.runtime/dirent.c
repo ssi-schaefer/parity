@@ -23,7 +23,7 @@
 #include "dirent.h"
 #include "errno.h"
 
-#include "LoaderHelper.h"
+#include "internal/pcrt.h"
 
 #include <windows.h>
 
@@ -49,7 +49,7 @@ DIR* opendir(const char* szPath)
 		return (DIR *) 0;
 	}
 
-	szConv = LoaderConvertPathToNative(szPath);
+	szConv = PcrtPathToNative(szPath);
 
 	rc = GetFileAttributes (szConv);
 	if(rc == (unsigned int)-1) {
