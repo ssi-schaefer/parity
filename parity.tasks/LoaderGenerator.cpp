@@ -603,7 +603,7 @@ namespace parity
 				// handle entry point stuff
 				//
 
-				std::string entry = ctx.getEntryPoint();
+				std::string entry = ctx.getSharedLink() ? ctx.getSharedEntryPoint() : ctx.getEntryPoint();
 
 				if(entry.empty())
 				{
@@ -618,6 +618,10 @@ namespace parity
 						switch(ctx.getSubsystem())
 						{
 						case utils::SubsystemWindowsCui:
+							if(ctx.getBackendType() == utils::ToolchainInterixMS) {
+								entry = "___DllMainCRTStartup@12";
+								break;
+							}
 						case utils::SubsystemWindowsGui:
 						case utils::SubsystemWindowsCeGui:
 							entry = "__DllMainCRTStartup@12";
@@ -635,14 +639,17 @@ namespace parity
 						switch(ctx.getSubsystem())
 						{
 						case utils::SubsystemWindowsCui:
-							entry = "_mainCRTStartup";
+							if(ctx.getBackendType() == utils::ToolchainInterixMS)
+								entry = "___MixedModeProcessStartup";
+							else
+								entry = "_mainCRTStartup";
 							break;
 						case utils::SubsystemWindowsGui:
 						case utils::SubsystemWindowsCeGui:
 							entry = "_WinMainCRTStartup";
 							break;
 						case utils::SubsystemPosixCui:
-							entry = "___MixedModeProcessStartup";
+							entry = "___PosixProcessStartup";
 							break;
 						default:
 							throw utils::Exception("subsystem default entry point not implemented!");
@@ -661,7 +668,7 @@ namespace parity
 				//
 				// extern definition for real entry point.
 				//
-				binary::Symbol& symRealEntry = hdr.addSymbol(entry);
+				binary::Symbol& symRealEntry = hdr.addSymbol("_" + entry);
 				symRealEntry.setSectionNumber(0);
 				symRealEntry.setStorageClass(binary::Symbol::ClassExternal);
 				symRealEntry.setType(binary::Symbol::ComplexFunction);

@@ -279,8 +279,8 @@ void saveSetting(std::ostringstream& target, const std::string& name, const Tool
 	case ToolchainMicrosoft:
 		target << "Microsoft";
 		break;
-	case ToolchainInterixMixed:
-		target << "Interix MixedMode";
+	case ToolchainInterixMS:
+		target << "Interix Microsoft";
 		break;
 	case ToolchainInvalid:
 		target << "<INVALID>";

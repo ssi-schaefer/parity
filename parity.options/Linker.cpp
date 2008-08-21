@@ -171,6 +171,7 @@ namespace parity
 
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setEntryPoint(arg);
+			ctx.setSharedEntryPoint(arg);
 
 			return true;
 		}

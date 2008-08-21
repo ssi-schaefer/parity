@@ -101,8 +101,8 @@ namespace parity
 			if(_stricmp(val.c_str(), "microsoft") == 0
 				|| _stricmp(val.c_str(), "ms") == 0)
 				target = ToolchainMicrosoft;
-			else if(_stricmp(val.c_str(), "interixmixed") == 0)
-				target = ToolchainInterixMixed;
+			else if(_stricmp(val.c_str(), "interixms") == 0)
+				target = ToolchainInterixMS;
 			else if(_stricmp(val.c_str(), "gnu") == 0
 				|| _stricmp(val.c_str(), "gcc") == 0)
 				target = ToolchainInterixGNU;
@@ -236,8 +236,8 @@ namespace parity
 				return "GCC";
 			case ToolchainMicrosoft:
 				return "Microsoft";
-			case ToolchainInterixMixed:
-				return "Interix MixedMode";
+			case ToolchainInterixMS:
+				return "Interix Microsoft";
 			case ToolchainInvalid:
 				return "Invalid";
 			}

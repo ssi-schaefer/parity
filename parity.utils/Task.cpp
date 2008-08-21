@@ -63,6 +63,13 @@ namespace parity
 
 		bool Task::prepareEnvironment()
 		{
+			static bool prepared = false;
+
+			if(prepared)
+				return true;
+
+			prepared = true;
+
 			Environment pth("PATH");
 			PathVector& paths = Context::getContext().getAdditionalExecPaths();
 

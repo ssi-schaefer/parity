@@ -63,7 +63,7 @@ namespace parity
 				switch(utils::Context::getContext().getBackendType())
 				{
 				case utils::ToolchainMicrosoft:
-				case utils::ToolchainInterixMixed:
+				case utils::ToolchainInterixMS:
 					{
 						parity::tasks::MsCompiler compiler;
 						compiler.doWork();
@@ -91,7 +91,7 @@ namespace parity
 				switch(utils::Context::getContext().getBackendType())
 				{
 				case utils::ToolchainMicrosoft:
-				case utils::ToolchainInterixMixed:
+				case utils::ToolchainInterixMS:
 					{
 						parity::tasks::MsLinker linker;
 						linker.doWork();

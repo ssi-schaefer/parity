@@ -70,7 +70,11 @@ namespace parity
 			//
 			// add pass default and through arguments.
 			//
-			MsCompiler::vectorize(ctx.getLinkerDefaults(), vec);
+			if(ctx.getSharedLink())
+				MsCompiler::vectorize(ctx.getLinkerSharedDefaults(), vec);
+			else
+				MsCompiler::vectorize(ctx.getLinkerDefaults(), vec);
+
 			MsCompiler::vectorize(ctx.getLinkerPassThrough(), vec);
 
 			//
@@ -172,9 +176,12 @@ namespace parity
 			//
 			// add entry point if set.
 			//
-			if(!ctx.getEntryPoint().empty())
-			{
-				vec.push_back("/ENTRY:" + ctx.getEntryPoint());
+			if(ctx.getSharedLink()) {
+				if(!ctx.getSharedEntryPoint().empty())
+					vec.push_back("/ENTRY:" + ctx.getSharedEntryPoint());
+			} else {
+				if(!ctx.getEntryPoint().empty())
+					vec.push_back("/ENTRY:" + ctx.getEntryPoint());
 			}
 
 			//
@@ -393,7 +400,7 @@ namespace parity
 			utils::Path manifest = out.get() + ".mf";
 			utils::Log::verbose("looking for manifest: %s\n", manifest.get().c_str());
 
-			if(manifest.exists())
+			if(manifest.exists() && ctx.getBackendType() == utils::ToolchainMicrosoft)
 			{
 				//
 				// embed manifest

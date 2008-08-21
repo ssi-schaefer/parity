@@ -35,7 +35,9 @@
 #include <Threading.h>
 #include <Statistics.h>
 
+#include <CoffObject.h>
 #include <CoffFileHeader.h>
+#include <CoffDirectiveSection.h>
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -223,7 +225,7 @@ namespace parity
 			// effect of compilation.
 			//
 			if(context.getDependencyTracking() && !context.getSources().empty()
-				&& context.getFrontendType() == utils::ToolchainInterixGNU && context.getBackendType() == utils::ToolchainMicrosoft)
+				&& context.getFrontendType() == utils::ToolchainInterixGNU && context.getBackendType() != utils::ToolchainInterixGNU)
 			{
 				threading.run(tasks::TaskStubs::runDependencyTracking, 0, true);
 
@@ -320,7 +322,14 @@ namespace parity
 			// processing.
 			//
 
-			if(ctx.getBackendType() == utils::ToolchainMicrosoft) {
+			if(ctx.getBackendType() == utils::ToolchainInterixMS && ctx.getSubsystem() == utils::SubsystemPosixCui
+				&& ctx.getSharedLink()) {
+					utils::Log::error("cannot link shared libraries with POSIX subsystem!\n");
+					exit(1);
+			}
+
+			if(ctx.getBackendType() == utils::ToolchainMicrosoft
+				|| (ctx.getBackendType() == utils::ToolchainInterixMS && ctx.getSubsystem() != utils::SubsystemPosixCui)) {
 				utils::Timing::instance().start("Symbol gathering");
 
 				binary::Symbol::SymbolVector exportedSymbols;
@@ -338,6 +347,56 @@ namespace parity
 				} catch(const utils::Exception& e) {
 					utils::Log::error("while gathering from binaries: %s\n", e.what());
 					exit(1);
+				}
+
+				//
+				// we can't get here if Subsystem = POSIX, so we don't need to check...
+				//
+				if(ctx.getSharedLink() && ctx.getBackendType() == utils::ToolchainInterixMS) {
+					//
+					// Need to eventually generate a DllMain@12
+					//
+					bool bHaveDllMain = false;
+					for(binary::Symbol::SymbolVector::iterator it = exportedSymbols.begin(); it != exportedSymbols.end(); ++it) {
+						if(it->getName().compare(0, strlen("_DllMain@12"), "_DllMain@12") == 0) {
+							utils::Log::verbose("found existing DllMain function, skipping generation!\n");
+							bHaveDllMain = true;
+						}
+					}
+
+					if(!bHaveDllMain) {
+						utils::Log::verbose("generating DllMain stub function\n");
+
+						binary::Object obj;
+						binary::FileHeader& hdr = obj.getHeader();
+						binary::Section& txtSect = hdr.addSection(".text");
+
+						txtSect.setCharacteristics( binary::Section::CharAlign16Bytes | binary::Section::CharMemoryExecute | binary::Section::CharMemoryRead | binary::Section::CharContentCode);
+
+						binary::Symbol& dllmain = hdr.addSymbol("_DllMain@12");
+						txtSect.markSymbol(dllmain);
+						dllmain.setStorageClass(binary::Symbol::ClassExternal);
+
+						//
+						// This means:
+						//   mov eax, 1
+						//   ret 0Ch
+						// which should be enough for a dllmain stub
+						//
+						const unsigned char dllmain_data[] = { 0xB8, 0x01, 0x0, 0x0, 0x0, 0xC2, 0x0C, 0x0 };
+						txtSect.addData(dllmain_data, sizeof(dllmain_data));
+
+						txtSect.padSection();
+
+						utils::MemoryFile mem;
+						obj.update(mem);
+
+						utils::Path f = utils::Path::getTemporary(".parity.dllmain.XXXXXX.o");
+						mem.save(f);
+
+						ctx.getObjectsLibraries().push_back(f);
+						ctx.getTemporaryFiles().push_back(f);
+					}
 				}
 
 				utils::Timing::instance().stop("Symbol gathering");
@@ -358,16 +417,30 @@ namespace parity
 				if(!staticImports.empty())
 					threading.run(TaskStubs::runMsStaticImportGenerator, &staticImports, false);
 
-				//
-				// The fourth part is generating the binaries for the shared library
-				// loader. This can be done in Background, since it does not require
-				// any information from the exports generator and the import generator.
-				//
-				// This is run *always* because parts of parity.runtime depend on
-				// code from parity.loader. this means that it must be present
-				// always, even if it's not required.
-				//
-				threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
+				if(ctx.getBackendType() == utils::ToolchainMicrosoft) {
+					//
+					// The fourth part is generating the binaries for the shared library
+					// loader. This can be done in Background, since it does not require
+					// any information from the exports generator and the import generator.
+					//
+					// This is run *always* because parts of parity.runtime depend on
+					// code from parity.loader. this means that it must be present
+					// always, even if it's not required.
+					//
+					threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
+
+					//
+					// need the parity.runtime library. for this to work, one need to set
+					// the system include directories to include the parity.runtime include
+					// directory as first one.
+					//
+					try {
+						lookupParityRuntimeLibrary();
+					} catch(const utils::Exception&) {
+						utils::Log::error("cannot find suitable parity.runtime library!\n");
+						exit(1);
+					}
+				}
 
 				//
 				// The last part finally is linking itself. Before doing this, all
@@ -375,18 +448,6 @@ namespace parity
 				// all created files and informations.
 				//
 				threading.synchronize();
-
-				//
-				// need the parity.runtime library. for this to work, one need to set
-				// the system include directories to include the parity.runtime include
-				// directory as first one.
-				//
-				try {
-					lookupParityRuntimeLibrary();
-				} catch(const utils::Exception&) {
-					utils::Log::error("cannot find suitable parity.runtime library!\n");
-					exit(1);
-				}
 			}
 
 			if(TaskStubs::runLinker(0) != 0)

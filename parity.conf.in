@@ -5,41 +5,95 @@
 #  the parity configurator to edit.
 #
 
-# Colored (bool): Initial Value: "true"
 Colored = true
 
-# CompilerExe (Path): Initial Value: ""
 CompilerExe = @ParityCompiler@
-
-# AssemblerExe (Path): Initial Value: ""
 AssemblerExe = @ParityAssembler@
-
-# LinkerExe (Path): Initial Value: ""
 LinkerExe = @ParityLinker@
-
-# ManifestExe (Path): Initial Value: ""
 ManifestExe = @ParityManifest@
 
-# AdditionalExecPaths (PathVector): Initial Value: PathVector()
 @ParityAdditionalExecPaths@
 
-# SysIncludePaths (PathVector): Initial Value: PathVector()
-@ParitySysIncludePaths@
+#
+# The default section is a setup for normal native Win32 builds.
+#
+section default {
+	@ParitySysIncludePaths@
 
-# SysLibraryPaths (PathVector): Initial Value: PathVector()
-@ParitySysLibraryPaths@
+	@ParitySysLibraryPaths@
 
-# ObjectsLibraries (PathVector): Initial Value: PathVector()
-ObjectsLibraries = kernel32.lib
-ObjectsLibraries = user32.lib
-ObjectsLibraries = advapi32.lib
-ObjectsLibraries = gdi32.lib
-ObjectsLibraries = ws2_32.lib
-ObjectsLibraries = shell32.lib
-ObjectsLibraries = ole32.lib
-ObjectsLibraries = winspool.lib
-ObjectsLibraries = comctl32.lib
-ObjectsLibraries = comdlg32.lib
-ObjectsLibraries = userenv.lib
-ObjectsLibraries = uuid.lib
+	ObjectsLibraries = kernel32.lib
+	ObjectsLibraries = user32.lib
+	ObjectsLibraries = advapi32.lib
+	ObjectsLibraries = gdi32.lib
+	ObjectsLibraries = ws2_32.lib
+	ObjectsLibraries = shell32.lib
+	ObjectsLibraries = ole32.lib
+	ObjectsLibraries = winspool.lib
+	ObjectsLibraries = comctl32.lib
+	ObjectsLibraries = comdlg32.lib
+	ObjectsLibraries = userenv.lib
+	ObjectsLibraries = uuid.lib
+}
+
+#
+# The posix section provides non-shared pure POSIX build capabilities
+#
+section posix {
+	BackendType = InterixMS
+	Subsystem = POSIX
+
+	SysIncludePaths = /usr/include
+	SysIncludePaths = /usr/include/c++
+
+	SysLibraryPaths = /lib
+	SysLibraryPaths = /usr/lib
+	
+	ObjectsLibraries = libcsafe.a
+	ObjectsLibraries = libpsxdll.a
+	ObjectsLibraries = libstdc++.a
+	ObjectsLibraries = libm.a
+
+	Defines = _MT
+	Defines = _MS_SUA_
+	Defines = _CTYPE_DISABLE_MACROS
+	Defines = _PSX_LIB
+
+	EntryPoint = __PosixProcessStartup
+
+	CompilerDefaults = /nologo /X
+	LinkerDefaults = /nologo /NODEFAULTLIB /MERGE:.CRT=.rdata
+}
+
+#
+# The mixed section can build shared libraries, build Visual Studio Debug
+# Information, and use things like fork().
+#
+section mixed {
+	BackendType = InterixMS
+	Subsystem = Console
+
+	SysIncludePaths = /usr/include
+	SysIncludePaths = /usr/include/c++
+
+	SysLibraryPaths = /lib
+	SysLibraryPaths = /usr/lib
+
+	ObjectsLibraries = psxlibc.lib
+	ObjectsLibraries = libpsxdll.a
+
+	Defines = _REENTRANT
+	Defines = _IMPORT_LIBCDLL_GLOBALS
+	Defines = _MT
+	Defines = _MS_SUA_
+	Defines = _CTYPE_DISABLE_MACROS
+	Defines = _PSX_LIB
+
+	EntryPoint = __MixedModeProcessStartup
+	SharedEntryPoint = DllMainCRTStartup@12
+
+	CompilerDefaults = /nologo /X
+	LinkerDefaults = /nologo /NODEFAULTLIB /MERGE:.CRT=.rdata crtexe.o
+	LinkerSharedDefaults = /nologo /NODEFAULTLIB /MERGE:.CRT=.rdata crtdll.o
+}
 

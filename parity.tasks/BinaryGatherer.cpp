@@ -54,13 +54,6 @@ namespace parity
 		void BinaryGatherer::doWork()
 		{
 			//
-			// TODO: until the loader is added this should do nothing
-			// for the GNU backend, since it knows what to do.
-			//
-			if(utils::Context::getContext().getBackendType() != utils::ToolchainMicrosoft)
-				return;
-
-			//
 			// does the following:
 			// * lookup libraries from directive sections.
 			// * lookup all symbols from all objects / libraries.

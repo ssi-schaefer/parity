@@ -865,6 +865,7 @@ namespace parity
 			case ToolchainInterixGNU:
 				/* TODO: what about mingw, cygwin and others that understand windows paths? */
 				return false;
+			case ToolchainInterixMS:
 			case ToolchainMicrosoft:
 				return true;
 			default:

@@ -68,7 +68,7 @@ namespace parity
 			ToolchainInvalid = -1,
 			ToolchainMicrosoft,
 			ToolchainInterixGNU,
-			ToolchainInterixMixed
+			ToolchainInterixMS,
 		} ToolchainType;
 
 		typedef enum {
@@ -169,6 +169,7 @@ namespace parity
 				CTX_GETSET   (Path			,PCRTLibrary		,""				)  /* internal only */ \
 				CTX_GETSET   (Path			,PCRTInclude		,""				)  /* internal only */ \
 				CTX_GETSET   (std::string	,EntryPoint			,""				)  /* internal only */ \
+				CTX_GETSET   (std::string	,SharedEntryPoint	,""				)  /* internal only */ \
 				CTX_GETSET   (PathVector	,RunPaths			,PathVector()	)  /* internal only */ \
 				CTX_GETSET   (bool			,KeepTemporary		,false			)  /* internal only */ \
 				CTX_GETSET   (bool			,TimingShowTasks	,true			)  /* internal only */ \
@@ -227,6 +228,7 @@ namespace parity
 				CTX_GETSET   (long			,HeapCommit			,65536			)  /* linker (default: 64KB) */ \
 				CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
 				CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
+				CTX_GETSET   (std::string	,LinkerSharedDefaults	,"/nologo /incremental:no"		)  /* linker */ \
 				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no"		)  /* linker */ \
 				CTX_GETSET   (Path			,LinkerExe			,""				)  /* linker */ \
 				CTX_GETSET_C (PathVector	,SysLibraryPaths	,PathVector()	)  /* linker (by config only) */ \
