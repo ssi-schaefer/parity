@@ -92,3 +92,21 @@ corrected a spelling mistake, which made parity ignore LD_LIBRARY_PATH.
 Slightly adjusted the output of the -v switch, to identify the platform parity was built on/for, since now the windows version is not so easily distinguishable from the interix version.
 
 When automatically exporting symbols from an object file, ignore symbols which where introduced by the compiler for strings. All symbols starting with (mangled) ??_C@ are now ignored.
+
+
+parity 1.1.0
+------------
+
+fixed a bug, which made parity crash, if a file given to the dependency tracker had exactly the size of a page in memory.
+
+parity now allows passing .res files through to the compiler/linker.
+
+The search order for libraries has been corrected. Previously parity would look for all possible names of a library in each directory before advancing to the next one. The new (and correct) behaviour is, to look for each possible library name in each directory, before advancing to the next best library name.
+
+Using the preload feature of parity binaries with an interix library set in LD_PRELOAD made parity crash in previous versions. This has been fixed. Since interix Libraries are still valid windows binaries, loading them succeeds, but no symbols are found to preload. This could still cause troubles in special cases.
+
+Resolved some internal inter-library dependency mess, which caused too many libraries to be linked, even if the parity loader was not generated. Path conversion has been moved to the runtime library to achieve this.
+
+The Configuration loading code has been extended to support profiles. This way multiple configurations can be saved to a single file. The Graphical Configurator has been updated to be able to read such files, but cannot write them (yet) due to architectural limitations.
+
+Added internal capabilities and configuration profiles to support compiling of POSIX subsystem and MixedMode Interix applications. This has the great advantage over gcc, that the result can be debugged in Visual Studio, rather than gdb. The main difference to native Windows builds is the dependency to the SUA subsystem, and the use of the POSIX libc (and thus the availablility of fork(), etc.). The full POSIX mode does not support C++ or shared libraries. The MixedMode does not (yet) support C++, but shared libraries work.
