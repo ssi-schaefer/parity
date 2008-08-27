@@ -619,15 +619,15 @@ namespace parity
 						{
 						case utils::SubsystemWindowsCui:
 							if(ctx.getBackendType() == utils::ToolchainInterixMS) {
-								entry = "___DllMainCRTStartup@12";
+								entry = "__DllMainCRTStartup@12";
 								break;
 							}
 						case utils::SubsystemWindowsGui:
 						case utils::SubsystemWindowsCeGui:
-							entry = "__DllMainCRTStartup@12";
+							entry = "_DllMainCRTStartup@12";
 							break;
 						case utils::SubsystemPosixCui:
-							entry = "___DllMainCRTStartup@12";
+							entry = "__DllMainCRTStartup@12";
 							break;
 						default:
 							throw utils::Exception("subsystem default entry point not implemented!");
@@ -640,16 +640,16 @@ namespace parity
 						{
 						case utils::SubsystemWindowsCui:
 							if(ctx.getBackendType() == utils::ToolchainInterixMS)
-								entry = "___MixedModeProcessStartup";
+								entry = "__MixedModeProcessStartup";
 							else
-								entry = "_mainCRTStartup";
+								entry = "mainCRTStartup";
 							break;
 						case utils::SubsystemWindowsGui:
 						case utils::SubsystemWindowsCeGui:
-							entry = "_WinMainCRTStartup";
+							entry = "WinMainCRTStartup";
 							break;
 						case utils::SubsystemPosixCui:
-							entry = "___PosixProcessStartup";
+							entry = "__PosixProcessStartup";
 							break;
 						default:
 							throw utils::Exception("subsystem default entry point not implemented!");
