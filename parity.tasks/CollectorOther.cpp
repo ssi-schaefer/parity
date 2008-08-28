@@ -227,13 +227,17 @@ namespace parity
 			if(context.getDependencyTracking() && !context.getSources().empty()
 				&& context.getFrontendType() == utils::ToolchainInterixGNU && context.getBackendType() != utils::ToolchainInterixGNU)
 			{
-				threading.run(tasks::TaskStubs::runDependencyTracking, 0, true);
 
 				if(context.getDependencyOnly())
 				{
+					//
+					// run without threading to save some time
+					//
+					tasks::TaskStubs::runDependencyTracking(0);
 					utils::Log::verbose("only dependency tracking requested, exiting.\n");
-					threading.synchronize();
 					exit(0);
+				} else {
+					threading.run(tasks::TaskStubs::runDependencyTracking, 0, true);
 				}
 			}
 
