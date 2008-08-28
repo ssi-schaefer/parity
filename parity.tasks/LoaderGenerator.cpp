@@ -673,7 +673,12 @@ namespace parity
 				symRealEntry.setStorageClass(binary::Symbol::ClassExternal);
 				symRealEntry.setType(binary::Symbol::ComplexFunction);
 
-				binary::Symbol& symParityEntry = hdr.addSymbol("_ParityLoaderGeneratedEntry");
+				std::string ename = "ParityLoaderGeneratedEntry";
+
+				if(ctx.getSharedLink())
+					ename.append("@12");
+
+				binary::Symbol& symParityEntry = hdr.addSymbol("_" + ename);
 				symParityEntry.setStorageClass(binary::Symbol::ClassExternal);
 				symParityEntry.setType(binary::Symbol::ComplexFunction);
 
@@ -710,8 +715,8 @@ namespace parity
 					sectText.padSection();
 				}
 
-				ctx.setEntryPoint("ParityLoaderGeneratedEntry");
-				ctx.setSharedEntryPoint("ParityLoaderGeneratedEntry");
+				ctx.setEntryPoint(ename);
+				ctx.setSharedEntryPoint(ename);
 			}
 
 			//
