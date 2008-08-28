@@ -711,6 +711,7 @@ namespace parity
 				}
 
 				ctx.setEntryPoint("ParityLoaderGeneratedEntry");
+				ctx.setSharedEntryPoint("ParityLoaderGeneratedEntry");
 			}
 
 			//
