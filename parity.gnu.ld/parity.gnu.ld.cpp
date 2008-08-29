@@ -87,7 +87,20 @@ int main(int argc, char** argv)
 	context.setFrontendType(utils::ToolchainInterixGNU);
 
 	try {
-		parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableGnuLd, 0);
+		parity::options::UnknownArgumentVector unknown;
+		parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableGnuLd, &unknown);
+
+		for(parity::options::UnknownArgumentVector::iterator it = unknown.begin(); it != unknown.end(); ++it) {
+			parity::utils::Path pth(*it);
+			pth.toNative();
+
+			if(pth.exists()) {
+				Log::verbose("assuming object: %s\n", pth.get().c_str());
+				context.setObjectsLibrariesString(pth.get());
+			} else {
+				Log::verbose("ignoring unknonw argument: %s\n", it->c_str());
+			}
+		}
 	} catch(const Exception& e) {
 		Log::error("while processing command line: %s\n", e.what());
 		exit(1);

@@ -317,6 +317,7 @@ void saveSetting(std::ostringstream& target, const std::string& name, const Lang
 	case LanguageCpp:
 		target << "C++";
 		break;
+	case LanguageUnknown:
 	case LanguageInvalid:
 		target << "none";
 		break;

@@ -56,6 +56,7 @@ namespace parity
 					break;
 				case utils::LanguageC:
 				case utils::LanguageCpp:
+				case utils::LanguageUnknown:
 					processCOrCppFile(specialized);
 					compileGeneric(native, ctx.getCompilerExe(), specialized);
 					break;
@@ -237,6 +238,10 @@ namespace parity
 			case utils::LanguageCpp:
 				vec.push_back("/Tp" + file.get());
 				break;
+			case utils::LanguageUnknown:
+				// let the compiler decide here...
+				vec.push_back(file.get());
+				break;
 			default:
 				throw utils::Exception("unknown language type, or language not supported by backend!");
 			}
@@ -256,6 +261,7 @@ namespace parity
 				break;
 			case utils::LanguageC:
 			case utils::LanguageCpp:
+			case utils::LanguageUnknown:
 				{
 					utils::Task::ArgumentVector temp;
 					vectorize(ctx.getCompilerDefaults(), temp);

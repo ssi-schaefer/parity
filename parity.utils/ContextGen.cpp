@@ -211,8 +211,9 @@ namespace parity
 					Log::warning("ignoring forced language for assembler, continuing normally!\n");
 				Log::verbose("adding assembler source file: %s\n", ref.c_str());
 				target[ref] = LanguageAsssembler;
-			} else
-				throw utils::Exception("cannot determine type of source file: %s\n", ref.c_str());
+			} else {
+				target[ref] = LanguageUnknown;
+			}
 		}
 
 		std::string ContextGen::printable(const long& val)
@@ -345,6 +346,7 @@ namespace parity
 				return "C";
 			case LanguageCpp:
 				return "C++";
+			case LanguageUnknown:
 			case LanguageInvalid:
 				return "None";
 			default:

@@ -253,20 +253,20 @@ namespace parity
 					utils::Log::error("error executing compiler!\n");
 					exit(1);
 				}
+			}
 
-				if(context.getCompileOnly())
-				{
-					utils::Log::verbose("only compilation requested, exiting.\n");
-					threading.synchronize();
-					exit(0);
-				}
+			if(context.getCompileOnly())
+			{
+				utils::Log::verbose("only compilation requested, exiting.\n");
+				threading.synchronize();
+				exit(0);
+			}
 
-				if(context.getPreprocess())
-				{
-					utils::Log::verbose("only preprocessing requested, exiting.\n");
-					threading.synchronize();
-					exit(0);
-				}
+			if(context.getPreprocess())
+			{
+				utils::Log::verbose("only preprocessing requested, exiting.\n");
+				threading.synchronize();
+				exit(0);
 			}
 		}
 

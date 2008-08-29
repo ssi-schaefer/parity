@@ -73,6 +73,7 @@ namespace parity
 
 		typedef enum {
 			LanguageInvalid = -1,
+			LanguageUnknown,
 			LanguageC,
 			LanguageCpp,
 			LanguageAsssembler
