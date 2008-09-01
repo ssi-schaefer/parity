@@ -110,3 +110,13 @@ Resolved some internal inter-library dependency mess, which caused too many libr
 The Configuration loading code has been extended to support profiles. This way multiple configurations can be saved to a single file. The Graphical Configurator has been updated to be able to read such files, but cannot write them (yet) due to architectural limitations.
 
 Added internal capabilities and configuration profiles to support compiling of POSIX subsystem and MixedMode Interix applications. This has the great advantage over gcc, that the result can be debugged in Visual Studio, rather than gdb. The main difference to native Windows builds is the dependency to the SUA subsystem, and the use of the POSIX libc (and thus the availablility of fork(), etc.). The full POSIX mode does not support C++ or shared libraries. The MixedMode does not (yet) support C++, but shared libraries work.
+
+
+parity 1.1.1
+------------
+
+fixed a bug which caused parity to be unable to link binaries including the custom loader. there where too many underscores added to the entry point symbol name.
+
+fixed a bug which caused shared libraries to bypass the entry point required for the custom loader, which resulted in crashes at runtime, since symbols had faulty addresses.
+
+added support for files with unknown extensions. any unknown argument is now processed a second time, to see wether it could be an input file. depending on the current mode, the file is assumed to be a source file (compile mode, preprocess mode), or an object file (link mode).
