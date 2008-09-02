@@ -85,6 +85,8 @@
 #pragma pop_macro("__STDC__")
 #pragma pop_macro("_POSIX_")
 
+#include RUNTIME_INC(stdarg.h)
+
 PCRT_BEGIN_C
 
 #pragma push_macro("execl")

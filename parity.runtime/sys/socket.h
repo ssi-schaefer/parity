@@ -24,7 +24,7 @@
 #define __PCRT_SYS_SOCKET_H__
 
 #if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
-#  error "sys/socket.h doesn't support winsock.h, please include winsock2.h before and windows header!"
+#  error "sys/socket.h doesn't support winsock.h, please include winsock2.h before any windows header!"
 #endif
 
 #include <WinSock2.h>
