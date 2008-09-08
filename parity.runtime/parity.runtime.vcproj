@@ -315,6 +315,10 @@
 				Name="internal"
 				>
 				<File
+					RelativePath=".\diagnose.c"
+					>
+				</File>
+				<File
 					RelativePath=".\pcrt.c"
 					>
 				</File>
@@ -444,6 +448,10 @@
 			<Filter
 				Name="internal"
 				>
+				<File
+					RelativePath=".\internal\diagnose.h"
+					>
+				</File>
 				<File
 					RelativePath=".\internal\pcrt.h"
 					>

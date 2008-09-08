@@ -120,3 +120,10 @@ fixed a bug which caused parity to be unable to link binaries including the cust
 fixed a bug which caused shared libraries to bypass the entry point required for the custom loader, which resulted in crashes at runtime, since symbols had faulty addresses.
 
 added support for files with unknown extensions. any unknown argument is now processed a second time, to see wether it could be an input file. depending on the current mode, the file is assumed to be a source file (compile mode, preprocess mode), or an object file (link mode).
+
+added support for overriding the dll name of shared libraries linked with the GNU frontend. when /OUT: is found somewhere in the linker pass throughs (pass with -Y), /OUT: is not added to the link command explicitly.
+
+added debugging support functions to parity.runtime, allowing to easily add code to make a process wait for a debugger to be attached, or break at a specified statement.
+
+added parity.diagnostic, which in fact is a micro-debugger, which can start a process with itself attached. while the started process is executed normally, parity.diagnostic catches and processes various debug events and messages, and displays them on the console. future plans include function call tracing (when debug information is present), etc.
+

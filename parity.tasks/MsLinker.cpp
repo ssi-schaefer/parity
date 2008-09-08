@@ -112,12 +112,22 @@ namespace parity
 					dll.toForeign();
 					lib.toForeign();
 
-					vec.push_back("/OUT:" + dll.get());
+					//
+					// allow overriding from commandline by explicitly passing /OUT:blah.dll
+					// this is required during parity build in future versions where there
+					// will be a ntdll.dll stub library (which of course _must_ be named
+					// ntdll.dll) to be able to link against it without DDK.
+					//
+					if(ctx.getLinkerPassThrough().find("/OUT:") == std::string::npos) {
+						vec.push_back("/OUT:" + dll.get());
+						out = lib;
+					} else {
+						utils::Log::warning("output filename overridden. this will break manifest embedding (so do it manually)\n");
+					}
+
 					vec.push_back("/IMPLIB:" + lib.get());
 
 					task.addFilter(lib.file(), false);
-
-					out = lib;
 				}
 			} else {
 				out = ctx.getOutputFile();

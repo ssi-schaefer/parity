@@ -138,9 +138,6 @@ namespace parity
 			{
 				sysp->toNative();
 
-				//
-				// TODO: This check stinks...
-				//
 				if(pth == *sysp) {
 					utils::Log::verbose("ignoring system path given on commandline: %s\n", pth.get().c_str());
 					return true;
