@@ -32,10 +32,21 @@ extern void* LoaderLibraryGetHandle(const char*, int);
 
 #include <windows.h>
 
+#define ERRORTAB \
+	ERR_ITEM("No Error", NoError) \
+	ERR_ITEM("Cannot find given library", LibError) \
+	ERR_ITEM("Cannot find given symbol", SymError) \
+	ERR_ITEM("Memory allocation error", MemError)
+
+#define ERR_ITEM(x, y) x,
 static const char* tabErrors[] = {
-	"No Error",
-	"Cannot find given library",
-	"Cannot find given symbol"
+	ERRORTAB
+};
+
+#undef ERR_ITEM
+#define ERR_ITEM(x, y) y,
+enum {
+	ERRORTAB
 };
 
 static const char* curError;
@@ -46,14 +57,14 @@ int dlclose(void* handle)
 	// due to limitations in the library cache this
 	// cannot be done!
 	//
-	curError = tabErrors[0];
+	curError = tabErrors[NoError];
 	return 0;
 }
 
 char* dlerror()
 {
 	const char* ptr = curError;
-	curError = tabErrors[0];
+	curError = tabErrors[NoError];
 	return (char*)ptr;
 }
 
@@ -62,7 +73,7 @@ void* dlopen(const char* name, int flags)
 	void* handle = 0;
 	const char* conv = PcrtPathToNative(name);
 	int unsetEnv = 0;
-	curError = tabErrors[0];
+	curError = tabErrors[NoError];
 
 	if(flags & RTLD_NOW && !GetEnvironmentVariable("LD_BIND_NOW", 0, 0)) {
 		SetEnvironmentVariable("LD_BIND_NOW", "on");
@@ -71,14 +82,33 @@ void* dlopen(const char* name, int flags)
 
 	//
 	// TODO: implement handling of import libraries?
+	// For a start we could simply try and load conv + .dll
+	// too, if the first one fails (so most probably this is
+	// an import library).
 	//
 	handle = LoaderLibraryGetHandle(conv, 0);
+
+	if(!handle) {
+		char* conv_dll = malloc(strlen(conv) + 5); /* .dll + \0 */
+
+		if(conv_dll) {
+			strcpy(conv_dll, conv);
+			strcat(conv_dll, ".dll");
+
+			handle = LoaderLibraryGetHandle(conv_dll, 0);
+
+			free(conv_dll);
+		} else {
+			curError = tabErrors[MemError];
+			return 0;
+		}
+	}
 
 	if(unsetEnv)
 		SetEnvironmentVariable("LD_BIND_NOW", 0);
 
 	if(!handle)
-		curError = tabErrors[1];
+		curError = tabErrors[LibError];
 
 	return handle;
 }
@@ -90,7 +120,7 @@ void* dlsym(void* handle, const char* symbol)
 	sym = GetProcAddress((HMODULE)handle, symbol);
 
 	if(!sym)
-		curError = tabErrors[2];
+		curError = tabErrors[SymError];
 
 	return sym;
 }

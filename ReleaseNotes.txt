@@ -128,3 +128,5 @@ added debugging support functions to parity.runtime, allowing to easily add code
 added parity.diagnostic, which in fact is a micro-debugger, which can start a process with itself attached. while the started process is executed normally, parity.diagnostic catches and processes various debug events and messages, and displays them on the console. future plans include function call tracing (when debug information is present), etc.
 
 the default parity.conf now sets the WIN32_LEAN_AND_MEAN define.
+
+made the dlopen function a little more intelligent, making it now search for .dll files too.
