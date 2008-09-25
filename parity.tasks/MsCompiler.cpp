@@ -393,6 +393,12 @@ namespace parity
 							val.replace(pos, 1, "\\\"");
 					}
 
+					while((pos = val.find('%', (pos ? pos + 2 : 0))) != std::string::npos)
+					{
+						if(pos == 0 || (pos > 0 && val[pos-1] != '\\'))
+							val.replace(pos, 1, "%%");
+					}
+
 					def += "=";
 
 					if(!ctx.getUseCommandScripts()) {

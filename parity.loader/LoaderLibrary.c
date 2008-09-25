@@ -144,7 +144,7 @@ static void LibCreatePathCache()
 	//
 	szLdLib = GetEnvironmentVariable("LD_LIBRARY_PATH", 0, 0);
 
-	if(szLdLib)
+	if(szLdLib > 1)
 	{
 		char* ptrLdLib = HeapAlloc(GetProcessHeap(), 0, szLdLib);
 		char* start = 0;

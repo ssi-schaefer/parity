@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <intrin.h>
 
 #define RING_SIZE 8
