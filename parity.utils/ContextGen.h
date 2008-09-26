@@ -230,7 +230,7 @@ namespace parity
 				CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
 				CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
 				CTX_GETSET   (std::string	,LinkerSharedDefaults	,"/nologo /incremental:no"		)  /* linker */ \
-				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no"		)  /* linker */ \
+				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no /fixed:no"		)  /* linker */ \
 				CTX_GETSET   (Path			,LinkerExe			,""				)  /* linker */ \
 				CTX_GETSET_C (PathVector	,SysLibraryPaths	,PathVector()	)  /* linker (by config only) */ \
 				CTX_GETSET_C (PathVector	,ObjectsLibraries	,PathVector()	)  /* linker (must be after syslib paths)*/ \
