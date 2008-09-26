@@ -134,3 +134,5 @@ made the dlopen function a little more intelligent, making it now search for .dl
 corrected the expansion of define values given on the command line, so that the percent character ("%") is escaped correctly before beeing passed to cl.exe.
 
 corrected code that reads environment variables in the loader to ignore variables that are set but empty.
+
+be default, no longer link executables with fixed base addresses, but relocateable to allow purifying. this makes executables unsignificantly slower. This can be overridden using the "LinkerDefaults" setting in any parity configuration file.
