@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.utils&quot;;&quot;$(SolutionDir)/parity.options&quot;;&quot;$(SolutionDir)/parity.binary&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)/parity.utils&quot;;&quot;$(SolutionDir)/parity.options&quot;;&quot;$(SolutionDir)/parity.binary&quot;;&quot;$(SolutionDir)/parity.tasks&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -369,11 +369,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\parity.exe.no.loader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.exe.shared.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\parity.exe.static.import.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\parity.options.commandline.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.runtime.dlfcn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.tasks.gatherer.debug.switch.cpp"
 				>
 			</File>
 			<File
@@ -402,6 +418,10 @@
 			</File>
 			<File
 				RelativePath=".\parity.utils.task.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.utils.threading.cpp"
 				>
 			</File>
 		</Filter>

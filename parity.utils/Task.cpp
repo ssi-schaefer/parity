@@ -229,6 +229,8 @@ namespace parity
 
 				Timing::instance().stop(oss.str());
 
+				utils::Log::verbose(" * result: %d\n", exitCode);
+
 				if(exitCode == 0)
 					return true;
 
@@ -357,6 +359,8 @@ namespace parity
 					out_->flush();
 					
 					Timing::instance().stop(oss.str());
+					
+					utils::Log::verbose(" * result: %d\n", exitStatus);
 					
 					if(exitStatus == 0)
 						return true;

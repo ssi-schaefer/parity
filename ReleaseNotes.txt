@@ -136,3 +136,13 @@ corrected the expansion of define values given on the command line, so that the 
 corrected code that reads environment variables in the loader to ignore variables that are set but empty.
 
 be default, no longer link executables with fixed base addresses, but relocateable to allow purifying. this makes executables unsignificantly slower. This can be overridden using the "LinkerDefaults" setting in any parity configuration file.
+
+a lot of test cases have been added to the testsuite, to guarantee better code quality.
+
+updated some internal classes to provide some more detailed output in verbose mode, and to provide better/more stable functionality.
+
+errors in the threading classes don't immediately exit parity, but rather throw exceptions as they should.
+
+the timing information is no longer displayed if no timing records are available.
+
+parity now ignores libraries not built by himself while gathering symbols to be loaded through the generated loader.

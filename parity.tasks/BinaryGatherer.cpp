@@ -208,10 +208,30 @@ namespace parity
 			{
 				//
 				// Import Library found!
+				// We need to at first check wether this import lib is a parity
+				// built one, otherwise we ignore it completely.
 				//
+				bool parity_lib = false;
 				for(binary::Archive::ImportMap::iterator it = imports.begin(); it != imports.end(); ++it)
 				{
-					processImport(it->second, path);
+					if(it->first.find("parity_dummy_for") != std::string::npos) {
+						parity_lib = true;
+						break;
+					}
+				}
+
+				//
+				// if this is a parity built lib, we can take the symbols into account.
+				// otherwise we leave them out, use the default link and don't generate
+				// loader tables for it.
+				//
+				if(parity_lib) {
+					for(binary::Archive::ImportMap::iterator it = imports.begin(); it != imports.end(); ++it)
+					{
+						processImport(it->second, path);
+					}
+				} else {
+					utils::Log::verbose("library %s was not built using parity, not procesing imports any further.\n", path.get().c_str());
 				}
 			}
 

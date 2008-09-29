@@ -22,7 +22,7 @@ section default {
 
 	@ParitySysLibraryPaths@
 	
-	Defines = WIN32_LEAN_AND_MEAN=1
+	Defines = WIN32_LEAN_AND_MEAN
 
 	ObjectsLibraries = kernel32.lib
 	ObjectsLibraries = user32.lib

@@ -44,6 +44,7 @@ namespace parity
 
 			bool extend(const Path& path);
 			bool set(const std::string& value);
+			bool clear();
 
 			static Environment fromString(const std::string& value);
 

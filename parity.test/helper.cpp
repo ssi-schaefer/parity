@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <Exception.h>
+#include <Environment.h>
 
 namespace parity
 {
@@ -59,10 +60,24 @@ namespace parity
 			return pth;
 		}
 
-		bool TestSuite::executeParity(const utils::Task::ArgumentVector& vec, bool quiet)
+		bool TestSuite::executeParity(const utils::Task::ArgumentVector& vec, bool quiet, char const* conf)
 		{
 			utils::Task task;
 			utils::Path parity = getParityExecutable();
+			utils::Environment env("PARITY_CONFIG");
+
+			if(conf) {
+				utils::Path cf = utils::Path::getTemporary(".parity.test.XXXXXX.conf");
+				std::ofstream of;
+				of.open(cf.get().c_str());
+
+				of << conf << std::endl;
+				of.close();
+
+				env.set(cf.get().c_str());
+			} else {
+				env.clear();
+			}
 
 			std::ostringstream ossOut;
 			std::ostringstream ossErr;
@@ -112,6 +127,8 @@ namespace parity
 					utils::Log::verbose("\n");
 				}
 			}
+
+			env.clear();
 
 			return ret;
 		}

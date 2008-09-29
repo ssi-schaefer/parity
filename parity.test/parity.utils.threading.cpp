@@ -20,72 +20,58 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __TESTSUITE_H__
-#define __TESTSUITE_H__
+#include "TestSuite.h"
 
-#include <list>
-#include <vector>
-#include <iostream>
-
-#include <Log.h>
-#include <Path.h>
+#include <Exception.h>
 #include <Task.h>
+#include <Log.h>
+#include <Threading.h>
+
+#include <sstream>
+
+static unsigned int THREADINGAPI runThread1(void* p) {
+	parity::utils::Log::verbose("in runThread1: %p\n", p);
+	return 0;
+}
+
+static unsigned int THREADINGAPI runThread2(void* p) {
+	parity::utils::Log::verbose("in runThread2: %p\n", p);
+	return 1;
+}
 
 namespace parity
 {
 	namespace testing
 	{
-		class TestSuite
+		bool TestSuite::testParityUtilsThreading()
 		{
-		public:
-			TestSuite(std::vector<std::string> arguments) : arguments_(arguments) {}
+			try {
+				utils::Threading thr;
+					
+				if(thr.run(runThread1, NULL, false) < 1)
+					throw utils::Exception("cannot start thread 1");
 
-			//
-			// pure internal tests
-			//
+				if(thr.run(runThread2, NULL, true) < 1)
+					throw utils::Exception("cannot start thread 2");
 
-			bool testParityUtilsPath();
-			bool testParityUtilsEnvironment();
-			bool testParityUtilsException();
-			bool testParityOptionsCommandLine();
-			bool testParityUtilsConfig();
-			bool testParityUtilsMappedFile();
-			bool testParityUtilsMemoryFile();
-			bool testParityUtilsTask();
-			bool testParityUtilsThreading();
-			bool testParityBinaryObject();
-			bool testParityBinaryObjectWrite();
-			bool testParityBinaryImageWrite();
+				try {
+					thr.synchronize();
 
-			//
-			// tests that call parity.exe
-			//
-			bool testParityExeCompile();
-			bool testParityExeLink();
-			bool testParityExeStaticImport();
-			bool testParityExeAutoExport();
-			bool testParityExeShared();
-			bool testParityExeNoLoad();
+					utils::Log::verbose("unexpected pass of synchronize!\n");
+					return false;
+				} catch (utils::Exception& e) {
+					// expected :)
+					utils::Log::verbose("exception from synchronize (expected): %s\n", e.what());
+					if(std::string(e.what()).find("exited abnormally") != std::string::npos)
+						return true;
+				}
+			} catch(const utils::Exception& e)
+			{
+				utils::Log::warning("catched: %s\n", e.what());
+			}
 
-			bool testParityTasksGathererDebugSwitch();
-
-			//
-			// tests that test only the resulting binaries
-			// (i.e. the loader and the runtime).
-			//
-			bool testParityRuntimeDlfcn();
-
-			//
-			// internal helper functions
-			//
-			parity::utils::Path getParityExecutable();
-			bool executeParity(const utils::Task::ArgumentVector& vec, bool quiet, char const* conf = NULL);
-
-		private:
-			std::vector<std::string> arguments_;
-		};
+			return false;
+		}
 	}
 }
-
-#endif
 

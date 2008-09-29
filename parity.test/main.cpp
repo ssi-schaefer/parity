@@ -105,12 +105,17 @@ int main(int argc, char** argv)
 		{ "parity::utils::MappedFile", &parity::testing::TestSuite::testParityUtilsMappedFile, true},
 		{ "parity::utils::MemoryFile", &parity::testing::TestSuite::testParityUtilsMemoryFile, true },
 		{ "parity::utils::Task", &parity::testing::TestSuite::testParityUtilsTask, true },
+		{ "parity::utils::Threading", &parity::testing::TestSuite::testParityUtilsThreading, true },
 		{ "parity::options::CommandLine", &parity::testing::TestSuite::testParityOptionsCommandLine, true },
+		{ "parity::tasks::BinaryGatherer Debug switching", &parity::testing::TestSuite::testParityTasksGathererDebugSwitch, true },
 		{ "parity::binary::Object", &parity::testing::TestSuite::testParityBinaryObject, true },
 		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite, true },
 		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite, true },
+		{ "parity::runtime::dlfcn", &parity::testing::TestSuite::testParityRuntimeDlfcn, true },
 		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile, true },
 		{ "parity.exe: link (and intermediate compile)", &parity::testing::TestSuite::testParityExeLink, true },
+		{ "parity.exe: shared link", &parity::testing::TestSuite::testParityExeShared, true },
+		{ "parity.exe: shared link (no loader)", &parity::testing::TestSuite::testParityExeNoLoad, true },
 		{ "parity.exe: static import", &parity::testing::TestSuite::testParityExeStaticImport, true },
 		{ "parity.exe: automatic export", &parity::testing::TestSuite::testParityExeAutoExport, true },
 		{ "", NULL }
@@ -140,6 +145,12 @@ int main(int argc, char** argv)
 
 		if(current->quiet)
 			utils::Log::profile(" * %-45s: \r", current->name.c_str());
+
+		//
+		// flush to let the user know what happens
+		//
+		std::cerr.flush();
+		std::cout.flush();
 
 		if((suite.*current->func)())
 		{

@@ -21,6 +21,7 @@
 \****************************************************************/
 
 #include "Environment.h"
+#include "Log.h"
 
 #include <stdlib.h>
 
@@ -31,10 +32,27 @@ namespace parity
 
 		Environment::Environment(const std::string &value)
 		{
+#ifdef _WIN32
+			char* buf;
+			int len;
+
+			if((len = GetEnvironmentVariableA(value.c_str(), 0, 0)) > 1) {
+				buf = new char[len];
+
+				if((len = GetEnvironmentVariableA(value.c_str(), buf, len)) == 0) {
+					utils::Log::verbose("failed to get environment variable %s\n", value.c_str());
+				} else {
+					value_ = buf;
+				}
+
+				delete[] buf;
+			}
+#else
 			const char * env = getenv(value.c_str());
 
 			if(env)
 				value_ = env;
+#endif
 
 			varname_ = value;
 		}
@@ -127,6 +145,15 @@ namespace parity
 			return (SetEnvironmentVariableA(varname_.c_str(), value.c_str()) == TRUE);
 #else
 			return (setenv(varname_.c_str(), value.c_str(), 1) == 0);
+#endif
+		}
+
+		bool Environment::clear()
+		{
+#ifdef _WIN32
+			return (SetEnvironmentVariableA(varname_.c_str(), NULL) == TRUE);
+#else
+			return (unsetenv(varname_.c_str()) == 0);
 #endif
 		}
 	}

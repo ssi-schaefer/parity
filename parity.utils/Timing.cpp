@@ -73,7 +73,12 @@ namespace parity
 				{
 					ftime(&it->second.second);
 
-					if(key != "Timing")
+					//
+					// both Timing and Configuration loading can never be
+					// there, since both have to be started before a statistic
+					// output file is set.
+					//
+					if(key != "Timing" && key != "Configuration Loading")
 						Statistics::instance().addInformation("TimingE:" + key, it->second.second);
 
 					break;
@@ -83,6 +88,10 @@ namespace parity
 
 		void Timing::dump()
 		{
+			if(!times_.size()) {
+				return;
+			}
+
 			Context& ctx = Context::getContext();
 			Color col(ctx.getColorMode());
 			Log::profile("\n%s %s\n", col.magenta("   Timing information:").c_str(), forked_ ? col.red("(forked)").c_str() : "");

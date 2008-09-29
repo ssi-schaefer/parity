@@ -52,22 +52,19 @@ namespace parity
 
 				if(exitStatus != 0)
 				{
-					Log::error("Thread %d exited abnormally with code: %d!\n", it->first, exitStatus);
-					exit(1);
+					throw Exception("Thread %d exited abnormally with code: %d!", it->first, exitStatus);
 				}
 			#elif POSIX_THREADING_MODEL == POSIX_THREADS
 				void* val;
 				Log::verbose("joining posix thread %d...\n", it->first);
 
 				if(pthread_join(it->first, &val) != 0) {
-					Log::error("cannot join posix thread %d!\n", it->first);
-					exit(1);
+					throw Exception("cannot join posix thread %d!", it->first);
 				}
 
 				if((unsigned int)val != 0)
 				{
-					Log::error("Posix thread %d exited abnormally with code: %d!\n", it->first, val);
-					exit(1);
+					throw Exception("Posix thread %d exited abnormally with code: %d!", it->first, val);
 				}
 			#elif POSIX_THREADING_MODEL == POSIX_FORK
 				int ret = 0;
@@ -75,17 +72,14 @@ namespace parity
 
 				if(waitpid(it->first, &ret, WUNTRACED) != it->first)
 				{
-					Log::error("cannot wait for forked child %d: %s.\n", it->first, ::strerror(errno));
-					exit(1);
+					throw Exception("cannot wait for forked child %d: %s.", it->first, ::strerror(errno));
 				}
 
 				if(WIFEXITED(ret) && WEXITSTATUS(ret) != 0)
 				{
-					Log::error("forked child %d failed with status %d.\n", it->first, WEXITSTATUS(ret));
-					exit(1);
+					throw Exception("forked child %d exited abnormally with code %d.", it->first, WEXITSTATUS(ret));
 				} else if(!WIFEXITED(ret)) {
-					Log::error("forked child %d did not terminate normally.\n", it->first);
-					exit(1);
+					throw Exception("forked child %d did not terminate normally.\n", it->first);
 				}
 			#endif
 		}
@@ -152,7 +146,7 @@ namespace parity
 					return 1;
 				}
 			#elif POSIX_THREADING_MODEL == POSIX_NONE
-				Log::verbose("running single threaded job!\n");
+				Log::verbose("running single threaded job, exit code will be lost!\n");
 				method(data);
 				return 1;
 			#else

@@ -79,6 +79,15 @@ namespace parity
 				pth.toForeign();
 			}
 
+			utils::Environment to_set("PARITY_TEST_ENV");
+			to_set.set("test_value");
+
+			utils::Environment to_get("PARITY_TEST_ENV");
+			if(to_get.getValue() != "test_value") {
+				utils::Log::error("environment variable cannot be set and re-read again\n");
+				return false;
+			}
+
 			return true;
 		}
 	}
