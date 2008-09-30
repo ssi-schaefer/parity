@@ -37,7 +37,6 @@
 typedef struct {
 	std::string name;
 	bool (parity::testing::TestSuite::*func)();
-	bool quiet;
 } testcase_t;
 
 using namespace parity;
@@ -49,16 +48,41 @@ using namespace parity;
 int main(int argc, char** argv)
 {
 	std::vector<std::string> arguments;
-	bool bQuiet = false;
+	bool bQuiet = true;
 	bool bConfig = false;
+	std::map<int, bool> to_run;
 
 	for(int i = 0; i < argc; ++i)
 	{
 		std::string arg(argv[i]);
 
-		if(arg == "--quiet")
+		if(arg == "--verbose" || arg == "-v")
 		{
-			bQuiet = true;
+			bQuiet = false;
+			argv[i] = (char*)"";
+		}
+
+		if(arg == "--help" || arg == "-h") {
+			std::cout << "usage: " << argv[0] << " [--verbose|-v] [--help|-h]" << std::endl << "       [--config <file>] [<testnum> ...] [<parity args>]" << std::endl;
+			std::cout << std::endl << " --verbose | -v      verbose output (may be very much)." << std::endl;
+			std::cout <<              " --help | -h         print this help message and exit." << std::endl;
+			std::cout <<              " --config <file>     load configuration from file. the values" << std::endl;
+			std::cout <<              "                     loaded from this file are used to configure" << std::endl;
+			std::cout <<              "                     the test environment, not the parity" << std::endl;
+			std::cout <<              "                     instances started by the testsuite." << std::endl;
+			std::cout <<              "                     This means that some settings may not" << std::endl;
+			std::cout <<              "                     have any effect, while others influence" << std::endl;
+			std::cout <<              "                     the internal unit tests." << std::endl;
+			std::cout <<              " <testnum> ...		test numbers can be specified on the" << std::endl;
+			std::cout <<              "                     command line, to only run those tests." << std::endl;
+			std::cout <<              "                     multiple test numbers can be specified," << std::endl;
+			std::cout <<              "                     each as one argument, seperated by space." << std::endl;
+
+			exit(1);
+		}
+
+		if(isdigit(arg[0])) {
+			to_run[atoi(arg.c_str())] = true;
 			argv[i] = (char*)"";
 		}
 
@@ -68,7 +92,7 @@ int main(int argc, char** argv)
 
 			if(arg.empty())
 			{
-				utils::Log::error("missing argument to -config\n");
+				utils::Log::error("missing argument to --config\n");
 				exit(1);
 			}
 
@@ -98,92 +122,107 @@ int main(int argc, char** argv)
 	options::CommandLine::process(argc - 1, &argv[1], options::OptionTableGnuGcc, 0);
 
 	testcase_t cases[] = {
-		{ "parity::utils::Path", &parity::testing::TestSuite::testParityUtilsPath, true },
-		{ "parity::utils::Environment", &parity::testing::TestSuite::testParityUtilsEnvironment, true },
-		{ "parity::utils::Exception", &parity::testing::TestSuite::testParityUtilsException, true },
-		{ "parity::utils::Config", &parity::testing::TestSuite::testParityUtilsConfig, true },
-		{ "parity::utils::MappedFile", &parity::testing::TestSuite::testParityUtilsMappedFile, true},
-		{ "parity::utils::MemoryFile", &parity::testing::TestSuite::testParityUtilsMemoryFile, true },
-		{ "parity::utils::Task", &parity::testing::TestSuite::testParityUtilsTask, true },
-		{ "parity::utils::Threading", &parity::testing::TestSuite::testParityUtilsThreading, true },
-		{ "parity::options::CommandLine", &parity::testing::TestSuite::testParityOptionsCommandLine, true },
-		{ "parity::tasks::BinaryGatherer Debug switching", &parity::testing::TestSuite::testParityTasksGathererDebugSwitch, true },
-		{ "parity::binary::Object", &parity::testing::TestSuite::testParityBinaryObject, true },
-		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite, true },
-		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite, true },
-		{ "parity::runtime::dlfcn", &parity::testing::TestSuite::testParityRuntimeDlfcn, true },
-		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile, true },
-		{ "parity.exe: link (and intermediate compile)", &parity::testing::TestSuite::testParityExeLink, true },
-		{ "parity.exe: shared link", &parity::testing::TestSuite::testParityExeShared, true },
-		{ "parity.exe: shared link (no loader)", &parity::testing::TestSuite::testParityExeNoLoad, true },
-		{ "parity.exe: static import", &parity::testing::TestSuite::testParityExeStaticImport, true },
-		{ "parity.exe: automatic export", &parity::testing::TestSuite::testParityExeAutoExport, true },
+		{ "parity::utils::Path", &parity::testing::TestSuite::testParityUtilsPath },
+		{ "parity::utils::Environment", &parity::testing::TestSuite::testParityUtilsEnvironment },
+		{ "parity::utils::Exception", &parity::testing::TestSuite::testParityUtilsException },
+		{ "parity::utils::Config", &parity::testing::TestSuite::testParityUtilsConfig },
+		{ "parity::utils::MappedFile", &parity::testing::TestSuite::testParityUtilsMappedFile },
+		{ "parity::utils::MemoryFile", &parity::testing::TestSuite::testParityUtilsMemoryFile },
+		{ "parity::utils::Task", &parity::testing::TestSuite::testParityUtilsTask },
+		{ "parity::utils::Threading", &parity::testing::TestSuite::testParityUtilsThreading },
+		{ "parity::options::CommandLine", &parity::testing::TestSuite::testParityOptionsCommandLine },
+		{ "parity::tasks::BinaryGatherer Debug switch", &parity::testing::TestSuite::testParityTasksGathererDebugSwitch },
+		{ "parity::binary::Object", &parity::testing::TestSuite::testParityBinaryObject },
+		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite },
+		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite },
+		{ "parity::runtime::dlfcn", &parity::testing::TestSuite::testParityRuntimeDlfcn },
+		{ "parity::loader::preload", &parity::testing::TestSuite::testParityLoaderPreload },
+		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile },
+		{ "parity.exe: link (and intermediate compile)", &parity::testing::TestSuite::testParityExeLink },
+		{ "parity.exe: shared link", &parity::testing::TestSuite::testParityExeShared },
+		{ "parity.exe: shared link (no loader)", &parity::testing::TestSuite::testParityExeNoLoad },
+		{ "parity.exe: static import", &parity::testing::TestSuite::testParityExeStaticImport },
+		{ "parity.exe: automatic export", &parity::testing::TestSuite::testParityExeAutoExport },
 		{ "", NULL }
 	};
 
 	testcase_t* current = cases;
 	unsigned long numPass = 0;
 	unsigned long numFailed = 0;
+	unsigned long numCur = 0;
 
 	utils::Log::profile(col.magenta("\n   Running Tests...\n").c_str());
-	utils::Log::profile(col.magenta("   ---------------------------------------------------\n").c_str());
+	utils::Log::profile(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
 	while(current->func)
 	{
-		if(!bQuiet)
+		++numCur;
+
+		if((!to_run.empty() && to_run[numCur]) || to_run.empty())
 		{
-			if(current->quiet)
-				utils::Log::setLevel(utils::Log::Profile);
-			else
+			if(!bQuiet)
+			{
 				utils::Log::setLevel(utils::Log::Verbose);
 
-			utils::Log::verbose(col.magenta("   ---------------------------------------------------\n").c_str());
-			utils::Log::verbose(" * Running %s verbosely\n", current->name.c_str());
+				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose(" * Running %s verbosely\n", col.yellow(current->name).c_str());
+			}
+
+			utils::Timing::instance().start(current->name);
+
+			if(bQuiet)
+				utils::Log::profile(" %s [%2d] %-65s: \r", col.cyan("*").c_str(), numCur, current->name.c_str());
+
+			//
+			// flush to let the user know what happens
+			//
+			std::cerr.flush();
+			std::cout.flush();
+
+			if((suite.*current->func)())
+			{
+				if(!bQuiet)
+					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+
+				utils::Log::profile(" %s [%2d] %-65s:   %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.green("ok").c_str());
+				++numPass;
+			} else {
+				if(!bQuiet)
+					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+
+				utils::Log::profile(" %s [%2d] %-65s: %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.red("fail").c_str());
+				++numFailed;
+			}
+
+			utils::Timing::instance().stop(current->name);
 		}
-
-		utils::Timing::instance().start(current->name);
-
-		if(current->quiet)
-			utils::Log::profile(" * %-45s: \r", current->name.c_str());
-
-		//
-		// flush to let the user know what happens
-		//
-		std::cerr.flush();
-		std::cout.flush();
-
-		if((suite.*current->func)())
-		{
-			if(!current->quiet)
-				utils::Log::verbose(col.magenta("   ---------------------------------------------------\n").c_str());
-
-			utils::Log::profile(" * %-45s:   %s\n", current->name.c_str(), col.green("ok").c_str());
-			++numPass;
-		} else {
-			if(!current->quiet)
-				utils::Log::verbose(col.magenta("   ---------------------------------------------------\n").c_str());
-
-			utils::Log::profile(" * %-45s: %s\n", current->name.c_str(), col.red("fail").c_str());
-			++numFailed;
-		}
-
-		utils::Timing::instance().stop(current->name);
 
 		++current;
 	}
 
-	utils::Log::profile(col.magenta("   ---------------------------------------------------\n").c_str());
+	utils::Log::profile(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 	if(numFailed == 0)
 	{
 		std::cerr << "   All " << numPass << " Tests passed." << std::endl;
 	} else {
 		std::cerr << "   " << numFailed << " out of " << (numPass + numFailed) << " Tests failed." << std::endl;
 	}
-	utils::Log::profile(col.magenta("   ---------------------------------------------------\n").c_str());
+	utils::Log::profile(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
 	if(!bQuiet) {
 		utils::Log::setLevel(utils::Log::Profile);
 	}
+
+	//
+	// set the output format of the timing class to match what we have
+	// here (80 chars);
+	//
+	utils::Timing::instance().setOutputWidth(80);
+
+	//
+	// do some more cleanup for crashed/failed tests.
+	// find .parity.* files in the current dir, and delete them.
+	//
 
 	return numFailed;
 }

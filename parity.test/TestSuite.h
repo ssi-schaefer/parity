@@ -74,6 +74,7 @@ namespace parity
 			// (i.e. the loader and the runtime).
 			//
 			bool testParityRuntimeDlfcn();
+			bool testParityLoaderPreload();
 
 			//
 			// internal helper functions

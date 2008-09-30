@@ -33,7 +33,7 @@ namespace parity
 		bool TestSuite::testParityUtilsException()
 		{
 			try {
-				utils::Log::verbose("throwing Exception(\"test text %s\", \"test insertion\") ... \n");
+				utils::Log::verbose("throwing Exception(\"test text <string>\", \"test insertion\") ... \n");
 				throw utils::Exception("test text %s", "test insertion");
 			} catch(const utils::Exception& e)
 			{

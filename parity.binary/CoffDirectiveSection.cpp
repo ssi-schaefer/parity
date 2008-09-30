@@ -62,16 +62,16 @@ namespace parity
 			}
 
 			const char* end = start;
-			const char* top = start + ::strlen(start) - 2;
+			const char* top = start + sect.getSizeOfRawData();
 
-			while(*end != 0)
+			while(*end != 0 && end < top)
 			{
 				while(*start == ' ')
 					++start;
 				
 				end = start;
 
-				while(end != top && *end != ' ')
+				while(end < top && *end != ' ')
 				{
 					//
 					// Handle Strings
@@ -80,7 +80,7 @@ namespace parity
 					{
 						++end;
 
-						while(end != top && *end != '"')
+						while(end < top && *end != '"')
 							++end;
 
 						if(end == top)

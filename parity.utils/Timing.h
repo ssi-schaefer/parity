@@ -44,18 +44,21 @@ namespace parity
 			void start(const std::string& key);
 			void stop(const std::string& key);
 
+			void setOutputWidth(size_t w) { width_ = w; }
+
 			void dump();
 
 			void forked() { forked_ = true; times_.clear(); longest_ = 0; }
 
 			const SortedTimingVector& getCurrentState() { return times_; }
 		private:
-			Timing() : longest_(0) { start("Timing"); }
+			Timing() : longest_(0), width_(0) { start("Timing"); }
 
 			SortedTimingVector times_;
 			size_t longest_;
 
 			bool forked_;
+			size_t width_;
 		};
 	}
 }

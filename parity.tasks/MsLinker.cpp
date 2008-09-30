@@ -286,7 +286,12 @@ namespace parity
 
 				binary::DirectiveSection drectveWrapper(drectveSect);
 
-				std::string symName = "___parity_dummy_for_" + symbolifyName(out.file());
+				//
+				// those many underscores are intentionally to (hopefully) make the
+				// linker insert the import symbol quite at the beginning (if sorted
+				// alphabetically), so that the BinaryGatherer can find it quickly.
+				//
+				std::string symName = "____parity_dummy_for_" + symbolifyName(out.file());
 
 				binary::Symbol& symDataSym	= hdr.addSymbol("$DAT" + symName);
 				binary::Symbol& symPtrSym	= hdr.addSymbol(symName);

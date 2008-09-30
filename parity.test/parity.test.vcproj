@@ -381,6 +381,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\parity.loader.preload.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\parity.options.commandline.cpp"
 				>
 			</File>

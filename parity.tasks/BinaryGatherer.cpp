@@ -214,7 +214,7 @@ namespace parity
 				bool parity_lib = false;
 				for(binary::Archive::ImportMap::iterator it = imports.begin(); it != imports.end(); ++it)
 				{
-					if(it->first.find("parity_dummy_for") != std::string::npos) {
+					if(it->second.getSymbolName().find("parity_dummy_for") != std::string::npos) {
 						parity_lib = true;
 						break;
 					}

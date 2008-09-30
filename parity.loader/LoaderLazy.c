@@ -93,19 +93,21 @@ static void PreloadCreateCache()
 					++end;
 				}
 
-				if(!gPreloadLibCache)
-					gPreloadLibCache = HeapAlloc(GetProcessHeap(), 0, sizeof(PreloadCacheNode));
-				else
-					gPreloadLibCache = HeapReAlloc(GetProcessHeap(), 0, gPreloadLibCache, sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
+				if(strlen(start) > 0) {
+					if(!gPreloadLibCache)
+						gPreloadLibCache = HeapAlloc(GetProcessHeap(), 0, sizeof(PreloadCacheNode));
+					else
+						gPreloadLibCache = HeapReAlloc(GetProcessHeap(), 0, gPreloadLibCache, sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
 
-				if(!gPreloadLibCache)
-				{
-					LogWarning("cannot allocate %d bytes for preload cache, this will break preloading!\n", sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
-					LoaderWriteLastWindowsError();
-					gPreloadLibCacheCount = 0;
-				} else {
-					gPreloadLibCache[gPreloadLibCacheCount].name = start;
-					++gPreloadLibCacheCount;
+					if(!gPreloadLibCache)
+					{
+						LogWarning("cannot allocate %d bytes for preload cache, this will break preloading!\n", sizeof(PreloadCacheNode) * (gPreloadLibCacheCount + 1));
+						LoaderWriteLastWindowsError();
+						gPreloadLibCacheCount = 0;
+					} else {
+						gPreloadLibCache[gPreloadLibCacheCount].name = start;
+						++gPreloadLibCacheCount;
+					}
 				}
 
 				start = end;

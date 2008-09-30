@@ -146,3 +146,9 @@ errors in the threading classes don't immediately exit parity, but rather throw 
 the timing information is no longer displayed if no timing records are available.
 
 parity now ignores libraries not built by himself while gathering symbols to be loaded through the generated loader.
+
+fixed a bug in the directive section processing of object files, which could have caused crashes, since string offsets were calculated wrong.
+
+fixed a bug which could crash the routine responsible for colorizing the output of a task.
+
+made testsuite output more readable.

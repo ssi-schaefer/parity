@@ -57,6 +57,7 @@ namespace parity
 
 			bool exists() const;
 			bool remove() const;
+			bool createPath() const;
 
 			bool move(Path dest);
 			bool moveCopy(Path dest);
@@ -104,6 +105,9 @@ namespace parity
 			char getSeperator() const;
 
 			void resolveLink();
+			bool removeRecursive(std::string path) const;
+			bool removeFile(std::string const& file) const;
+			void changeMode(std::string const& file, int mode) const;
 		};
 
 	}

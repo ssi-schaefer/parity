@@ -33,6 +33,7 @@
 #  include <windows.h>
 #  include <io.h>
 #  include <process.h>
+#  include <direct.h>
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -305,15 +306,37 @@ namespace parity
 			if(path_.empty())
 				return false;
 
-			mode(0777);
+			if(isFile()) {
+				return removeFile(path_);
+			} else {
+				//
+				// recursive delete...
+				//
+				return removeRecursive(path_);
+			}
+
+			return false;
+		}
+
+		bool Path::removeRecursive(std::string path) const
+		{
+			//
+			// TODO: do delete.
+			//
+			return false;
+		}
+
+		bool Path::removeFile(std::string const& file) const
+		{
+			changeMode(file, 0777);
+
+			*(const_cast<bool*>(&stated_)) = false;
 
 			#ifdef _WIN32
 			#  define unlink _unlink
 			#endif
 
-			*(const_cast<bool*>(&stated_)) = true;
-
-			if(unlink(path_.c_str()) == 0)
+			if(unlink(file.c_str()) == 0)
 				return true;
 
 			#ifdef unlink
@@ -395,6 +418,11 @@ namespace parity
 
 		void Path::mode(int mode) const
 		{
+			changeMode(path_, mode);
+		}
+
+		void Path::changeMode(std::string const& file, int mode) const
+		{
 			#ifdef _WIN32
 			#  define chmod _chmod
 			#  define umask _umask
@@ -424,7 +452,7 @@ namespace parity
 
 			final_mode = final_mode & ~mask;
 
-			chmod(path_.c_str(), final_mode);
+			chmod(file.c_str(), final_mode);
 
 			#ifdef chmod
 			#  undef chmod
@@ -485,6 +513,61 @@ namespace parity
 			stated_ = false;
 
 			resolveLink();
+		}
+
+		bool Path::createPath() const {
+			if(exists()) {
+				return true;
+			}
+
+			//
+			// break appart into components.
+			//
+			char* tmp = new char[path_.length() + 1];
+			strcpy(tmp, path_.c_str());
+			char* walk = tmp;
+			std::vector<std::string> to_delete;
+
+			while(walk && *walk != '\0') {
+				char backup = '\0';
+				if(*walk == '\\' || *walk == '/') {
+					backup = *walk;
+
+					*walk = '\0';
+
+					#ifdef _WIN32
+					# define access _access
+					# define rmdir _rmdir
+					#endif
+
+					if(access(tmp, 0) != 0) {
+						#ifdef _WIN32
+						if(_mkdir(tmp) != 0) {
+						#else
+						if(mkdir(tmp, 0777) != 0) {
+						#endif
+							//
+							// clean any created directory.
+							//
+							for(std::vector<std::string>::reverse_iterator it = to_delete.rbegin(); it != to_delete.rend(); ++it) {
+								rmdir(it->c_str());
+							}
+							return false;
+						} else {
+							to_delete.push_back(tmp);
+						}
+					}
+
+					#ifdef _WIN32
+					# undef access
+					# undef rmdir
+					#endif
+
+				}
+				++walk;
+			}
+
+			return true;
 		}
 
 		void Path::expand()

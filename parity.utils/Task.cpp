@@ -520,14 +520,21 @@ namespace parity
 				oss << col.cyan(input.substr(0, posCol));
 
 				std::string::size_type posEnd = input.find(':', posCol);
-				if(bIsError)
-					oss << col.red(input.substr(posCol, posEnd - posCol));
-				else
-					oss << col.yellow(input.substr(posCol, posEnd - posCol));
+				if(posEnd != std::string::npos) {
+					if(bIsError)
+						oss << col.red(input.substr(posCol, posEnd - posCol));
+					else
+						oss << col.yellow(input.substr(posCol, posEnd - posCol));
 
-				posCol = posEnd;
+					posCol = posEnd;
 
-				oss << input.substr(posCol);
+					oss << input.substr(posCol);
+				} else {
+					// something else, not conforming to paritys format...
+					// for example: parity.gnu.gcc: error in loading shared libraries.
+					// when running from the testsuite.
+					return;
+				}
 				input = oss.str();
 				return;
 			}

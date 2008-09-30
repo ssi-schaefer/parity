@@ -53,6 +53,10 @@ namespace parity
 				pth = pth.base();
 				pth.append("parity.gnu.gcc");
 
+				//
+				// TODO: search in PATH.
+				//
+
 				if(!pth.exists())
 					throw utils::Exception("cannot find parity.exe (for non-win32 don't start from PATH)!");
 			}
@@ -67,7 +71,7 @@ namespace parity
 			utils::Environment env("PARITY_CONFIG");
 
 			if(conf) {
-				utils::Path cf = utils::Path::getTemporary(".parity.test.XXXXXX.conf");
+				utils::Path cf = utils::Path::getTemporary(".parity.testsuite.XXXXXX.conf");
 				std::ofstream of;
 				of.open(cf.get().c_str());
 
@@ -75,6 +79,8 @@ namespace parity
 				of.close();
 
 				env.set(cf.get().c_str());
+
+				utils::Context::getContext().getTemporaryFiles().push_back(cf);
 			} else {
 				env.clear();
 			}

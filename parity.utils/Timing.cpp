@@ -92,19 +92,20 @@ namespace parity
 				return;
 			}
 
+			size_t print_w = longest_;
+
+			if(width_)
+				print_w = width_ - 17;
+
 			Context& ctx = Context::getContext();
 			Color col(ctx.getColorMode());
 			Log::profile("\n%s %s\n", col.magenta("   Timing information:").c_str(), forked_ ? col.red("(forked)").c_str() : "");
 			Log::profile("   ");
-			for(unsigned int i = 0; i < (longest_ + 2); ++i)
+			for(unsigned int i = 0; i < (print_w + 2); ++i)
 				Log::profile(col.magenta("-").c_str());	
 			Log::profile(col.magenta("-----------\n").c_str());
 
 			time_t all = 0;
-			//std::ofstream ofs;
-
-			//if(!ctx.getStatisticsFile().get().empty())
-			//	ofs.open(ctx.getStatisticsFile().get().c_str(), std::ios_base::app | std::ios_base::out);
 
 			for(SortedTimingVector::iterator it = times_.begin(); it != times_.end(); ++it)
 			{
@@ -131,40 +132,40 @@ namespace parity
 				char buf[20];
 				::snprintf(buf, 19, "%d", tmp);
 
+				std::string col_buf;
+
+				if(tmp < 500) {
+					col_buf = col.green(buf);
+				} else if(tmp < 1000) {
+					col_buf = col.yellow(buf);
+				} else {
+					col_buf = col.red(buf);
+				}
+
 				#ifdef snprintf
 				#  undef snprintf
 				#endif
 
 				if(it->first[0] == '[') {
 					if(Context::getContext().getTimingShowTasks())
-						Log::profile("    %-*s: %6s ms\n", longest_ + 1 + col.green("").length(), col.green(it->first).c_str(), (tmp < 0 ? "unfin." : buf));
+						Log::profile("    %-*s: %*s ms\n", print_w + 1 + col.green("").length(), col.green(it->first).c_str(), 6 + col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
 				} else if(it->first == "Timing") {
 					all = tmp;
 				} else
-					Log::profile("%s%-*s: %6s ms\n", col.cyan(" * ").c_str(), longest_ + 2, it->first.c_str(), (tmp < 0 ? "unfin." : buf));
-
-				//
-				// Format of statistics file:
-				//  "item"|start s:start ms|stop s: stop ms|time\n
-				//
-				//if(ofs.is_open())
-				//	ofs << it->first << "|" << it->second.first.time << ":" << it->second.first.millitm << "|" << it->second.second.time << ":" << it->second.second.millitm << "|" << tmp << std::endl;
+					Log::profile("%s%-*s: %*s ms\n", col.cyan(" * ").c_str(), print_w + 2, it->first.c_str(), 6 + col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
 			}
 
-			//if(ofs.is_open())
-			//	ofs.close();
-
 			Log::profile("   ");
-			for(unsigned int i = 0; i < (longest_ + 2); ++i)
+			for(unsigned int i = 0; i < (print_w + 2); ++i)
 				Log::profile(col.magenta("-").c_str());	
 			Log::profile(col.magenta("-----------\n").c_str());
 
 			if(all > 0)
 			{
-				Log::profile("   %-*s: %6d ms\n", longest_ + 2, "All together", all);
+				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together", all);
 
 				Log::profile("   ");
-				for(unsigned int i = 0; i < (longest_ + 2); ++i)
+				for(unsigned int i = 0; i < (print_w + 2); ++i)
 					Log::profile(col.magenta("-").c_str());	
 				Log::profile(col.magenta("-----------\n").c_str());
 				Log::profile("\n");

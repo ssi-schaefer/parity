@@ -104,6 +104,9 @@ namespace parity
 
 				Log::verbose("cleaning %d files.\n", TemporaryFiles.size());
 
+				//
+				// TODO: allow wildcards!
+				//
 				for(PathVector::iterator it = TemporaryFiles.begin(); it != TemporaryFiles.end(); ++it)
 				{
 					it->toNative();
