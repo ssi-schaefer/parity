@@ -67,9 +67,27 @@ namespace parity
 			}
 		}
 
+		Section::Section(Section const& rhs)
+			: struct_(rhs.struct_)
+			, idx_(rhs.idx_)
+			, data_(0)
+			, allocated_(0)
+			, allocated_size_(rhs.allocated_size_)
+			, relocs_(rhs.relocs_)
+			, name_(rhs.name_)
+		{
+			if(!allocated_size_) {
+				data_ = rhs.data_;
+			} else {
+				allocated_ = malloc(allocated_size_);
+				memcpy(allocated_, rhs.allocated_, allocated_size_);
+				data_ = allocated_;
+			}
+		}
+
 		Section::~Section()
 		{
-			if(allocated_) {
+			if(allocated_size_ > 0 && allocated_) {
 				free(allocated_);
 			}
 		}

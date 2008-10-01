@@ -55,6 +55,7 @@ namespace parity
 			//
 			Section(const FileHeader* fh, int idx, void* ptr);
 			~Section();
+			Section(Section const& rhs);
 		private:
 			friend class FileHeader;
 			Section(FileHeader* fh, int idx, const std::string& name);
