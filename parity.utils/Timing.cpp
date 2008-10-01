@@ -106,6 +106,7 @@ namespace parity
 			Log::profile(col.magenta("-----------\n").c_str());
 
 			time_t all = 0;
+			time_t all_calc = 0;
 
 			for(SortedTimingVector::iterator it = times_.begin(); it != times_.end(); ++it)
 			{
@@ -151,8 +152,10 @@ namespace parity
 						Log::profile("    %-*s: %*s ms\n", print_w + 1 + col.green("").length(), col.green(it->first).c_str(), 6 + col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
 				} else if(it->first == "Timing") {
 					all = tmp;
-				} else
+				} else {
 					Log::profile("%s%-*s: %*s ms\n", col.cyan(" * ").c_str(), print_w + 2, it->first.c_str(), 6 + col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
+					all_calc += tmp;
+				}
 			}
 
 			Log::profile("   ");
@@ -161,9 +164,12 @@ namespace parity
 			Log::profile(col.magenta("-----------\n").c_str());
 
 			if(all > 0)
-			{
-				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together", all);
+				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (real runtime)", all);
 
+			if(all_calc > 0)
+				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (summed)", all_calc);
+
+			if(all > 0 || all_calc > 0) {
 				Log::profile("   ");
 				for(unsigned int i = 0; i < (print_w + 2); ++i)
 					Log::profile(col.magenta("-").c_str());	

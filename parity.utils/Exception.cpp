@@ -47,7 +47,7 @@ namespace parity
 		{
 			if(buffer_)
 			{
-				delete buffer_;
+				delete[] buffer_;
 				buffer_ = NULL;
 			}
 		}

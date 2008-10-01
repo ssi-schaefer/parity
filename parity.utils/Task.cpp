@@ -227,6 +227,9 @@ namespace parity
 
 				out_->flush();
 
+				::_close(stdOutPipe[READ_FD]);
+				::_close(stdErrPipe[READ_FD]);
+
 				Timing::instance().stop(oss.str());
 
 				utils::Log::verbose(" * result: %d\n", exitCode);
@@ -357,6 +360,9 @@ namespace parity
 					} while(bRunning || bFinishedLast || (readOut != 0 && readErr != 0));
 
 					out_->flush();
+
+					close(stdOutPipe[READ_FD]);
+					close(stdOutPipe[READ_FD]);
 					
 					Timing::instance().stop(oss.str());
 					

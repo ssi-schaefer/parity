@@ -67,6 +67,13 @@ namespace parity
 			}
 		}
 
+		Section::~Section()
+		{
+			if(allocated_) {
+				free(allocated_);
+			}
+		}
+
 		void Section::lookupRelocations(const FileHeader* fh)
 		{
 			if(struct_.NumberOfRelocations == 0 || fh->getCharacteristics() & FileHeader::CharRelocsStripped)

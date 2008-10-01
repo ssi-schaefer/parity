@@ -54,6 +54,7 @@ namespace parity
 			// Contructors and Destructors
 			//
 			Section(const FileHeader* fh, int idx, void* ptr);
+			~Section();
 		private:
 			friend class FileHeader;
 			Section(FileHeader* fh, int idx, const std::string& name);

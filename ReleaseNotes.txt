@@ -152,3 +152,9 @@ fixed a bug in the directive section processing of object files, which could hav
 fixed a bug which could crash the routine responsible for colorizing the output of a task.
 
 made testsuite output more readable.
+
+fixed a memory leak in the binary file handling code, which could have resulted in out of memory conditions when linking very many files.
+
+fixed a problem in the exception base class which could have caused memory leaks.
+
+fixed a bug in the external task execution code, which resulted in a handle leak, leaving pipes open after the task finished.

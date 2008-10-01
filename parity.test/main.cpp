@@ -66,17 +66,14 @@ int main(int argc, char** argv)
 			std::cout << "usage: " << argv[0] << " [--verbose|-v] [--help|-h]" << std::endl << "       [--config <file>] [<testnum> ...] [<parity args>]" << std::endl;
 			std::cout << std::endl << " --verbose | -v      verbose output (may be very much)." << std::endl;
 			std::cout <<              " --help | -h         print this help message and exit." << std::endl;
-			std::cout <<              " --config <file>     load configuration from file. the values" << std::endl;
-			std::cout <<              "                     loaded from this file are used to configure" << std::endl;
-			std::cout <<              "                     the test environment, not the parity" << std::endl;
-			std::cout <<              "                     instances started by the testsuite." << std::endl;
-			std::cout <<              "                     This means that some settings may not" << std::endl;
-			std::cout <<              "                     have any effect, while others influence" << std::endl;
-			std::cout <<              "                     the internal unit tests." << std::endl;
-			std::cout <<              " <testnum> ...		test numbers can be specified on the" << std::endl;
-			std::cout <<              "                     command line, to only run those tests." << std::endl;
-			std::cout <<              "                     multiple test numbers can be specified," << std::endl;
-			std::cout <<              "                     each as one argument, seperated by space." << std::endl;
+			std::cout <<              " --config <file>     load configuration from file. the values loaded from this" << std::endl;
+			std::cout <<              "                     file are used to configure the test environment, not the" << std::endl;
+			std::cout <<              "                     parity instances started by the testsuite." << std::endl;
+			std::cout <<              "                     This means that some settings may not have any effect, " << std::endl;
+			std::cout <<              "                     while others influence the internal unit tests." << std::endl;
+			std::cout <<              " <testnum> ...       test numbers can be specified on the command line, to" << std::endl;
+			std::cout <<              "                     only run those tests. multiple test numbers can be" << std::endl;
+			std::cout <<              "                     specified, each as one argument, seperated by space." << std::endl;
 
 			exit(1);
 		}
@@ -131,7 +128,7 @@ int main(int argc, char** argv)
 		{ "parity::utils::Task", &parity::testing::TestSuite::testParityUtilsTask },
 		{ "parity::utils::Threading", &parity::testing::TestSuite::testParityUtilsThreading },
 		{ "parity::options::CommandLine", &parity::testing::TestSuite::testParityOptionsCommandLine },
-		{ "parity::tasks::BinaryGatherer Debug switch", &parity::testing::TestSuite::testParityTasksGathererDebugSwitch },
+		{ "parity::tasks::BinaryGatherer (switch to debug)", &parity::testing::TestSuite::testParityTasksGathererDebugSwitch },
 		{ "parity::binary::Object", &parity::testing::TestSuite::testParityBinaryObject },
 		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite },
 		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite },
