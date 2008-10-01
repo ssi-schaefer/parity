@@ -25,6 +25,12 @@
 
 #include <stdlib.h>
 
+#ifdef __INTERIX
+// interix versions prior to 6.0 miss the prototype for
+// unsetenv, although it exists in libc.so.
+extern "C" int unsetenv(const char* name);
+#endif
+
 namespace parity
 {
 	namespace utils
