@@ -36,7 +36,7 @@ namespace parity
 		static std::map<std::string, unsigned long> deps_f_;
 		static unsigned long longest_ = 0;
 
-		void HandleDependency(std::string const& key, std::string const& value, std::string const& type)
+		void HandleDependency(std::string const& key, std::string const& value, std::string const&)
 		{
 			available_stats["dependency"] = PrintDependency;
 			std::string file = key.substr(key.find('(') + 1, key.find(')') - (key.find('(') + 1));

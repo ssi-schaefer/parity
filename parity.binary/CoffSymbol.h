@@ -47,7 +47,7 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			Symbol(const FileHeader* fh, long idx, void* ptr) : idx_(idx) { if(ptr) { struct_ = *(SymStruct*)ptr; calcName(fh); } }
+			Symbol(const FileHeader* fh, long idx, void* ptr) : idx_(idx), struct_(), name_(), aux_() { if(ptr) { struct_ = *(SymStruct*)ptr; calcName(fh); } }
 			Symbol(FileHeader* fh, long idx, const std::string& name);
 			
 			//
@@ -56,7 +56,7 @@ namespace parity
 			typedef enum {
 				SymbolUndefined	= 0,
 				SymbolAbsolute	= -1,
-				SymbolDebug		= -2,
+				SymbolDebug		= -2
 			} SectionNumberFlags;
 
 			//
@@ -78,7 +78,7 @@ namespace parity
 				TypeByte	= 12,
 				TypeWord	= 13,
 				TypeUint	= 14,
-				TypeDWord	= 15,
+				TypeDWord	= 15
 			} BaseTypes;
 
 			//
@@ -90,7 +90,7 @@ namespace parity
 				ComplexNull		= 0x00,
 				ComplexPointer	= 0x10,
 				ComplexFunction	= 0x20,
-				ComplexArray	= 0x30,
+				ComplexArray	= 0x30
 			} ComplexTypes;
 
 			typedef enum {
@@ -120,7 +120,7 @@ namespace parity
 				ClassFile			= 103,
 				ClassSection		= 104,	// MS Tools use ClassStatic instead.
 				ClassWeakExternal	= 105,
-				ClassCLRToken		= 107,
+				ClassCLRToken		= 107
 			} StorageClassFlags;
 
 			typedef std::vector<Symbol> SymbolVector;
@@ -146,7 +146,7 @@ namespace parity
 			// To support the correctly indexed map, we need a default constructor
 			// that is accessable from the map's operator[]
 			//
-			Symbol() : idx_(-11) { throw utils::Exception("construction of invalid symbol!"); }
+			Symbol() : idx_(-11), struct_(), name_("INVALID"), aux_() { throw utils::Exception("construction of invalid symbol!"); }
 			friend IndexedSymbolMap::mapped_type& IndexedSymbolMap::operator [](const IndexedSymbolMap::key_type&);
 
 			#define SYM_MEMBERS \

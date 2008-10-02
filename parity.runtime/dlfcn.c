@@ -89,7 +89,7 @@ void* dlopen(const char* name, int flags)
 	handle = LoaderLibraryGetHandle(conv, 0);
 
 	if(!handle) {
-		char* conv_dll = malloc(strlen(conv) + 5); /* .dll + \0 */
+		char* conv_dll = (char*)malloc(strlen(conv) + 5); /* .dll + \0 */
 
 		if(conv_dll) {
 			strcpy(conv_dll, conv);

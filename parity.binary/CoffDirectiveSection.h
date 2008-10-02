@@ -44,7 +44,7 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			DirectiveSection(Section& sect) : section_(sect) { calcDirectives(sect); }
+			DirectiveSection(Section& sect) : vector_(), section_(sect) { calcDirectives(sect); }
 			
 			typedef std::vector<std::string> DirectiveVector;
 			//

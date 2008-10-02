@@ -42,7 +42,7 @@ namespace parity
 		static TimingMap invalids_;
 		static std::string::size_type longest_ = 0;
 
-		void HandleTiming(std::string const& key, std::string const& value, std::string const& type)
+		void HandleTiming(std::string const& key, std::string const& value, std::string const&)
 		{
 			available_stats["timing"] = PrintTiming;
 			std::string::size_type posKey = key.find(':');

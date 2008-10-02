@@ -37,10 +37,15 @@ namespace parity
 {
 	namespace utils
 	{
-		static char* emptyFile = "";
+		static char const* emptyFile = "";
 
 		MappedFile::MappedFile(const Path& path, OpenMode mode)
-			: path_(path), mode_(mode)
+			: path_(path), base_(0), top_(0), mode_(mode)
+#ifdef _WIN32
+			, file_(INVALID_HANDLE_VALUE), mapping_(INVALID_HANDLE_VALUE)
+#else
+			, info_(), file_(0)
+#endif
 		{
 			#ifdef _WIN32
 				DWORD dwAccess;
@@ -72,7 +77,7 @@ namespace parity
 
 				if(tmp.st_size == 0)
 				{
-					base_ = emptyFile;
+					base_ = (void*)emptyFile;
 					top_ = MAKEPTR(void*, base_, 1);
 					file_ = 0;
 					mapping_ = 0;
@@ -125,7 +130,7 @@ namespace parity
 
 				if(info_.st_size == 0)
 				{
-					base_ = emptyFile;
+					base_ = (void*)emptyFile;
 					top_ = MAKEPTR(void*, base_, 1);
 					file_ = 0;
 					return;

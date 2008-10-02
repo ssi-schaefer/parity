@@ -24,6 +24,7 @@
 #define __MSDOSSTUB_H__
 
 #include <MemoryFile.h>
+#include <Exception.h>
 
 namespace parity
 {
@@ -33,6 +34,27 @@ namespace parity
 		public:
 			MsDosStub(void* ptr, size_t length);
 			~MsDosStub();
+
+			MsDosStub(MsDosStub const& rhs) : data_(::malloc(rhs.size_)), size_(rhs.size_) {
+				if (!data_)
+					throw utils::Exception("cannot allocate memory for MsDos Stub");
+				
+				::memcpy(data_, rhs.data_, size_);
+			}
+
+			MsDosStub& operator=(MsDosStub const& rhs) {
+				if(data_) 
+					free(data_);
+
+				size_ = rhs.size_;
+				data_ = ::malloc(size_);
+
+				if(!data_)
+					throw utils::Exception("cannot allocate memory for MsDos Stub");
+
+				::memcpy(data_, rhs.data_, size_);
+				return *this;
+			}
 
 			//unsigned int getSignaturePointer() { return *(MAKEPTR(unsigned int*, data_, 0x3C)); }
 			//void setSignaturePointer(unsigned int val) { *(MAKEPTR(unsigned int*, data_, 0x3C)) = val; }

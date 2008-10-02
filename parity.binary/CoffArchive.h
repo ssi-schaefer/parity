@@ -44,11 +44,16 @@ namespace parity
 		public:
 			Archive(const utils::MappedFile* ptr)
 				: file_(ptr)
+				, members_()
+				, imports_()
 			{
 				if(::strncmp((const char*)ptr->getBase(), "!<arch>\n", 8) != 0)
 					throw utils::Exception("not an archive!");
 				gatherMembersAndImports();
 			}
+
+			Archive(Archive const& rhs) : file_(rhs.file_), members_(rhs.members_), imports_(rhs.imports_) {}
+			Archive& operator=(Archive const& rhs) { file_ = rhs.file_; members_ = rhs.members_; imports_ = rhs.imports_; return *this; }
 
 			typedef std::multimap<std::string, FileHeader> MemberMap;
 			typedef std::multimap<std::string, Import> ImportMap;

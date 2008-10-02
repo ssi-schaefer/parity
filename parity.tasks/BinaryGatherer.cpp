@@ -24,7 +24,6 @@
 
 #include <Context.h>
 #include <MappedFile.h>
-#include <MappedFileCache.h>
 #include <GenericFile.h>
 #include <Log.h>
 #include <Statistics.h>
@@ -38,14 +37,9 @@ namespace parity
 {
 	namespace tasks
 	{
-		//
-		// The Binary Gatherer needs to use MappedFileCache to keep
-		// all Files open, since otherwise all the stored symbols etc.
-		// would point into invalid memory. This may result in too many
-		// open file handls
-		//
-
 		BinaryGatherer::BinaryGatherer()
+			: unresolved_(), local_(), imports_(), exports_(), maybeExports_()
+			, staticImports_(), loadedImports_(), implicits_(), processed_(), hybrids_()
 		{
 			if(utils::Context::getContext().getObjectsLibraries().empty())
 				throw utils::Exception("construction of binary gatherer without binaries is invalid!");

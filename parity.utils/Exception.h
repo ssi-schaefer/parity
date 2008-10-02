@@ -40,7 +40,8 @@ namespace parity
 #ifdef _WIN32
 		private:
 #endif
-			Exception(const Exception& other) { throw "invalid"; }
+			Exception(const Exception&) : buffer_(0) { throw "invalid"; }
+			Exception& operator=(const Exception&);
 #ifndef _WIN32
 		private:
 #endif

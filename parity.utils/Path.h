@@ -41,7 +41,11 @@ namespace parity
 			Path(const std::string& source);
 
 			static Path getTemporary(std::string templ);
+			/*
+			 * not required ATM. keep for the future.
+			 *
 			static Path getTemporaryDirectory();
+			 */
 
 			const std::string& get() const;
 			void set(const std::string& value);
@@ -57,6 +61,7 @@ namespace parity
 
 			bool exists() const;
 			bool remove() const;
+	
 			bool createPath() const;
 
 			bool move(Path dest);

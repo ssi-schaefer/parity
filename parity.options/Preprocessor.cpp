@@ -28,14 +28,14 @@ namespace parity
 {
 	namespace options
 	{
-		bool setKeepComments(const char* option, const char* argument, bool& used)
+		bool setKeepComments(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setKeepComments(true);
 			return true;
 		}
 		
-		bool setNoStdIncludes(const char* option, const char* argument, bool& used)
+		bool setNoStdIncludes(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setNoStdIncludes(true);
@@ -91,7 +91,7 @@ namespace parity
 			return true;
 		}
 
-		bool setPreprocess(const char* option, const char* argument, bool& used)
+		bool setPreprocess(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setPreprocess(true);
@@ -150,7 +150,7 @@ namespace parity
 			return true;
 		}
 
-		bool setDependencyTracking(const char* option, const char* argument, bool& used)
+		bool setDependencyTracking(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setDependencyTracking(true);
@@ -166,14 +166,14 @@ namespace parity
 			return true;
 		}
 
-		bool setDependencyPhony(const char* option, const char* argument, bool& used)
+		bool setDependencyPhony(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setDependencyPhony(true);
 			return true;
 		}
 
-		bool setDependencyGenerated(const char* option, const char* argument, bool& used)
+		bool setDependencyGenerated(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setDependencyGenerated(true);

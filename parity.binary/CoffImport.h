@@ -45,7 +45,10 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			Import(const utils::GenericFile* file, void* ptr) : file_(file), struct_(*(ImpStruct*)ptr) { calcName(ptr); }
+			Import(const utils::GenericFile* file, void* ptr) : file_(file), struct_(*(ImpStruct*)ptr), symbol_(), library_() { calcName(ptr); }
+			Import(Import const& rhs) : file_(rhs.file_), struct_(rhs.struct_), symbol_(rhs.symbol_), library_(rhs.library_) { }
+
+			Import& operator=(Import const& rhs) { file_ = rhs.file_; struct_ = rhs.struct_; symbol_ = rhs.symbol_; library_ = rhs.library_; return *this; }
 			
 			//
 			// Public Types

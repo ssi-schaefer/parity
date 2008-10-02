@@ -28,14 +28,14 @@ namespace parity
 {
 	namespace options
 	{
-		bool setForceLink(const char* option, const char* argument, bool& used)
+		bool setForceLink(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setForceLink(true);
 			return true;
 		}
 
-		bool setSharedLink(const char* option, const char* argument, bool& used)
+		bool setSharedLink(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setSharedLink(true);
@@ -72,7 +72,7 @@ namespace parity
 
 		}
 
-		bool setPreferStatic(const char* option, const char* argument, bool& used)
+		bool setPreferStatic(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			if(option[1] == 'B')
@@ -86,7 +86,7 @@ namespace parity
 			return true;
 		}
 
-		bool addObjectsLibraries(const char* option, const char* argument, bool& used)
+		bool addObjectsLibraries(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 

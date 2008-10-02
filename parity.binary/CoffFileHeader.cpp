@@ -39,7 +39,7 @@ namespace parity
 	namespace binary
 	{
 		FileHeader::FileHeader(const utils::GenericFile* file, void* ptr, bool isArchive)
-			: start_(ptr), file_(file), hdr_(*(FHStruct*)ptr)
+			: start_(ptr), file_(file), hdr_(*(FHStruct*)ptr), stringtable_(), map_(), sections_()
 			, nextStringOffset_(sizeof(unsigned int)), nextSectionIndex_(1), nextSymbolIndex_(0), isArchive_(isArchive)
 		{
 			lookupStringTab();
@@ -48,11 +48,11 @@ namespace parity
 		}
 
 		FileHeader::FileHeader() 
-			//                     One Based Index       First 4 bytes are size of table          Zero base index
-			: start_(0), file_(0), nextStringOffset_(sizeof(unsigned int)), nextSectionIndex_(1), nextSymbolIndex_(0)
-			, isArchive_(false)
+			: start_(0), file_(0), hdr_(), stringtable_(), map_(), sections_()
+			, nextStringOffset_(sizeof(unsigned int)), nextSectionIndex_(1), nextSymbolIndex_(0) , isArchive_(false)
 		{
-			::memset(&hdr_, 0, sizeof(hdr_));
+			// should not be required anymore hopefully...
+			//::memset(&hdr_, 0, sizeof(hdr_));
 		}
 
 		OptionalHeader FileHeader::getOptionalHeader() const

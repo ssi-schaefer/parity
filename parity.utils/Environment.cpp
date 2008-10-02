@@ -37,16 +37,17 @@ namespace parity
 	{
 
 		Environment::Environment(const std::string &value)
+			: value_(), varname_(value)
 		{
 #ifdef _WIN32
 			char* buf;
 			int len;
 
-			if((len = GetEnvironmentVariableA(value.c_str(), 0, 0)) > 1) {
+			if((len = GetEnvironmentVariableA(varname_.c_str(), 0, 0)) > 1) {
 				buf = new char[len];
 
-				if((len = GetEnvironmentVariableA(value.c_str(), buf, len)) == 0) {
-					utils::Log::verbose("failed to get environment variable %s\n", value.c_str());
+				if((len = GetEnvironmentVariableA(varname_.c_str(), buf, len)) == 0) {
+					utils::Log::verbose("failed to get environment variable %s\n", varname_.c_str());
 				} else {
 					value_ = buf;
 				}
@@ -54,13 +55,11 @@ namespace parity
 				delete[] buf;
 			}
 #else
-			const char * env = getenv(value.c_str());
+			const char * env = getenv(varname_.c_str());
 
 			if(env)
 				value_ = env;
 #endif
-
-			varname_ = value;
 		}
 
 		std::string Environment::getValue()

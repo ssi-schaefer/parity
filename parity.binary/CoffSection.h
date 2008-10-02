@@ -56,6 +56,7 @@ namespace parity
 			Section(const FileHeader* fh, int idx, void* ptr);
 			~Section();
 			Section(Section const& rhs);
+			Section& operator=(Section const& rhs);
 		private:
 			friend class FileHeader;
 			Section(FileHeader* fh, int idx, const std::string& name);
@@ -105,14 +106,14 @@ namespace parity
 				CharMemoryShared		= 0x10000000,
 				CharMemoryExecute		= 0x20000000,
 				CharMemoryRead			= 0x40000000,
-				CharMemoryWrite			= 0x80000000,
+				CharMemoryWrite			= 0x80000000
 			} CharacteristicsFlags;
 
 			typedef std::vector<Section> SectionVector;
 			typedef std::map<unsigned int, Section> IndexedSectionMap;
 
 		private:
-			Section() { throw utils::Exception("invalid construction of Section object!"); }
+			Section() : struct_(), idx_(-11), data_(0), allocated_(0), allocated_size_(0), relocs_(), name_("INVALID") { throw utils::Exception("invalid construction of Section object!"); }
 			friend IndexedSectionMap::mapped_type& IndexedSectionMap::operator [](const IndexedSectionMap::key_type&);
 		public:
 			

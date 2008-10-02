@@ -29,13 +29,13 @@ namespace parity
 	namespace inspector 
 	{
 
-		static bool setVerbose(const char* option, const char* argument, bool& used)
+		static bool setVerbose(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Log::setLevel(utils::Log::Verbose);
 			return true;
 		}
 
-		static bool printHelp(const char* opt, const char* arg, bool& u)
+		static bool printHelp(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			std::cout << "parity.inspector [-h | --help] [--verbose] [-s | --symbols]" << std::endl;
 			std::cout << "    [--short] binary [binary ...]" << std::endl;
@@ -56,28 +56,28 @@ namespace parity
 			return false;
 		}
 
-		static bool addFile(const char* opt, const char* arg, bool& u)
+		static bool addFile(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			utils::Path pth(opt);
+			utils::Path pth(option);
 			pth.toNative();
 
 			if(pth.exists())
 				gFilesToProcess.push_back(pth);
 			else {
-				utils::Log::verbose("cannot find file or unknown option: %s (rejecting)\n", opt);
+				utils::Log::verbose("cannot find file or unknown option: %s (rejecting)\n", option);
 				return false;
 			}
 
 			return true;
 		}
 
-		static bool setShowSymbols(const char* opt, const char* arg, bool& u)
+		static bool setShowSymbols(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			gShowSymbols = true;
 			return true;
 		}
 
-		static bool setShortFormat(const char* opt, const char* arg, bool& u)
+		static bool setShortFormat(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			gShortFormat = true;
 			return true;

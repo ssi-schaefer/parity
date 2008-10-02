@@ -36,7 +36,14 @@ namespace parity
 	{
 		class Task {
 		public:
-			Task() : out_(&std::cout), err_(&std::cerr) {}
+			Task() : filters_(), out_(&std::cout), err_(&std::cerr) {}
+
+			//
+			// in this case, it is ok, to copy the pointers to the streams
+			// without doing a deep copy.
+			//
+			Task(const Task& rhs) : filters_(rhs.filters_), out_(rhs.out_), err_(rhs.err_) { }
+			Task& operator=(Task const& rhs) { filters_ = rhs.filters_; out_ = rhs.out_; err_ = rhs.err_; return *this; }
 
 			typedef std::vector<std::string> ArgumentVector;
 			typedef std::vector<std::string> OutputVector;

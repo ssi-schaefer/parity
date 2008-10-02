@@ -30,28 +30,28 @@ namespace parity
 {
 	namespace options
 	{
-		bool setUseSSE(const char* option, const char* argument, bool& used)
+		bool setUseSSE(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setUseSSE(true);
 			return true;
 		}
 
-		bool setUseSSE2(const char* option, const char* argument, bool& used)
+		bool setUseSSE2(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setUseSSE2(true);
 			return true;
 		}
 
-		bool setForScope(const char* option, const char* argument, bool& used)
+		bool setForScope(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setForScope(!(::strstr(option, "no") && (::strstr(option, "forScope") && option[strlen(option) - 1] == '-')));
 			return true;
 		}
 
-		bool setMsExtensions(const char* option, const char* argument, bool& used)
+		bool setMsExtensions(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setMsExtensions(!(::strstr(option, "ansi") || ::strstr(option, "no") || ::strstr(option, "Za")));
@@ -99,14 +99,14 @@ namespace parity
 			return true;
 		}
 
-		bool setWarningAsError(const char* option, const char* argument, bool& used)
+		bool setWarningAsError(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setWarningAsError(true);
 			return true;
 		}
 
-		bool setAnsiMode(const char* option, const char* argument, bool& used)
+		bool setAnsiMode(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setAnsiMode(true);
@@ -150,7 +150,7 @@ namespace parity
 			return true;
 		}
 
-		bool setDebugable(const char* option, const char* argument, bool& used)
+		bool setDebugable(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setDebugable(true);

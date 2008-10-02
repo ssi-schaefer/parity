@@ -41,6 +41,7 @@ namespace parity
 
 		class GenericFile {
 		public:
+			virtual ~GenericFile() {}
 			virtual void close() = 0;
 
 			virtual void* getBase() const = 0;

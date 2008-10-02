@@ -25,6 +25,8 @@
 
 #include <Exception.h>
 
+#define OPT_UNUSED(x)
+
 namespace parity
 {
 	namespace options

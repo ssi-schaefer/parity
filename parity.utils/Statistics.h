@@ -51,7 +51,8 @@ namespace parity
 			//
 			// for reading.
 			//
-			typedef struct {
+			typedef struct _StatisticItem {
+				_StatisticItem() : key(), value(), type() {}
 				std::string key;
 				std::string value;
 				std::string type;

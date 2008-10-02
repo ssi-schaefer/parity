@@ -43,6 +43,7 @@ namespace parity
 			//
 			AuxSymbol(void* ptr) { ::memcpy(data_, ptr, 18); }
 			AuxSymbol() { ::memset(data_, 0, 18); }
+			virtual ~AuxSymbol() {}
 			
 			//
 			// Public Types

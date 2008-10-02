@@ -31,6 +31,7 @@ namespace parity
 		static MappedFileCache gCache;
 
 		MappedFileCache::MappedFileCache()
+			: handles_()
 		{
 		}
 

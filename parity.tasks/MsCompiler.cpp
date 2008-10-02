@@ -30,6 +30,7 @@ namespace parity
 	namespace tasks
 	{
 		MsCompiler::MsCompiler()
+			: prepOut_()
 		{
 			if(utils::Context::getContext().getSources().empty())
 				throw utils::Exception("No Source files given as input for Compiler!");

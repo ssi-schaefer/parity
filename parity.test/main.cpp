@@ -140,6 +140,9 @@ int main(int argc, char** argv)
 		{ "parity.exe: shared link (no loader)", &parity::testing::TestSuite::testParityExeNoLoad },
 		{ "parity.exe: static import", &parity::testing::TestSuite::testParityExeStaticImport },
 		{ "parity.exe: automatic export", &parity::testing::TestSuite::testParityExeAutoExport },
+		{ "parity.exe: statistics", &parity::testing::TestSuite::testParityExeStatistics },
+		{ "parity.exe: runpaths", &parity::testing::TestSuite::testParityExeStatistics },
+		{ "parity.inspector.exe: basic functionality", &parity::testing::TestSuite::testParityInspectorExe },
 		{ "", NULL }
 	};
 

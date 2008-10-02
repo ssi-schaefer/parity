@@ -52,7 +52,7 @@ namespace parity
 
 			const SortedTimingVector& getCurrentState() { return times_; }
 		private:
-			Timing() : longest_(0), width_(0) { start("Timing"); }
+			Timing() : times_(), longest_(0), forked_(false), width_(0) { start("Timing"); }
 
 			SortedTimingVector times_;
 			size_t longest_;

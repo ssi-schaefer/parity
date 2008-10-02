@@ -36,7 +36,10 @@ namespace parity
 		public:
 			Object(const utils::GenericFile* ptr)
 				: file_(ptr), hdr_(ptr, ptr->getBase(), false) {}
-			Object() : file_(0) {}
+			Object() : file_(0), hdr_() {}
+			Object(Object const& rhs) : file_(rhs.file_), hdr_(rhs.hdr_) {}
+			Object& operator=(Object const& rhs) { file_ = rhs.file_; hdr_ = rhs.hdr_; return *this; }
+
 			FileHeader& getHeader() { return hdr_; }
 
 			void update(utils::MemoryFile& file) { hdr_.update(file, 0); }

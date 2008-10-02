@@ -48,6 +48,32 @@ namespace parity
 			FileHeader(const utils::GenericFile* file, void* ptr, bool isArch);
 			FileHeader();
 
+			FileHeader(FileHeader const& rhs)
+				: start_(rhs.start_)
+				, file_(rhs.file_)
+				, hdr_(rhs.hdr_)
+				, stringtable_(rhs.stringtable_)
+				, map_(rhs.map_)
+				, sections_(rhs.sections_)
+				, nextStringOffset_(rhs.nextStringOffset_)
+				, nextSectionIndex_(rhs.nextSectionIndex_)
+				, nextSymbolIndex_(rhs.nextSymbolIndex_)
+				, isArchive_(rhs.isArchive_) {}
+
+			FileHeader& operator=(FileHeader const& rhs) { 
+				start_				= rhs.start_;
+				file_				= rhs.file_;
+				hdr_				= rhs.hdr_;
+				stringtable_		= rhs.stringtable_;
+				map_				= rhs.map_;
+				sections_			= rhs.sections_;
+				nextStringOffset_	= rhs.nextStringOffset_;
+				nextSectionIndex_	= rhs.nextSectionIndex_;
+				nextSymbolIndex_	= rhs.nextSymbolIndex_;
+				isArchive_			= rhs.isArchive_;
+				return *this;
+			}
+
 			//
 			// Public Types
 			//
@@ -59,7 +85,7 @@ namespace parity
 				MachineI386		= 0x14c,
 				MachineAMD64	= 0x8664,
 				MachineARM		= 0x1c0,
-				MachineIA64		= 0x200,
+				MachineIA64		= 0x200
 			} MachineType;
 
 			typedef enum {

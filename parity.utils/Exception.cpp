@@ -32,6 +32,7 @@ namespace parity
 	{
 
 		Exception::Exception(const char * fmt, ...)
+			: buffer_(0)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -52,7 +53,13 @@ namespace parity
 			}
 		}
 
-		size_t Exception::getLength(const char * fmt, va_list args) const
+		#ifndef _WIN32
+		# define EXCPT_MAYBE_UNUSED(x)
+		#else
+		# define EXCPT_MAYBE_UNUSED(x) x
+		#endif
+
+		size_t Exception::getLength(const char * EXCPT_MAYBE_UNUSED(fmt), va_list EXCPT_MAYBE_UNUSED(args)) const
 		{
 			#ifdef _WIN32
 				return ::_vscprintf(fmt, args);

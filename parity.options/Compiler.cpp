@@ -28,21 +28,21 @@ namespace parity
 {
 	namespace options
 	{
-		bool setSyntaxOnly(const char* option, const char* argument, bool& used)
+		bool setSyntaxOnly(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setSyntaxOnly(true);
 			return true;
 		}
 
-		bool setCompileOnly(const char* option, const char* argument, bool& used)
+		bool setCompileOnly(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setCompileOnly(true);
 			return true;
 		}
 
-		bool setExceptionHandling(const char* option, const char* argument, bool& used)
+		bool setExceptionHandling(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setExceptionHandling(!::strstr(option, "no"));
@@ -50,14 +50,14 @@ namespace parity
 			return true;
 		}
 
-		bool setRuntimeTypes(const char* option, const char* argument, bool& used)
+		bool setRuntimeTypes(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setExceptionHandling((!::strstr(option, "no") && !(option[::strlen(option) - 1] == '-')));
 			return true;
 		}
 
-		bool setPositionIndep(const char* option, const char* argument, bool& used)
+		bool setPositionIndep(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setPositionIndep(true);
@@ -120,14 +120,14 @@ namespace parity
 			return true;
 		}
 
-		bool setShortWchar(const char* option, const char* argument, bool& used)
+		bool setShortWchar(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setShortWchar(!::strstr(option, "no"));
 			return true;
 		}
 
-		bool setRuntime(const char* option, const char* argument, bool& used)
+		bool setRuntime(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 

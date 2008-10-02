@@ -55,7 +55,8 @@ namespace parity
 			bool isReadable() const { return true; }
 			bool isWriteable() const { return true; }
 		private:
-			MemoryFile(const MemoryFile& right);
+			MemoryFile(const MemoryFile&);
+			MemoryFile& operator=(const MemoryFile&);
 
 			bool allocated_;
 			size_t allocated_size_;

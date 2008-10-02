@@ -112,7 +112,7 @@ The Configuration loading code has been extended to support profiles. This way m
 Added internal capabilities and configuration profiles to support compiling of POSIX subsystem and MixedMode Interix applications. This has the great advantage over gcc, that the result can be debugged in Visual Studio, rather than gdb. The main difference to native Windows builds is the dependency to the SUA subsystem, and the use of the POSIX libc (and thus the availablility of fork(), etc.). The full POSIX mode does not support C++ or shared libraries. The MixedMode does not (yet) support C++, but shared libraries work.
 
 
-parity 1.1.1
+parity 1.2.0
 ------------
 
 fixed a bug which caused parity to be unable to link binaries including the custom loader. there where too many underscores added to the entry point symbol name.
@@ -158,3 +158,11 @@ fixed a memory leak in the binary file handling code, which could have resulted 
 fixed a problem in the exception base class which could have caused memory leaks.
 
 fixed a bug in the external task execution code, which resulted in a handle leak, leaving pipes open after the task finished.
+
+fixed various compiler warnings.
+
+made parity compile with gcc's -pedantic switch. also some -Wall -Wextra warnings have been fixed.
+
+made parity compile wihtout warnings with gcc's -Weffc++ option enabled. this assures much better overal code quality.
+
+optimized parity source code and resulting binaries, by removing functions which are not currently required, but take up a lot of space.

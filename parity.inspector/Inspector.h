@@ -69,6 +69,8 @@ namespace parity
 		} InspectorLibrariesPointerLayoutVA;
 
 		typedef struct _InspectorLibrariesStruct {
+			_InspectorLibrariesStruct() : name(), imports(), children(), file() {}
+
 			std::string name;
 			InspectorImportVector imports;
 			std::vector<struct _InspectorLibrariesStruct> children;

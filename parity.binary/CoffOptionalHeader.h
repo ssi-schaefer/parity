@@ -37,8 +37,8 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			OptionalHeader(void* ptr) { hdr_ = *(OHStruct*)ptr; if(hdr_.Magic != 0x10b) throw utils::Exception("unsupported or invalid optional header magic: %x\n", hdr_.Magic); }
-			OptionalHeader() { ::memset(&hdr_, 0, sizeof(OHStruct)); }
+			OptionalHeader(void* ptr) : hdr_(*(OHStruct*)ptr) { if(hdr_.Magic != 0x10b) throw utils::Exception("unsupported or invalid optional header magic: %x\n", hdr_.Magic); }
+			OptionalHeader() : hdr_() { /* should not be neccessary: ::memset(&hdr_, 0, sizeof(OHStruct)); */ }
 
 			//
 			// Public Types

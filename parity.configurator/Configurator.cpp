@@ -361,9 +361,9 @@ void saveSetting(std::ostringstream& target, const std::string& name, const Subs
 	target << std::endl;
 }
 
-void saveSetting(std::ostringstream& target, const std::string& name, const SourceMap& value)
+void saveSetting(std::ostringstream& target, const std::string& name, const SourceMap&)
 {
-	target << "# WARNING: this is a runtime only setting, and may not be set by configuration!" << std::endl;
+	target << "# WARNING: " << name << " is a runtime only setting, and may not be set by configuration!" << std::endl;
 }
 
 void saveConfiguration()

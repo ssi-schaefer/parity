@@ -44,6 +44,10 @@ namespace parity
 				, hdr_(ptr, MAKEPTR(void*, ptr->getBase(), *(MAKEPTR(unsigned int*, ptr->getBase(), 0x3C)) + 4), false)
 				, opt_(hdr_.getOptionalHeader())
 			{}
+
+			Image(Image const& rhs) : file_(rhs.file_), stub_(rhs.stub_), hdr_(rhs.hdr_), opt_(rhs.opt_) {}
+			Image& operator=(Image const& rhs) { file_ = rhs.file_; stub_ = rhs.stub_; hdr_ = rhs.hdr_; opt_ = rhs.opt_; return *this; }
+
 			FileHeader& getHeader() { return hdr_; }
 			OptionalHeader& getOptionalHeader() { return opt_; }
 			MsDosStub& getMsDosStub() { return stub_; }

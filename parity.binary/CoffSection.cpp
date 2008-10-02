@@ -38,8 +38,11 @@ namespace parity
 		Section::Section(const FileHeader* fh, int idx, void* ptr)
 			: struct_(*(SecStruct*)ptr)
 			, idx_(idx)
+			, data_(0)
 			, allocated_(0)
 			, allocated_size_(0)
+			, relocs_()
+			, name_()
 		{
 			lookupRelocations(fh);
 			calcName(fh);
@@ -48,16 +51,19 @@ namespace parity
 		}
 
 		Section::Section(FileHeader* fh, int idx, const std::string& name)
-			: idx_(idx)
+			: struct_()
+			, idx_(idx)
 			, data_(0)
 			, allocated_(0)
 			, allocated_size_(0)
+			, relocs_()
 			, name_(name)
 		{
 			//
 			// set name. this is the reverse to calcName.
 			//
-			::memset(&struct_, 0, sizeof(struct_));
+			// should not be required anymore hopefully...
+			//::memset(&struct_, 0, sizeof(struct_));
 
 			if(name.length() <= 8)
 			{
@@ -83,6 +89,26 @@ namespace parity
 				memcpy(allocated_, rhs.allocated_, allocated_size_);
 				data_ = allocated_;
 			}
+		}
+
+		Section& Section::operator=(Section const& rhs)
+		{
+			struct_ = rhs.struct_;
+			idx_ = rhs.idx_;
+			allocated_ = 0;
+			allocated_size_ = rhs.allocated_size_;
+			relocs_ = rhs.relocs_;
+			name_ = rhs.name_;
+
+			if(!allocated_size_) {
+				data_ = rhs.data_;
+			} else {
+				allocated_ = malloc(allocated_size_);
+				memcpy(allocated_, rhs.allocated_, allocated_size_);
+				data_ = allocated_;
+			}
+
+			return *this;
 		}
 
 		Section::~Section()

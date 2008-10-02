@@ -75,17 +75,17 @@ namespace parity
 			return true;
 		}
 
-		bool setUnhandledSourceFilePassthrough(const char* option, const char* argument, bool& used)
+		bool setUnhandledSourceFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& used)
 		{
 			return setCompilerPassthrough("-X", option, used);
 		}
 
-		bool setUnhandledObjectFilePassthrough(const char* option, const char* argument, bool& used)
+		bool setUnhandledObjectFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& used)
 		{
 			return setLinkerPassthrough("-Y", option, used);
 		}
 
-		bool showParityVersion(const char* option, const char* argument, bool& used)
+		bool showParityVersion(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ") ";
 #ifdef _WIN32
@@ -114,7 +114,7 @@ namespace parity
 			return false;
 		}
 
-		bool setCtxDump(const char* option, const char* argument, bool& used)
+		bool setCtxDump(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setCtxDump(true);
@@ -134,6 +134,8 @@ namespace parity
 				ctx.setColorMode(utils::Color::Dark);
 			else
 				throw utils::Exception("%s is not a valid argument to %s", argument, option);
+
+			used = true;
 
 			return true;
 		}

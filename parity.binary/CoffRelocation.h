@@ -46,7 +46,7 @@ namespace parity
 			Relocation(void* ptr) : struct_(*(RelStruct*)ptr) {}
 		private:
 			friend class Section;
-			Relocation() {}
+			Relocation() : struct_() {}
 		public:
 
 			//
@@ -69,7 +69,7 @@ namespace parity
 				TypeAmd64Token			= 0x000d,
 				TypeAmd64SpanRelative32	= 0x000e,
 				TypeAmd64Pair			= 0x000f,
-				TypeAmd64SignedSpan32	= 0x0010,
+				TypeAmd64SignedSpan32	= 0x0010
 			} Amd64TypeFlags;
 
 			typedef enum {
@@ -79,7 +79,7 @@ namespace parity
 				TypeArmBranch24			= 0x0003,
 				TypeArmBranch11			= 0x0004,
 				TypeArmSection			= 0x000e,
-				TypeArmSectionRelative	= 0x000f,
+				TypeArmSectionRelative	= 0x000f
 			} ArmTypeFlags;
 
 			typedef enum {
@@ -93,7 +93,7 @@ namespace parity
 				i386SectionRelative		= 0x000b,
 				i386Token				= 0x000c,
 				i386SectionRelative7	= 0x000d,
-				i386Relative32			= 0x0014,
+				i386Relative32			= 0x0014
 			} i386TypeFlags;
 
 			typedef enum {
@@ -125,7 +125,7 @@ namespace parity
 				IA64ImmediateGPRelative64= 0x001a,
 				IA64Token				= 0x001b,
 				IA64GPRelative32		= 0x001c,
-				IA64Append				= 0x001f,
+				IA64Append				= 0x001f
 			} IA64TypeFlags;
 
 			//

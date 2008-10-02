@@ -373,11 +373,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\parity.exe.runpaths.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\parity.exe.shared.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\parity.exe.static.import.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.exe.statistics.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.inspector.exe.cpp"
 				>
 			</File>
 			<File

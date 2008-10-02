@@ -94,6 +94,11 @@ namespace parity
 			handles_.clear();
 		}
 
+		/* not needed right now. commented out for future
+		 * reference. maybe this will be needed someday, when
+		 * there are tasks that require a specific order, but
+		 * still some of them can run in parallel...
+		 *
 		void Threading::synchronize(long id)
 		{
 			HandleMap::iterator pos = handles_.find(id);
@@ -102,6 +107,7 @@ namespace parity
 				waitForOneThread(pos);
 			}
 		}
+		 */
 
 		long Threading::run(ThreadingFunction method, void* data, bool allowDataSeparation)
 		{

@@ -30,9 +30,12 @@ namespace parity
 	{
 		Symbol::Symbol(FileHeader* fh, long idx, const std::string& name)
 			: idx_(idx)
+			, struct_()
 			, name_(name)
+			, aux_()
 		{
-			::memset(&struct_, 0, sizeof(struct_));
+			// should not be required anymore hopefullly...
+			//::memset(&struct_, 0, sizeof(struct_));
 
 			if(name.length() <= 8)
 			{

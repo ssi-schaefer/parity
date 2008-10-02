@@ -68,7 +68,7 @@ namespace parity
 			ToolchainInvalid = -1,
 			ToolchainMicrosoft,
 			ToolchainInterixGNU,
-			ToolchainInterixMS,
+			ToolchainInterixMS
 		} ToolchainType;
 
 		typedef enum {
@@ -145,6 +145,7 @@ namespace parity
 
 		private:
 			ContextGen();
+			virtual ~ContextGen() { }
 
 			//
 			// The following is the Context Member Table. From this information

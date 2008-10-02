@@ -32,20 +32,20 @@ namespace parity
 
 	namespace testing
 	{
-		bool CompileOnlyOption(const char * option, const char* arg, bool& used) {
+		bool CompileOnlyOption(const char * OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used)) {
 			return true;
 		}
 
-		bool ExceptionOption(const char * option, const char* arg, bool& used) {
+		bool ExceptionOption(const char *  OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool&  OPT_UNUSED(used)) {
 			return true;
 		}
 
-		bool OutputOption(const char * option, const char* arg, bool& used) {
+		bool OutputOption(const char *  OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& used) {
 			used = true;
 			return true;
 		}
 
-		bool FileOption(const char * option, const char * arg, bool& used) {
+		bool FileOption(const char * option, const char * OPT_UNUSED(argument), bool&  OPT_UNUSED(used)) {
 			if(option[strlen(option) - 1] == 'o') {
 				return true;
 			} else {
@@ -53,7 +53,7 @@ namespace parity
 			}
 		}
 
-		bool SourceOption(const char* option, const char* arg, bool& used) {
+		bool SourceOption(const char*  OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool&  OPT_UNUSED(used)) {
 			return true;
 		}
 

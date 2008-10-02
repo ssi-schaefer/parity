@@ -52,7 +52,8 @@ namespace parity
 			const Path& getPath() const { return path_; }
 
 		private:
-			MappedFile(const MappedFile& right);
+			MappedFile(const MappedFile&);
+			MappedFile& operator=(const MappedFile&);
 
 			const Path path_;
 

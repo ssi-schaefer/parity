@@ -66,6 +66,8 @@ namespace parity
 			bool testParityExeAutoExport();
 			bool testParityExeShared();
 			bool testParityExeNoLoad();
+			bool testParityExeStatistics();
+			bool testParityExeRunpaths();
 
 			bool testParityTasksGathererDebugSwitch();
 
@@ -77,10 +79,16 @@ namespace parity
 			bool testParityLoaderPreload();
 
 			//
+			// tests for other executables from parity.
+			//
+			bool testParityInspectorExe();
+
+			//
 			// internal helper functions
 			//
-			parity::utils::Path getParityExecutable();
+			parity::utils::Path getParityExecutable(std::string const& x = std::string("parity.gnu.gcc"));
 			bool executeParity(const utils::Task::ArgumentVector& vec, bool quiet, char const* conf = NULL);
+			void dumpStreams(std::string out, std::string err);
 
 		private:
 			std::vector<std::string> arguments_;

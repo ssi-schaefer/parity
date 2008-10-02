@@ -47,10 +47,11 @@ namespace parity
 
 		MemoryFile::MemoryFile(size_t sz)
 			: allocated_(true)
+			, allocated_size_(BUFFER_ALLOCSIZE(sz + 1))
+			, base_(0)
+			, size_(sz)
 		{
-			allocated_size_ = BUFFER_ALLOCSIZE(sz + 1);
 			base_ = malloc(allocated_size_);
-			size_ = sz;
 
 			if(!base_)
 				throw Exception("Cannot allocate buffer for MemoryFile!");
@@ -59,18 +60,19 @@ namespace parity
 		MemoryFile::MemoryFile(void * buffer, size_t sz)
 			: allocated_(false)
 			, allocated_size_(0)
+			, base_(buffer)
+			, size_(sz)
 		{
-			base_ = buffer;
-			size_ = sz;
-
 			if(!base_)
 				throw Exception("Invalid buffer for MemoryFile given!");
 		}
 
 		MemoryFile::MemoryFile(const MappedFile& map)
 			: allocated_(true)
+			, allocated_size_(0)
+			, base_(0)
+			, size_(((char*)map.getTop() - (char*)map.getBase()) + 1)
 		{
-			size_ = ((char*)map.getTop() - (char*)map.getBase()) + 1;
 			allocated_size_ = BUFFER_ALLOCSIZE(size_);
 			base_ = malloc(allocated_size_);
 

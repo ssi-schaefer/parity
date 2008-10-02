@@ -34,6 +34,7 @@ namespace parity
 	namespace tasks
 	{
 		MsDependencyTracker::MsDependencyTracker()
+			: dependencies_(), lock_()
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			utils::PathVector& incPaths = ctx.getIncludePaths();

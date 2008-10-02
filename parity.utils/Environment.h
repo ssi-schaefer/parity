@@ -49,7 +49,7 @@ namespace parity
 			static Environment fromString(const std::string& value);
 
 		private:
-			Environment() {}
+			Environment() : value_(), varname_() {}
 			std::string value_;
 			std::string varname_;
 		};

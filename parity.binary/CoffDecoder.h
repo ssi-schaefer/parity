@@ -39,7 +39,7 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			Decoder(void* ptr, size_t length) { decode(ptr, length); }
+			Decoder(void* ptr, size_t length) : instructions_() { decode(ptr, length); }
 
 			typedef std::vector<Instruction> InstructionVector;
 

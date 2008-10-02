@@ -57,8 +57,13 @@ namespace parity
 		class Threading
 		{
 		public:
+			Threading() : handles_() {}
 			void synchronize();
+			/*
+			 * commented out since not required right now, see cpp file.
+			 *
 			void synchronize(long id);
+			 */
 			long run(ThreadingFunction method, void* data, bool allowDataSeparation);
 		private:
 			typedef std::map<long, void*> HandleMap;

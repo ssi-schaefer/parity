@@ -66,15 +66,17 @@ namespace parity
 	{
 
 		Path::Path()
-			: stated_(false)
+			: path_(), stat_(), stated_(false)
 		{
-			::memset(&stat_, 0, sizeof(stat_));
+			// hopefully no more required...
+			//::memset(&stat_, 0, sizeof(stat_));
 		}
 
 		Path::Path(const std::string &source)
-			: path_(source), stated_(false)
+			: path_(source), stat_(), stated_(false)
 		{
-			::memset(&stat_, 0, sizeof(stat_));
+			// hopefully no more required...
+			//::memset(&stat_, 0, sizeof(stat_));
 
 			if(!path_.empty())
 				expand();
@@ -113,6 +115,9 @@ namespace parity
 		#  undef getpid
 		#endif
 
+		/*
+		 * not required ATM. keep for the future.
+		 *
 		Path Path::getTemporaryDirectory()
 		{
 #if defined(_WIN32)
@@ -129,6 +134,7 @@ namespace parity
 				return Path("/tmp");
 #endif
 		}
+		 */
 
 		const std::string& Path::get() const
 		{
@@ -321,9 +327,19 @@ namespace parity
 		bool Path::removeRecursive(std::string path) const
 		{
 			//
-			// TODO: do delete.
+			// TODO: do a recursive delete, not only flat rmdir.
 			//
-			return false;
+#ifdef _WIN32
+# define rmdir _rmdir
+#endif
+
+			if(rmdir(path.c_str()) != 0)
+				return false;
+
+#ifdef _WIN32
+# undef rmdir
+#endif
+			return true;
 		}
 
 		bool Path::removeFile(std::string const& file) const
@@ -699,7 +715,13 @@ namespace parity
 
 		bool Path::convert_ = true;
 
-		bool Path::convertGeneric(bool bWindows)
+		#ifndef _WIN32
+		# define PTH_MAYBE_UNUSED(x)
+		#else
+		# define PTH_MAYBE_UNUSED(x) x
+		#endif
+
+		bool Path::convertGeneric(bool PTH_MAYBE_UNUSED(bWindows))
 		{
 			if(path_.empty())
 				return true;

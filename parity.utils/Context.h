@@ -83,7 +83,7 @@ namespace parity
 			//
 			// cannot copy!
 			//
-			Context(const Context& rhs) {}
+			Context(const Context& rhs) : ContextGen(rhs) {}
 
 			void cleanup();
 

@@ -30,7 +30,7 @@ namespace parity
 {
 	namespace testing
 	{
-		utils::Path TestSuite::getParityExecutable()
+		utils::Path TestSuite::getParityExecutable(std::string const& x)
 		{
 #ifdef _WIN32
 			char buffer[1024];
@@ -46,19 +46,19 @@ namespace parity
 #endif
 			pth = pth.base();
 
-			pth.append("parity.gnu.gcc.exe");
+			pth.append(x + ".exe");
 
 			if(!pth.exists())
 			{
 				pth = pth.base();
-				pth.append("parity.gnu.gcc");
+				pth.append(x);
 
 				//
 				// TODO: search in PATH.
 				//
 
 				if(!pth.exists())
-					throw utils::Exception("cannot find parity.exe (for non-win32 don't start from PATH)!");
+					throw utils::Exception("cannot find %s (for non-win32 don't start from PATH)!", x.c_str());
 			}
 
 			return pth;
@@ -69,7 +69,6 @@ namespace parity
 			utils::Task task;
 			utils::Path parity = getParityExecutable();
 			utils::Environment env("PARITY_CONFIG");
-			utils::Color col(utils::Context::getContext().getColorMode());
 
 			if(conf) {
 				utils::Path cf = utils::Path::getTemporary(".parity.testsuite.XXXXXX.conf");
@@ -99,45 +98,52 @@ namespace parity
 				std::string out = ossOut.str();
 				std::string err = ossErr.str();
 
-				if(out == "\n")
-					out = "";
-				if(err == "\n")
-					err = "";
-
-				std::string::size_type pos = 0;
-
-				if(!out.empty())
-				{
-					while((pos = out.find("\n", pos ? pos + 5 : 0)) != std::string::npos)
-						out.replace(pos, 1, "\n   | ");
-
-					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
-					utils::Log::verbose(" %s %s:\n", col.cyan("*").c_str(), col.yellow("parity task stdout").c_str());
-					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
-					utils::Log::verbose("   |\n");
-					utils::Log::verbose("   | ");
-					utils::Log::verbose(out.c_str());
-					utils::Log::verbose("\n");
-				}
-
-				if(!err.empty())
-				{
-					while((pos = err.find("\n", pos ? pos + 5 : 0)) != std::string::npos)
-						err.replace(pos, 1, "\n   | ");
-
-					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
-					utils::Log::verbose(" %s %s:\n", col.cyan("*").c_str(), col.yellow("parity task stderr").c_str());
-					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
-					utils::Log::verbose("   |\n");
-					utils::Log::verbose("   | ");
-					utils::Log::verbose(err.c_str());
-					utils::Log::verbose("\n");
-				}
+				dumpStreams(out, err);
 			}
 
 			env.clear();
 
 			return ret;
+		}
+
+		void TestSuite::dumpStreams(std::string out, std::string err)
+		{
+			utils::Color col(utils::Context::getContext().getColorMode());
+
+			if(out == "\n")
+				out = "";
+			if(err == "\n")
+				err = "";
+
+			std::string::size_type pos = 0;
+
+			if(!out.empty())
+			{
+				while((pos = out.find("\n", pos ? pos + 5 : 0)) != std::string::npos)
+					out.replace(pos, 1, "\n   | ");
+
+				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose(" %s %s:\n", col.cyan("*").c_str(), col.yellow("task stdout").c_str());
+				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("   |\n");
+				utils::Log::verbose("   | ");
+				utils::Log::verbose(out.c_str());
+				utils::Log::verbose("\n");
+			}
+
+			if(!err.empty())
+			{
+				while((pos = err.find("\n", pos ? pos + 5 : 0)) != std::string::npos)
+					err.replace(pos, 1, "\n   | ");
+
+				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose(" %s %s:\n", col.cyan("*").c_str(), col.yellow("task stderr").c_str());
+				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("   |\n");
+				utils::Log::verbose("   | ");
+				utils::Log::verbose(err.c_str());
+				utils::Log::verbose("\n");
+			}
 		}
 
 	}

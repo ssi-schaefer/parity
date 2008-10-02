@@ -47,7 +47,7 @@ namespace parity
 		}
 
 		Statistics::Statistics()
-			: forked_(false)
+			: file_(), forked_(false)
 		{
 			start();
 		}

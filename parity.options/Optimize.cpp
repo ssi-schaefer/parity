@@ -49,14 +49,14 @@ namespace parity
 			return true;
 		}
 
-		bool setOmitFramePointer(const char* option, const char* argument, bool& used)
+		bool setOmitFramePointer(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setOmitFramePointer(true);
 			return true;
 		}
 
-		bool setInlineFunctions(const char* option, const char* argument, bool& used)
+		bool setInlineFunctions(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			ctx.setInlineFunctions((::strstr(option, "no") != 0 && ::strstr(option, "Ob0") == 0));

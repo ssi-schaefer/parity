@@ -27,10 +27,15 @@ namespace parity
 	namespace binary
 	{
 		MsDosStub::MsDosStub(void* data, size_t length)
+			: data_(0)
+			, size_(length)
 		{
-			data_ = ::malloc(length);
-			::memcpy(data_, data, length);
-			size_ = length;
+			data_ = ::malloc(size_);
+
+			if(!data_)
+				throw utils::Exception("cannot allocate memory for MsDos Stub");
+
+			::memcpy(data_, data, size_);
 		}
 
 		MsDosStub::~MsDosStub()
