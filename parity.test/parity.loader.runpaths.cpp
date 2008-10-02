@@ -53,7 +53,7 @@ namespace parity
 			"Colored = off\n"
 			"GenerateLoader = off";
 
-		bool TestSuite::testParityExeRunpaths()
+		bool TestSuite::testParityLoaderRunpaths()
 		{
 			try {
 				utils::Task::ArgumentVector exearguments;
@@ -66,6 +66,8 @@ namespace parity
 					} else {
 						utils::Log::warning("cannot remove %s\n", dir.get().c_str());
 					}
+				} else {
+					dir.createPath();
 				}
 				
 				utils::Path maincfile = utils::Path::getTemporary(".parity.testsuite.main.runpaths.XXXXXX.c");
@@ -114,7 +116,7 @@ namespace parity
 				if(!exe.execute(oexefile, utils::Task::ArgumentVector()))
 					throw utils::Exception("cannot execute test result!");
 
-				if(!utils::Path(olibfile.get() + ".dll").move(dir + olibfile.file()))
+				if(!utils::Path(olibfile.get() + ".dll").move(dir + (olibfile.file() + ".dll")))
 					throw utils::Exception("cannot move library to test directory");
 
 				if(!exe.execute(oexefile, utils::Task::ArgumentVector()))

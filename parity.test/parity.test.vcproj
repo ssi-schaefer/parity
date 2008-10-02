@@ -373,10 +373,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\parity.exe.runpaths.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\parity.exe.shared.cpp"
 				>
 			</File>
@@ -394,6 +390,10 @@
 			</File>
 			<File
 				RelativePath=".\parity.loader.preload.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.loader.runpaths.cpp"
 				>
 			</File>
 			<File

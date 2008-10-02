@@ -67,7 +67,6 @@ namespace parity
 			bool testParityExeShared();
 			bool testParityExeNoLoad();
 			bool testParityExeStatistics();
-			bool testParityExeRunpaths();
 
 			bool testParityTasksGathererDebugSwitch();
 
@@ -77,6 +76,7 @@ namespace parity
 			//
 			bool testParityRuntimeDlfcn();
 			bool testParityLoaderPreload();
+			bool testParityLoaderRunpaths();
 
 			//
 			// tests for other executables from parity.

@@ -134,6 +134,7 @@ int main(int argc, char** argv)
 		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite },
 		{ "parity::runtime::dlfcn", &parity::testing::TestSuite::testParityRuntimeDlfcn },
 		{ "parity::loader::preload", &parity::testing::TestSuite::testParityLoaderPreload },
+		{ "parity::loader::runpaths", &parity::testing::TestSuite::testParityLoaderRunpaths },
 		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile },
 		{ "parity.exe: link (and intermediate compile)", &parity::testing::TestSuite::testParityExeLink },
 		{ "parity.exe: shared link", &parity::testing::TestSuite::testParityExeShared },
@@ -141,7 +142,6 @@ int main(int argc, char** argv)
 		{ "parity.exe: static import", &parity::testing::TestSuite::testParityExeStaticImport },
 		{ "parity.exe: automatic export", &parity::testing::TestSuite::testParityExeAutoExport },
 		{ "parity.exe: statistics", &parity::testing::TestSuite::testParityExeStatistics },
-		{ "parity.exe: runpaths", &parity::testing::TestSuite::testParityExeStatistics },
 		{ "parity.inspector.exe: basic functionality", &parity::testing::TestSuite::testParityInspectorExe },
 		{ "", NULL }
 	};

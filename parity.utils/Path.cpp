@@ -403,6 +403,12 @@ namespace parity
 			FILE* old_file = fopen(path_.c_str(), "rb");
 			FILE* new_file = fopen(dest.path_.c_str(), "wb");
 
+			if(!old_file)
+				throw Exception("cannot open source file (%s) for move", path_.c_str());
+
+			if(!new_file)
+				throw Exception("cannot open target file (%s) for move", dest.path_.c_str());
+
 			#define READ_BUFFER_SIZE 4096
 			char buffer[READ_BUFFER_SIZE];
 
@@ -544,9 +550,9 @@ namespace parity
 			char* walk = tmp;
 			std::vector<std::string> to_delete;
 
-			while(walk && *walk != '\0') {
+			while(walk) {
 				char backup = '\0';
-				if(*walk == '\\' || *walk == '/') {
+				if(*walk == '\\' || *walk == '/' || *walk == '\0') {
 					backup = *walk;
 
 					*walk = '\0';
@@ -573,6 +579,11 @@ namespace parity
 							to_delete.push_back(tmp);
 						}
 					}
+
+					*walk = backup;
+
+					if(backup == '\0')
+						break;
 
 					#ifdef _WIN32
 					# undef access
