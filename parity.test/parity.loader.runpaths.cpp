@@ -86,7 +86,6 @@ namespace parity
 				utils::Context::getContext().getTemporaryFiles().push_back(libcfile);
 				utils::Context::getContext().getTemporaryFiles().push_back(oexefile);
 				utils::Context::getContext().getTemporaryFiles().push_back(olibfile);
-				utils::Context::getContext().getTemporaryFiles().push_back(utils::Path(olibfile.get() + ".dll"));
 
 				libarguments.push_back(libcfile.get());
 				libarguments.push_back("-shared");
@@ -94,6 +93,8 @@ namespace parity
 				libarguments.push_back(olibfile.get());
 
 				exearguments.push_back(maincfile.get());
+				exearguments.push_back("-dbg");
+				exearguments.push_back("verbose");
 				exearguments.push_back("-o");
 				exearguments.push_back(oexefile.get());
 				exearguments.push_back(olibfile.get());
@@ -121,6 +122,9 @@ namespace parity
 
 				if(!exe.execute(oexefile, utils::Task::ArgumentVector()))
 					throw utils::Exception("cannot execute moved test result!");
+
+				utils::Path(dir + (olibfile.file() + ".dll")).remove();
+				dir.remove();
 
 				return true;
 			} catch(const utils::Exception& e)
