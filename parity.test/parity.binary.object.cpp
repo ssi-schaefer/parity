@@ -86,7 +86,7 @@ namespace parity
 				{
 					++countAllSyms;
 
-					if((unsigned int)sym->second.getSectionNumber() == it->first)
+					if(sym->second.getSectionNumber() == static_cast<short>(it->first))
 						utils::Log::verbose(" * SYM: Index: %5d, Name:, %s\n", sym->first, sym->second.getName().c_str());
 				}
 			}

@@ -196,8 +196,8 @@ namespace parity
 		void MsDependencyTracker::getIncludes(const utils::Path& file, utils::PathVector& target)
 		{
 			utils::MappedFile map(file, utils::ModeRead);
-			const char* content = (char*)map.getBase();
-			const char* top = (char*)map.getTop();
+			const char* content = reinterpret_cast<char*>(map.getBase());
+			const char* top = reinterpret_cast<char*>(map.getTop());
 
 			while(*content != '\0' && content < top)
 			{

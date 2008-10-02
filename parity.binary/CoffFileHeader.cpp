@@ -39,7 +39,7 @@ namespace parity
 	namespace binary
 	{
 		FileHeader::FileHeader(const utils::GenericFile* file, void* ptr, bool isArchive)
-			: start_(ptr), file_(file), hdr_(*(FHStruct*)ptr), stringtable_(), map_(), sections_()
+			: start_(ptr), file_(file), hdr_(*reinterpret_cast<FHStruct*>(ptr)), stringtable_(), map_(), sections_()
 			, nextStringOffset_(sizeof(unsigned int)), nextSectionIndex_(1), nextSymbolIndex_(0), isArchive_(isArchive)
 		{
 			lookupStringTab();
@@ -67,11 +67,11 @@ namespace parity
 
 		void FileHeader::lookupSections()
 		{
-			char * ptr = MAKEPTR(char*, ((char*)start_ + sizeof(FHStruct)), hdr_.SizeOfOptionalHeader);
+			char * ptr = MAKEPTR(char*, (reinterpret_cast<char*>(start_) + sizeof(FHStruct)), hdr_.SizeOfOptionalHeader);
 
 			for(unsigned int i = 0; i < hdr_.NumberOfSections; ++i)
 			{
-				sections_.insert(Section::IndexedSectionMap::value_type(i+1, Section(this, i+1, (void*)ptr)));
+				sections_.insert(Section::IndexedSectionMap::value_type(i+1, Section(this, i+1, reinterpret_cast<void*>(ptr))));
 				ptr += SIZEOF_SECTION_HEADER;
 
 				nextSectionIndex_ = i+2;
@@ -106,13 +106,13 @@ namespace parity
 				// FIXXME: if an object is contained within a library, we need to use getStartPointer
 				// instead of getBasePointer...
 				//
-				char* ptr = MAKEPTR(char*, getBasePointer(), (char*)hdr_.PointerToSymbolTable + (hdr_.NumberOfSymbols * SIZEOF_SYMBOL));
+				char* ptr = MAKEPTR(char*, getBasePointer(), hdr_.PointerToSymbolTable + (hdr_.NumberOfSymbols * SIZEOF_SYMBOL));
 
 				//
 				// pay attention: the first 4 bytes specify the string table size!
 				// but: every offset is given correctly paying attention to this.
 				//
-				unsigned int sz = *(unsigned int*)ptr;
+				unsigned int sz = *reinterpret_cast<unsigned int*>(ptr);
 
 				if(sz > 4 /* sizeof(unsigned int) */)
 				{
@@ -188,7 +188,7 @@ namespace parity
 				Section sec = getSectionForRVA(rva);
 
 				int delta = sec.getVirtualAddress() - sec.getPointerToRawData();
-				return (void*)((unsigned int)getBasePointer() + rva - delta);
+				return reinterpret_cast<void*>(reinterpret_cast<unsigned int>(getBasePointer()) + rva - delta);
 			} catch(const utils::Exception& e) {
 				utils::Log::warning("cannot find pointer for given RVA: %s\n", e.what());
 				return 0;
@@ -209,7 +209,7 @@ namespace parity
 
 			for(unsigned int i = 0; i < hdr_.NumberOfSymbols; i++)
 			{
-				Symbol sym(this, i, (void*)ptr);
+				Symbol sym(this, i, reinterpret_cast<void*>(ptr));
 				ptr += SIZEOF_SYMBOL;
 
 				int num = sym.getNumberOfAuxSymbols();
@@ -353,7 +353,7 @@ namespace parity
 				//
 				for(Symbol::IndexedSymbolMap::iterator sym = map_.begin(); sym != map_.end(); ++sym)
 				{
-					if(sym->second.getSectionNumber() == (short)it->first
+					if(sym->second.getSectionNumber() == static_cast<short>(it->first)
 						&& sym->second.getStorageClass() == Symbol::ClassStatic
 						&& sym->second.getName() == it->second.getName())
 					{
@@ -364,7 +364,7 @@ namespace parity
 							throw utils::Exception("missing auxiliary symbol describing section!");
 
 						AuxSymbol& aux = sym->second.getAuxSymbols().front();
-						SectionAuxSymbol* ptr = (SectionAuxSymbol*)&aux;
+						SectionAuxSymbol* ptr = reinterpret_cast<SectionAuxSymbol*>(&aux);
 
 						if(it->second.getSizeOfRawData() > it->second.getVirtualSize())
 							ptr->setLength(it->second.getSizeOfRawData());
@@ -398,7 +398,7 @@ namespace parity
 
 			hdr_.NumberOfSections = sections_.size();
 			hdr_.NumberOfSymbols = nextSymbolIndex_;
-			hdr_.TimeDateStamp = (unsigned int)::time(0);
+			hdr_.TimeDateStamp = static_cast<unsigned int>(::time(0));
 
 			if(opt)
 				hdr_.SizeOfOptionalHeader = OptionalHeader::getSizeInFile();

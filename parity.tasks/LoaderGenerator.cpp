@@ -835,7 +835,7 @@ namespace parity
 			// WARNING: since the loader cannot use parity::utils, it needs to
 			// define the subsystem values itself, and this must be kept in sync!
 			//
-			int subsys = (int)ctx.getSubsystem();
+			int subsys = static_cast<int>(ctx.getSubsystem());
 			sectPtrs.addData(&subsys, sizeof(int));
 
 			//

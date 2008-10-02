@@ -66,7 +66,7 @@ namespace parity
 
 			std::cout << std::setw(longest_ + 1 + 10) << std::setfill('-') << "-" << std::setfill(' ') << std::endl;
 			std::cout << std::left << std::setw(longest_ + 1) << "sum" << std::setw(10) << std::right << all << std::endl;
-			std::cout << std::left << std::setw(longest_ + 1) << "average" << std::setw(10) << std::right << ((float)all/deps_f_.size()) << std::endl;
+			std::cout << std::left << std::setw(longest_ + 1) << "average" << std::setw(10) << std::right << (static_cast<float>(all/deps_f_.size())) << std::endl;
 			std::cout << std::setw(longest_ + 1 + 10) << std::setfill('-') << "-" << std::setfill(' ') << std::endl;
 		}
 	}

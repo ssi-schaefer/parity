@@ -28,8 +28,8 @@ namespace parity
 	{
 		void Import::calcName(const void* ptr)
 		{
-			symbol_ = (const char*)ptr + sizeof(ImpStruct);
-			library_ = (const char*)ptr + sizeof(ImpStruct) + strlen((const char*)ptr + sizeof(ImpStruct)) + 1;
+			symbol_ = reinterpret_cast<const char*>(ptr) + sizeof(ImpStruct);
+			library_ = reinterpret_cast<const char*>(ptr) + sizeof(ImpStruct) + strlen(reinterpret_cast<const char*>(ptr) + sizeof(ImpStruct)) + 1;
 		}
 	}
 }

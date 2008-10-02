@@ -43,7 +43,7 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			Relocation(void* ptr) : struct_(*(RelStruct*)ptr) {}
+			Relocation(void* ptr) : struct_(*reinterpret_cast<RelStruct*>(ptr)) {}
 		private:
 			friend class Section;
 			Relocation() : struct_() {}

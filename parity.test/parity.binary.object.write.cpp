@@ -103,17 +103,17 @@ namespace parity
 				const unsigned char txtSym1Data3[] = { 0x00, 0x00, 0x00, 0x00, 0x5D, 0xC3 };
 
 				textSection.markSymbol(txtSym1);
-				textSection.addData((void*)txtSym1Data1, sizeof(txtSym1Data1));
+				textSection.addData(reinterpret_cast<const char*>(txtSym1Data1), sizeof(txtSym1Data1));
 				textSection.markRelocation(txtSym2, Relocation::i386Direct32);
-				textSection.addData((void*)txtSym1Data2, sizeof(txtSym1Data2));
+				textSection.addData(reinterpret_cast<const char*>(txtSym1Data2), sizeof(txtSym1Data2));
 				textSection.markRelocation(txtSym2, Relocation::i386Direct32);
-				textSection.addData((void*)txtSym1Data3, sizeof(txtSym1Data3));
+				textSection.addData(reinterpret_cast<const char*>(txtSym1Data3), sizeof(txtSym1Data3));
 				textSection.padSection();
 
 				textSection.markSymbol(txtSym2);
-				textSection.addData((void*)txtSym1Data1, 4);
+				textSection.addData(reinterpret_cast<const char*>(txtSym1Data1), 4);
 				textSection.markRelocation(extSym1, Relocation::i386Direct32);
-				textSection.addData((void*)txtSym1Data2, 6);
+				textSection.addData(reinterpret_cast<const char*>(txtSym1Data2), 6);
 				textSection.padSection();
 
 				utils::Log::verbose("setting storage class for symbols.\n");

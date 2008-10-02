@@ -36,7 +36,7 @@ namespace parity
 	namespace binary
 	{
 		Section::Section(const FileHeader* fh, int idx, void* ptr)
-			: struct_(*(SecStruct*)ptr)
+			: struct_(*reinterpret_cast<SecStruct*>(ptr))
 			, idx_(idx)
 			, data_(0)
 			, allocated_(0)
@@ -67,9 +67,9 @@ namespace parity
 
 			if(name.length() <= 8)
 			{
-				::strncpy((char*)struct_.Name, name.c_str(), 8);
+				::strncpy(reinterpret_cast<char*>(struct_.Name), name.c_str(), 8);
 			} else {
-				::sprintf((char*)struct_.Name, "/%-7d", fh->addString(name));
+				::sprintf(reinterpret_cast<char*>(struct_.Name), "/%-7d", fh->addString(name));
 			}
 		}
 
@@ -150,7 +150,7 @@ namespace parity
 		{
 			if(struct_.Name[0] == '/')
 			{
-				name_ = fh->getStringFromOffset(atoi((const char*)&struct_.Name[1]));
+				name_ = fh->getStringFromOffset(atoi(reinterpret_cast<const char*>(&struct_.Name[1])));
 
 				if(name_.empty()) {
 					name_ = "<invalid>";
@@ -162,9 +162,9 @@ namespace parity
 						sh = true;
 
 				if(sh)
-					name_ = std::string((char*)struct_.Name);
+					name_ = std::string(reinterpret_cast<char*>(struct_.Name));
 				else
-					name_ = std::string((char*)struct_.Name, 8);
+					name_ = std::string(reinterpret_cast<char*>(struct_.Name), 8);
 			}
 		}
 
@@ -403,7 +403,7 @@ namespace parity
 
 								new_target = *target + length;
 							}
-						} else if(position > symrel_isertionpoint + (int)length) {
+						} else if(position > symrel_isertionpoint + static_cast<int>(length)) {
 							if((position + *target + insn->getLength()) <= symrel_isertionpoint) {
 								// Jump backward that crosses.
 								// sanity check if the target is negative.
@@ -460,7 +460,7 @@ namespace parity
 							// need to restart processing here, since positions changed again!
 							// before restarting, update pos if it changed!
 							//
-							if(position < (int)*pos) {
+							if(position < static_cast<int>(*pos)) {
 								*pos += (insn->getOpcode() == 0xEB) ? sizeof(grow_data1) : sizeof(grow_data2);
 							}
 
@@ -582,9 +582,9 @@ namespace parity
 			{
 				--end;
 
-				if(padEnd == 0 && (unsigned char)((char*)data_)[end] == 0xcc)
+				if(padEnd == 0 && (reinterpret_cast<unsigned char*>(data_))[end] == 0xcc)
 					padEnd = end;
-				else if((unsigned char)((char*)data_)[end] != 0xcc) {
+				else if((reinterpret_cast<unsigned char*>(data_))[end] != 0xcc) {
 					padStart = end;
 					break;
 				}
@@ -744,9 +744,9 @@ namespace parity
 			while(struct_.SizeOfRawData % alignment)
 			{
 				if(struct_.Characteristics & Section::CharContentCode)
-					addData((void*)&chInt3, 1);
+					addData(reinterpret_cast<const void*>(&chInt3), 1);
 				else
-					addData((void*)&chZero, 1);
+					addData(reinterpret_cast<const void*>(&chZero), 1);
 			}
 		}
 

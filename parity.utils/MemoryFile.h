@@ -50,7 +50,7 @@ namespace parity
 			bool isInRange(void* ptr) const;
 
 			void* getBase() const { return base_; }
-			void* getTop() const { return (char*)base_ + size_; }
+			void* getTop() const { return reinterpret_cast<char*>(base_) + size_; }
 
 			bool isReadable() const { return true; }
 			bool isWriteable() const { return true; }

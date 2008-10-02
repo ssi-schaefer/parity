@@ -47,7 +47,7 @@ namespace parity
 				, members_()
 				, imports_()
 			{
-				if(::strncmp((const char*)ptr->getBase(), "!<arch>\n", 8) != 0)
+				if(::strncmp(reinterpret_cast<const char*>(ptr->getBase()), "!<arch>\n", 8) != 0)
 					throw utils::Exception("not an archive!");
 				gatherMembersAndImports();
 			}

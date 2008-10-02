@@ -77,7 +77,7 @@ namespace parity
 
 				if(tmp.st_size == 0)
 				{
-					base_ = (void*)emptyFile;
+					base_ = const_cast<char*>(emptyFile);
 					top_ = MAKEPTR(void*, base_, 1);
 					file_ = 0;
 					mapping_ = 0;
@@ -96,7 +96,7 @@ namespace parity
 					throw Exception("Cannot create memory mapping on file: %s: %s", path_.get().c_str(), strerror(errno));
 				}
 
-				base_ = (void*)MapViewOfFile(mapping_, dwMapAccess, 0, 0, 0);
+				base_ = reinterpret_cast<void*>(MapViewOfFile(mapping_, dwMapAccess, 0, 0, 0));
 				if (base_ == 0)
 				{
 					CloseHandle(mapping_);
@@ -130,7 +130,7 @@ namespace parity
 
 				if(info_.st_size == 0)
 				{
-					base_ = (void*)emptyFile;
+					base_ = const_cast<char*>(emptyFile);
 					top_ = MAKEPTR(void*, base_, 1);
 					file_ = 0;
 					return;

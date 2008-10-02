@@ -166,3 +166,5 @@ made parity compile with gcc's -pedantic switch. also some -Wall -Wextra warning
 made parity compile wihtout warnings with gcc's -Weffc++ option enabled. this assures much better overal code quality.
 
 optimized parity source code and resulting binaries, by removing functions which are not currently required, but take up a lot of space.
+
+replaced old-style (C-style) casts in all the source code with the correct C++ cast equivalents.

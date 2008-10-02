@@ -52,7 +52,7 @@ namespace parity
 				if(!pth.remove())
 					utils::Log::warning("cannot remove test file: %s\n", TESTFILE);
 
-				if(strncmp(TESTSTR, (const char*)mem.getBase(), strlen(TESTSTR)) != 0)
+				if(strncmp(TESTSTR, reinterpret_cast<const char*>(mem.getBase()), strlen(TESTSTR)) != 0)
 					throw utils::Exception("file content does not match!");
 
 				mem.close();
@@ -61,15 +61,15 @@ namespace parity
 
 				utils::MemoryFile mem1(const_cast<char*>(buf.c_str()), buf.length());
 
-				if(strncmp(TESTSTR, (const char*)mem1.getBase(), strlen(TESTSTR)) != 0)
+				if(strncmp(TESTSTR, reinterpret_cast<const char*>(mem1.getBase()), strlen(TESTSTR)) != 0)
 					throw utils::Exception("file content does not match!");
 
 				mem1.close();
 
 				utils::MemoryFile mem2(buf.length());
-				strcpy((char*)mem2.getBase(), buf.c_str());
+				strcpy(reinterpret_cast<char*>(mem2.getBase()), buf.c_str());
 
-				if(strncmp(TESTSTR, (const char*)mem2.getBase(), strlen(TESTSTR)) != 0)
+				if(strncmp(TESTSTR, reinterpret_cast<const char*>(mem2.getBase()), strlen(TESTSTR)) != 0)
 					throw utils::Exception("file content does not match!");
 
 				mem2.close();

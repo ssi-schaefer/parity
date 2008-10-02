@@ -118,13 +118,13 @@ namespace parity
 					genSectionFound = true;
 
 					pointers = MAKEPTR(InspectorPointerLayoutVA*, mapping.getBase(), it->second.getPointerToRawData());
-					genImageName	= (const char*)img.getHeader().getPointerFromVA(pointers->name);
-					genRunPathPtr	= (const char*)img.getHeader().getPointerFromVA(pointers->rpaths);
-					genTablePtr		= (unsigned int*)img.getHeader().getPointerFromVA(pointers->table);
+					genImageName	= reinterpret_cast<const char*>(img.getHeader().getPointerFromVA(pointers->name));
+					genRunPathPtr	= reinterpret_cast<const char*>(img.getHeader().getPointerFromVA(pointers->rpaths));
+					genTablePtr		= reinterpret_cast<unsigned int*>(img.getHeader().getPointerFromVA(pointers->table));
 					genSubsystem	= pointers->subsystem;
 
 					if(*genTablePtr)
-						genLibs		= InspectorLayoutToLibraries((InspectorLibrariesPointerLayoutVA*)img.getHeader().getPointerFromVA(*genTablePtr), img.getHeader());
+						genLibs		= InspectorLayoutToLibraries(reinterpret_cast<InspectorLibrariesPointerLayoutVA*>(img.getHeader().getPointerFromVA(*genTablePtr)), img.getHeader());
 
 					genRunPaths		= ConvertRunPaths(genRunPathPtr);
 
@@ -254,16 +254,16 @@ namespace parity
 
 			while(ptr->name != 0 && ptr->imports != 0)
 			{
-				InspectorImportsPointerLayoutVA* imp = (InspectorImportsPointerLayoutVA*)hdr.getPointerFromVA(ptr->imports);
+				InspectorImportsPointerLayoutVA* imp = reinterpret_cast<InspectorImportsPointerLayoutVA*>(hdr.getPointerFromVA(ptr->imports));
 				InspectorImportVector imports;
 
 				while(imp->name != 0)
 				{
 					InspectorImports item;
 
-					item.name		= (const char*)hdr.getPointerFromVA(imp->name);
-					item.library	= (const char*)hdr.getPointerFromVA(imp->library);
-					item.import		= (const void*)imp->import;
+					item.name		= reinterpret_cast<const char*>(hdr.getPointerFromVA(imp->name));
+					item.library	= reinterpret_cast<const char*>(hdr.getPointerFromVA(imp->library));
+					item.import		= reinterpret_cast<const void*>(imp->import);
 					item.ordinal	= imp->ordinal;
 
 					imports.push_back(item);
@@ -273,7 +273,7 @@ namespace parity
 
 				InspectorLibraries library;
 
-				library.name	= (const char*)hdr.getPointerFromVA(ptr->name);
+				library.name	= reinterpret_cast<const char*>(hdr.getPointerFromVA(ptr->name));
 				library.imports	= imports;
 
 				libraries.push_back(library);
@@ -348,7 +348,7 @@ namespace parity
 
 						if(sym->import == 0x00000000)
 							std::cout << "[CODE, ";
-						else if(sym->import == (void*)0xbaadf00d)
+						else if(sym->import == reinterpret_cast<void*>(0xbaadf00d))
 							std::cout << "[DATA, ";
 						else
 							std::cout << "[LAZY, ";

@@ -118,7 +118,7 @@ namespace parity
 				if(!ptrVec)
 					throw utils::Exception("pointer to symbols invalid, cannot generate exports!");
 
-				parity::tasks::MsExportGenerator generator(*(binary::Symbol::SymbolVector*)ptrVec);
+				parity::tasks::MsExportGenerator generator(*reinterpret_cast<binary::Symbol::SymbolVector*>(ptrVec));
 				generator.doWork();
 			} catch(const utils::Exception& e) {
 				utils::Log::error("while generating exports: %s\n", e.what());
@@ -137,7 +137,7 @@ namespace parity
 				if(!ptrVec)
 					throw utils::Exception("pointer to symbols invalid, cannot generate static imports!");
 
-				parity::tasks::MsStaticImportGenerator generator(*(binary::Symbol::SymbolVector*)ptrVec);
+				parity::tasks::MsStaticImportGenerator generator(*reinterpret_cast<binary::Symbol::SymbolVector*>(ptrVec));
 				generator.doWork();
 			} catch(const utils::Exception& e) {
 				utils::Log::error("while generating static imports: %s\n", e.what());
@@ -156,7 +156,7 @@ namespace parity
 				if(!ptrMap)
 					throw utils::Exception("pointer to imports invalid, cannot generate loader!");
 
-				parity::tasks::LoaderGenerator generator(*(tasks::BinaryGatherer::ImportHybridityMap*)ptrMap);
+				parity::tasks::LoaderGenerator generator(*reinterpret_cast<tasks::BinaryGatherer::ImportHybridityMap*>(ptrMap));
 				generator.doWork();
 			} catch(const utils::Exception& e) {
 				utils::Log::error("while generating loader: %s\n", e.what());

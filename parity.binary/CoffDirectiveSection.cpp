@@ -45,7 +45,7 @@ namespace parity
 			//
 			// Cannot use getPointerFromRVA, since PointerToRawData is a file pointer.
 			//
-			const char* start = (const char*)sect.getDataPtr();
+			const char* start = reinterpret_cast<const char*>(sect.getDataPtr());
 
 			if(!start || sect.getSizeOfRawData() == 0)
 				return;
@@ -53,7 +53,7 @@ namespace parity
 			//
 			// Check BOM for UTF-8
 			//
-			if((unsigned char)start[0] == 0xEF && (unsigned char)start[1] == 0xBB && (unsigned char)start[2] == 0xBF)
+			if(static_cast<unsigned char>(start[0]) == 0xEF && static_cast<unsigned char>(start[1]) == 0xBB && static_cast<unsigned char>(start[2]) == 0xBF)
 			{
 				//
 				// This is an UTF-8 String!

@@ -71,7 +71,7 @@ namespace parity
 			: allocated_(true)
 			, allocated_size_(0)
 			, base_(0)
-			, size_(((char*)map.getTop() - (char*)map.getBase()) + 1)
+			, size_((reinterpret_cast<char*>(map.getTop()) - reinterpret_cast<char*>(map.getBase())) + 1)
 		{
 			allocated_size_ = BUFFER_ALLOCSIZE(size_);
 			base_ = malloc(allocated_size_);
@@ -116,7 +116,7 @@ namespace parity
 			if(fd == -1)
 				throw Exception("Cannot open %s: %s", dest.get().c_str(), strerror(errno));
 
-			if(::write(fd, base_, (unsigned int)size_) == -1)
+			if(::write(fd, base_, static_cast<unsigned int>(size_)) == -1)
 			{
 				::close(fd);
 				throw Exception("Cannot write %s: %s", dest.get().c_str(), strerror(errno));
@@ -168,7 +168,7 @@ namespace parity
 
 		bool MemoryFile::isInRange(void *ptr) const
 		{
-			if(ptr >= base_ && ptr <= ((char*)base_ + size_))
+			if(ptr >= base_ && ptr <= (reinterpret_cast<char*>(base_) + size_))
 				return true;
 			else
 				return false;
@@ -179,7 +179,7 @@ namespace parity
 			if(!resize(size_ + len))
 				return false;
 
-			::memcpy((char*)base_ + (size_ - len), data, len);
+			::memcpy(reinterpret_cast<char*>(base_) + (size_ - len), data, len);
 
 			return true;
 		}

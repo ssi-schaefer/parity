@@ -23,10 +23,16 @@
 #ifndef __POINTER_H__
 #define __POINTER_H__
 
+//
+// ATTENTION: cannot use any of the C++ cast operators in the MAKEPTR macro, since
+// this may be used for _any_ data-type, one requiring reinterpret_cast, and others
+// requiring static_cast.
+//
+
 #ifdef BITS64
-#define MAKEPTR(cast, ptr, addValue) (cast)((unsigned long long)(ptr) + (unsigned long long)(addValue))
+#define MAKEPTR(cast, ptr, addValue) (reinterpret_cast<cast>(reinterpret_cast<unsigned long long>(ptr) + static_cast<unsigned long long>((addValue))))
 #else
-#define MAKEPTR(cast, ptr, addValue) (cast)((unsigned long)(ptr) + (unsigned long)(addValue))
+#define MAKEPTR(cast, ptr, addValue) (reinterpret_cast<cast>(reinterpret_cast<unsigned long>(ptr) + static_cast<unsigned long>((addValue))))
 #endif
 
 #endif

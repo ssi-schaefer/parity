@@ -28,14 +28,14 @@ namespace parity
 	{
 		File::Type File::getType(const utils::GenericFile* ptr)
 		{
-			switch(*(const unsigned short*)ptr->getBase())
+			switch(*reinterpret_cast<const unsigned short*>(ptr->getBase()))
 			{
 			case 0x5A4D: // Signature for the MS-DOS 2.0 Compatability Header
 				return TypeImage;
 			default:
-				if(FileHeader::isValidMachine(*(const unsigned short*)ptr->getBase()))
+				if(FileHeader::isValidMachine(*reinterpret_cast<const unsigned short*>(ptr->getBase())))
 					return TypeObject;
-				else if(strncmp((const char*)ptr->getBase(), "!<arch>\n", 8) == 0)
+				else if(strncmp(reinterpret_cast<const char*>(ptr->getBase()), "!<arch>\n", 8) == 0)
 					return TypeLibrary;
 				else
 					return TypeInvalid;

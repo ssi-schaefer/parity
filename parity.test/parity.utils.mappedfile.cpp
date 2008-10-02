@@ -46,7 +46,7 @@ namespace parity
 
 				utils::MappedFile file(pth, utils::ModeRead);
 
-				if(strncmp(TESTSTR, (const char*)file.getBase(), strlen(TESTSTR)) != 0)
+				if(strncmp(TESTSTR, reinterpret_cast<const char*>(file.getBase()), strlen(TESTSTR)) != 0)
 					throw utils::Exception("file content does not match!");
 
 				file.close();

@@ -70,7 +70,7 @@ namespace parity
 				{
 					if(hdr->Name[1] == ' ') {}
 					else if(hdr->Name[1] == '/') {
-						longnames = (const char*)(hdr+1);
+						longnames = reinterpret_cast<const char*>((hdr+1));
 					} else if(!isdigit(hdr->Name[1])) {
 						throw utils::Exception("unexpected charackter \"%c\" in archive member name!", hdr->Name[1]);
 					} else {
@@ -86,7 +86,7 @@ namespace parity
 					//
 					// name is in "name/" format
 					//
-					name = std::string(hdr->Name, (long)::strchr(hdr->Name, '/') - (long)hdr->Name);
+					name = std::string(hdr->Name, reinterpret_cast<long>(::strchr(hdr->Name, '/')) - reinterpret_cast<long>(hdr->Name));
 				}
 
 				if(!name.empty())
@@ -94,23 +94,23 @@ namespace parity
 					//
 					// create either a object member entry or an import record entry.
 					//
-					PartialImportDescriptor* imp = (PartialImportDescriptor*)(hdr+1);
+					PartialImportDescriptor* imp = reinterpret_cast<PartialImportDescriptor*>(hdr+1);
 
 					if(imp->Sig1 == 0x0 && imp->Sig2 == 0xFFFF)
 					{
 						//
 						// Import record found.
 						//
-						imports_.insert(ImportMap::value_type(name, Import(file_, (void*)imp)));
+						imports_.insert(ImportMap::value_type(name, Import(file_, reinterpret_cast<void*>(imp))));
 					} else {
 						//
 						// Object found?
 						//
-						if(FileHeader::isValidMachine(*(unsigned short*)imp))
+						if(FileHeader::isValidMachine(*reinterpret_cast<unsigned short*>(imp)))
 						{
-							members_.insert(MemberMap::value_type(name, FileHeader(file_, (void*)imp, true)));
+							members_.insert(MemberMap::value_type(name, FileHeader(file_, reinterpret_cast<void*>(imp), true)));
 						} else {
-							utils::Log::warning("invalid object signature: %p in library: %s, member: %s\n", *(unsigned short*)imp, file_->getPath().get().c_str(), name.c_str());
+							utils::Log::warning("invalid object signature: %p in library: %s, member: %s\n", *reinterpret_cast<unsigned short*>(imp), file_->getPath().get().c_str(), name.c_str());
 						}
 					}
 				}

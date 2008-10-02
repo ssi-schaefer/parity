@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 		if(arg == "--verbose" || arg == "-v")
 		{
 			bQuiet = false;
-			argv[i] = (char*)"";
+			argv[i] = const_cast<char*>("");
 		}
 
 		if(arg == "--help" || arg == "-h") {
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
 		if(isdigit(arg[0])) {
 			to_run[atoi(arg.c_str())] = true;
-			argv[i] = (char*)"";
+			argv[i] = const_cast<char*>("");
 		}
 
 		if(bConfig)
@@ -97,13 +97,13 @@ int main(int argc, char** argv)
 			utils::MappedFile file(tmp, utils::ModeRead);
 			utils::Config::parseFile(utils::Context::getContext(), file, argc, argv);
 
-			argv[i] = (char*)"";
+			argv[i] = const_cast<char*>("");
 		}
 
 		if(arg == "--config")
 		{
 			bConfig = true;
-			argv[i] = (char*)"";
+			argv[i] = const_cast<char*>("");
 		}
 
 		arguments.push_back(arg);

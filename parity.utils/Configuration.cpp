@@ -40,7 +40,7 @@ namespace parity
 
 			if(m.empty()) {
 				utils::Log::verbose("no sections found, parsing whole file\n");
-				if(!parseString(ctx, (const char*)file.getBase(), (char*)file.getTop() - (char*)file.getBase()))
+				if(!parseString(ctx, reinterpret_cast<const char*>(file.getBase()), reinterpret_cast<char*>(file.getTop()) - reinterpret_cast<char*>(file.getBase())))
 					throw Exception("cannot parse configuration file %s", file.getPath().get().c_str());
 			} else {
 				int iLoadedSections = 0;
@@ -92,8 +92,8 @@ namespace parity
 		}
 
 		ConfigSectionMap Config::getSections(const MappedFile& file) {
-			const char* top = (const char*)file.getTop();
-			const char* line = (const char*)file.getBase();
+			const char* top = reinterpret_cast<const char*>(file.getTop());
+			const char* line = reinterpret_cast<const char*>(file.getBase());
 			const char* end = line;
 			ConfigSectionMap m;
 			int firstSec = 1;
@@ -120,7 +120,7 @@ namespace parity
 
 							ConfigSection general;
 
-							general.first = (const char*)file.getBase();
+							general.first = reinterpret_cast<const char*>(file.getBase());
 							general.second = line - general.first;
 
 							m[GENERAL_CONFIG_KEY] = general;

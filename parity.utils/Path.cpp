@@ -102,7 +102,7 @@ namespace parity
 			ftime(&cur);
 
 			std::ostringstream oss;
-			oss << (unsigned short)cur.time << "." << cur.millitm << "." << getpid();
+			oss << static_cast<unsigned short>(cur.time) << "." << cur.millitm << "." << getpid();
 			templ.replace(pos, 6, oss.str());
 
 			return Path(templ);

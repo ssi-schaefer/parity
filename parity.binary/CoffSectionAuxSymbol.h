@@ -55,8 +55,8 @@ namespace parity
 			#undef AUXSEC_MEM
 			#define AUXSEC_MEM(type, name) \
 				public: \
-					type get##name() const { return ((SectionAuxSymbolStruct*)data_)->name; } \
-					void set##name(type val) { ((SectionAuxSymbolStruct*)data_)->name = val; } \
+					type get##name() const { return (reinterpret_cast<const SectionAuxSymbolStruct*>(reinterpret_cast<const char*>(data_)))->name; } \
+					void set##name(type val) { (const_cast<SectionAuxSymbolStruct*>(reinterpret_cast<const SectionAuxSymbolStruct*>(reinterpret_cast<const char*>(data_))))->name = val; } \
 
 			AUXSEC_MEMBERS
 

@@ -79,7 +79,7 @@ namespace parity
 					"something.cc"
 				};
 
-				if(parity::options::CommandLine::process(argc, (char **)argv, options, 0))
+				if(parity::options::CommandLine::process(argc, const_cast<char**>(reinterpret_cast<const char**>(argv)), options, 0))
 					return true;
 			} catch(const utils::Exception&)
 			{

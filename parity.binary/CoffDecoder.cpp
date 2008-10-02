@@ -36,11 +36,11 @@ namespace parity
 		void Decoder::decode(void* what, size_t length) {
 			void* position = what;
 			
-			while((BYTE*)position < ((BYTE*)what + length)) {
+			while(reinterpret_cast<BYTE*>(position) < (reinterpret_cast<BYTE*>(what) + length)) {
 				int len = decodeNext(position);
 
 				if(len == 0)
-					throw utils::Exception("cannot decode next opcode after successfully decoding %d bytes!", (BYTE*)position - (BYTE*)what);
+					throw utils::Exception("cannot decode next opcode after successfully decoding %d bytes!", reinterpret_cast<BYTE*>(position) - reinterpret_cast<BYTE*>(what));
 
 				position = MAKEPTR(void*, position, len);
 			}
@@ -80,7 +80,7 @@ namespace parity
 			BYTE  disasm_mem[8];                    // mem addr value
 			BYTE  disasm_data[8];                   // data value
 
-			BYTE* opcode0 = (BYTE*)position;
+			BYTE* opcode0 = reinterpret_cast<BYTE*>(position);
 			BYTE* opcode = opcode0;
 
 			disasm_len = 0;

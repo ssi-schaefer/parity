@@ -47,7 +47,7 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			Symbol(const FileHeader* fh, long idx, void* ptr) : idx_(idx), struct_(), name_(), aux_() { if(ptr) { struct_ = *(SymStruct*)ptr; calcName(fh); } }
+			Symbol(const FileHeader* fh, long idx, void* ptr) : idx_(idx), struct_(), name_(), aux_() { if(ptr) { struct_ = *reinterpret_cast<SymStruct*>(ptr); calcName(fh); } }
 			Symbol(FileHeader* fh, long idx, const std::string& name);
 			
 			//
