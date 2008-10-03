@@ -299,6 +299,8 @@ namespace parity
 					fcntl(stdOutPipe[READ_FD], F_SETFL, fcntl(stdOutPipe[READ_FD], F_GETFL, 0) | O_NONBLOCK);
 					fcntl(stdErrPipe[READ_FD], F_SETFL, fcntl(stdErrPipe[READ_FD], F_GETFL, 0) | O_NONBLOCK);
 
+					utils::Log::verbose(" * child %d started...\n", child);
+
 					pid_t wpid = 0;
 
 					int readOut = 1;
@@ -335,6 +337,8 @@ namespace parity
 									exitStatus = 1;
 								else
 									exitStatus = WEXITSTATUS(exitStatus);
+
+								utils::Log::verbose(" * child %d finished: %d\n", wpid, exitStatus);
 							}
 						}
 
