@@ -50,8 +50,7 @@ namespace parity
 
 		static const char dataConf[] =
 			"DebugLevel = verbose\n"
-			"Colored = off\n"
-			"GenerateLoader = off";
+			"Colored = off\n";
 
 		bool TestSuite::testParityLoaderRunpaths()
 		{
