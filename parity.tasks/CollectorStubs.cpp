@@ -28,6 +28,7 @@
 #include "MsExportGenerator.h"
 #include "MsStaticImportGenerator.h"
 #include "MsLoaderGenerator.h"
+#include "MsSymbolTableGenerator.h"
 
 #include <Timing.h>
 #include <Log.h>
@@ -164,6 +165,25 @@ namespace parity
 			}
 
 			utils::Timing::instance().stop("Loader Generator");
+			return 0;
+		}
+
+		unsigned int THREADINGAPI TaskStubs::runMsSymbolTableGenerator(void* ptrMap)
+		{
+			utils::Timing::instance().start("Symbol Table Generator");
+
+			try {
+				if(!ptrMap)
+					throw utils::Exception("pointer to symbols invalid, cannot generate symbol table!");
+
+				parity::tasks::MsSymbolTableGenerator generator(*reinterpret_cast<binary::Symbol::SymbolVector*>(ptrMap));
+				generator.doWork();
+			} catch(const utils::Exception& e) {
+				utils::Log::error("while generating symbol table: %s\n", e.what());
+				return 1;
+			}
+
+			utils::Timing::instance().stop("Symbol Table Generator");
 			return 0;
 		}
 	}

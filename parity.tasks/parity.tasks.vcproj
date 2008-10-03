@@ -319,6 +319,10 @@
 					RelativePath=".\MsStaticImportGenerator.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\MsSymbolTableGenerator.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Interix Gnu Backend"
@@ -367,6 +371,10 @@
 				</File>
 				<File
 					RelativePath=".\MsStaticImportGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MsSymbolTableGenerator.h"
 					>
 				</File>
 			</Filter>

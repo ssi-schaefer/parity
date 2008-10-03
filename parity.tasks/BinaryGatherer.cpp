@@ -344,6 +344,7 @@ namespace parity
 						ref = true;
 
 						local_.insert(SymbolUsageMap::value_type(it->second.getName(), SymbolUsagePair(it->second, path)));
+						localSymbols_.push_back(it->second);
 
 						//
 						// Export symbol if linking shared.

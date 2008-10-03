@@ -20,29 +20,35 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __COLLECTORSTUBS_H__
-#define __COLLECTORSTUBS_H__
+#include "MsSymbolTableGenerator.h"
 
-#include <Threading.h>
+#include <Log.h>
+#include <Statistics.h>
+
+#include <CoffObject.h>
 
 namespace parity
 {
 	namespace tasks
 	{
+		MsSymbolTableGenerator::MsSymbolTableGenerator(parity::binary::Symbol::SymbolVector &sym)
+			: symbols_(sym)
+		{
+			utils::Log::verbose("generating symbol table for %d symbols..\n", sym.size());
+		}
 
-		class TaskStubs {
-		public:
-			static unsigned int THREADINGAPI runDependencyTracking(void*);
-			static unsigned int THREADINGAPI runCompiler(void*);
-			static unsigned int THREADINGAPI runLinker(void*);
-			static unsigned int THREADINGAPI runMsExportGenerator(void*);
-			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
-			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
-			static unsigned int THREADINGAPI runMsSymbolTableGenerator(void*);
-		};
+		void MsSymbolTableGenerator::doWork()
+		{
+			if(symbols_.empty())
+				return;
 
+			//
+			// Generate a temporary object file which contains:
+			//  *) a table of all symbol names, with relocations to the real symbols
+			//  *) a function with a well-known name that returns a pointer to that table.
+			//
+
+		}
 	}
 }
-
-#endif
 

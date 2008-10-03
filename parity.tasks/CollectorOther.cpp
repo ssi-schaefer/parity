@@ -338,6 +338,7 @@ namespace parity
 
 				binary::Symbol::SymbolVector exportedSymbols;
 				binary::Symbol::SymbolVector staticImports;
+				binary::Symbol::SymbolVector localSymbols;
 				tasks::BinaryGatherer::ImportHybridityMap loadedImports;
 
 				try {
@@ -347,6 +348,7 @@ namespace parity
 					exportedSymbols	= gatherer.getExportedSymbols();
 					staticImports	= gatherer.getStaticImports();
 					loadedImports	= gatherer.getLoadedImports();
+					localSymbols	= gatherer.getLocalSymbols();
 
 				} catch(const utils::Exception& e) {
 					utils::Log::error("while gathering from binaries: %s\n", e.what());

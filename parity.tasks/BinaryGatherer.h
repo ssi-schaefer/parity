@@ -54,6 +54,11 @@ namespace parity
 			const binary::Symbol::SymbolVector& getStaticImports() const { return staticImports_; }
 
 			//
+			// Local Symbols explain themselves :)
+			//
+			const binary::Symbol::SymbolVector& getLocalSymbols() const { return localSymbols_; }
+
+			//
 			// Loaded import are the symbols that will be handled by the loader generator.
 			//
 			typedef std::pair<utils::Path, binary::Import> PathImportPair;
@@ -83,6 +88,7 @@ namespace parity
 			binary::Symbol::SymbolVector exports_;
 			binary::Symbol::SymbolVector maybeExports_;
 			binary::Symbol::SymbolVector staticImports_;
+			binary::Symbol::SymbolVector localSymbols_;
 			ImportHybridityMap loadedImports_;
 
 			PathUsageMap implicits_;
