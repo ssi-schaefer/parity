@@ -270,7 +270,7 @@ namespace parity
 						
 						// bug on interix 6.0 makes waitpid return 0 (nothing happened)
 						// until there is a return on stdin of child (or there is no stdin)						
-						freopen("/dev/null", "r", stdin);
+						close(fileno(stdin));
 
 						//
 						// execute child process
