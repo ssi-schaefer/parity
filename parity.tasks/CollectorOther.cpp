@@ -431,7 +431,7 @@ namespace parity
 					// code from parity.loader. this means that it must be present
 					// always, even if it's not required.
 					//
-					threading.run(TaskStubs::runLoaderGenerator, &loadedImports, false);
+					threading.run(TaskStubs::runMsLoaderGenerator, &loadedImports, false);
 
 					//
 					// need the parity.runtime library. for this to work, one need to set

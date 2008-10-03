@@ -36,9 +36,9 @@ namespace parity
 {
 	namespace tasks
 	{
-		class LoaderGenerator {
+		class MsLoaderGenerator {
 		public:
-			LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports);
+			MsLoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports);
 			void doWork();
 		private:
 			const tasks::BinaryGatherer::ImportHybridityMap& imports_;

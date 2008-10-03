@@ -27,7 +27,7 @@
 #include "MsDependencyTracker.h"
 #include "MsExportGenerator.h"
 #include "MsStaticImportGenerator.h"
-#include "LoaderGenerator.h"
+#include "MsLoaderGenerator.h"
 
 #include <Timing.h>
 #include <Log.h>
@@ -148,7 +148,7 @@ namespace parity
 			return 0;
 		}
 	
-		unsigned int THREADINGAPI TaskStubs::runLoaderGenerator(void* ptrMap)
+		unsigned int THREADINGAPI TaskStubs::runMsLoaderGenerator(void* ptrMap)
 		{
 			utils::Timing::instance().start("Loader Generator");
 
@@ -156,7 +156,7 @@ namespace parity
 				if(!ptrMap)
 					throw utils::Exception("pointer to imports invalid, cannot generate loader!");
 
-				parity::tasks::LoaderGenerator generator(*reinterpret_cast<tasks::BinaryGatherer::ImportHybridityMap*>(ptrMap));
+				parity::tasks::MsLoaderGenerator generator(*reinterpret_cast<tasks::BinaryGatherer::ImportHybridityMap*>(ptrMap));
 				generator.doWork();
 			} catch(const utils::Exception& e) {
 				utils::Log::error("while generating loader: %s\n", e.what());

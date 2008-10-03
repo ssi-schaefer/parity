@@ -37,7 +37,7 @@ namespace parity
 			static unsigned int THREADINGAPI runLinker(void*);
 			static unsigned int THREADINGAPI runMsExportGenerator(void*);
 			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
-			static unsigned int THREADINGAPI runLoaderGenerator(void*);
+			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
 		};
 
 	}

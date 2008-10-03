@@ -292,10 +292,6 @@
 				RelativePath=".\CollectorStubs.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\LoaderGenerator.cpp"
-				>
-			</File>
 			<Filter
 				Name="Microsoft Backend"
 				>
@@ -313,6 +309,10 @@
 				</File>
 				<File
 					RelativePath=".\MsLinker.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\MsLoaderGenerator.cpp"
 					>
 				</File>
 				<File
@@ -342,10 +342,6 @@
 				RelativePath=".\CollectorStubs.h"
 				>
 			</File>
-			<File
-				RelativePath=".\LoaderGenerator.h"
-				>
-			</File>
 			<Filter
 				Name="Microsoft Backend"
 				>
@@ -363,6 +359,10 @@
 				</File>
 				<File
 					RelativePath=".\MsLinker.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MsLoaderGenerator.h"
 					>
 				</File>
 				<File

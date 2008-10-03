@@ -20,7 +20,7 @@
 *                                                                *
 \****************************************************************/
 
-#include "LoaderGenerator.h"
+#include "MsLoaderGenerator.h"
 
 #include <map>
 #include <sstream>
@@ -150,7 +150,7 @@ namespace parity
 			static const unsigned char dataLazyStubPart4[] = { 0x83, 0xC4, 0x04, 0x61, 0xFF, 0x25 };
 
 
-		LoaderGenerator::LoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports)
+		MsLoaderGenerator::MsLoaderGenerator(const tasks::BinaryGatherer::ImportHybridityMap& imports)
 			: imports_(imports)
 		{
 			//
@@ -214,7 +214,7 @@ namespace parity
 		static const unsigned char dataEmptyPtr[] = { 0x00, 0x00, 0x00, 0x00 };
 		static const unsigned char dataBFoodPtr[] = { 0x0D, 0xF0, 0xAD, 0xBA };
 
-		void LoaderGenerator::doWork()
+		void MsLoaderGenerator::doWork()
 		{
 			//
 			// 1) Generate the object for the loader
