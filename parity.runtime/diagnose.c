@@ -1,7 +1,14 @@
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0400
+#endif
+
 #include <windows.h>
 #include <stdio.h>
 
 #include "internal/diagnose.h"
+
+extern void* _ReturnAddress();
+#pragma intrinsic(_ReturnAddress)
 
 int PcrtWaitForDebugger(int timeout) {
 	fprintf(stderr, "Process %d waiting for Debugger to be attached (%d seconds): ", GetCurrentProcessId(), timeout);
@@ -93,5 +100,56 @@ static DWORD WINAPI PcrtpDiagnoseThread(DWORD Unused) {
 		}
 
 		fprintf(stderr, "got debug event: %d\n", ev.dwDebugEventCode);
+	}
+}
+
+void PcrtPrintStackTrace()
+{
+	stackframe_t* stack = PcrtGetStackTrace();
+	stackframe_t* walk = stack;
+	unsigned int num = 0;
+
+	if(!stack) {
+		fprintf(stderr, "Cannot obtain Stack Trace!\n");
+		return;
+	}
+
+	while(1) {
+		fprintf(stderr, " [%2d] %p : %s\n", num, walk->eip, walk->sym);
+
+		if(!walk->next)
+			break;
+
+		walk = walk->next;
+	}
+}
+
+stackframe_t* PcrtGetStackTrace()
+{
+	//
+	// Our starting point is the frame above ourselves.
+	//
+	void* _eip;
+	void* _ebp;
+	stackframe_t* trace = NULL;
+
+	while(1) {
+		stackframe_t* frame = malloc(sizeof(stackframe_t));
+
+		if(!frame) {
+			fprintf(stderr, "cannot allocate memory for stack trace!");
+			return NULL;
+		}
+
+		if(!trace) {
+			trace = frame;
+		} else {
+			trace->next = frame;
+		}
+
+		_eip = *((void**)((char*)_ebp+sizeof(void*)));
+		_ebp = *((void**)(_ebp));
+
+		frame->eip = _eip;
 	}
 }

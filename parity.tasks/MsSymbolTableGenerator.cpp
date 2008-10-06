@@ -26,6 +26,7 @@
 #include <Statistics.h>
 
 #include <CoffObject.h>
+#include <CoffDirectiveSection.h>
 
 namespace parity
 {
@@ -58,9 +59,13 @@ namespace parity
 
 			binary::Section& sectText = hdr.addSection(".text");
 			binary::Section& sectRData = hdr.addSection(".rdata");
+			binary::Section& rawSection = hdr.addSection(".drectve");
 
 			sectText.setCharacteristics( binary::Section::CharAlign16Bytes | binary::Section::CharMemoryExecute | binary::Section::CharMemoryRead | binary::Section::CharContentCode);
 			sectRData.setCharacteristics(binary::Section::CharAlign4Bytes  | binary::Section::CharMemoryRead    | binary::Section::CharContentInitData);
+			rawSection.setCharacteristics(binary::Section::CharAlign1Bytes | binary::Section::CharLinkInfo | binary::Section::CharLinkRemove);
+
+			binary::DirectiveSection drectveSection(rawSection);
 
 			std::map<std::string, int> symIndexMap;
 
@@ -70,13 +75,17 @@ namespace parity
 				// generate name symbols in an extra pass, since they end up in
 				// the same section as the table.
 				//
-				binary::Symbol& symName = hdr.addSymbol("$SYMNAME_" + it->getName());
+				binary::Symbol& symName = hdr.addSymbol("$NAME_" + it->getName());
 				sectRData.markSymbol(symName);
 				symName.setStorageClass(binary::Symbol::ClassStatic);
 				sectRData.addData(it->getName().c_str(), it->getName().length() + 1);
 
-				symIndexMap["$SYMNAME_" + it->getName()] = symName.getIndex();
-				sectRData.padSection(4);
+				symIndexMap["$NAME_" + it->getName()] = symName.getIndex();
+
+				//
+				// keep up section alignment (most probably 4 bytes).
+				//
+				sectRData.padSection();
 
 				binary::Symbol& extSym = hdr.addSymbol(it->getName());
 				extSym.setStorageClass(binary::Symbol::ClassExternal);
@@ -99,7 +108,7 @@ namespace parity
 				//   void* addr;
 				// }
 				//
-				sectRData.markRelocation(hdr.getAllSymbols()[symIndexMap["$SYMNAME_" + it->getName()]], binary::Relocation::i386Direct32);
+				sectRData.markRelocation(hdr.getAllSymbols()[symIndexMap["$NAME_" + it->getName()]], binary::Relocation::i386Direct32);
 				sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 				sectRData.markRelocation(hdr.getAllSymbols()[symIndexMap[it->getName()]], binary::Relocation::i386Direct32);
 				sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
@@ -118,14 +127,13 @@ namespace parity
 			//
 			// set up section where the symtab will go.
 			//
-			binary::Section& sectSyms = hdr.addSection(".p.syms");
-			sectSyms.setCharacteristics(binary::Section::CharAlign1Bytes | binary::Section::CharContentInitData | binary::Section::CharMemoryRead);
-
 			binary::Symbol& symGenTab = hdr.addSymbol("_ParityGeneratedSymbolTable");
 			symGenTab.setStorageClass(binary::Symbol::ClassExternal);
-			sectSyms.markSymbol(symGenTab);
-			sectSyms.markRelocation(symtab, binary::Relocation::i386Direct32);
-			sectSyms.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
+			sectRData.markSymbol(symGenTab);
+			sectRData.markRelocation(symtab, binary::Relocation::i386Direct32);
+			sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
+
+			drectveSection.addDirective("/EXPORT:_ParityGeneratedSymbolTable,DATA");
 
 			//
 			// now save the object file to disk.

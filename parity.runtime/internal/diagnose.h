@@ -25,13 +25,24 @@
 
 #include "pcrt.h"
 
+typedef struct _stackframe_t {
+	void* eip;
+	void* ebp;
+	void* ret;
+	char const * sym;
+
+	struct _stackframe_t* next;
+} stackframe_t;
+
 PCRT_BEGIN_C
 
 extern int PcrtWaitForDebugger(int timeout);
 extern int PcrtBreakIfDebugged();
 extern int PcrtAttachDebugger();
 
+extern void PcrtPrintStackTrace();
+extern stackframe_t* PcrtGetStackTrace();
+
 PCRT_END_C
 
 #endif
-

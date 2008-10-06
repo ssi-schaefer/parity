@@ -164,7 +164,7 @@ namespace parity
 			Log::profile(col.magenta("-----------\n").c_str());
 
 			if(all > 0)
-				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (real runtime)", all);
+				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (real)", all);
 
 			if(all_calc > 0)
 				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (summed)", all_calc);
