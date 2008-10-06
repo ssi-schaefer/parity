@@ -415,6 +415,11 @@ namespace parity
 					threading.run(TaskStubs::runMsExportGenerator, &exportedSymbols, false);
 
 				//
+				// generate the symbol table.
+				//
+				threading.run(TaskStubs::runMsSymbolTableGenerator, &localSymbols, true);
+
+				//
 				// The third part is generating the import symbols for all static
 				// libraries involved in linking. This can be done in Background too.
 				// This should only generate symbols for things requested from

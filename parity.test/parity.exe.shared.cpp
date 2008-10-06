@@ -74,10 +74,14 @@ namespace parity
 
 				libarguments.push_back(libcfile.get());
 				libarguments.push_back("-shared");
+				libarguments.push_back("-dbg");
+				libarguments.push_back("verbose");
 				libarguments.push_back("-o");
 				libarguments.push_back(olibfile.get());
 
 				exearguments.push_back(maincfile.get());
+				exearguments.push_back("-dbg");
+				exearguments.push_back("verbose");
 				exearguments.push_back("-o");
 				exearguments.push_back(oexefile.get());
 				exearguments.push_back(olibfile.get());

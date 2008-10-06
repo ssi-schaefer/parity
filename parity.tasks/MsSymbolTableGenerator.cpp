@@ -76,6 +76,7 @@ namespace parity
 				sectRData.addData(it->getName().c_str(), it->getName().length() + 1);
 
 				symIndexMap["$SYMNAME_" + it->getName()] = symName.getIndex();
+				sectRData.padSection(4);
 
 				binary::Symbol& extSym = hdr.addSymbol(it->getName());
 				extSym.setStorageClass(binary::Symbol::ClassExternal);
