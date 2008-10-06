@@ -39,7 +39,7 @@ namespace parity
 	{
 		BinaryGatherer::BinaryGatherer()
 			: unresolved_(), local_(), imports_(), exports_(), maybeExports_()
-			, staticImports_(), loadedImports_(), implicits_(), processed_(), hybrids_()
+			, staticImports_(), localSymbols_(), loadedImports_(), implicits_(), processed_(), hybrids_()
 		{
 			if(utils::Context::getContext().getObjectsLibraries().empty())
 				throw utils::Exception("construction of binary gatherer without binaries is invalid!");
