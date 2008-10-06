@@ -34,6 +34,15 @@ typedef struct _stackframe_t {
 	struct _stackframe_t* next;
 } stackframe_t;
 
+//
+// Describes the symbol that is nearest to
+// a given address...
+//
+typedef struct {
+	void* addr;
+	char const* name;
+} syminfo_t;
+
 PCRT_BEGIN_C
 
 extern int PcrtWaitForDebugger(int timeout);
@@ -42,6 +51,8 @@ extern int PcrtAttachDebugger();
 
 extern void PcrtPrintStackTrace();
 extern stackframe_t* PcrtGetStackTrace();
+extern stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace);
+extern syminfo_t PcrtGetNearestSymbol(void* addr);
 
 PCRT_END_C
 

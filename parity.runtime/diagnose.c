@@ -114,14 +114,20 @@ void PcrtPrintStackTrace()
 		return;
 	}
 
+	fprintf(stderr, "   #  Address  StackAddr.   Name\n");
+	fprintf(stderr, " ---------------------------------\n");
+
 	while(1) {
-		fprintf(stderr, " [%2d] %p : %s\n", num, walk->eip, walk->sym);
+		fprintf(stderr, " [%2d] %p [%p] : %s\n", num++, walk->eip, walk->ebp, walk->sym);
 
 		if(!walk->next)
 			break;
 
 		walk = walk->next;
 	}
+
+	fprintf(stderr, " ---------------------------------\n");
+	stack = PcrtDestroyStackTrace(stack);
 }
 
 stackframe_t* PcrtGetStackTrace()
@@ -129,27 +135,70 @@ stackframe_t* PcrtGetStackTrace()
 	//
 	// Our starting point is the frame above ourselves.
 	//
-	void* _eip;
-	void* _ebp;
+	void* _ip = _ReturnAddress();
+	void** _bp;
 	stackframe_t* trace = NULL;
+	stackframe_t* last = NULL;
 
-	while(1) {
+	__asm {
+		mov _bp, ebp
+	}
+
+	_bp = (void**)_bp[0];
+
+	while(_bp && _ip) {
 		stackframe_t* frame = malloc(sizeof(stackframe_t));
 
 		if(!frame) {
 			fprintf(stderr, "cannot allocate memory for stack trace!");
 			return NULL;
-		}
+		}		
+
+		frame->eip = _ip;
+		frame->ebp = _bp;
+		frame->next= NULL;
+
+		_ip = _bp[1];
+
+		frame->ret = _ip;
+		frame->sym = NULL; /* dlinfo(....) ? */
 
 		if(!trace) {
 			trace = frame;
+		} else if(last) {
+			last->next = frame;
 		} else {
-			trace->next = frame;
+			fprintf(stderr, "neither top nor last node set.");
+			return NULL;
 		}
 
-		_eip = *((void**)((char*)_ebp+sizeof(void*)));
-		_ebp = *((void**)(_ebp));
-
-		frame->eip = _eip;
+		last = frame;
+		_bp = (void**)_bp[0];
 	}
+
+	return trace;
+}
+
+stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace)
+{
+	stackframe_t* next;
+
+	while(trace) {
+		next = trace->next;
+		free(trace);
+		trace = next;
+	}
+
+	return NULL;
+}
+
+syminfo_t PcrtGetNearestSymbol(void* addr)
+{
+	syminfo_t info = { 0, 0 };
+
+	//
+	// TODO: gather information from symbol tables.
+	//
+
+	return info;
 }
