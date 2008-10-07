@@ -1,7 +1,36 @@
+/****************************************************************\
+*                                                                *
+* Copyright (C) 2007 by Markus Duft <markus.duft@salomon.at>     *
+*                                                                *
+* This file is part of parity.                                   *
+*                                                                *
+* parity is free software: you can redistribute it and/or modify *
+* it under the terms of the GNU Lesser General Public License as *
+* published by the Free Software Foundation, either version 3 of *
+* the License, or (at your option) any later version.            *
+*                                                                *
+* parity is distributed in the hope that it will be useful,      *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the  *
+* GNU Lesser General Public License for more details.            *
+*                                                                *
+* You should have received a copy of the GNU Lesser General      *
+* Public License along with parity. If not,                      *
+* see <http://www.gnu.org/licenses/>.                            *
+*                                                                *
+\****************************************************************/
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501
+#endif
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
+
+#include "internal/diagnose.h"
+#include <excpt.h>
 
 #define RING_SIZE 8
 
@@ -124,4 +153,16 @@ const char* PcrtPathToNative(const char* ptr) {
 #else
 	return ptr;
 #endif
+}
+
+int PcrtInit()
+{
+	SetErrorMode(GetErrorMode() | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+
+	PcrtSetupExceptionHandling();
+
+	//
+	// Success ...
+	//
+	return 1;
 }

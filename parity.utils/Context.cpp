@@ -338,6 +338,53 @@ namespace parity
 			Statistics::instance().start();
 		}
 
+		std::string Context::calculateDefaultEntrypoint()
+		{
+
+			//
+			// try to figure out default entry points.
+			//
+			if(getSharedLink())
+			{
+				//
+				// entry point is __stdcall and has three arguments ("@12")
+				//
+				switch(getSubsystem())
+				{
+				case SubsystemWindowsCui:
+					if(getBackendType() == ToolchainInterixMS)
+						return "__DllMainCRTStartup@12";
+					/* Fallthrough */
+				case SubsystemWindowsGui:
+				case SubsystemWindowsCeGui:
+					return "_DllMainCRTStartup@12";
+				case SubsystemPosixCui:
+					return "__DllMainCRTStartup@12";
+				default:
+					throw Exception("subsystem default entry point not implemented!");
+				}
+			} else {
+				//
+				// entry point without arguments or return, and __cdecl
+				//
+				switch(getSubsystem())
+				{
+				case SubsystemWindowsCui:
+					if(getBackendType() == ToolchainInterixMS)
+						return "__MixedModeProcessStartup";
+					else
+						return "mainCRTStartup";
+				case SubsystemWindowsGui:
+				case SubsystemWindowsCeGui:
+					return "WinMainCRTStartup";
+				case SubsystemPosixCui:
+					return "__PosixProcessStartup";
+				default:
+					throw Exception("subsystem default entry point not implemented!");
+				}
+			}
+		}
+
 	}
 }
 

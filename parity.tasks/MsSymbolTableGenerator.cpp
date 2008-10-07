@@ -95,22 +95,24 @@ namespace parity
 				symIndexMap[it->getName()] = extSym.getIndex();
 			}
 
-			binary::Symbol& symtab = hdr.addSymbol("$START_ParitySymbolTable");
+			//binary::Symbol& symtab = hdr.addSymbol("$START_ParitySymbolTable");
+			binary::Symbol& symtab = hdr.addSymbol("_ParityGeneratedSymbolTable");
 			sectRData.markSymbol(symtab);
-			symtab.setStorageClass(binary::Symbol::ClassStatic);
+			//symtab.setStorageClass(binary::Symbol::ClassStatic);
+			symtab.setStorageClass(binary::Symbol::ClassExternal);
 
 			for(binary::Symbol::SymbolVector::const_iterator it = symbols_.begin(); it != symbols_.end(); ++it)
 			{
 				//
-				// format for table is a struct like this:
+				// format for table is a struct like this: (keep in sync with parity.runtime/diagnose.h)
 				// struct symtab_entry {
-				//   char const* name;
 				//   void* addr;
+				//   char const* name;
 				// }
 				//
-				sectRData.markRelocation(hdr.getAllSymbols()[symIndexMap["$NAME_" + it->getName()]], binary::Relocation::i386Direct32);
-				sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 				sectRData.markRelocation(hdr.getAllSymbols()[symIndexMap[it->getName()]], binary::Relocation::i386Direct32);
+				sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
+				sectRData.markRelocation(hdr.getAllSymbols()[symIndexMap["$NAME_" + it->getName()]], binary::Relocation::i386Direct32);
 				sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 			}
 
@@ -123,15 +125,6 @@ namespace parity
 			binary::Symbol& symtab_end = hdr.addSymbol("$END_ParitySymbolTable");
 			sectRData.markSymbol(symtab_end);
 			symtab_end.setStorageClass(binary::Symbol::ClassStatic);
-
-			//
-			// set up section where the symtab will go.
-			//
-			binary::Symbol& symGenTab = hdr.addSymbol("_ParityGeneratedSymbolTable");
-			symGenTab.setStorageClass(binary::Symbol::ClassExternal);
-			sectRData.markSymbol(symGenTab);
-			sectRData.markRelocation(symtab, binary::Relocation::i386Direct32);
-			sectRData.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 
 			drectveSection.addDirective("/EXPORT:_ParityGeneratedSymbolTable,DATA");
 
@@ -149,4 +142,3 @@ namespace parity
 		}
 	}
 }
-

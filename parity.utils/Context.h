@@ -79,6 +79,8 @@ namespace parity
 #endif
 			Path lookupLibrary(const std::string& name, bool isMinusL);
 
+			std::string calculateDefaultEntrypoint();
+
 		private:
 			//
 			// cannot copy!

@@ -20,32 +20,17 @@
 *                                                                *
 \****************************************************************/
 
-#include "LoaderLog.h"
-#include "LoaderInit.h"
-#include "LoaderHelper.h"
-
 #include <stdarg.h>
 #include <windows.h>
 
-static LoaderLogLevel gLevel;
-static HANDLE gDebugStream;
+#include "internal/output.h"
 
-//
-// there are parity.runtime provided functions which do the same, but
-// better :) so:
-// TODO: replace this...
-//
-static void LogFormatString(char* buffer, const char* fmt, va_list args)
+void PcrtOutFormatString(char* buffer, const char* fmt, va_list args)
 {
-	static isNewLine = 1;
 	const char* ptr = fmt;
 	const char* end = ptr;
 
-	if(isNewLine)
-	{
-		lstrcat(buffer, ParityLoaderGeneratedImageName);
-		lstrcat(buffer, ": ");
-	}
+	buffer[0] = '\0';
 
 	while(end && *end != '\0')
 	{
@@ -91,13 +76,28 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 					}
 					while(num != 0);
 
+					if(*end == 'p') {
+						//
+						// prepend 0's
+						//
+						unsigned int req = (sizeof(void*) * 2) - lstrlen(wh);
+
+						while(req--) {
+							lstrcat(buffer, "0");
+						}
+					}
+
 					lstrcat(buffer, wh);
 				}
 				break;
 			case 's':
 				{
 					const char* tmp = va_arg(args, const char*);
-					lstrcat(buffer, tmp);
+
+					if(tmp)
+						lstrcat(buffer, tmp);
+					else
+						lstrcat(buffer, "(null)");
 				}
 				break;
 			case 'c':
@@ -118,15 +118,26 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 		if(*end != '\0')
 			++end;
 	}
-
-	end--;
-	if(*end == '\n')
-		isNewLine = 1;
-	else
-		isNewLine = 0;
 }
 
-static void LogOutputDebugString(char* buffer)
+void PcrtOutPrint(HANDLE dest, char const* fmt, ...)
+{
+	//
+	// FIXXME: uah... hack :(
+	//
+	char buffer[2048];
+	long iBytesWritten;
+	va_list args;
+	va_start(args, fmt);
+
+	PcrtOutFormatString(buffer, fmt, args);
+
+	va_end(args);
+
+	WriteFile(dest, buffer, lstrlen(buffer), &iBytesWritten, NULL);
+}
+
+void PcrtOutDebugString(char* buffer)
 {
 	//
 	// write line by line...
@@ -157,101 +168,3 @@ static void LogOutputDebugString(char* buffer)
 		++end;
 	}
 }
-
-//
-// WARNING: va_args may come from CRT, but most of the time
-// those are just defines, so not so dangerous.
-//
-
-void LogInit()
-{
-	static int isInited = 0;
-	unsigned int szOut = 0;
-	gDebugStream = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	if(isInited)
-		return;
-
-	isInited = 1;
-
-	if(GetEnvironmentVariable("LD_DEBUG", 0, 0))
-		gLevel = LevelDebug;
-	else
-		gLevel = LevelWarning;
-
-	if((szOut = GetEnvironmentVariable("LD_DEBUG_OUTPUT", 0, 0)) != 0)
-	{
-		char * ptrOut = HeapAlloc(GetProcessHeap(), 0, szOut);
-
-		if(GetEnvironmentVariable("LD_DEBUG_OUTPUT", ptrOut, szOut) == 0)
-		{
-			LogWarning("cannot read LD_DEBUG_OUTPUT variable!\n");
-		} else {
-			HANDLE handle = CreateFile(ptrOut, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-			
-			if(handle == INVALID_HANDLE_VALUE) {
-				LogWarning("cannot open debug output file %s!\n", ptrOut);
-				LoaderWriteLastWindowsError();
-			} else {
-				gDebugStream = handle;
-			}
-		}
-	}
-}
-
-void LogWarning(const char* fmt, ...)
-{
-	char buffer[2048]; // hope it suffices.
-	unsigned int iBytesWritten = 0;
-	va_list args;
-	va_start(args, fmt);
-
-	memset(buffer, 0, sizeof(buffer));
-
-	LogFormatString(buffer, fmt, args);
-	LogOutputDebugString(buffer);
-	WriteFile(GetStdHandle(STD_ERROR_HANDLE), buffer, lstrlen(buffer), &iBytesWritten, 0);
-
-	va_end(args);
-}
-
-void LogDebug(const char* fmt, ...)
-{
-	char buffer[2048]; // hope it suffices.
-	unsigned int iBytesWritten = 0;
-
-	va_list args;
-	va_start(args, fmt);
-
-	memset(buffer, 0, sizeof(buffer));
-
-	LogFormatString(buffer, fmt, args);
-	LogOutputDebugString(buffer);
-
-	va_end(args);
-
-	if(gLevel == LevelDebug)
-	{
-		//
-		// first seek to end of file.
-		//
-		SetFilePointer(gDebugStream, 0, 0, FILE_END);
-		WriteFile(gDebugStream, buffer, lstrlen(buffer), &iBytesWritten, 0);
-
-		//
-		// flush immediatly
-		//
-		FlushFileBuffers(gDebugStream);
-	}
-}
-
-void LogSetLevel(LoaderLogLevel lvl)
-{
-	gLevel = lvl;
-}
-
-void LogSetDebugStream(HANDLE stream)
-{
-	gDebugStream = stream;
-}
-

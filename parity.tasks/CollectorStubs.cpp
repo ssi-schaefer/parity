@@ -29,6 +29,7 @@
 #include "MsStaticImportGenerator.h"
 #include "MsLoaderGenerator.h"
 #include "MsSymbolTableGenerator.h"
+#include "MsPcrtInitEntryGenerator.h"
 
 #include <Timing.h>
 #include <Log.h>
@@ -184,6 +185,22 @@ namespace parity
 			}
 
 			utils::Timing::instance().stop("Symbol Table Generator");
+			return 0;
+		}
+
+		unsigned int THREADINGAPI TaskStubs::runMsPcrtInitEntryGenerator(void*)
+		{
+			utils::Timing::instance().start("PcrtInit Entrypoint Generator");
+
+			try {
+				parity::tasks::MsPcrtInitEntryGenerator generator;
+				generator.doWork();
+			} catch(const utils::Exception& e) {
+				utils::Log::error("while generating PcrtInit entrypoint: %s\n", e.what());
+				return 1;
+			}
+
+			utils::Timing::instance().stop("PcrtInit Entrypoint Generator");
 			return 0;
 		}
 	}

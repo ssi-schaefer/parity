@@ -316,6 +316,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\MsPcrtInitEntryGenerator.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\MsStaticImportGenerator.cpp"
 					>
 				</File>
@@ -367,6 +371,10 @@
 				</File>
 				<File
 					RelativePath=".\MsLoaderGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MsPcrtInitEntryGenerator.h"
 					>
 				</File>
 				<File

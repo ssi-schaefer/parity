@@ -71,6 +71,7 @@ namespace parity
 			void processImport(binary::Import& import, const utils::Path& path);
 
 			void resolveSymbols();
+			bool isSystemToSkip(std::string const& str) const;
 
 			typedef std::pair<binary::Symbol, utils::Path> SymbolUsagePair;
 			typedef std::pair<binary::Import, utils::Path> ImportUsagePair;

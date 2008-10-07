@@ -20,30 +20,18 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __COLLECTORSTUBS_H__
-#define __COLLECTORSTUBS_H__
+#ifndef __PCRT_OUTPUT_H__
+#define __PCRT_OUTPUT_H__
 
-#include <Threading.h>
+#include "internal/pcrt.h"
 
-namespace parity
-{
-	namespace tasks
-	{
+PCRT_BEGIN_C
 
-		class TaskStubs {
-		public:
-			static unsigned int THREADINGAPI runDependencyTracking(void*);
-			static unsigned int THREADINGAPI runCompiler(void*);
-			static unsigned int THREADINGAPI runLinker(void*);
-			static unsigned int THREADINGAPI runMsExportGenerator(void*);
-			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
-			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
-			static unsigned int THREADINGAPI runMsSymbolTableGenerator(void*);
-			static unsigned int THREADINGAPI runMsPcrtInitEntryGenerator(void*);
-		};
+void PcrtOutFormatString(char* buffer, const char* fmt, va_list args);
+void PcrtOutPrint(HANDLE dest, char const* fmt, ...);
+void PcrtOutDebugString(char* buffer);
 
-	}
-}
+PCRT_END_C
 
 #endif
 

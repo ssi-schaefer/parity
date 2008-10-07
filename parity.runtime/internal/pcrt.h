@@ -40,6 +40,8 @@ PCRT_BEGIN_C
 extern const char* PcrtPathToNative(const char*);
 #define PCRT_CONV(x) PcrtPathToNative(x)
 
+extern int PcrtInit();
+
 PCRT_END_C
 
 #endif

@@ -319,6 +319,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\output.c"
+					>
+				</File>
+				<File
 					RelativePath=".\pcrt.c"
 					>
 				</File>
@@ -450,6 +454,10 @@
 				>
 				<File
 					RelativePath=".\internal\diagnose.h"
+					>
+				</File>
+				<File
+					RelativePath=".\internal\output.h"
 					>
 				</File>
 				<File

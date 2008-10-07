@@ -417,7 +417,7 @@ namespace parity
 				//
 				// generate the symbol table.
 				//
-				threading.run(TaskStubs::runMsSymbolTableGenerator, &localSymbols, true);
+				threading.run(TaskStubs::runMsSymbolTableGenerator, &localSymbols, false);
 
 				//
 				// The third part is generating the import symbols for all static
@@ -439,6 +439,12 @@ namespace parity
 					// always, even if it's not required.
 					//
 					threading.run(TaskStubs::runMsLoaderGenerator, &loadedImports, false);
+
+					//
+					// Now we generate a new Entrypoint function, that initializes the
+					// parity.runtime library (sets up exception handling, etc).
+					//
+					threading.run(TaskStubs::runMsPcrtInitEntryGenerator, NULL, false);
 
 					//
 					// need the parity.runtime library. for this to work, one need to set

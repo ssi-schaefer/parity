@@ -20,28 +20,27 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __COLLECTORSTUBS_H__
-#define __COLLECTORSTUBS_H__
+#ifndef __MSPCRTINITENTRYGENERATOR_H__
+#define __MSPCRTINITENTRYGENERATOR_H__
 
-#include <Threading.h>
+#include <CoffArchive.h>
+#include <CoffFileHeader.h>
+#include <CoffImport.h>
+#include <CoffSymbol.h>
+
+#include <map>
+#include <vector>
+#include <string>
 
 namespace parity
 {
 	namespace tasks
 	{
-
-		class TaskStubs {
+		class MsPcrtInitEntryGenerator {
 		public:
-			static unsigned int THREADINGAPI runDependencyTracking(void*);
-			static unsigned int THREADINGAPI runCompiler(void*);
-			static unsigned int THREADINGAPI runLinker(void*);
-			static unsigned int THREADINGAPI runMsExportGenerator(void*);
-			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
-			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
-			static unsigned int THREADINGAPI runMsSymbolTableGenerator(void*);
-			static unsigned int THREADINGAPI runMsPcrtInitEntryGenerator(void*);
+			MsPcrtInitEntryGenerator();
+			void doWork();
 		};
-
 	}
 }
 

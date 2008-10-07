@@ -62,24 +62,10 @@ namespace parity
 			{
 				it->toNative();
 
-				if(!ctx.getGatherSystem())
+				if(isSystemToSkip(it->get()))
 				{
-					//
-					// skip if path is inside of a system path.
-					//
-					bool bIsSystem = false;;
-					for(utils::PathVector::iterator sys = ctx.getSysLibraryPaths().begin(); sys != ctx.getSysLibraryPaths().end(); ++sys)
-					{
-						sys->toNative();
-						if(it->get().find(sys->get()) != std::string::npos)
-							bIsSystem = true;
-					}
-
-					if(bIsSystem)
-					{
-						utils::Log::verbose("skipping system library %s\n", it->get().c_str());
-						continue;
-					}
+					utils::Log::verbose("skipping system library %s\n", it->get().c_str());
+					continue;
 				}
 
 				//
@@ -192,6 +178,36 @@ namespace parity
 
 			utils::Log::verbose("gathered %d unresolved symbols, %d local symbols and %d imports\n", unresolved_.size(), local_.size(), imports_.size());
 			utils::Log::verbose("prepared %d symbols for export and %d symbols for static import\n", exports_.size(), staticImports_.size());
+		}
+
+		bool BinaryGatherer::isSystemToSkip(std::string const& str) const {
+			utils::Context& ctx = utils::Context::getContext();
+
+			if(!ctx.getGatherSystem())
+			{
+				//
+				// skip if path is inside of a system path.
+				//
+				bool bIsSystem = false;;
+				for(utils::PathVector::iterator sys = ctx.getSysLibraryPaths().begin(); sys != ctx.getSysLibraryPaths().end(); ++sys)
+				{
+					sys->toNative();
+					if(str.find(sys->get()) != std::string::npos)
+						bIsSystem = true;
+				}
+
+				//if(str.find("MSVCRT") != std::string::npos || str.find("msvcrt") != std::string::npos) {
+					//
+					// we still gather from this one, since we require some symbolic information
+					// to be able and produce _some_ stacktrace at runtime.
+					//
+				//	bIsSystem = false;
+				//}
+
+				return bIsSystem;
+			}
+
+			return false;
 		}
 
 		void BinaryGatherer::processArchive(binary::Archive& arch, const utils::Path& path)
@@ -343,8 +359,8 @@ namespace parity
 					{
 						ref = true;
 
-						local_.insert(SymbolUsageMap::value_type(it->second.getName(), SymbolUsagePair(it->second, path)));
 						localSymbols_.push_back(it->second);
+						local_.insert(SymbolUsageMap::value_type(it->second.getName(), SymbolUsagePair(it->second, path)));
 
 						//
 						// Export symbol if linking shared.
@@ -415,21 +431,7 @@ namespace parity
 									{
 										proc = true;
 
-										bool bIsSystem = false;
-										if(!ctx.getGatherSystem())
-										{
-											//
-											// skip if path is inside of a system path.
-											//
-											for(utils::PathVector::iterator sys = ctx.getSysLibraryPaths().begin(); sys != ctx.getSysLibraryPaths().end(); ++sys)
-											{
-												sys->toNative();
-												if(pth.get().find(sys->get()) != std::string::npos)
-													bIsSystem = true;
-											}
-										}
-
-										if(!bIsSystem)
+										if(!isSystemToSkip(pth.get()))
 										{
 											utils::MappedFile f(pth, utils::ModeRead);
 
