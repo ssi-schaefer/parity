@@ -168,3 +168,15 @@ made parity compile wihtout warnings with gcc's -Weffc++ option enabled. this as
 optimized parity source code and resulting binaries, by removing functions which are not currently required, but take up a lot of space.
 
 replaced old-style (C-style) casts in all the source code with the correct C++ cast equivalents.
+
+fixed a few warnings that occured when building core parity libraries with /W4 in visual studio.
+
+parity now generates a symbol table for every linked binary. this means that the images get a little larger on disk. this should have a minimal impact on loading times (in the range of a few microseconds), but no other disadvantages.
+
+added capabilities to create stacktraces of the running program, and for fixed EIP/EBP register pairs as one can obtain from exception records.
+
+added capabilities to get symbol information for a certain address. this finds the nearest symbol at an address lower than the given one. of course this can report wrong symbol names if the given address is inside a static symbol for example, for which no symbolic information is stored in the symbol tables.
+
+added capabilities to parity.runtime to handle exceptions the way other Unices do, and write a "core" file (plain text) instead of showing a messagebox.
+
+all parity built images now set the mode for stdin/out/err to _O_BINARY for compatability with other Unices.

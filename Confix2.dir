@@ -1,7 +1,7 @@
 ADD_EXTRA_DIST('parity.sln')
 
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity.conf parity.loader/parity.conf parity.runtime/parity.conf)'],
+	lines=['AC_CONFIG_FILES(parity.conf parity.loader/parity.conf parity.runtime/parity.conf parity.diagnostic/parity.conf)'],
 	order=AC_BOILERPLATE)
 
 acm4 = """

@@ -110,8 +110,10 @@ namespace parity
 
 			exit(0);
 
-			/* never reached! */
+			#ifndef _WIN32
+			/* never reached (this is there for some gcc versions)! */
 			return false;
+			#endif
 		}
 
 		bool setCtxDump(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))

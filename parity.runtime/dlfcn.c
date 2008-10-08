@@ -51,7 +51,7 @@ enum {
 
 static const char* curError;
 
-int dlclose(void* handle)
+int dlclose(void* unused)
 {
 	//
 	// due to limitations in the library cache this
@@ -117,7 +117,7 @@ void* dlsym(void* handle, const char* symbol)
 {
 	void* sym = 0;
 	curError = tabErrors[0];
-	sym = GetProcAddress((HMODULE)handle, symbol);
+	sym = (void*)GetProcAddress((HMODULE)handle, symbol);
 
 	if(!sym)
 		curError = tabErrors[SymError];

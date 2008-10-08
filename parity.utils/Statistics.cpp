@@ -128,7 +128,7 @@ namespace parity
 			if(posEnd == std::string::npos)
 				throw utils::Exception("cannot deserialize time from string: cannot find end of milliseconds.");
 
-			tm.millitm = atoi(str.substr(posStart, posEnd - posStart).c_str());
+			tm.millitm = static_cast<unsigned short>(atoi(str.substr(posStart, posEnd - posStart).c_str()));
 
 			return tm;
 		}

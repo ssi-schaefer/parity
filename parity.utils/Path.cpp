@@ -320,8 +320,6 @@ namespace parity
 				//
 				return removeRecursive(path_);
 			}
-
-			return false;
 		}
 
 		bool Path::removeRecursive(std::string path) const
@@ -528,7 +526,7 @@ namespace parity
 			//
 			for(size_t i = 0; i < component.length(); ++i)
 				if(isalpha(component[i]) && isupper(component[i]))
-					component[i] = ::tolower(component[i]);
+					component[i] = static_cast<char>(::tolower(component[i]));
 			#endif
 
 			path_.append(component);
@@ -638,7 +636,7 @@ namespace parity
 				//
 				for(size_t i = 0; i < path_.length(); ++i)
 					if(isalpha(path_[i]) && isupper(path_[i]))
-						path_[i] = ::tolower(path_[i]);
+						path_[i] = static_cast<char>(::tolower(path_[i]));
 			#endif
 
 			path_ = path;
@@ -865,9 +863,9 @@ namespace parity
 				}
 
 				return false;
-			#endif
-
+			#else
 			return true;
+			#endif
 		}
 
 		bool Path::naiveInterixConverter(std::string& target, std::string& source, bool bWindows)

@@ -37,7 +37,7 @@ static HANDLE gDebugStream;
 //
 static void LogFormatString(char* buffer, const char* fmt, va_list args)
 {
-	static isNewLine = 1;
+	static int isNewLine = 1;
 	const char* ptr = fmt;
 	const char* end = ptr;
 
@@ -140,7 +140,7 @@ static void LogOutputDebugString(char* buffer)
 
 		if(*end == '\0' || *end == '\n')
 		{
-			char repl;
+			char repl = '\0';
 
 			if(*end == '\0') isEnd = 1;
 			else { ++end; repl = *end; *end = '\0'; }

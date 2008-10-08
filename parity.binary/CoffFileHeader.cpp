@@ -261,7 +261,7 @@ namespace parity
 			AuxSymbol aux;
 			addAuxSymbol(entry, aux);
 
-			entry.setSectionNumber(sect.getIndex());
+			entry.setSectionNumber(static_cast<short>(sect.getIndex()));
 			entry.setStorageClass(Symbol::ClassStatic);
 
 			sections_.insert(Section::IndexedSectionMap::value_type(sect.getIndex(), sect));
@@ -396,7 +396,7 @@ namespace parity
 			// Update the FileHeader with some fresh values.
 			//
 
-			hdr_.NumberOfSections = sections_.size();
+			hdr_.NumberOfSections = static_cast<unsigned short>(sections_.size());
 			hdr_.NumberOfSymbols = nextSymbolIndex_;
 			hdr_.TimeDateStamp = static_cast<unsigned int>(::time(0));
 

@@ -59,7 +59,7 @@ namespace parity
 			//unsigned int getSignaturePointer() { return *(MAKEPTR(unsigned int*, data_, 0x3C)); }
 			//void setSignaturePointer(unsigned int val) { *(MAKEPTR(unsigned int*, data_, 0x3C)) = val; }
 
-			unsigned short getSizeInFile() { return size_; }
+			unsigned short getSizeInFile() { return static_cast<unsigned short>(size_); }
 			void update(utils::MemoryFile& file) { file.append(data_, size_); }
 
 		private:

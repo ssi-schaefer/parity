@@ -21,15 +21,17 @@
 \****************************************************************/
 
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0500
 #endif
 
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <intrin.h>
+#include <fcntl.h>
 
 #include "internal/diagnose.h"
+#include "unistd.h"
 #include <excpt.h>
 
 #define RING_SIZE 8
@@ -157,8 +159,33 @@ const char* PcrtPathToNative(const char* ptr) {
 
 int PcrtInit()
 {
+	//
+	// Disable various error boxes, which we no longer need,
+	// as we create core files after seting up exception
+	// handling.
+	//
 	SetErrorMode(GetErrorMode() | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
 
+	//
+	// Set stream modes to binary to stay compatible with the
+	// rest of the world. this makes some autoconf patches
+	// obsolete, which handled line ending conversion in some
+	// check macros which rely on a single \n
+	//
+	_setmode(STDIN_FILENO, _O_BINARY);
+	_setmode(STDOUT_FILENO, _O_BINARY);
+	_setmode(STDERR_FILENO, _O_BINARY);
+
+	//
+	// This effectively adds a VecoredExceptionHandler to the
+	// process' chain, which enables us to watch all exceptions
+	// as they fly by :). this way we can create core files
+	// and still continue exception handling as normal. This
+	// also means that writing a core file does not neccesarily
+	// mean process termination, since the exception handler may
+	// take an exception as fatal, where the Default handler does
+	// not.
+	//
 	PcrtSetupExceptionHandling();
 
 	//

@@ -109,7 +109,13 @@ namespace parity
 		}
 		 */
 
-		long Threading::run(ThreadingFunction method, void* data, bool allowDataSeparation)
+		#ifdef _WIN32
+		# define THR_MAYBE_UNUSED(x)
+		#else
+		# define THR_MAYBE_UNUSED(x) x
+		#endif
+
+		long Threading::run(ThreadingFunction method, void* data, bool THR_MAYBE_UNUSED(allowDataSeparation))
 		{
 			long threadID;
 

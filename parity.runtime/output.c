@@ -151,7 +151,7 @@ void PcrtOutDebugString(char* buffer)
 
 		if(*end == '\0' || *end == '\n')
 		{
-			char repl;
+			char repl = '\0';
 
 			if(*end == '\0') isEnd = 1;
 			else { ++end; repl = *end; *end = '\0'; }

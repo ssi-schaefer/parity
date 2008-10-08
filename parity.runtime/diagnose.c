@@ -20,12 +20,10 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
-
 #include <windows.h>
 #include <stdio.h>
+
+#include <dbghelp.h>
 
 #include "internal/diagnose.h"
 #include "internal/output.h"
@@ -352,6 +350,11 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	PcrtOutPrint(hCore, "      known symbol. this may be wrong, since private symbols\n");
 	PcrtOutPrint(hCore, "      are not recognized.\n\n");
 
+	PcrtOutPrint(hCore, "NOTE: Since the Exception handler sees all exceptions that\n");
+	PcrtOutPrint(hCore, "      fly by, it may create a core file even though the\n");
+	PcrtOutPrint(hCore, "      process can and will continue. so make sure the\n");
+	PcrtOutPrint(hCore, "      process really terminated after writing the core file.\n");
+
 	while(trace) {
 		PcrtOutPrint(hCore, " [%d] %p %s(%d bytes)+0x%x\n", num++, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
 
@@ -367,36 +370,36 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	PcrtOutPrint(hCore, "  Flags : %p\n", ex->ContextRecord->ContextFlags);
 	
 	if(ex->ContextRecord->ContextFlags & CONTEXT_DEBUG_REGISTERS) {
-		PcrtOutPrint(hCore, "  DR0   : %p\n", ex->ContextRecord->Dr0);
-		PcrtOutPrint(hCore, "  DR1   : %p\n", ex->ContextRecord->Dr1);
+		PcrtOutPrint(hCore, "  DR0   : %p,", ex->ContextRecord->Dr0);
+		PcrtOutPrint(hCore, "  DR1   : %p,", ex->ContextRecord->Dr1);
 		PcrtOutPrint(hCore, "  DR2   : %p\n", ex->ContextRecord->Dr2);
-		PcrtOutPrint(hCore, "  DR3   : %p\n", ex->ContextRecord->Dr3);
-		PcrtOutPrint(hCore, "  DR6   : %p\n", ex->ContextRecord->Dr6);
+		PcrtOutPrint(hCore, "  DR3   : %p,", ex->ContextRecord->Dr3);
+		PcrtOutPrint(hCore, "  DR6   : %p,", ex->ContextRecord->Dr6);
 		PcrtOutPrint(hCore, "  DR7   : %p\n", ex->ContextRecord->Dr7);
 	}
 	
 	if(ex->ContextRecord->ContextFlags & CONTEXT_SEGMENTS) {
-		PcrtOutPrint(hCore, "  SegGS : %p\n", ex->ContextRecord->SegGs);
-		PcrtOutPrint(hCore, "  SegFS : %p\n", ex->ContextRecord->SegFs);
+		PcrtOutPrint(hCore, "  SegGS : %p,", ex->ContextRecord->SegGs);
+		PcrtOutPrint(hCore, "  SegFS : %p,", ex->ContextRecord->SegFs);
 		PcrtOutPrint(hCore, "  SegES : %p\n", ex->ContextRecord->SegEs);
 		PcrtOutPrint(hCore, "  SegDS : %p\n", ex->ContextRecord->SegDs);
 	}
 
 	if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
-		PcrtOutPrint(hCore, "  EDI   : %p\n", ex->ContextRecord->Edi);
-		PcrtOutPrint(hCore, "  ESI   : %p\n", ex->ContextRecord->Esi);
+		PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
+		PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
 		PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
-		PcrtOutPrint(hCore, "  EDX   : %p\n", ex->ContextRecord->Edx);
-		PcrtOutPrint(hCore, "  ECX   : %p\n", ex->ContextRecord->Ecx);
+		PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
+		PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
 		PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
 	}
 
 	if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
-		PcrtOutPrint(hCore, "  EBP   : %p\n", ex->ContextRecord->Ebp);
-		PcrtOutPrint(hCore, "  EIP   : %p\n", ex->ContextRecord->Eip);
+		PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
+		PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
 		PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
-		PcrtOutPrint(hCore, "  EFlags: %p\n", ex->ContextRecord->EFlags);
-		PcrtOutPrint(hCore, "  ESP   : %p\n", ex->ContextRecord->Esp);
+		PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
+		PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
 		PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
 	}
 
@@ -445,16 +448,15 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	case EXCEPTION_FLT_INEXACT_RESULT:			PcrtOutPrint(hCore, "  Floating Point: Inexact Result (result cannot be represented as Decimal)\n"); break;
 	case EXCEPTION_FLT_INVALID_OPERATION:		PcrtOutPrint(hCore, "  Floating Point: Invalid Operation\n"); break;
 	case EXCEPTION_FLT_OVERFLOW:				PcrtOutPrint(hCore, "  Floating Point: Overflow. The Exponent is greater than the magnitude allowed by the corresponding type\n"); break;
-	case EXCEPTION_FLT_STACK_CHECK:
-	case EXCEPTION_FLT_UNDERFLOW:
-	case EXCEPTION_ILLEGAL_INSTRUCTION:
-	case EXCEPTION_INT_DIVIDE_BY_ZERO:
-	case EXCEPTION_INT_OVERFLOW:
-	case EXCEPTION_INVALID_DISPOSITION:
-	case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-	case EXCEPTION_PRIV_INSTRUCTION:
-	case EXCEPTION_STACK_OVERFLOW:
-		break;
+	case EXCEPTION_FLT_STACK_CHECK:				PcrtOutPrint(hCore, "  Floating Point: Stack over- or underflow\n"); break;
+	case EXCEPTION_FLT_UNDERFLOW:				PcrtOutPrint(hCore, "  Floating Point: Undeflow. The Exponent is lower than the magnitude allowed by the corresponding type\n"); break;
+	case EXCEPTION_ILLEGAL_INSTRUCTION:			PcrtOutPrint(hCore, "  Invalid Instruction\n"); break;
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:			PcrtOutPrint(hCore, "  Integer Division by Zero\n"); break;
+	case EXCEPTION_INT_OVERFLOW:				PcrtOutPrint(hCore, "  Integer Overflow\n"); break;
+	case EXCEPTION_INVALID_DISPOSITION:			PcrtOutPrint(hCore, "  Invalid Exception Disposition\n"); break;
+	case EXCEPTION_NONCONTINUABLE_EXCEPTION:	PcrtOutPrint(hCore, "  Noncontinuable Exception tried to continue\n"); break;
+	case EXCEPTION_PRIV_INSTRUCTION:			PcrtOutPrint(hCore, "  Tried to execute a Priviledged Instruction, which is not allowed in the current machine state\n"); break;
+	case EXCEPTION_STACK_OVERFLOW:				PcrtOutPrint(hCore, "  Stack Overflow\n"); break;
 	}
 
 	CloseHandle(hCore);

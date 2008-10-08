@@ -182,7 +182,7 @@ namespace parity
 
 			// relocation from current position to given symbol's index.
 			rel.setSymbolTableIndex(sym.getIndex());
-			rel.setType(type);
+			rel.setType(static_cast<unsigned short>(type));
 			rel.setVirtualAddress(struct_.SizeOfRawData);
 
 			relocs_.push_back(rel);
@@ -194,7 +194,7 @@ namespace parity
 			// set the symbols Value field to the end of the current data
 			//
 			sym.setValue(struct_.SizeOfRawData);
-			sym.setSectionNumber(idx_);
+			sym.setSectionNumber(static_cast<short>(idx_));
 		}
 
 		void Section::takeBufferControl()
@@ -344,6 +344,8 @@ namespace parity
 							break;
 						//
 						// we assume that this fits in 32bits, so there are no safety nets here.
+						// TODO: check wether this really works.. reading this a while after i
+						// wrote it, i'm not sure wether the addresses are patched correctly here.
 						//
 						char* target = MAKEPTR(char*, data_, position + 1 /* offset for insn byte */);
 						
@@ -466,7 +468,7 @@ namespace parity
 
 							return 1;
 						} else {
-							*target = new_target;
+							*target = static_cast<char>(new_target);
 						}
 					}
 					break;
@@ -487,6 +489,8 @@ namespace parity
 							//
 							// just like for the "big" call instructions, there are no safety nets here,
 							// and i just assume, that things fit in 32 bits.
+							// TODO: same as above: check wether this really patches correctly, since i
+							// don't think so reading this again.
 							//
 							char* target = MAKEPTR(char*, data_, position + 2 /* offset for (2!) insn bytes */);
 						
