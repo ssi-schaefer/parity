@@ -182,3 +182,5 @@ added capabilities to parity.runtime to handle exceptions the way other Unices d
 all parity built images now set the mode for stdin/out/err to _O_BINARY for compatability with other Unices.
 
 changed lots of include directives in parity.runtime to use some uppercase letters to avoid clashes with defines.
+
+added an implementation for the gettimeofday function, which is missing in windows.

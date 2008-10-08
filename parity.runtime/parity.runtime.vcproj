@@ -307,6 +307,10 @@
 				Name="sys"
 				>
 				<File
+					RelativePath=".\time.c"
+					>
+				</File>
+				<File
 					RelativePath=".\times.c"
 					>
 				</File>

@@ -20,12 +20,19 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_SYS_TIME_H__
-#define __PCRT_SYS_TIME_H__
+#include "sys/time.h"
+#include "sys/timeb.h"
+#include "sys/socket.h"
 
-#include "../netdb.h"
+//
+// TODO: 64 bit time_t? hmm... i think we can't do anything about it.
+//
+int gettimeofday(struct timeval *tv, void* unused)
+{
+    struct timeb tb; 
+    ftime(&tb);
 
-int gettimeofday(struct timeval *tv, void*);
-
-#endif
-
+    tv->tv_sec  = (long)tb.time;
+    tv->tv_usec = (long)tb.millitm;
+    return(0);
+}
