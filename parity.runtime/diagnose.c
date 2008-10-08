@@ -333,8 +333,22 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if(hCore == INVALID_HANDLE_VALUE) {
-		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error opening core file!\n");
-		return EXCEPTION_CONTINUE_SEARCH;
+		char nestedcore[] = "core0";
+		int num = 0;
+
+		while(num < 10 && hCore == INVALID_HANDLE_VALUE) {
+			hCore = CreateFile(nestedcore, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			if(hCore != INVALID_HANDLE_VALUE)
+				break;
+
+			nestedcore[4] = '0' + (++num);
+		}
+
+		if(hCore == INVALID_HANDLE_VALUE) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error opening core file!\n");
+			return EXCEPTION_CONTINUE_SEARCH;
+		}
 	}
 
 	//
