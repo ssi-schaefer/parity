@@ -34,7 +34,7 @@
 #  ifndef _USE_MATH_DEFINES
 #    define _USE_MATH_DEFINES 1
 #  endif
-#  include RUNTIME_INC(math.h)
+#  include RUNTIME_INC(Math.h)
 #pragma pop_macro("_USE_MATH_DEFINES")
 #pragma pop_macro("__STDC__")
 

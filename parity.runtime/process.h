@@ -65,7 +65,7 @@
 #    define spawnve __crt_invalid_spawnve
 #    define spawnvp __crt_invalid_spawnvp
 #    define spawnvpe __crt_invalid_spawnvpe
-#    include RUNTIME_INC(process.h)
+#    include RUNTIME_INC(Process.h)
 #  pragma pop_macro("execl")
 #  pragma pop_macro("execle")
 #  pragma pop_macro("execlp")
@@ -85,7 +85,7 @@
 #pragma pop_macro("__STDC__")
 #pragma pop_macro("_POSIX_")
 
-#include RUNTIME_INC(stdarg.h)
+#include RUNTIME_INC(Stdarg.h)
 
 PCRT_BEGIN_C
 

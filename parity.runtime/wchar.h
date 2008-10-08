@@ -33,7 +33,7 @@
 #  ifdef __STDC__
 #    undef __STDC__
 #  endif
-#  include RUNTIME_INC(wchar.h)
+#  include RUNTIME_INC(Wchar.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")
 

@@ -29,7 +29,7 @@
 #  ifndef _POSIX_
 #    define _POSIX_ 1
 #  endif
-#  include RUNTIME_INC(time.h)
+#  include RUNTIME_INC(Time.h)
 #pragma pop_macro("_POSIX_")
 
 #endif

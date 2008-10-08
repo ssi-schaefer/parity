@@ -29,7 +29,7 @@
 #  ifdef __STDC__
 #    undef __STDC__
 #  endif
-#  include RUNTIME_INC(ctype.h)
+#  include RUNTIME_INC(Ctype.h)
 #pragma pop_macro("__STDC__")
 
 #endif

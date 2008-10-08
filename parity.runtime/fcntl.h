@@ -29,7 +29,7 @@
 #  ifndef _POSIX_
 #    define _POSIX_ 1
 #  endif
-#  include RUNTIME_INC(fcntl.h)
+#  include RUNTIME_INC(Fcntl.h)
 #pragma pop_macro("_POSIX_")
 
 //

@@ -32,7 +32,7 @@
 #include "sys/types.h"
 #include "direct.h"
 
-#include RUNTIME_INC(stdarg.h)
+#include RUNTIME_INC(Stdarg.h)
 
 #define STDIN_FILENO	0
 #define STDOUT_FILENO	1

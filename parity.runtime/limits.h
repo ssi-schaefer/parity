@@ -29,7 +29,7 @@
 #  ifndef _POSIX_
 #    define _POSIX_ 1
 #  endif
-#  include RUNTIME_INC(limits.h)
+#  include RUNTIME_INC(Limits.h)
 #pragma pop_macro("_POSIX_")
 
 #endif

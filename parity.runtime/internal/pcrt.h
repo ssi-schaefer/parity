@@ -23,6 +23,12 @@
 #ifndef __PCRT_PARITYCRT_H__
 #define __PCRT_PARITYCRT_H__
 
+//
+// WARNING: use uppercase letters in include file names
+// always to avoid clashes with possible defines (e.g.
+// if malloc is defined to rpl_malloc, RUNTIME_INC will
+// try to include <rpl_malloc.h> which doesnt exist
+//
 #define RUNTIME_INC(x) <../include/x>
 
 #define PCRT_INLINE __inline

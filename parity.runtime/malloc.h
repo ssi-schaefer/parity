@@ -33,7 +33,7 @@
 #  ifdef __STDC__
 #    undef __STDC__
 #  endif
-#  include RUNTIME_INC(malloc.h)
+#  include RUNTIME_INC(Malloc.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")
 

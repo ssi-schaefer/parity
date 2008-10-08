@@ -44,7 +44,7 @@
 #    define chmod __crt_invalid_chmod
 #    define creat __crt_invalid_creat
 #    define unlink __crt_invalid_unlink
-#    include RUNTIME_INC(io.h)
+#    include RUNTIME_INC(Io.h)
 #  pragma pop_macro("open")
 #  pragma pop_macro("access")
 #  pragma pop_macro("chmod")
@@ -52,7 +52,7 @@
 #  pragma pop_macro("unlink")
 #pragma pop_macro("__STDC__")
 
-#include RUNTIME_INC(stdarg.h)
+#include RUNTIME_INC(Stdarg.h)
 
 //
 // redefine io.h functions which work with files to be able
