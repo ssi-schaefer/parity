@@ -153,7 +153,7 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 	stackframe_t* last = NULL;
 
 	while(_bp && _ip) {
-		stackframe_t* frame = malloc(sizeof(stackframe_t));
+		stackframe_t* frame = (stackframe_t*)malloc(sizeof(stackframe_t));
 
 		if(!frame) {
 			fprintf(stderr, "cannot allocate memory for stack trace!");
@@ -363,6 +363,8 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 
 		trace = trace->next;
 	}
+
+	trace = PcrtDestroyStackTrace(trace);
 
 	PcrtOutPrint(hCore, "\n");
 	PcrtOutPrint(hCore, "CPU Context at the time the exception occured:\n");
