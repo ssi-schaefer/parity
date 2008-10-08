@@ -353,7 +353,7 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	PcrtOutPrint(hCore, "NOTE: Since the Exception handler sees all exceptions that\n");
 	PcrtOutPrint(hCore, "      fly by, it may create a core file even though the\n");
 	PcrtOutPrint(hCore, "      process can and will continue. so make sure the\n");
-	PcrtOutPrint(hCore, "      process really terminated after writing the core file.\n");
+	PcrtOutPrint(hCore, "      process really terminated after writing the core file.\n\n");
 
 	while(trace) {
 		PcrtOutPrint(hCore, " [%d] %p %s(%d bytes)+0x%x\n", num++, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
