@@ -425,7 +425,7 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	PcrtOutPrint(hCore, "  Exception Code    : %p\n", ex->ExceptionRecord->ExceptionCode);
 	PcrtOutPrint(hCore, "  Exception Address : %p\n", ex->ExceptionRecord->ExceptionAddress);
 	PcrtOutPrint(hCore, "  Exception Flags   : %p (%s)\n", ex->ExceptionRecord->ExceptionFlags, (ex->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE ? "non-continueable" : "continueable"));
-	PcrtOutPrint(hCore, "  Nested Exception  : %p (%d)\n", ex->ExceptionRecord->ExceptionRecord, (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionCode : 0));
+	PcrtOutPrint(hCore, "  Nested Exception  : %p (%d at %p)\n", ex->ExceptionRecord->ExceptionRecord, (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionCode : 0), (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionAddress : 0));
 	PcrtOutPrint(hCore, "  Number of Params  : %d\n", ex->ExceptionRecord->NumberParameters);
 	
 	if(ex->ExceptionRecord->NumberParameters > 0) {
