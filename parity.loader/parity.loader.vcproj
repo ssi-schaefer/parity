@@ -324,6 +324,14 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\Confix2.dir"
+			>
+		</File>
+		<File
+			RelativePath=".\parity.conf.in"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

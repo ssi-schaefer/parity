@@ -16,6 +16,7 @@ ManifestExe = @ParityManifest@
 
 PCRTInclude = @top_srcdir@/parity.runtime
 PCRTLibrary = @top_builddir@/parity.runtime/libparity_parity.runtime.a
+ParityLoader = @top_builddir@/parity.loader/libparity_parity.loader.a
 
 @ParitySysIncludePaths@
 

@@ -400,6 +400,10 @@
 				</File>
 			</Filter>
 		</Filter>
+		<File
+			RelativePath=".\Confix2.dir"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

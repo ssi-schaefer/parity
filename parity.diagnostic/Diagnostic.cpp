@@ -27,6 +27,41 @@
 
 #include <psapi.h>
 
+#pragma comment(lib, "psapi.lib")
+
+#define BUFSIZE 512
+
+BOOL GetFileNameFromHandle(HANDLE hFile, char* pszFilename, size_t length) 
+{
+	BOOL bSuccess = FALSE;
+	HANDLE hFileMap;
+
+	//
+	// Would require a check wether the file is zero length
+	// but this should never happen with DLL or EXE files
+	// that are mapped into address space.
+	//
+
+	hFileMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 1, NULL);
+
+	if (hFileMap) 
+	{
+		void* pMem = MapViewOfFile(hFileMap, FILE_MAP_READ, 0, 0, 1);
+
+		if (pMem) 
+		{
+			if (GetMappedFileName (GetCurrentProcess(), pMem, pszFilename, length))
+			{
+				bSuccess = TRUE;
+			}
+			UnmapViewOfFile(pMem);
+		} 
+
+		CloseHandle(hFileMap);
+	}
+	return(bSuccess);
+}
+
 void Diagnose(FILE* out, DWORD dwTopProcess) {
 	DWORD dwContinuationStatus = DBG_CONTINUE;
 	DEBUG_EVENT ev;
@@ -70,7 +105,12 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 				fprintf(out, "[%d:%d] Exiting Thread: Exit Code: %d\n", ev.dwProcessId, ev.dwThreadId, ev.u.ExitThread.dwExitCode);
 				break;
 			case LOAD_DLL_DEBUG_EVENT:
-				fprintf(out, "[%d:%d] Loading DLL: Base: %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.LoadDll.lpBaseOfDll);
+				char buffer[MAX_PATH];
+				if(!GetFileNameFromHandle(ev.u.LoadDll.hFile, buffer, MAX_PATH)) {
+					fprintf(out, "warning: cannot obtain dll file name!\n");
+					buffer[0] = '\0';
+				}
+				fprintf(out, "[%d:%d] Loading DLL: %s, Base: %p\n", ev.dwProcessId, ev.dwThreadId, buffer, ev.u.LoadDll.lpBaseOfDll);
 				break;
 			case OUTPUT_DEBUG_STRING_EVENT:
 				if(ev.u.DebugString.nDebugStringLength > 0)
