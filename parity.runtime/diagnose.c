@@ -91,25 +91,6 @@ int PcrtAttachDebugger() {
 	return 0;
 }
 
-static void PcrtpPrintFormattedError(DWORD dw) 
-{ 
-    LPVOID lpMsgBuf;
-
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        dw,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR) &lpMsgBuf,
-        0, NULL );
-
-    fprintf(stderr, "ERROR %d: %s", dw, lpMsgBuf);
-
-    LocalFree(lpMsgBuf);
-}
-
 void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 {
 	stackframe_t* walk = stack;
