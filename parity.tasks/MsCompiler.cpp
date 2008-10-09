@@ -405,6 +405,8 @@ namespace parity
 					if(!ctx.getUseCommandScripts()) {
 						if(val.find(' ') != std::string::npos)
 							def += "\"" + val + "\"";
+						else
+							def += val;
 					} else {
 						def += val;
 					}
