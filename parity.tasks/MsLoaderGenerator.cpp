@@ -79,7 +79,7 @@ namespace parity
 						//
 						// try from non-installed structure?
 						//
-						utils::Log::warning("TODO: non-installed loader library search.");
+						utils::Log::warning("TODO: non-installed loader library search.\n");
 					}
 				#endif
 

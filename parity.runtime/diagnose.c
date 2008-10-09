@@ -20,6 +20,16 @@
 *                                                                *
 \****************************************************************/
 
+/* require at least windows XP API for GetModuleHandleEx to
+ * behave as we expect it for symbol searching... */
+#if defined(_WIN32_WINNT) && _WIN32_WINNT <= 0x0500
+# undef _WIN32_WINNT
+#endif
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501
+#endif
+
 #include <windows.h>
 #include <stdio.h>
 
