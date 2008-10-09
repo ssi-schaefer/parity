@@ -42,6 +42,7 @@ namespace parity
 			{ "-Y"			,setLinkerPassthrough		},	// GCC knows -Xlinker here.
 			{ "-v"			,showParityVersion			},
 			{ "-ctxdump"	,setCtxDump					},
+			{ "-cfg"		,addConfigString			},
 			//
 			// GCC command line switches
 			//

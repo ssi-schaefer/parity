@@ -55,6 +55,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 				break;
 			case EXCEPTION_DEBUG_EVENT:
 				fprintf(out, "[%d:%d] %sException: %x at %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.Exception.dwFirstChance ? "First Chance " : "", ev.u.Exception.ExceptionRecord.ExceptionCode, ev.u.Exception.ExceptionRecord.ExceptionAddress);
+				dwContinuationStatus = DBG_EXCEPTION_NOT_HANDLED;
 				break;
 			case EXIT_PROCESS_DEBUG_EVENT:
 				fprintf(out, "[%d:%d] Exiting Process: Exit Code: %d\n", ev.dwProcessId, ev.dwThreadId, ev.u.ExitProcess.dwExitCode);

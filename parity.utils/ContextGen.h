@@ -179,6 +179,8 @@ namespace parity
 				CTX_GETSET   (Path			,StatisticsFile		,""				)  /* internal only */ \
 				CTX_GETSET   (bool			,IgnoreOutputFilters,false			)  /* internal only */ \
 				CTX_GETSET   (PathVector	,AdditionalExecPaths,PathVector()	)  /* internal only */ \
+				CTX_GETSET   (bool			,GeneratePCRTEntry	,true			)  /* internal only */ \
+				CTX_GETSET   (bool			,GenerateSymbols	,true			)  /* internal only */ \
 				CTX_GETSET   (bool			,UseCommandScripts	,true			)  /* internal (MS) */ \
 				CTX_GETSET_I (std::string	,CompilerPassThrough,""				)  /* internal (compiler) */ \
 				CTX_GETSET_I (std::string	,LinkerPassThrough	,""				)  /* internal (linker) */ \

@@ -171,7 +171,7 @@ replaced old-style (C-style) casts in all the source code with the correct C++ c
 
 fixed a few warnings that occured when building core parity libraries with /W4 in visual studio.
 
-parity now generates a symbol table for every linked binary. this means that the images get a little larger on disk. this should have a minimal impact on loading times (in the range of a few microseconds), but no other disadvantages.
+parity now generates a symbol table for every linked binary (can be disabled). this means that the images get a little larger on disk. this should have a minimal impact on loading times (in the range of a few microseconds), but no other disadvantages.
 
 added capabilities to create stacktraces of the running program, and for fixed EIP/EBP register pairs as one can obtain from exception records.
 
@@ -181,6 +181,11 @@ added capabilities to parity.runtime to handle exceptions the way other Unices d
 
 all parity built images now set the mode for stdin/out/err to _O_BINARY for compatability with other Unices.
 
+added the configuration option to disable the generation of the so called PcrtInitEntry function which initializes the new exception handling mechanism and sets stream and error handling modes described above.
+
 changed lots of include directives in parity.runtime to use some uppercase letters to avoid clashes with defines.
 
 added an implementation for the gettimeofday function, which is missing in windows.
+
+added the capability to parse configuration directives directly from command line arguments, which makes it possible to influence all possible internals of parity per call.
+

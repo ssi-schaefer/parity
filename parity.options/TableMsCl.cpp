@@ -42,6 +42,7 @@ namespace parity
 			{ "-Y"			,setLinkerPassthrough		},
 			{ "-v"			,showParityVersion			},
 			{ "-ctxdump"	,setCtxDump					},
+			{ "-cfg"		,addConfigString			},
 			//
 			// CL and LINK command line switches
 			//

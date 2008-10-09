@@ -22,6 +22,7 @@
 
 #include "Internal.h"
 #include "Version.h"
+#include <Configuration.h>
 
 #include <iostream>
 
@@ -138,6 +139,19 @@ namespace parity
 				throw utils::Exception("%s is not a valid argument to %s", argument, option);
 
 			used = true;
+
+			return true;
+		}
+
+		bool addConfigString(const char* option, const char* argument, bool& used)
+		{
+			if(!argument || ::strlen(argument) < 1)
+				throw utils::Exception("%s requires an argument!", option);
+
+			used = true;
+
+			if(!utils::Config::parseString(utils::Context::getContext(), argument, strlen(argument)))
+				throw utils::Exception("cannot parse configuration string \"%s\"\n", argument);
 
 			return true;
 		}
