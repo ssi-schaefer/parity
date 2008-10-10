@@ -164,7 +164,7 @@ int PcrtInit()
 	// as we create core files after seting up exception
 	// handling.
 	//
-	SetErrorMode(GetErrorMode() | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
 
 	//
 	// Set stream modes to binary to stay compatible with the
