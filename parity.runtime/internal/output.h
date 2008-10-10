@@ -27,7 +27,8 @@
 
 PCRT_BEGIN_C
 
-void PcrtOutFormatString(char* buffer, const char* fmt, va_list args);
+void PcrtOutFormatStringVa(char* buffer, const char* fmt, va_list args);
+void PcrtOutFormatString(char* buffer, const char* fmt, ...);
 void PcrtOutPrint(HANDLE dest, char const* fmt, ...);
 void PcrtOutDebugString(char* buffer);
 

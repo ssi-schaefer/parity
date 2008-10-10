@@ -39,6 +39,8 @@
 #include "internal/output.h"
 #include "libgen.h"
 
+#define STACKTRACE_MAX_NONDETAILED_FRAMES 99
+
 extern void* _ReturnAddress();
 #pragma intrinsic(_ReturnAddress)
 
@@ -138,6 +140,25 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 	stack = PcrtDestroyStackTrace(stack);
 }
 
+static SymbolLookupType PcrtUseDebugSymbols() {
+	//
+	// Determine from Environment wether we should use Debug Informations
+	// (slower and maybe unavailable)...
+	//
+	static int checked = 0;
+	static DWORD dwSz;
+	
+	if(!checked) {
+		dwSz = GetEnvironmentVariableA("PCRT_DEBUG_SYMBOLS", NULL, 0);
+		checked = 1;
+	}
+
+	if(dwSz != 0)
+		return LookupDebugInfo;
+
+	return LookupInternal;
+}
+
 stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 {
 	stackframe_t* trace = NULL;
@@ -158,23 +179,28 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 
 		if(last) {
 			frame->size = (unsigned long)frame->ebp - (unsigned long)last->ebp;
-		}
 
-		//
-		// subtract from the size the room that the own ebp
-		// and the call return address take up in the frame.
-		//
-		// left in the size if the accumulated size of:
-		//  * local variables
-		//  * parameters for the next frame (!)
-		//    (the parameters for the call it is right now executing!)
-		//
-		frame->size -= (sizeof(void*)*2);
+			//
+			// subtract from the size the room that the own ebp
+			// and the call return address take up in the frame.
+			//
+			// left in the size if the accumulated size of:
+			//  * local variables
+			//  * parameters for the next frame (!)
+			//    (the parameters for the call it is right now executing!)
+			//
+			frame->size -= (sizeof(void*)*2);
+		}
 
 		_ip = _bp[1];
 
 		frame->ret = _ip;
-		frame->sym = PcrtGetNearestSymbol(frame->eip);
+
+		//
+		// ATTENTION: contains an allocated (strdup) pointer
+		// to the name, so free it again!
+		//
+		frame->sym = PcrtGetNearestSymbol(frame->eip, PcrtUseDebugSymbols());
 
 		if(!trace) {
 			trace = frame;
@@ -216,6 +242,10 @@ stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace)
 
 	while(trace) {
 		next = trace->next;
+
+		if(trace->sym.name)
+			free(trace->sym.name);
+
 		free(trace);
 		trace = next;
 	}
@@ -223,42 +253,192 @@ stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace)
 	return NULL;
 }
 
-syminfo_t PcrtGetNearestSymbol(void* addr)
-{
-	syminfo_t info = { 0, 0 };
-	syminfo_t* symtab;
-	modinfo_t module = PcrtGetContainingModule(addr);
+static char const* PcrtGetGuardMutexName() {
+	static char buffer[MAX_PATH] = { 0 };
 
-	if(!module.module) {
-		fprintf(stderr, "cannot obtain module information for symbol lookup (%p)!\n", addr);
-		return info;
-	}
-	
-	//
-	// keep this name in sync with the one in MsSymbolTableGenerator.
-	//
-	symtab = (syminfo_t*)GetProcAddress(module.module, "ParityGeneratedSymbolTable");
-
-	if(!symtab) {
-		//fprintf(stderr, "cannot find symbol table in %s (%p)\n", module.name, module.module);
-		return info;
+	if(buffer[0] == '\0') {
+		PcrtOutFormatString(buffer, "Local\\PcrtDebugInfoMutex-%p", GetCurrentProcessId());
 	}
 
+	return buffer;
+}
+
+static int PcrtIsDebugInitialized() {
 	//
-	// would it be better to copy and sort the table? i guess
-	// not, since we have to iterate over the whole thing in
-	// any case, and in this case only once. however if we would
-	// cache the results, this may bring some performance benefits
-	// if getting many, many stack traces (or sym infos).
+	// determine wether we have allready initialized the
+	// debugging information...
 	//
-	while(symtab->addr && symtab->name) {
-		if(((unsigned long)symtab->addr < (unsigned long)addr)
-			&& ((unsigned long)symtab->addr > (unsigned long)info.addr))
-		{
-			info = *symtab;
+	HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, PcrtGetGuardMutexName());
+
+	if(hMutex) {
+		CloseHandle(hMutex);
+		return 1;
+	}
+
+	return 0;
+}
+
+static void PcrtGuardDebugInitialization() {
+	if(PcrtIsDebugInitialized()) {
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot guard debug information initialization, since it already is guarded.\n");
+		return;
+	}
+
+	//
+	// the mutex object is slightly misused here: guarding
+	// the initialization creates a mutex object, but nobody
+	// ever waits on it, only it's existance is checked.
+	//
+	{
+		HANDLE hMutex = CreateMutex(NULL, 0, PcrtGetGuardMutexName());
+
+		if(!hMutex) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot create guard mutex, application may crash if more than one image try to retrieve symbol information.\n");
 		}
 
-		++symtab;
+		//
+		// intentionally don't close the handle, since otherwise
+		// the mutex would disappear again, which we don't want.
+		//
+	}
+}
+
+typedef BOOL (WINAPI * SymInitFunc)(HANDLE, PCTSTR, BOOL);
+typedef BOOL (WINAPI * SymAddrFunc)(HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*);
+
+HANDLE			hDbgLib;
+SymInitFunc		hInit;
+SymAddrFunc		hSym;
+
+void PcrtInitializeDebugInformation() {
+	//
+	// TODO: Guard all this with some process global mechanism
+	//
+	if(!PcrtIsDebugInitialized())
+	{
+		PcrtGuardDebugInitialization();
+
+		hDbgLib = LoadLibrary("dbghelp.dll");
+
+		if(!hDbgLib) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot load dbghelp.dll required for debug symbol handling!\n");
+			return;
+		}
+
+		hInit	= (SymInitFunc)		GetProcAddress(hDbgLib, "SymInitialize");
+		hSym	= (SymAddrFunc)		GetProcAddress(hDbgLib, "SymFromAddr");
+
+		if(!hInit || !hSym) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot load dbghelp.dll symbols.\n");
+		}
+
+		if(!hInit(GetCurrentProcess(), NULL, TRUE)) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot initialize debug symbol information.\n");
+		}
+	}
+}
+
+syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
+{
+	syminfo_t info = { 0, 0 };
+
+	if(t == LookupDebugInfo && !PcrtIsDebugInitialized()) {
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "warning: debug information not yet initialized, doing it now.\n");
+		PcrtInitializeDebugInformation();
+	}
+	
+	if(t == LookupDebugInfo && hSym) {
+		//
+		// Symbol initialization should be done only once, except
+		// when it is de-initialized. for now we take the penalty
+		// and de-initialize, so:
+		// TODO: initialize once, and protect with a (process local)
+		//       mutex or something alike.
+		//       if already initialized call SymRefreshModuleList instead!
+		//
+		// using debug symbols displays undecorated names by default
+		// whereas parity's mechanism displays decorated ones, which
+		// of course is a little bit faster.
+		//
+		// ATTENTION: Using the debug symbols nearly always gives
+		//            good results, even on binaries without debug
+		//            information, since parity exports almost all
+		//            symbols, and this information suffices.
+		//            For not exported symbols, debug symbols behave
+		//            exactly the same as paritys internal mechanism
+		//            and the nearest exported symbol is returned.
+		//            Since parity generates symbol information for
+		//            some symbols it doesn't export, parity's internal
+		//            mechanism can be more accurate on release builds.
+		//
+		// ATTENTION: Using the debug symbols can lead to a silent crash
+		//            of the application on stack overflows. this is
+		//            because the dbghelp.dll seems to require more stack
+		//            space than is available on the guard page. parity's
+		//            tracing and lookup functionality is slim enough to
+		//            fit in approximately 5 stack frames with each only
+		//            very few locals.
+		//
+		
+		DWORD64			iDisplacement;
+		unsigned char	aBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+		SYMBOL_INFO*	hSymInfo = (SYMBOL_INFO*)&aBuffer;
+
+		memset(&aBuffer, 0, sizeof(aBuffer));
+		hSymInfo->MaxNameLen = MAX_SYM_NAME;
+		hSymInfo->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+		if(!hSym(GetCurrentProcess(), (DWORD64)addr, &iDisplacement, hSymInfo)) {
+			return info;
+		}
+
+		info.addr = (void*)hSymInfo->Address;
+		info.name = _strdup(hSymInfo->Name);
+
+		return info;
+	} else {
+		syminfo_t* symtab;
+		modinfo_t module = PcrtGetContainingModule(addr);
+
+		if(!module.module) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot obtain module information for symbol lookup (%p)!\n", addr);
+			return info;
+		}
+		
+		//
+		// keep this name in sync with the one in MsSymbolTableGenerator.
+		//
+		symtab = (syminfo_t*)GetProcAddress(module.module, "ParityGeneratedSymbolTable");
+
+		if(!symtab) {
+			//fprintf(stderr, "cannot find symbol table in %s (%p)\n", module.name, module.module);
+			return info;
+		}
+
+		//
+		// would it be better to copy and sort the table? i guess
+		// not, since we have to iterate over the whole thing in
+		// any case, and in this case only once. however if we would
+		// cache the results, this may bring some performance benefits
+		// if getting many, many stack traces (or sym infos).
+		//
+		while(symtab->addr && symtab->name) {
+			if(((unsigned long)symtab->addr < (unsigned long)addr)
+				&& ((unsigned long)symtab->addr > (unsigned long)info.addr))
+			{
+				info = *symtab;
+			}
+
+			++symtab;
+		}
+
+		//
+		// take control over the name buffer, since this is
+		// const otherwise (buffer is free'd in the Destroy
+		// function...
+		//
+		if(info.name)
+			info.name = _strdup(info.name);
 	}
 
 	return info;
@@ -285,62 +465,10 @@ modinfo_t PcrtGetContainingModule(void* addr)
 	return info;
 }
 
-static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
-	HANDLE hCore;
+static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex, int detailed)
+{
 	long num = 0;
 	stackframe_t* trace;
-
-	switch(ex->ExceptionRecord->ExceptionCode)
-	{
-	case EXCEPTION_ACCESS_VIOLATION:
-	case EXCEPTION_IN_PAGE_ERROR:
-	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-	case EXCEPTION_ILLEGAL_INSTRUCTION:
-	case EXCEPTION_STACK_OVERFLOW:
-	case EXCEPTION_PRIV_INSTRUCTION:
-	case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-	case EXCEPTION_DATATYPE_MISALIGNMENT:
-	case EXCEPTION_FLT_DENORMAL_OPERAND:
-	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-	case EXCEPTION_FLT_INEXACT_RESULT:
-	case EXCEPTION_FLT_INVALID_OPERATION:
-	case EXCEPTION_FLT_OVERFLOW:
-	case EXCEPTION_FLT_STACK_CHECK:
-	case EXCEPTION_FLT_UNDERFLOW:
-	case EXCEPTION_INT_DIVIDE_BY_ZERO:
-	case EXCEPTION_INT_OVERFLOW:
-	case EXCEPTION_INVALID_DISPOSITION:
-		break;
-
-	case EXCEPTION_BREAKPOINT:
-	case EXCEPTION_SINGLE_STEP:
-	default:
-		/* those exceptions are not handled (includes C++ exceptions) */
-		return EXCEPTION_CONTINUE_SEARCH;
-	}
-
-	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Exception %p at %p (core dumped)\n", ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
-
-	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if(hCore == INVALID_HANDLE_VALUE) {
-		char nestedcore[] = "core0";
-		int num = 0;
-
-		while(num < 10 && hCore == INVALID_HANDLE_VALUE) {
-			hCore = CreateFile(nestedcore, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-			if(hCore != INVALID_HANDLE_VALUE)
-				break;
-
-			nestedcore[4] = '0' + (++num);
-		}
-
-		if(hCore == INVALID_HANDLE_VALUE) {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error opening core file!\n");
-			return EXCEPTION_CONTINUE_SEARCH;
-		}
-	}
 
 	//
 	// cannot use the PcrtPrintStackTrace, since we should not rely
@@ -351,63 +479,92 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 
 	PcrtOutPrint(hCore, "Stack Layout at the time the exception occured:\n\n");
 
-	PcrtOutPrint(hCore, "NOTE: The symbol names are guessed by finding the nearest\n");
-	PcrtOutPrint(hCore, "      known symbol. this may be wrong, since private symbols\n");
-	PcrtOutPrint(hCore, "      are not recognized.\n\n");
+	if(detailed) {
+		if(PcrtUseDebugSymbols()) {
+			PcrtOutPrint(hCore, "NOTE: The symbol names are guessed by finding the nearest\n");
+			PcrtOutPrint(hCore, "      known symbol. this may be wrong, since private symbols\n");
+			PcrtOutPrint(hCore, "      are not recognized.\n\n");
+		}
 
-	PcrtOutPrint(hCore, "NOTE: Since the Exception handler sees all exceptions that\n");
-	PcrtOutPrint(hCore, "      fly by, it may create a core file even though the\n");
-	PcrtOutPrint(hCore, "      process can and will continue. so make sure the\n");
-	PcrtOutPrint(hCore, "      process really terminated after writing the core file.\n\n");
+		PcrtOutPrint(hCore, "NOTE: Since the Exception handler sees all exceptions that\n");
+		PcrtOutPrint(hCore, "      fly by, it may create a core file even though the\n");
+		PcrtOutPrint(hCore, "      process can and will continue. so make sure the\n");
+		PcrtOutPrint(hCore, "      process really terminated after writing the core file.\n\n");
+	}
 
 	while(trace) {
-		PcrtOutPrint(hCore, " [%d] %p %s(%d bytes)+0x%x\n", num++, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
+		//
+		// PcrtOutPrint does not know too extensive formatting stuff, so
+		// we have to do some of the work per pedes here.
+		//
+		modinfo_t mod = PcrtGetContainingModule(trace->eip);
+		char modname_aligned[ST_FW_MODULE + 1];
+		char * modname_unaligned = basename(mod.name);
+		long len = lstrlen(modname_unaligned);
+
+		if(len > ST_FW_MODULE)
+			len = ST_FW_MODULE;
+
+		memset(modname_aligned, ' ', sizeof(modname_aligned));
+		lstrcpyn(&modname_aligned[ST_FW_MODULE - len], modname_unaligned, ST_FW_MODULE);
+
+		++num;
+
+		PcrtOutPrint(hCore, " [%s%d]", ( num < 100000 ? ( num < 10000 ? ( num < 1000 ? ( num < 100 ? ( num < 10 ? "     " : "    " ) : "   ") : "  ") : " ") : ""), num);
+		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n", modname_aligned, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
 
 		if(!trace->next)
 			break;
+
+		if(num >= STACKTRACE_MAX_NONDETAILED_FRAMES && !detailed) {
+			PcrtOutPrint(hCore, " ... additional frames omitted in non-detailed mode ...\n");
+			break;
+		}
 
 		trace = trace->next;
 	}
 
 	trace = PcrtDestroyStackTrace(trace);
 
-	PcrtOutPrint(hCore, "\n");
-	PcrtOutPrint(hCore, "CPU Context at the time the exception occured:\n");
+	if(detailed) {
+		PcrtOutPrint(hCore, "\n");
+		PcrtOutPrint(hCore, "CPU Context at the time the exception occured:\n");
 
-	PcrtOutPrint(hCore, "  Flags : %p\n", ex->ContextRecord->ContextFlags);
-	
-	if(ex->ContextRecord->ContextFlags & CONTEXT_DEBUG_REGISTERS) {
-		PcrtOutPrint(hCore, "  DR0   : %p,", ex->ContextRecord->Dr0);
-		PcrtOutPrint(hCore, "  DR1   : %p,", ex->ContextRecord->Dr1);
-		PcrtOutPrint(hCore, "  DR2   : %p\n", ex->ContextRecord->Dr2);
-		PcrtOutPrint(hCore, "  DR3   : %p,", ex->ContextRecord->Dr3);
-		PcrtOutPrint(hCore, "  DR6   : %p,", ex->ContextRecord->Dr6);
-		PcrtOutPrint(hCore, "  DR7   : %p\n", ex->ContextRecord->Dr7);
-	}
-	
-	if(ex->ContextRecord->ContextFlags & CONTEXT_SEGMENTS) {
-		PcrtOutPrint(hCore, "  SegGS : %p,", ex->ContextRecord->SegGs);
-		PcrtOutPrint(hCore, "  SegFS : %p,", ex->ContextRecord->SegFs);
-		PcrtOutPrint(hCore, "  SegES : %p\n", ex->ContextRecord->SegEs);
-		PcrtOutPrint(hCore, "  SegDS : %p\n", ex->ContextRecord->SegDs);
-	}
+		PcrtOutPrint(hCore, "  Flags : %p\n", ex->ContextRecord->ContextFlags);
+		
+		if(ex->ContextRecord->ContextFlags & CONTEXT_DEBUG_REGISTERS) {
+			PcrtOutPrint(hCore, "  DR0   : %p,", ex->ContextRecord->Dr0);
+			PcrtOutPrint(hCore, "  DR1   : %p,", ex->ContextRecord->Dr1);
+			PcrtOutPrint(hCore, "  DR2   : %p\n", ex->ContextRecord->Dr2);
+			PcrtOutPrint(hCore, "  DR3   : %p,", ex->ContextRecord->Dr3);
+			PcrtOutPrint(hCore, "  DR6   : %p,", ex->ContextRecord->Dr6);
+			PcrtOutPrint(hCore, "  DR7   : %p\n", ex->ContextRecord->Dr7);
+		}
+		
+		if(ex->ContextRecord->ContextFlags & CONTEXT_SEGMENTS) {
+			PcrtOutPrint(hCore, "  SegGS : %p,", ex->ContextRecord->SegGs);
+			PcrtOutPrint(hCore, "  SegFS : %p,", ex->ContextRecord->SegFs);
+			PcrtOutPrint(hCore, "  SegES : %p\n", ex->ContextRecord->SegEs);
+			PcrtOutPrint(hCore, "  SegDS : %p\n", ex->ContextRecord->SegDs);
+		}
 
-	if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
-		PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
-		PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
-		PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
-		PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
-		PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
-		PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
-	}
+		if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
+			PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
+			PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
+			PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
+			PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
+			PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
+			PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
+		}
 
-	if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
-		PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
-		PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
-		PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
-		PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
-		PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
-		PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+		if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
+			PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
+			PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
+			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
+			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
+			PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
+			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+		}
 	}
 
 	PcrtOutPrint(hCore, "\n");
@@ -447,6 +604,14 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 			PcrtOutPrint(hCore, "  Page Mapping Error %x at %p trying to %s memory at %p\n", ex->ExceptionRecord->ExceptionInformation[2], ex->ExceptionRecord->ExceptionAddress, ((int)ex->ExceptionRecord->ExceptionInformation[0] == 1 ? "write" : "read"), ex->ExceptionRecord->ExceptionInformation[1]);
 		break;
 
+	case 0xE06D7363:
+		if(ex->ExceptionRecord->NumberParameters >= 3)
+			PcrtOutPrint(hCore, "  Native C++ Exception. C++ Frame Magic: %p, Object pointer: %p, Type: %x\n", ex->ExceptionRecord->ExceptionInformation[0], ex->ExceptionRecord->ExceptionInformation[1], ex->ExceptionRecord->ExceptionInformation[2]);
+		else
+			PcrtOutPrint(hCore, "  Possibly Native C++ Exception (damaged exception information)\n"); break;
+		break;
+
+
 	/* other exception codes... */
 	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:		PcrtOutPrint(hCore, "  Array bounds exceeded\n"); break;
 	case EXCEPTION_DATATYPE_MISALIGNMENT:		PcrtOutPrint(hCore, "  Datatype misaligned\n"); break;
@@ -464,27 +629,169 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	case EXCEPTION_NONCONTINUABLE_EXCEPTION:	PcrtOutPrint(hCore, "  Noncontinuable Exception tried to continue\n"); break;
 	case EXCEPTION_PRIV_INSTRUCTION:			PcrtOutPrint(hCore, "  Tried to execute a Priviledged Instruction, which is not allowed in the current machine state\n"); break;
 	case EXCEPTION_STACK_OVERFLOW:				PcrtOutPrint(hCore, "  Stack Overflow\n"); break;
+	case EXCEPTION_BREAKPOINT:					PcrtOutPrint(hCore, "  Debug Breakpoint\n"); break;
+	case EXCEPTION_SINGLE_STEP:					PcrtOutPrint(hCore, "  Single Step Breakpoint\n"); break;
+	case 0xE0434F4D:							PcrtOutPrint(hCore, "  Managed C++ (CLR) Exception.\n"); break;
+	default:									PcrtOutPrint(hCore, "  Unrecognized Structured Exception.\n"); break;
 	}
+}
+
+static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
+	HANDLE hCore;
+
+	switch(ex->ExceptionRecord->ExceptionCode)
+	{
+	case EXCEPTION_ACCESS_VIOLATION:
+	case EXCEPTION_IN_PAGE_ERROR:
+	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+	case EXCEPTION_ILLEGAL_INSTRUCTION:
+	case EXCEPTION_STACK_OVERFLOW:
+	case EXCEPTION_PRIV_INSTRUCTION:
+	case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+	case EXCEPTION_DATATYPE_MISALIGNMENT:
+	case EXCEPTION_FLT_DENORMAL_OPERAND:
+	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+	case EXCEPTION_FLT_INEXACT_RESULT:
+	case EXCEPTION_FLT_INVALID_OPERATION:
+	case EXCEPTION_FLT_OVERFLOW:
+	case EXCEPTION_FLT_STACK_CHECK:
+	case EXCEPTION_FLT_UNDERFLOW:
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:
+	case EXCEPTION_INT_OVERFLOW:
+	case EXCEPTION_INVALID_DISPOSITION:
+		break;
+
+	case EXCEPTION_BREAKPOINT:
+	case EXCEPTION_SINGLE_STEP:
+	default:
+		/* those exceptions are not handled (includes C++ exceptions) */
+		return EXCEPTION_CONTINUE_SEARCH;
+	}
+
+	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if(hCore == INVALID_HANDLE_VALUE) {
+		char nestedcore[] = "core0";
+		int num = 0;
+
+		while(num < 10 && hCore == INVALID_HANDLE_VALUE) {
+			hCore = CreateFile(nestedcore, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			if(hCore != INVALID_HANDLE_VALUE)
+				break;
+
+			nestedcore[4] = '0' + (++num);
+		}
+
+		if(hCore == INVALID_HANDLE_VALUE) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error opening core file!\n");
+			return EXCEPTION_CONTINUE_SEARCH;
+		}
+	}
+
+	PcrtWriteExceptionInformation(hCore, ex, 1);
+
+	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Exception %p at %p (core dumped)\n", ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
 
 	CloseHandle(hCore);
 
 	//
-	// this should result in process termination
+	// this should result in process termination in most cases.
 	//
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static HANDLE hTraceFile = INVALID_HANDLE_VALUE;
+static LONG CALLBACK PcrtHandleExceptionTrace(struct _EXCEPTION_POINTERS* ex) {
+	SYSTEMTIME time;
+
+	//
+	// Only do something if we're enabled
+	//
+	if(hTraceFile == INVALID_HANDLE_VALUE)
+		return EXCEPTION_CONTINUE_SEARCH;
+
+	GetSystemTime(&time);
+
+	PcrtOutPrint(hTraceFile, "Exception seen at %d:%d:%d.%d: %p at %p. Details follow:\n\n", time.wHour, time.wMinute, time.wSecond, time.wMilliseconds, ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
+	PcrtWriteExceptionInformation(hTraceFile, ex, 0);
+	PcrtOutPrint(hTraceFile, "\n");
+
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
 void PcrtSetupExceptionHandling()
 {
+	unsigned long sz;
 	//
 	// WARNING: only very basic initialization can be done here,
 	// since mainCRTStartup has not run yet, and thus std streams
 	// etc. may not be initialized yet.
 	//
-	if(!AddVectoredExceptionHandler(1, PcrtHandleException)) {
+	if(!AddVectoredExceptionHandler(0, PcrtHandleException)) {
 		//
 		// i know, std streams...
 		//
-		fprintf(stderr, "failed to install exception handler!\n");
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed to install exception handler!\n");
 	}
+
+	//
+	// Install the Exception Tracer if requested by environment.
+	//
+	if((sz = GetEnvironmentVariableA("PCRT_TRACE_EXCEPTIONS", NULL, 0)) != 0) {
+		if(sz > 1) {
+			char* buffer = (char*)HeapAlloc(GetProcessHeap(), 0, sz);
+
+			if(!buffer) {
+				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot allocate memory to read exception trace location, exception tracing not enabled.\n");
+				return;
+			}
+
+			if(GetEnvironmentVariableA("PCRT_TRACE_EXCEPTIONS", buffer, sz) == 0) {
+				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot read exception trace location from environment, exception tracing not enables.\n");
+				HeapFree(GetProcessHeap(), 0, buffer);
+				return;
+			}
+
+			if(lstrcmpiA(buffer, "on") == 0 || lstrcmpiA(buffer, "yes") == 0 || (lstrlen(buffer) == 1 && (buffer[0] >= '0' && buffer[0] <= '9')))
+				hTraceFile = GetStdHandle(STD_ERROR_HANDLE);
+			else
+				hTraceFile = CreateFile(buffer, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			HeapFree(GetProcessHeap(), 0, buffer);
+
+			//
+			// i know, that there is a small handle leak here in theory, but the file
+			// should stay open all the time anyway, so why bother - the system closes
+			// the handle on exit anyway.
+			//
+		} else {
+			//
+			// Set, but empty, use STDERR.
+			//
+			hTraceFile = GetStdHandle(STD_ERROR_HANDLE);
+		}
+
+		if(hTraceFile == INVALID_HANDLE_VALUE) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "unknown error opening stream for exception tracing, not enabled.\n");
+			return;
+		}
+
+		{
+			SYSTEMTIME time;
+			GetSystemTime(&time);
+
+			PcrtOutPrint(hTraceFile, "Exception Tracing started at %d:%d:%d.%d.\n\n", time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
+		}
+
+		if(!AddVectoredExceptionHandler(1, PcrtHandleExceptionTrace)) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed to install exception trace handler, exception tracing not enabled.\n");
+		}
+	}
+
+	//
+	// Initialize Debug symbols if required.
+	//
+	if(PcrtUseDebugSymbols())
+		PcrtInitializeDebugInformation();
 }

@@ -25,7 +25,7 @@
 
 #include "internal/output.h"
 
-void PcrtOutFormatString(char* buffer, const char* fmt, va_list args)
+void PcrtOutFormatStringVa(char* buffer, const char* fmt, va_list args)
 {
 	const char* ptr = fmt;
 	const char* end = ptr;
@@ -120,6 +120,16 @@ void PcrtOutFormatString(char* buffer, const char* fmt, va_list args)
 	}
 }
 
+void PcrtOutFormatString(char* buffer, const char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	PcrtOutFormatStringVa(buffer, fmt, args);
+
+	va_end(args);
+}
+
 void PcrtOutPrint(HANDLE dest, char const* fmt, ...)
 {
 	//
@@ -130,7 +140,7 @@ void PcrtOutPrint(HANDLE dest, char const* fmt, ...)
 	va_list args;
 	va_start(args, fmt);
 
-	PcrtOutFormatString(buffer, fmt, args);
+	PcrtOutFormatStringVa(buffer, fmt, args);
 
 	va_end(args);
 

@@ -32,7 +32,7 @@
 //
 typedef struct {
 	void* addr;
-	char const* name;
+	char* name;
 } syminfo_t;
 
 //
@@ -62,6 +62,11 @@ typedef struct _stackframe_t {
 	struct _stackframe_t* next;
 } stackframe_t;
 
+typedef enum {
+	LookupInternal = 0,
+	LookupDebugInfo = 1
+} SymbolLookupType;
+
 PCRT_BEGIN_C
 
 extern int PcrtWaitForDebugger(int timeout);
@@ -72,7 +77,7 @@ extern void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack);
 extern stackframe_t* PcrtGetStackTrace();
 extern stackframe_t* PcrtGetStackTraceFrom(void* _bp, void* _ip);
 extern stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace);
-extern syminfo_t PcrtGetNearestSymbol(void* addr);
+extern syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t);
 extern modinfo_t PcrtGetContainingModule(void* addr);
 extern void PcrtSetupExceptionHandling();
 

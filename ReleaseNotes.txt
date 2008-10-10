@@ -189,3 +189,8 @@ added an implementation for the gettimeofday function, which is missing in windo
 
 added the capability to parse configuration directives directly from command line arguments, which makes it possible to influence all possible internals of parity per call.
 
+parity-built binaries don't support windows 2000 any longer, because of the new features built into them. those binaries may still work on windows 2000 if new features are disabled.
+
+added exception tracing capabilities to parity.runtime. this feature can be eneabled by setting the environment variable PCRT_TRACE_EXCEPTIONS to either any number, "on", "yes", or any filename where the information should be written to instead of stderr.
+
+added debug symbol handling capabilities to parity.runtime for exception handling and tracing. to enable set the environment variable to PCRT_DEBUG_SYMBOLS to any value. be aware the binaries have to be built debugable for this to work. also the dbghel.dll has to be present an recent enough. in contrary to this mode, the internal symbol resolution works also with release builds and is faster, but is less accurate.
