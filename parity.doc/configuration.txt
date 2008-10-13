@@ -274,11 +274,45 @@ ShortWchar (bool)
 	Default: off
 
 CompilerDefaults (std::string)
+	Specifies the default arguments, that are passed to the compiler. This can be
+	overridden, but be sure to include the existing default values for the compiler
+	output and resulting binary code to remain compatible.
+	Default: /nologo
+	
 AssemblerDefaults (std::string)
+	Same as CompilerDefaults, but the arguments get passed to the Assembler.
+	Default: /nologo /Cp
+
 CompilerExe (Path)
+	Specifies the path to the compiler to use, normally an absolute path to cl.exe.
+	The default is an empty string, since a configuration directive is generated
+	by configure into the default (installed) parity.conf.
+	Default: ""
+
 AssemblerExe (Path)
+	Specifies the path to the assembler to use, normally an absolute path to ml.exe.
+	The default is an empty string, since a configuration directive is generated
+	by configure into the default (installed) parity.conf.
+	Default: ""
+	
 TimeT32Bit (bool)
+	Specifies wether the "time_t" type should be 32 or 64 bit wide. Be aware that
+	changing this creates ABI incompatible code, and may break your or others
+	libraries and/or executables.
+	Default: on
+	
 Runtime (RuntimeType)
+	Specifies which type of runtime to use when building and linking. Be aware that
+	mixing this among libraries and executables can be dangerous, since the memory
+	management functions are inside this runtime library. Allocating a pointer in
+	one of them and freeing in another may result in errors.
+	This can be	one of:
+	 a) "dynamic"
+	 b) "static"
+	 c) "dynamic debug"
+	 d) "static debug"
+	Default: dynamic
+
 ForcedLanguage (LanguageType)
 AnsiMode (bool)
 StackReserve (long)
@@ -288,7 +322,13 @@ HeapCommit (long)
 LibraryPaths (PathVector)
 LinkerSharedDefaults (std::string)
 LinkerDefaults (std::string)
+
 LinkerExe (Path)
+	Specifies the path to the linker to use, normally an absolute path to link.exe.
+	The default is an empty string, since a configuration directive is generated
+	by configure into the default (installed) parity.conf.
+	Default: ""
+
 SysLibraryPaths (PathVector)
 ObjectsLibraries (PathVector)
 ForceLink (bool)
