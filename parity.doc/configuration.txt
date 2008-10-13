@@ -1,6 +1,13 @@
 Configuration directives supported by parity:
 =============================================
 
+DebugLevel (Level)
+	Describes the verbosity of parity. There are four different levels available:
+	 a) verbose: output internal diagnostic information
+	 b) profile: output progiling information (time measurements)
+	 c) warning: output warnings and errors (default)
+	 d) error:   only output errors, no warnings.
+
 BackendType (ToolchainType)
 	Describes the type of Backend to use. This is used to decide which form
 	of paths to use, wether command scripts are allowed, etc.
@@ -83,33 +90,189 @@ SharedEntryPoint (std::string)
 	Default: ""
 
 RunPaths (PathVector)
+	Specifies a list of paths that are hardcoded into the binary when linking. These
+	paths are used for the runtime shared library lookup mechanism of the parity.loader.
+	If one or more paths are specified, the LD_RUN_PATH variable is ignored during
+	linking.
+	Default: (empty)
+
 KeepTemporary (bool)
+	Specifies wether temporary files should be kept, instead of deleting them at exit.
+	parity creates zero to one temporary files per compilation, and up to approximately
+	five temporary files per linker call, all of them in the current directory.
+	Default: off
+
 TimingShowTasks (bool)
+	Specifies wether the Timing statistics shown with DebugLevel "profile" include timing
+	information about every child process called by parity.
+	Default: on
+
 StatisticsFile (Path)
+	Specifies the path to a file, where statistical information should be written to.
+	Statistical information is only collected, if this file is set. After running parity,
+	the file can be evaluated using the parity.statistics command line utility.
+	Default: ""
+
 IgnoreOutputFilters (bool)
+	Specifies wether output filters should be ignored. There are various output filters
+	set for the compiler and linker, stripping away warnings that don't make any sense
+	when using parity, because they are either false positives, or save to ignore (for
+	example a warning about optimization not beeing supported in the standard edition
+	of cl.exe in Visual Studio .NET 2003).
+	Default: off
+
 AdditionalExecPaths (PathVector)
+	Specifies a list of paths that are required to successfully execute compiler, linker
+	and other utilities required by parity. These paths should be detected by the
+	configure script of not using the win32 version of parity.
+	Default: (empty)
+
 GeneratePCRTEntry (bool)
+	Specifies wether an entry point function for parity.runtime initialization should be
+	generated. If this is disabled, parity.runtime will not be initialized. The binary
+	which links against parity.runtime will still be fully functional, but some advanced
+	features will not be available, like more Unixish exception handling (no message
+	boxes, but rather a "core" file containing plain text exception information, including
+	a stack trace), exception tracing, binary output streams (no \r on stderr, stdout and
+	stdin), etc.
+	Default: on
+
 GenerateSymbols (bool)
+	Specifies wether a Symbol Table should be generated while linking. This creates a
+	table of symbol names, and relocations to the real address (so this effectively
+	creates a reference to each and every local symbol, thus every object from every
+	library on the link line will be linked in, even if it is otherwise unused). This
+	symbol table can be used to get human readable stack traces from release binaries
+	(for example when writing a "core" file).
+	Default: on
+
 UseCommandScripts (bool)
+	Specifies wether command scripts should be used when starting child processes. This
+	is done only if the utility which is to be started supports this. This way command
+	line overflows can be prevented with very long command lines.
+	Default: on
+
 ExportAll (bool)
+	Specifies wether all symbols should be exported, even from static libraries. This
+	is enabled automatically by parity - if not already enabled, if it detects, that
+	only static libraries are on the command line. Bu default parity does not export
+	symbols from static libraries, since those are treated as private to each binary.
+	Default: off
+
 ExportFromExe (bool)
+	Specifies wether parity should export all symbols from executables, much the same
+	as when linking shared libraries. This has the advantage that dlopen() works on
+	executables, and even the own process.
+	The problem with this directive is pretty much the same as with GenerateSymbols:
+	exporting a symbols results in a reference to that symbol. If one links against
+	a static library containing (unneeded) object files, containing references to
+	unavailable symbols (since the containing library is not on the link line), the
+	link will fail, since those symbols are unresolved. Without this directive set,
+	the link will go fine, since the linker finds the object inside the library
+	unreferenced, and throws it away for this link.
+	Default: on
+
 KeepComments (bool)
+	Specifies wether to keep comments in preprocessed source files. Enabling this is
+	the same as passing "-C" to the gcc compiler frontend on the command line.
+	Default: off
+
 NoStdIncludes (bool)
+	Ignore the standard include directories when preprocessing. Be aware that enabling
+	this results in no include paths beeing set except the ones provided by the user.
+	Be carefull, when setting include paths yourself. For a list of standard system
+	directories, see SysIncludePaths.
+	
 Defines (DefineMap)
+	Specifies a list of key-value pairs, which describe defines set during compilation
+	and preprocessing.
+	Default: __PARITY__ (and depending on the frontend __PARITY_GNU__ or __PARITY_MS__)
+	         Also the default parity.conf sets _WIN32_LEAN_AND_MEAN.
+	         POSIX or MixedMode compiler modes set many others (see parity.conf).
+
 IncludePaths (PathVector)
+	Specifies a list of include paths. Specifying -I on the command line, results
+	in the path beeing added to this list.
+	Default: (empty)
+
 SysIncludePaths (PathVector)
+	Specifies a list of system relevant include paths. Paths cannot be added to this
+	list from the command line.
+	Default: a) the parity.runtime include directory, which overrides many include
+	            files from the default c-runtime library.
+	         b) the c-runtime library include directory from the compiler.
+	         c) the Windows SDK include directory.
+
 OptimizeLevel (long)
+	Specifies the level of optimization applied at compile time. This can be a value
+	in the range of zero to three. When building debugable code, be careful with
+	optimization, since the debug information may no longer match the generated code.
+	Default: 0
+
 OmitFramePointer (bool)
+	Specifies wether frame pointers should be omitted. If omitting those, the "ebp"
+	register can be used as a general purpose register in addition to the existing
+	ones. This makes it impossible to create stack traces for the current process.
+	It even very likely crashes the program when trying to get a stack trace.
+	Be aware that parity.runtime automatically creates stack traces on program
+	crashes when GeneratePCRTEntry is enabled (which it is by default). This will
+	most likely result in a nested exception, if not in a recursive exception, which
+	crashes the program with false error messages, or simply leaves the process
+	hanging.
+	Default: off
+
 InlineFunctions (bool)
+	Specifies wether inline function expansion should occur. This is enabled by
+	default with all optimization levels greater than zero.
+	Default: off
+
 UseSSE (bool)
+	Specifies wether ther compiler should generate SSE instructions in the target
+	object file, to speed up the resulting code.
+	Default: off
+
 UseSSE2 (bool)
+	Same as UseSSE, except that this directive decides wether SSE2 instructions
+	should be generated.
+	Default: off
+
 ForScope (bool)
+	Specifies which scope variables should have, that are defined in the header
+	of a for loop (C++ only).
+	Default: on
+
 MsExtensions (bool)
+	Specifies wether Microsoft Extensions to C/C++ should be enabled.
+	Default: on
+
 WarningLevel (long)
+	Specifies the warning level for the compiler. The higher the level, the more
+	warnings get issued. The valid range is zero to four, where four produces
+	extremely much noise on the terminal, which can contain false positives, and/or
+	unwanted warnings.
+	Default: 3
+	
 WarningAsError (bool)
+	Specifies wether warnings should be treated as errors. This leads to compiler
+	exit everytime a warning is encountered.
+	Default: off
+	
 ExceptionHandling (bool)
+	Specifies wether exception handling should be enabled. Internally in parity this
+	results in /EHsc beeing put on the command line for cl.exe if the backend is the
+	Microsoft compiler. However, without this option, exception handling is still
+	enabled, but behaves slightly different.
+	Default: on
+
 RuntimeTypes (bool)
+	Specifies wether Runtime Type Information (RTTI) should be generated, to enable
+	C++ code to use things like "dynamic_cast".
+	Default: on
+
 ShortWchar (bool)
+	Specifies wether the wchar_t type should be a sperate type or "unsigned short".
+	Default: off
+
 CompilerDefaults (std::string)
 AssemblerDefaults (std::string)
 CompilerExe (Path)

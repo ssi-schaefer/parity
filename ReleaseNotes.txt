@@ -196,3 +196,13 @@ added exception tracing capabilities to parity.runtime. this feature can be enea
 added debug symbol handling capabilities to parity.runtime for exception handling and tracing. to enable set the environment variable to PCRT_DEBUG_SYMBOLS to any value. be aware the binaries have to be built debugable for this to work. also the dbghel.dll has to be present an recent enough. in contrary to this mode, the internal symbol resolution works also with release builds and is faster, but is less accurate.
 
 parity now knows how to handle SIGPIPE correctly; all child processes are now terminated, instead of keeping them running, while parity dies. this solves issues with file handles staying open in child processes, blocking those files for new processes. this happend for example if doing "parity.gnu.gcc -E <somefile>.c | head". this still does not work in the win32 version of parity, since there is no easy way of detecting a broken pipe on win32 with C++ streams.
+
+forcing inline function expansion with -finline-functions now works as expected. previously inline expansion was only enabled, when the optimization level was greater than zero.
+
+fixed the -fno-ms-extensions switch, which was not working correctly.
+
+fixed the -fno-rtti switch, which was not working correctly.
+
+fixed the -ffor-scope switch, which was not working correctly.
+
+fixed the -fshort-wchar switch, which was not working correctly.

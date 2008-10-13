@@ -206,7 +206,7 @@ namespace parity
 				CTX_GETSET   (bool			,InlineFunctions	,false			)  /* optimization */ \
 				CTX_GETSET   (bool			,UseSSE				,false			)  /* feature */ \
 				CTX_GETSET   (bool			,UseSSE2			,false			)  /* feature */ \
-				CTX_GETSET   (bool			,ForScope			,false			)  /* feature */ \
+				CTX_GETSET   (bool			,ForScope			,true			)  /* feature */ \
 				CTX_GETSET   (bool			,MsExtensions		,true			)  /* feature */ \
 				CTX_GETSET   (long			,WarningLevel		,3				)  /* feature */ \
 				CTX_GETSET   (bool			,WarningAsError		,false			)  /* feature */ \

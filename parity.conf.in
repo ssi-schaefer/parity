@@ -22,6 +22,10 @@ section default {
 
 	@ParitySysLibraryPaths@
 	
+	PCRTInclude = @PcrtInclude@
+	PCRTLibrary = @PcrtLibrary@
+	LoaderLibrary = @LoaderLibrary@
+	
 	Defines = WIN32_LEAN_AND_MEAN
 
 	ObjectsLibraries = kernel32.lib

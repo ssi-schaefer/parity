@@ -99,10 +99,40 @@ namespace parity
 				vec.push_back("/EHsc");
 
 			//
+			// Decide about inline function expansion.
+			//
+			if(ctx.getOptimizeLevel() <= 0 && ctx.getInlineFunctions())
+				vec.push_back("/Ob2");
+
+			//
+			// Decide about microsoft extensions.
+			//
+			if(!ctx.getMsExtensions())
+				vec.push_back("/Za");
+
+			//
 			// Decide about runtime type information
 			//
 			if(ctx.getRuntimeTypes())
 				vec.push_back("/GR");
+			else
+				vec.push_back("/GR-");
+
+			//
+			// Decide about for scope.
+			//
+			if(ctx.getForScope())
+				vec.push_back("/Zc:forScope");
+			else
+				vec.push_back("/Zc:forScope-");
+
+			//
+			// Decide about the type of wchar_t.
+			//
+			if(ctx.getShortWchar())
+				vec.push_back("/Zc:wchar_t");
+			else
+				vec.push_back("/Zc:wchar_t-");
 
 			//
 			// Decide about time_t size

@@ -274,12 +274,15 @@ AC_DEFUN([PARITY_CONFIGURE],
 	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
 	rm -f $ParityAdditionalExecPaths > /dev/null 2>&1
 
-	echo "	SysIncludePaths = $prefix/include/parity.runtime" >> $ParitySysIncludePaths
 	echo "	SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
 	echo "	SysIncludePaths = $SdkIncludeDir" >> $ParitySysIncludePaths
 
 	echo "	SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
 	echo "	SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
+
+	PcrtInclude="$prefix/include/parity.runtime"
+	PcrtLibrary="$prefix/lib/libparity_parity.runtime.a"
+	LoaderLibrary="$prefix/lib/libparity_parity.loader.a"
 
 	#
 	# Lookup required paths.
@@ -294,6 +297,10 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST(ParityAssembler)
 	AC_SUBST(ParityLinker)
 	AC_SUBST(ParityManifest)
+	
+	AC_SUBST(PcrtInclude)
+	AC_SUBST(PcrtLibrary)
+	AC_SUBST(LoaderLibrary)
 
 	AC_SUBST_FILE(ParityAdditionalExecPaths)
 	AC_SUBST_FILE(ParitySysIncludePaths)
