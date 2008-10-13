@@ -343,7 +343,7 @@ void PcrtInitializeDebugInformation() {
 		//
 		// refresh symbol list.
 		//
-		if(hRefresh && !hRefresh(GetCurrentProcess()) {
+		if(hRefresh && !hRefresh(GetCurrentProcess())) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot refresh debug information for loaded modules.\n");
 		}
 	}
