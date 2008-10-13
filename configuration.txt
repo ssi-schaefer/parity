@@ -1,3 +1,0 @@
-Configuration directives supported by parity:
-=============================================
-

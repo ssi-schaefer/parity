@@ -1,0 +1,88 @@
+Configuration directives supported by parity:
+=============================================
+
+CTX_GETSET_I (ToolchainType	,FrontendType		,ToolchainInterixGNU) /* internal only */ \
+CTX_GETSET   (ToolchainType	,BackendType		,ToolchainMicrosoft)/* internal only */ \
+CTX_GETSET   (bool			,CtxDump			,false			)  /* internal only */ \
+CTX_GETSET   (bool			,Colored			,true			)  /* internal only */ \
+CTX_GETSET   (Color::ColorMode,ColorMode		,Color::Bright	)  /* internal only */ \
+CTX_GETSET   (bool			,GatherSystem		,false			)  /* internal only */ \
+CTX_GETSET   (bool			,GenerateLoader		,true			)  /* internal only */ \
+CTX_GETSET   (bool			,LazyLoading		,true			)  /* internal only */ \
+CTX_GETSET   (Path			,ParityLoader		,""				)  /* internal only */ \
+CTX_GETSET   (Path			,PCRTLibrary		,""				)  /* internal only */ \
+CTX_GETSET   (Path			,PCRTInclude		,""				)  /* internal only */ \
+CTX_GETSET   (std::string	,EntryPoint			,""				)  /* internal only */ \
+CTX_GETSET   (std::string	,SharedEntryPoint	,""				)  /* internal only */ \
+CTX_GETSET   (PathVector	,RunPaths			,PathVector()	)  /* internal only */ \
+CTX_GETSET   (bool			,KeepTemporary		,false			)  /* internal only */ \
+CTX_GETSET   (bool			,TimingShowTasks	,true			)  /* internal only */ \
+CTX_GETSET_CI(PathVector	,TemporaryFiles		,PathVector()	)  /* internal only */ \
+CTX_GETSET   (Path			,StatisticsFile		,""				)  /* internal only */ \
+CTX_GETSET   (bool			,IgnoreOutputFilters,false			)  /* internal only */ \
+CTX_GETSET   (PathVector	,AdditionalExecPaths,PathVector()	)  /* internal only */ \
+CTX_GETSET   (bool			,GeneratePCRTEntry	,true			)  /* internal only */ \
+CTX_GETSET   (bool			,GenerateSymbols	,true			)  /* internal only */ \
+CTX_GETSET   (bool			,UseCommandScripts	,true			)  /* internal (MS) */ \
+CTX_GETSET_I (std::string	,CompilerPassThrough,""				)  /* internal (compiler) */ \
+CTX_GETSET_I (std::string	,LinkerPassThrough	,""				)  /* internal (linker) */ \
+CTX_GETSET   (bool			,ExportAll			,false			)  /* internal (linker) */ \
+CTX_GETSET   (bool			,ExportFromExe		,true			)  /* internal (linker) */ \
+CTX_GETSET_I (bool			,Preprocess			,false			)  /* preprocessor */ \
+CTX_GETSET   (bool			,KeepComments		,false			)  /* preprocessor */ \
+CTX_GETSET   (bool			,NoStdIncludes		,false			)  /* preprocessor */ \
+CTX_GETSET_C (DefineMap		,Defines			,DefineMap()	)  /* preprocessor */ \
+CTX_GETSET_C (PathVector	,IncludePaths		,PathVector()	)  /* preprocessor */ \
+CTX_GETSET_C (PathVector	,SysIncludePaths	,PathVector()	)  /* preprocessor (by config only) */ \
+CTX_GETSET_I (bool			,PreprocToFile		,false			)  /* preprocessor (MS) */ \
+CTX_GETSET_I (bool			,KeepHashLine		,true			)  /* preprocessor (MS) */ \
+CTX_GETSET_I (bool			,DependencyTracking	,false			)  /* preprocessor (GCC) */ \
+CTX_GETSET_I (bool			,DependencyOnly		,false			)  /* preprocessor (GCC) */ \
+CTX_GETSET_I (bool			,DependencySystem	,false			)  /* preprocessor (GCC) */ \
+CTX_GETSET_I (bool			,DependencyPhony	,false			)  /* preprocessor (GCC) */ \
+CTX_GETSET_I (bool			,DependencyGenerated,false			)  /* preprocessor (GCC) */ \
+CTX_GETSET_I (Path			,DependencyOutput	,""				)  /* preprocessor (GCC) */ \
+CTX_GETSET_I (std::string	,DependencyTarget	,""				)  /* preprocessor (GCC) */ \
+CTX_GETSET   (long			,OptimizeLevel		,0				)  /* optimization */ \
+CTX_GETSET   (bool			,OmitFramePointer	,false			)  /* optimization */ \
+CTX_GETSET   (bool			,InlineFunctions	,false			)  /* optimization */ \
+CTX_GETSET   (bool			,UseSSE				,false			)  /* feature */ \
+CTX_GETSET   (bool			,UseSSE2			,false			)  /* feature */ \
+CTX_GETSET   (bool			,ForScope			,false			)  /* feature */ \
+CTX_GETSET   (bool			,MsExtensions		,true			)  /* feature */ \
+CTX_GETSET   (long			,WarningLevel		,3				)  /* feature */ \
+CTX_GETSET   (bool			,WarningAsError		,false			)  /* feature */ \
+CTX_GETSET_I (bool			,SyntaxOnly			,false			)  /* compiler */ \
+CTX_GETSET_I (bool			,CompileOnly		,false			)  /* compiler */ \
+CTX_GETSET   (bool			,ExceptionHandling	,true			)  /* compiler */ \
+CTX_GETSET   (bool			,RuntimeTypes		,true			)  /* compiler */ \
+CTX_GETSET_I (bool			,Debugable			,false			)  /* compiler */ \
+CTX_GETSET_CI(SourceMap		,Sources			,SourceMap()	)  /* compiler */ \
+CTX_GETSET   (bool			,ShortWchar			,false			)  /* compiler */ \
+CTX_GETSET   (std::string	,CompilerDefaults	,"/nologo"		)  /* compiler */ \
+CTX_GETSET   (std::string	,AssemblerDefaults	,"/nologo /Cp"	)  /* compiler */ \
+CTX_GETSET   (Path			,CompilerExe		,""				)  /* compiler */ \
+CTX_GETSET   (Path			,AssemblerExe		,""				)  /* compiler (assembler) */ \
+CTX_GETSET   (bool			,TimeT32Bit			,true			)  /* compiler (MS) */ \
+CTX_GETSET   (RuntimeType	,Runtime			,RuntimeDynamic	)  /* compiler (MS) */ \
+CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
+CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
+CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \
+CTX_GETSET   (long			,StackReserve		,10485760		)  /* linker (default: 10MB) */ \
+CTX_GETSET   (long			,StackCommit		,65536			)  /* linker (default: 64KB) */ \
+CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \
+CTX_GETSET   (long			,HeapCommit			,65536			)  /* linker (default: 64KB) */ \
+CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
+CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
+CTX_GETSET   (std::string	,LinkerSharedDefaults	,"/nologo /incremental:no"		)  /* linker */ \
+CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no /fixed:no"		)  /* linker */ \
+CTX_GETSET   (Path			,LinkerExe			,""				)  /* linker */ \
+CTX_GETSET_C (PathVector	,SysLibraryPaths	,PathVector()	)  /* linker (by config only) */ \
+CTX_GETSET_C (PathVector	,ObjectsLibraries	,PathVector()	)  /* linker (must be after syslib paths)*/ \
+CTX_GETSET   (bool			,ForceLink			,false			)  /* linker (MS) */ \
+CTX_GETSET   (SubsystemType	,Subsystem			,SubsystemWindowsCui) /* linker (MS) */ \
+CTX_GETSET   (Path			,ManifestExe		,""				)  /* linker (MS) */ \
+CTX_GETSET   (std::string	,ManifestDefaults	,"-nologo"		)  /* linker (MS) */ \
+CTX_GETSET_I (bool			,PreferStatic		,false			)  /* linker (GCC) */ \
+CTX_GETSET   (Path			,DefaultOutput		,"a.exe"		)  /* all */ \
+CTX_GETSET_I (Path			,OutputFile			,"a.exe"		)  /* all */
