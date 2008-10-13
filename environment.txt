@@ -1,0 +1,102 @@
+Environment Variables:
+======================
+
+   Note about Variables containing Path Lists (LIBRARY_PATH, CPATH,
+   LD_LIBRARY_PATH, ...): The format on the variable depends on
+   its contents; For example if the list consist of Windows style
+   paths (C:\...), the seperator has to be a semicolon (';').
+   On the other hand, if the list consist of Unix style paths
+   (either Interix or Cygwin path format allowed at the time of
+   writing this), the seperator has to be a colon (':').
+
+
+1) Environment Variables controlling parity:
+
+   Those Envrionment Variables directly influence the behaviour of
+   parity, while compiling of linking a binary image.
+   
+   * LIBRARY_PATH
+       Specifies a list of paths to be searched for libraries
+       during linking.
+   * LD_LIBRARY_PATH
+       Specifies a list of paths to be searched for libraries
+       during linking. This is used at runtime too.
+   * PARITY_CONFIG
+       Specifies a file containing additional configuration
+       directives for parity. Configuration directives can also
+       be passed on the command line, using the -cfg argument.
+   * CPATH
+       Specifies a list of paths to be searched for files while
+       resolving "#include" directives is source files.
+   * LD_RUN_PATH
+       Specifies a list of paths to be hardcoded into the binary
+       when linking. This variable is only used if no -rpath
+       argument is present on the command line, and no runpaths
+       have been specified through configuration directives.
+
+
+2) Environment Variables controlling parity.runtime:
+
+   Those Environment Variables influence binaries linked by parity
+   at runtime.
+   
+   * LD_PRELOAD
+       Specifies a whitespace seperated list of libraries to be
+       loaded before any other library. The loader tries to load
+       as many symbols from these libraries as possible, possibly
+       preventing the load of the symbol from it's real origin.
+       In contrary to Linux' LD_PRELOAD, on windows only symbols
+       that are imported from a shared library can be preloaded,
+       since there is no means of manipulating the location of
+       unexported symbols in PE/COFF.
+   * LD_BIND_NOW
+       If set (value ignored), prevents lazy loading (if it was
+       enabled through the configuration directive "LazyLoading"
+       while linking - which is the default). Lazy loading can be
+       done on a per-binary basis. for example a shared library
+       may have been linked without lazy loading, and thus binds
+       immediately to it's dependencies, but a binary linked
+       against this library may load symbols lazyly from it.
+   * LD_LIBRARY_PATH
+       Specifies a list of paths to be searched for shared libraries
+       in addition to the hardcoded runpaths. The shared library
+       search order is as follows:
+         1) Paths from LD_LIBRARY_PATH
+         2) Harcoded runpaths
+         3) Windows default lookup:
+            a) The directory where the executable for the process lives.
+            b) The 32 bit system directory (system32)
+            c) The 16 bit system directory (system)
+            d) The Windows directory.
+            e) Paths contained in the PATH environment variable.
+   * LD_DEBUG
+       Specifies that the loader should print verbose information
+       about the shared library loading process.
+   * LD_DEBUG_OUTPUT
+       Specifies a file where the output of LD_DEBUG should be written
+       to. If this is not set, LD_DEBUG output is written to stderr.
+   * PCRT_TRACE_EXCEPTIONS
+       Installs facilities to trace SEH and C++ Exceptions. This
+       basically prints a stack trace and some information each time
+       an exception occurs. It doesn't matter wether the exception
+       is handled afterwards, or the program terminates - it is traced
+       in any case.
+       The value of the Environment variable can be either one of "on",
+       "yes", "1" or a filename. If the value is a file, trace output
+       is written to that file instead of stderr (which is the case with
+       the other values).
+   * PCRT_DEBUG_SYMBOLS
+       When resolving symbols (either by request from an application, or
+       while tracing the stack), parity.runtime uses debug symbols if this
+       variable is set (value ignored). Otherwise parity uses symbol tables
+       generated during linking if the configuration directive
+       "GenerateSymbols" is set. Debug symbols have the advantage of being
+       much more accurate on a debugable binary. If the Image for which
+       symbol information is to be retrieved is not debugable, there is no
+       advantage in using debug symbols, except for name undecoration; The
+       internal mechanism even produces more accurate information on
+       non-debugable binaries, since it does not rely on the export tables.
+       The internal mechanism also has the advantage, that it is much faster,
+       and doesn't require an external library (debug symbols require 
+       dbghelp.dll v5.1 or later).
+   

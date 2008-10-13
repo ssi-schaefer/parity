@@ -104,23 +104,26 @@ namespace parity
 
 				Log::verbose("cleaning %d files.\n", TemporaryFiles.size());
 
-				//
-				// TODO: allow wildcards!
-				//
 				for(PathVector::iterator it = TemporaryFiles.begin(); it != TemporaryFiles.end(); ++it)
 				{
 					it->toNative();
 
-					if(it->exists()) {
-						//
-						// need to change mode to be able to delete
-						//
-						it->mode(0777);
+					if(it->get().find("*") == std::string::npos) {
+						if(it->exists()) {
+							//
+							// need to change mode to be able to delete
+							//
+							it->mode(0777);
 
-						if(!it->remove())
-							Log::warning("cannot cleanup %s!\n", it->get().c_str());
+							if(!it->remove())
+								Log::warning("cannot cleanup %s!\n", it->get().c_str());
+						} else {
+							Log::warning("temporary file missing: %s\n", it->get().c_str());
+						}
 					} else {
-						Log::warning("temporary file missing: %s\n", it->get().c_str());
+						//
+						// TODO: match wildcards...
+						//
 					}
 				}
 			}

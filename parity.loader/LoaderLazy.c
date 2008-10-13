@@ -83,10 +83,10 @@ static void PreloadCreateCache()
 			{
 				int isSep = 0;
 
-				while(*end != ' ' && *end != '\0')
+				while(*end != ' ' && *end != '\t' && *end != '\0')
 					++end;
 
-				if(*end == ' ')
+				if(*end == ' ' || *end == '\t')
 				{
 					isSep = 1;
 					*end = '\0';

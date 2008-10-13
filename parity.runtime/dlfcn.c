@@ -26,8 +26,9 @@
 //
 // code comes from parity.loader
 // to avoid circulars, we put an extern here.
+// WARNING: this means, that using dlfcn creates
+// a link-time dependency to the parity.loader lib!!
 //
-
 extern void* LoaderLibraryGetHandle(const char*, int);
 
 #include <windows.h>
@@ -80,21 +81,23 @@ void* dlopen(const char* name, int flags)
 		unsetEnv = 1;
 	}
 
-	//
-	// TODO: implement handling of import libraries?
-	// For a start we could simply try and load conv + .dll
-	// too, if the first one fails (so most probably this is
-	// an import library).
-	//
 	handle = LoaderLibraryGetHandle(conv, 0);
 
 	if(!handle) {
+		//
+		// if we cannot find a handle with all our lookup mechanisms,
+		// check wether an appended .dll helps, since the other name
+		// may have been an import library (.so in our case).
+		//
 		char* conv_dll = (char*)malloc(strlen(conv) + 5); /* .dll + \0 */
 
 		if(conv_dll) {
 			strcpy(conv_dll, conv);
 			strcat(conv_dll, ".dll");
 
+			//
+			//
+			//
 			handle = LoaderLibraryGetHandle(conv_dll, 0);
 
 			free(conv_dll);

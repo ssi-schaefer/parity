@@ -59,6 +59,8 @@ PCRT_BEGIN_C
 // TODO: The usleep implementation below is really bad, since
 // it doesn't really sleep the number of usec's given, but in
 // the worst case 1000 times longer (minnimum 1 ms)!
+// Note: use select with timeout, since this is fine-granular
+// enough.
 //
 
 __declspec(dllimport) void __stdcall Sleep(unsigned long millis);

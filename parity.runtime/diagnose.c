@@ -305,15 +305,14 @@ static void PcrtGuardDebugInitialization() {
 
 typedef BOOL (WINAPI * SymInitFunc)(HANDLE, PCTSTR, BOOL);
 typedef BOOL (WINAPI * SymAddrFunc)(HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*);
+typedef BOOL (WINAPI * SymRefreshFunc)(HANDLE);
 
 HANDLE			hDbgLib;
 SymInitFunc		hInit;
 SymAddrFunc		hSym;
+SymRefreshFunc	hRefresh;
 
 void PcrtInitializeDebugInformation() {
-	//
-	// TODO: Guard all this with some process global mechanism
-	//
 	if(!PcrtIsDebugInitialized())
 	{
 		PcrtGuardDebugInitialization();
@@ -327,13 +326,25 @@ void PcrtInitializeDebugInformation() {
 
 		hInit	= (SymInitFunc)		GetProcAddress(hDbgLib, "SymInitialize");
 		hSym	= (SymAddrFunc)		GetProcAddress(hDbgLib, "SymFromAddr");
+		hRefresh= (SymRefreshFunc)	GetProcAddress(hDbgLib, "SymRefreshModuleList");
 
+		//
+		// don't check for hRefresh, since this requires dbghelp.dll v6.5
+		// which won't be there always.
+		//
 		if(!hInit || !hSym) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot load dbghelp.dll symbols.\n");
 		}
 
 		if(!hInit(GetCurrentProcess(), NULL, TRUE)) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot initialize debug symbol information.\n");
+		}
+	} else {
+		//
+		// refresh symbol list.
+		//
+		if(hRefresh && !hRefresh(GetCurrentProcess()) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot refresh debug information for loaded modules.\n");
 		}
 	}
 }
@@ -342,9 +353,10 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 {
 	syminfo_t info = { 0, 0 };
 
-	if(t == LookupDebugInfo && !PcrtIsDebugInitialized()) {
-		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "warning: debug information not yet initialized, doing it now.\n");
+	if(t == LookupDebugInfo && PcrtUseDebugSymbols()) {
 		PcrtInitializeDebugInformation();
+	} else if(t == LookupDebugInfo) {
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "warning: requested debug symbols, but those are not enabled!\n");
 	}
 	
 	if(t == LookupDebugInfo && hSym) {
@@ -352,9 +364,6 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		// Symbol initialization should be done only once, except
 		// when it is de-initialized. for now we take the penalty
 		// and de-initialize, so:
-		// TODO: initialize once, and protect with a (process local)
-		//       mutex or something alike.
-		//       if already initialized call SymRefreshModuleList instead!
 		//
 		// using debug symbols displays undecorated names by default
 		// whereas parity's mechanism displays decorated ones, which

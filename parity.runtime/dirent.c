@@ -230,8 +230,9 @@ _WDIR* _wopendir(const wchar_t* szPath)
 		return 0;
 	}
 
-	// TODO: no conversion yet...
-	//szConv = LoaderConvertPathToNative(szPath);
+	// TODO: no conversion yet, since wchar_t not supported
+	// by parity.runtime
+	//szConv = PcrtPathToNative(szPath);
 
 	rc = GetFileAttributesW(szPath);
 	if(rc == (unsigned int)-1) {

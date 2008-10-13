@@ -133,7 +133,10 @@ void PcrtOutFormatString(char* buffer, const char* fmt, ...)
 void PcrtOutPrint(HANDLE dest, char const* fmt, ...)
 {
 	//
-	// FIXXME: uah... hack :(
+	// FIXXME: uah... hack :( there is no _fast_ way of
+	// determining the string length. maybe i could approximate it
+	// by calculating with maximum lengths for basic data types
+	// like int, long, etc. and adding string lengths...
 	//
 	char buffer[2048];
 	long iBytesWritten;

@@ -521,7 +521,7 @@ namespace parity
 			#ifdef _WIN32
 			//
 			// case insensitive, so convert to all lower case to prevent case clashes.
-			// TODO: FIXME: this shouldn't be done. better is to do a stricmp in 
+			// TODO: FIXXME: this shouldn't be done. better is to do a stricmp in 
 			// operator== & co if on _WIN32.
 			//
 			for(size_t i = 0; i < component.length(); ++i)

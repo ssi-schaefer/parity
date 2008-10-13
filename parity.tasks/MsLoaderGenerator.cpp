@@ -50,6 +50,8 @@ namespace parity
 		{
 			//
 			// lookup the loader library, and put it on the link line.
+			// WARNING: this has to be done _always_, since dlfcn functions
+			// from parity.runtime depend on this.
 			//
 			utils::Context& ctx = utils::Context::getContext();
 

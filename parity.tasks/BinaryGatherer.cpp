@@ -422,6 +422,8 @@ namespace parity
 									// TODO: when the loader is added, this libraries should be
 									// added to ObjectsLibraries
 									//
+									// Note: really? i think it works as one would expect right now.
+									//
 
 									//
 									// process directly recursively (if not processed allready).

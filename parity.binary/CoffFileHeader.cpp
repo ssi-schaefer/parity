@@ -106,6 +106,8 @@ namespace parity
 				// FIXXME: if an object is contained within a library, we need to use getStartPointer
 				// instead of getBasePointer...
 				//
+				// Note: If we have to, why the hell is parity working, then?
+				//
 				char* ptr = MAKEPTR(char*, getBasePointer(), hdr_.PointerToSymbolTable + (hdr_.NumberOfSymbols * SIZEOF_SYMBOL));
 
 				//
