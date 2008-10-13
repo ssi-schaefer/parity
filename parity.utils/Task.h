@@ -29,6 +29,11 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include <list>
+
+#ifdef _WIN32
+# include <windows.h>
+#endif
 
 namespace parity
 {
@@ -70,6 +75,17 @@ namespace parity
 			void processLine(std::string& line, bool stdOut);
 			void processBlock(const char* input, size_t size, bool stdOut);
 
+
+			static void terminateRunningProcesses();
+
+#ifndef _WIN32
+			typedef pid_t process_t;
+#else
+			typedef HANDLE process_t;
+#endif
+			typedef std::list<process_t> ProcessList;
+
+			static ProcessList running_;
 			static unsigned int taskCounter_;
 		};
 	}

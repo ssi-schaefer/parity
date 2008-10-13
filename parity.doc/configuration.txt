@@ -4,32 +4,37 @@ Configuration directives supported by parity:
 BackendType (ToolchainType)
 	Describes the type of Backend to use. This is used to decide which form
 	of paths to use, wether command scripts are allowed, etc.
+	Default: Microsoft
 	
 CtxDump (bool)
 	Specifies wether the whole internal parity context should be dumped on
 	the terminal. this is done using debug output with level verbose, so nothing
 	will be written, if the debug level is less then verbose.
+	Default: off
 	
 Colored (bool)
 	Specifies wether the output should be colored. This not only colors paritys
 	output, but also the output from the target compiler and linker.
+	Default: on
 
 ColorMode (Color::ColorMode)
-	Can be either "light" or "dark", describing the console background which
-	is in use. Colors are chosen so that the output will be readable on the given
-	type of terminal background.
+	Can be either "light" or "dark", describing the color type which should be
+	used. Colors are chosen so that the output will be readable on the terminals
+	background.
+	Default: bright
 
 GatherSystem (bool)
 	Specifies wether system libraries should be taken into account when gathering
 	symbol information. This does not bring any real advantage, except that system
 	libraries can be preloaded with LD_PRELOAD. Be aware that this takes quite some
 	time, even when linking one-liners.
+	Default: off
 
 GenerateLoader (bool)
-	Specifies wether a custom loader should be generated. This is enabled by default,
-	and makes features like LD_PRELOAD, hardcoded run-paths, lazy loading, etc.
-	possible. Without this directive enabled, all the above things will not be
-	available.
+	Specifies wether a custom loader should be generated. This makes features like
+	LD_PRELOAD, hardcoded run-paths, lazy loading, etc.	possible. Without this
+	directive enabled, all the above things will not be	available.
+	Default: on
 
 LazyLoading (bool)
 	Specifies wether lazy loading stubs should be generated. When GenerateLoader is
@@ -42,12 +47,41 @@ LazyLoading (bool)
 	library at startup time, since it has to load all data symbols. So Lazy loading only
 	pays if there are very many functions to load from shared libraries, where possibly
 	only a few of them are ever called during runtime.
+	Default: off
 
 ParityLoader (Path)
+	Specifies a path to the parity.loader library to link every binary against.
+	If no path is specified here, there is an internal lookup mechanism, searching for
+	a version of this library in various places.
+	Default: ""
+
 PCRTLibrary (Path)
+	Specifies a path to the parity.runtime library to link every binary against.
+	If no path is specifier here, there is an internal lookup mechanism, searching for
+	a version of this library in various places.
+	Default: ""
+
 PCRTInclude (Path)
+	Specifies a path to the include directory of the parity.runtime directory, which
+	is added to the command line of every compilation call. If no path is specifier here,
+	there is an internal lookup mechanism, searching for a valid directory in various
+	places.
+	Default: ""
+
 EntryPoint (std::string)
+	Specifies the entry point function for the binary to be linked. If nothing is
+	specified, the default entry points are used, depending on the target subsystem.
+	Since parity generates chained entry points to initialize parity.loader and
+	parity.runtime, this may not be the real entry point, but is called from another
+	function after initializing other things.
+	Default: ""
+
 SharedEntryPoint (std::string)
+	See EntryPoint. The only difference is, that SharedEntryPoint is used for shared
+	libraries, and EntryPoint is used for executables. This distinction has to be done,
+	since shared library entry points have a different signature.
+	Default: ""
+
 RunPaths (PathVector)
 KeepTemporary (bool)
 TimingShowTasks (bool)

@@ -34,6 +34,7 @@
 
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 #ifdef _WIN32
 #  include <windows.h>
@@ -59,7 +60,10 @@ namespace parity
 {
 	namespace utils
 	{
+		Task::ProcessList Task::running_;
 		unsigned int Task::taskCounter_;
+
+		static void handleBrokenPipe(int sig) { exit(sig); }
 
 		bool Task::prepareEnvironment()
 		{
@@ -88,6 +92,15 @@ namespace parity
 			Path ptmp = tmp.getPath();
 			ptmp.toForeign();
 			tmp.set(ptmp.get());
+
+			//
+			// when exiting, terminate all running processes...
+			//
+			atexit(terminateRunningProcesses);
+
+#ifdef SIGPIPE
+			signal(SIGPIPE, handleBrokenPipe);
+#endif
 
 			return true;
 		}
@@ -155,6 +168,7 @@ namespace parity
 				translated[i + 1] = 0;
 
 				process = (HANDLE)::_spawnv(_P_NOWAIT, pth.get().c_str(), translated);
+				running_.push_back(process);
 
 				//
 				// Re-redirect output stream back to where they came from
@@ -178,6 +192,10 @@ namespace parity
 				int readErr = 1;
 				char buffer[1024];
 				bool bFinishedLast = false;
+
+				//
+				// TODO: how can i detect a broken pipe on win32??
+				//
 
 				while(exitCode == STILL_ACTIVE || bFinishedLast || (readOut > 0 || readErr > 0))
 				{
@@ -231,6 +249,8 @@ namespace parity
 				::_close(stdErrPipe[READ_FD]);
 
 				Timing::instance().stop(oss.str());
+
+				running_.remove(process);
 
 				utils::Log::verbose(" * result: %d\n", exitCode);
 
@@ -293,6 +313,8 @@ namespace parity
 					//
 					// parent process
 					//
+					running_.push_back(child);
+
 					close(stdOutPipe[WRITE_FD]);
 					close(stdOutPipe[WRITE_FD]);
 
@@ -369,6 +391,8 @@ namespace parity
 					close(stdOutPipe[READ_FD]);
 					
 					Timing::instance().stop(oss.str());
+
+					running_.remove(child);
 					
 					utils::Log::verbose(" * result: %d\n", exitStatus);
 					
@@ -381,6 +405,33 @@ namespace parity
 			#endif
 
 			return false;
+		}
+
+		void Task::terminateRunningProcesses() {
+			if(running_.size() > 0) {
+				utils::Log::warning("%d child processes are still alive, terminating them.\n", running_.size());
+			} else {
+				return;
+			}
+
+			while(running_.size() > 0) {
+				ProcessList::iterator process = running_.begin();
+
+#ifdef _WIN32
+				if(!TerminateProcess(*process, 99)) {
+					utils::Log::warning("cannot terminate process %d. it may keep blocking file handles.\n", GetProcessId(*process));
+				}
+#else
+				if(kill(*process, SIGTERM) != 0) {
+					utils::Log::warning("cannot terminate process %d (%s). it may keep blocking file handles.\n", *process, strerror(errno));
+				}
+#endif
+
+				//
+				// after terminating the process, remove it from the list.
+				//
+				running_.erase(process);
+			}
 		}
 
 		void Task::createCommandScript(ArgumentVector& vec)

@@ -98,6 +98,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.graphical.configurat
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.diagnostic", "parity.diagnostic\parity.diagnostic.vcproj", "{D1F75BAA-90B6-414F-B841-0375AECB14BA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "parity.doc", "parity.doc", "{FA4388DC-A374-4EE2-9752-2F8A05A8C3CC}"
+	ProjectSection(SolutionItems) = preProject
+		parity.doc\configuration.txt = parity.doc\configuration.txt
+		parity.doc\environment.txt = parity.doc\environment.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -273,5 +279,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FA4388DC-A374-4EE2-9752-2F8A05A8C3CC} = {244C46AE-9C21-4DA8-A4FD-DD768B63FC76}
 	EndGlobalSection
 EndGlobal

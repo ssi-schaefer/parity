@@ -59,7 +59,6 @@ namespace parity
 				while(lock_ > 0) usleep(10);
 
 				++lock_;
-				//fprintf(stderr, "verbose: ");
 				ret = vfprintf(stdout, fmt, args);
 				--lock_;
 
