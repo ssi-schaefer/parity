@@ -24,7 +24,7 @@ section default {
 	
 	PCRTInclude = @PcrtInclude@
 	PCRTLibrary = @PcrtLibrary@
-	LoaderLibrary = @LoaderLibrary@
+	ParityLoader = @LoaderLibrary@
 	
 	Defines = WIN32_LEAN_AND_MEAN
 
