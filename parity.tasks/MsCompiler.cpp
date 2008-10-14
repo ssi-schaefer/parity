@@ -157,7 +157,9 @@ namespace parity
 
 		void MsCompiler::compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec)
 		{
+			utils::Context& ctx = utils::Context::getContext();
 			utils::Task tsk;
+			utils::Path output;
 
 			executable.toNative();
 
@@ -165,8 +167,6 @@ namespace parity
 				//
 				// Generate an output filename option for this source file
 				//
-				utils::Context& ctx = utils::Context::getContext();
-				utils::Path output;
 				std::string base = file.file();
 
 				if(!ctx.getPreprocess())
