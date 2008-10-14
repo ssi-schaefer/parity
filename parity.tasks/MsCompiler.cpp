@@ -107,7 +107,7 @@ namespace parity
 			//
 			// Decide about microsoft extensions.
 			//
-			if(!ctx.getMsExtensions())
+			if(!ctx.getMsExtensions() || ctx.getAnsiMode())
 				vec.push_back("/Za");
 
 			//

@@ -314,14 +314,68 @@ Runtime (RuntimeType)
 	Default: dynamic
 
 ForcedLanguage (LanguageType)
+	Specifies the language to use for any source file. Normally each source file has
+	it's own source file type, which is determined through the file's extension.
+	Using this directive (or the -x command line option, which sets this directive),
+	one can force the compile, to - for example - compile everything as C++. This
+	does not apply to assembler files, but only to C and C++. Possible values for
+	this directive are:
+	 a) "c"
+	 b) "c++"
+	Default: none
+
 AnsiMode (bool)
+	Specifies wether the compiler should run in an ANSI compatible mode. This is the
+	same as disabling the MsExtensions directive.
+	Default: off
+
 StackReserve (long)
+	Specifies the maximum size of the stack for each process. This is the hard limit;
+	if the stack grows that big it will hit a "guard page". if this guard page is
+	hit by a read or write operation, a stack overflow exception is issued.
+	Default: 10485760 (10MB)
+
 StackCommit (long)
+	Specifies the initial size of the stack, before it starts growing. At the end of
+	this stack is a guard page, which - when hit - generates an exception, which is
+	caught by the system, which in response grows the stack. The stack size is limited
+	by StackReserve; if the stack should grow bigger, the exception is passed through
+	to the application (which usually results in termination).
+	Default: 65536 (64KB)
+
 HeapReserve (long)
+	Specifies the maximum size of the Head in virtual memory. This settings seems to
+	be ignored by the linker, since every process can allocate until memory runs low.
+	Default: 10485760 (10MB)
+
 HeapCommit (long)
+	Specifies the commit value for the process Heap, which is subject to interpretation
+	by the operating system. Usually this specifies the minimum size of each allocation
+	on the heap. Since memory management is done by the C runtime library, this does
+	not mean that every call to malloca allocates such a piece of memeory, but rather
+	that the C runtime library gets such chuncks which it in turn can split into smaller
+	pieces passed to the application. Specifying a higher value here, can increase the
+	(initial) memory requirements for an application, but in turn saves time when the
+	application needs more memory.
+	Default: 65536 (64KB)
+
 LibraryPaths (PathVector)
+	Specifies a list of paths used during library search. Since the library search is
+	done in place, as soon as a library argument is encountered in either the config
+	file or the command line, the matching LibraryPaths have to be set before adding
+	the libraries.
+	Default: (empty)
+
 LinkerSharedDefaults (std::string)
+	Specifies the default arguments passed to the linker, when linking shared libraries.
+	When overriding be sure that you pass in the original default value too, since this
+	is required for purify cleanlyness.
+	Default: /nologo /incremental:no
+
 LinkerDefaults (std::string)
+	Specifies the default argument passed to the linker, when linking executables. This
+	is the same as LinkerSharedDefaults otherwise.
+	Default: /nologo /incremental:no /fixed:no
 
 LinkerExe (Path)
 	Specifies the path to the linker to use, normally an absolute path to link.exe.
@@ -330,9 +384,47 @@ LinkerExe (Path)
 	Default: ""
 
 SysLibraryPaths (PathVector)
+	Specifies the system library paths. This is usually done in the default parity.conf,
+	where the paths are collected by configure.
+	Default: (empty)
+
 ObjectsLibraries (PathVector)
+	Specifies the list of objects and libraries which are to be linked together. This can
+	be extended with this configuration directive, or by passing files on the command line.
+	Most required libraries to link even more complex applications are added to parity.conf
+	by configure at compile time.
+	Default: (empty)
+
 ForceLink (bool)
+	Specifies wether the link should be forced to run through even if there are duplicate
+	or missing symbols. Unresolved symbols will cause an abort at runtime, as soon as the
+	symbol is accessed or called. Duplicate symbols will result in the first seen instance
+	to be used.
+	Default: off
+
 Subsystem (SubsystemType)
+	Specifies the subsystem to link for. Depending on this value, the default entry point
+	for binaries is calculated by parity. The only other impact is, that the resulting
+	binary has the subsystem type set in the PE/COFF headers, and that different default
+	entry points may require different user supplied entry points (for example main for
+	the CONSOLE subsystem and WinMain for the WINDOWS subsystem). Possible values are:
+	 a) "console"   - the default console subsystem
+	 b) "windows"   - the windows subsystem
+	 c) "windowsce" - the windows ce (windows mobile) subsystem
+	 d) "posix"     - the posix subsystem (i.e. SFU/SUA).
+	Default: console
+
 ManifestExe (Path)
+	Specifies the path to the manifest tool, which is required to embed manifests into
+	binaries. If this is not done, the manifest needs to be copied along with the binary
+	for it to be executable. The manifest tool usually comes with the Windows SDK.
+	Default: ""
+
 ManifestDefaults (std::string)
+	Specifies the default command line arguments passed to the manifest tool.
+	Default: -nologo
+
 DefaultOutput (Path)
+	Specifies the default output name. Be aware that this name is also valid for shared
+	libraries, which can result in misleading binary names!
+	Default: a.exe
