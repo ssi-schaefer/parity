@@ -147,4 +147,38 @@ parity.gnu.ld options:
 parity.ms.cl options:
 ---------------------
 
+	/X				see parity.gnu.gcc -fnostdinc option.
+	/D<d>[=<v>]		see parity.gnu.gcc -D option.
+	/U<d>			see parity.gnu.gcc -U option.
+	/c				see parity.gnu.gcc -c option.
+	/DLL			see parity.gnu.gcc -shared option.
+	/E				see parity.gnu.gcc -E option.
+	/EP				same as -E, but strips all "#line " directives.
+	/P				same as -E, but redirects output to a file, normally <basename_of_source>.i
+	/I<p>			see parity.gnu.gcc -I option.
+	/LIBPATH:<p>	see parity.gnu.gcc -L option.
+	/Zi				see parity.gnu.gcc -g option.
+	/Fo, /Fe		see parity.gnu.gcc -o option.
+	/TP, /TC		see parity.gnu.gcc -x option, /TP is the same as -xc++ and /TC the same as -xc.
+	/SUBSYSTEM:		see parity.gnu.gcc -subsys option.
+	/MT, /MD		sets the runtime type to use. /MT forces use of the static runtime library,
+					and /MD forces use of the dynamic runtime, see config:Runtime
+	/Tp<f>, /Tc<f>	same as /TP and /TC, but force language only for one specific file.
+	.lib, .obj,		see parity.gnu.gcc corresponding options.
+	.o,	.a, .so		
 	
+	.c, .cc, .i,	see parity.gnu.gcc corresponding options.
+	.ii, .cpp,		
+	.cxx, .C, .asm,	
+	.s, .S			
+
+parity.ms.link options:
+-----------------------
+
+	/DLL			see parity.gnu.ld -shared option.
+	/LIBPATH:<p>	see parity.gnu.ld -L option.
+	/DEBUG			see parity.gnu.ld -g option.
+	/OUT:<f>		see parity.gnu.ld -o option.
+	/SUBSYSTEM:<s>	see parity.gnu.ld -subsys option.
+	.lib, .obj,		see parity.gnu.ld corresponding options.
+	.o, .a, .so

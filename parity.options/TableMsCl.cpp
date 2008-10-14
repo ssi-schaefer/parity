@@ -51,6 +51,7 @@ namespace parity
 			{ "/U"			,removeDefine				},
 			{ "/c"			,setCompileOnly				},
 			{ "/DLL"		,setSharedLink				},
+			{ "/dll"		,setSharedLink				},
 			{ "/E"			,setPreprocess				},
 			{ "/P"			,setPreprocess				},
 			{ "/I"			,addIncludePath				},

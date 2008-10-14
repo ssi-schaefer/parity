@@ -208,3 +208,5 @@ fixed the -ffor-scope switch, which was not working correctly.
 fixed the -fshort-wchar switch, which was not working correctly.
 
 fixed the -fsyntax switch, which was not working correctly.
+
+the parity.doc documentation project has been added, which provides thorough descriptions of configuration and command line switches, also including some information about the internal workings of parity.

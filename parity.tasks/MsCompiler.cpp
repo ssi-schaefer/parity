@@ -240,6 +240,8 @@ namespace parity
 				//
 				// if preprocessing multiple files, put them into a
 				// file.i or file.ii depending on the input language
+				// PreprocToFile is set by the microsoft frontend to
+				// handle the /P option.
 				//
 				if(ctx.getSources().size() > 1)
 				{
@@ -258,10 +260,17 @@ namespace parity
 				// Only difference to assembler: /EP given to the compiler means
 				// that the preprocessor output does not have #line's.
 				//
-				if(lang == utils::LanguageAsssembler)
+				if(lang == utils::LanguageAsssembler) {
 					vec.push_back("/EP");
-				else
-					vec.push_back("/E");
+				} else {
+					if(ctx.getKeepHashLine())
+						vec.push_back("/E");
+					else
+						vec.push_back("/EP");
+
+					if(ctx.getPreprocToFile())
+						vec.push_back("/P");
+				}
 			} else {
 				//
 				// parity allways links at another location, so we allways "compile only"
