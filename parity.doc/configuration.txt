@@ -1,5 +1,57 @@
+General Format Description:
+
+	Configuration directives can be passed either in a configuration file or
+	through the command line using the -cfg option. The format for one directive
+	is as follows:
+		<directive> = <value>
+	Whitespaces are ignored, except inside <value> (but trailing and leading
+	spaces and tabs are stripped). If <directive> denotes a list of something,
+	setting the value means appending to the list. There is no way of removing
+	something from a list.
+	There are several different types treated specially inside a configuration
+	file. Following is a table of types and possible string representations of
+	their value (does not contain types with simple conversions, i.e. strings
+	or numbers, which are simply converted to their string representations):
+	
+	+------------------+--------------------------------------------------------+
+	| Type             | String Representations for use with directives         |
+	+------------------+--------------------------------------------------------+
+	| bool             | "1", "yes", "on", "true" - "0", "no", "off", "false"   |
+	| Color::ColorMode | "bright", "dark"                                       |
+	| DefineMap        | <define> = <value>                                     |
+	| LanguageType     | "c", "c++"                                             |
+	| RuntimeType      | "dynamic", "static", "dynamic debug", "static debug"   |
+	| SubsystemType    | "console", "windows", "windowsce", "wince", "posix"    |
+	| ToolchainType    | "microsoft", "ms", "interixms", "gnu", "gcc"           |
+	+------------------+--------------------------------------------------------+
+	
+	A configuration file itself can have the following format (does not apply to
+	the -cfg option, which only takes single strings as desribed above):
+	
+		<directive1> = <value>
+	
+		section <sec1> {
+			<directive2> = <value>
+		}
+		
+		section default {
+			<directive3> = <value>
+		}
+		
+	The above example does the following: In any case, <directive1> is loaded. After
+	that parity takes a look at the complete command line (this is done most likely
+	before parsing the command line, if loading the default parity.conf). it searches
+	for an argument matching a section name, for example -<sec1> (one dash, followed
+	by the section name). So if one would define a section "posix" it can be enabled
+	with "-posix". Be careful to not define sections that clash with other command
+	line options! If parity finds such an option, it loads the section, in our example
+	<sec1>, and thus executes <directive2>. The default section is executed if no
+	other section switch is found on the command line. Be aware that no global
+	directives are executed after a section definition, so those have to be positioned
+	before the first section definition.
+	
 Configuration directives supported by parity:
-=============================================
+=============================================	
 
 DebugLevel (Level)
 	Describes the verbosity of parity. There are four different levels available:
@@ -25,7 +77,7 @@ Colored (bool)
 	Default: on
 
 ColorMode (Color::ColorMode)
-	Can be either "light" or "dark", describing the color type which should be
+	Can be either "bright" or "dark", describing the color type which should be
 	used. Colors are chosen so that the output will be readable on the terminals
 	background.
 	Default: bright

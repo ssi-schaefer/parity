@@ -139,6 +139,20 @@ namespace parity
 			//
 			if(ctx.getTimeT32Bit())
 				vec.push_back("/D_USE_32BIT_TIME_T");
+
+			//
+			// decide about syntax check only
+			//
+			if(ctx.getSyntaxOnly()) {
+				vec.push_back("/Zs");
+
+				//
+				// if not already set, enable compile only mode,
+				// so that the linker does not try to link the checked
+				// file...
+				//
+				ctx.setCompileOnly(true);
+			}
 		}
 
 		void MsCompiler::compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec)
@@ -147,43 +161,45 @@ namespace parity
 
 			executable.toNative();
 
-			//
-			// Generate an output filename option for this source file
-			//
-			utils::Context& ctx = utils::Context::getContext();
-			utils::Path output;
-			std::string base = file.file();
+			if(!ctx.getSyntaxOnly()) {
+				//
+				// Generate an output filename option for this source file
+				//
+				utils::Context& ctx = utils::Context::getContext();
+				utils::Path output;
+				std::string base = file.file();
 
-			if(!ctx.getPreprocess())
-			{
-				if(ctx.getDefaultOutput() != ctx.getOutputFile() && ctx.getCompileOnly())
+				if(!ctx.getPreprocess())
 				{
-					output = ctx.getOutputFile();
-					output.toForeign();
+					if(ctx.getDefaultOutput() != ctx.getOutputFile() && ctx.getCompileOnly())
+					{
+						output = ctx.getOutputFile();
+						output.toForeign();
 
-					vec.push_back("/Fo" + output.get());
-				} else if(!ctx.getCompileOnly()) {
-					//
-					// object is only temporary for linking.
-					//
-					output = utils::Path::getTemporary(".parity.object.XXXXXX.o");
-					output.toForeign();
-					vec.push_back("/Fo" + output.get());
-					ctx.getTemporaryFiles().push_back(output);
-				} else {
-					//
-					// Output filename in this case allways generated from source filename
-					//
-					output = base.substr(0, base.rfind('.')).append(".o");
-					output.toForeign();
-					vec.push_back("/Fo" + output.get());
+						vec.push_back("/Fo" + output.get());
+					} else if(!ctx.getCompileOnly()) {
+						//
+						// object is only temporary for linking.
+						//
+						output = utils::Path::getTemporary(".parity.object.XXXXXX.o");
+						output.toForeign();
+						vec.push_back("/Fo" + output.get());
+						ctx.getTemporaryFiles().push_back(output);
+					} else {
+						//
+						// Output filename in this case allways generated from source filename
+						//
+						output = base.substr(0, base.rfind('.')).append(".o");
+						output.toForeign();
+						vec.push_back("/Fo" + output.get());
+					}
 				}
+				
+				//
+				// Publish object information for the linker
+				//
+				ctx.getObjectsLibraries().push_back(output);
 			}
-			
-			//
-			// Publish object information for the linker
-			//
-			ctx.getObjectsLibraries().push_back(output);
 
 			if(utils::Context::getContext().getUseCommandScripts())
 				tsk.createCommandScript(vec);

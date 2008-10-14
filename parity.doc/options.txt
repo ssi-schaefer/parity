@@ -1,0 +1,150 @@
+Commandline Options for parity:
+===============================
+
+Note: the "see config:<directive>" syntax means, that the corresponding
+      <directive> is set by the described command line option, and this
+      is described in configuration.txt.
+      
+Note: option matching done on incomplete option strings in some cases,
+      so -fno-exceptions could be passed as -fno-except. parity will
+      recognize both versions of the option. The lists below contain
+      the minimum option required on the command line.
+      
+Note: GNU GCC supports the -Wl, option to pass options to the linker.
+      Some of these options are hardcoded into parity, since passing
+      options to the linker with -Wl, does not make any sense in parity.
+      
+Note: The Microsoft frontends are designed to _only_ work with the
+      matching Microsoft backends. The reason for these frontends is,
+      to enable usage of the advanced parity features with existing
+      native windows build mechanisms.
+      These frontends are rather simple, since they simply pass through
+      every option, that is not required for parity's internals to
+      function. only options that control parity's behaviour are handled
+      inside parity, and passed (maybe unmodified) to the compiler.
+
+General options (these apply to parity.gnu.* and parity.ms.*):
+--------------------------------------------------------------
+
+	-dbg <level>	sets the debug level, see config:DebugLevel
+	-X <option>		appends compiler option, see config:CompilerPassthrough
+	-Y <option>		appends linker option, see config:LinkerPassthrough
+	-v				dumps out parity's version information.
+	-ctxdump		enables context dump, see config:CtxDump
+	-cfg <directve> parses configuration directive. everything described
+					in configuration.txt is valid as argument. Use it
+					like in this example: -cfg "DebugLevel=verbose".
+					
+parity.gnu.gcc options:
+-----------------------
+
+	-C				keep comments, see config:KeepComments
+	-O<level>		set optimization, if level is omitted, level is set
+	                to 2, see config:OptimizeLevel
+	-fomit-fr		omit frame pointers, see config:OmitFramePointer
+	-finline		enable inline expansion, see config:InlineFunctions
+	-fno-inlin		disable inline expansion, see config:InlineFunctions
+	-msse			enable SSE instructions, see config:UseSSE
+	-msse2			enable SSE2 instructions, see config:UseSSE2
+	-ffor-sc		enable for-scope policy, see config:ForScope
+	-fno-for		disable for-scope policy, see config:ForScope
+	-fms-ext		enable microsoft extensions, see config:MsExtensions
+	-fno-ms-		disable microsoft extensions, see config:MsExtensions
+	-ansi			enable ANSI mode, see config:AnsiMode
+	-Wl,-rpath,<p>	add runpath for linker, see config:RunPaths
+	-Wl,-e,<e>		set entry point, see config:EntryPoint and
+	                config:SharedEntryPoint
+	-Werror			treat warnings as error, see config:WarningAsError
+	-w				disable warnings (set level to zero), see
+	                config:WarningLevel
+	-W<level>		set warning level, see config:WarningLevel
+	-fsyntax		syntax check only, see config:SyntaxOnly
+	-fnostdinc		ignore system include directories, see config:NoStdInlcudes
+	-D<d>[=<v>]		define <d>, see config:Defines
+	-U<d>			undefine <d>. if it was not previously defined through
+	                the -D option, this is passed through to the compiler, to
+	                make it possible to undefine built-in's, see config:Defines
+	-c				compile only (don't link).
+	-fexcept		enable exceptions, see config:ExceptionHandling
+	-fno-except		disable exceptions, see config:ExceptionHandling
+	-frtti			enable runtime type information, see config:RuntimeTypes
+	-fno-rtti		disable runtime type information, see config:RuntimeTypes
+	-shared			link a shared library
+	-fpic, -fPIC	ignored for microsoft backend.
+	-E				preprocess only (don't compile and link).
+	-I<dir>			add include directory, see config:IncludePaths
+	-L<dir>			add library directory, see config:LibraryPaths
+	-static			prefer static libraries. when directly giving a library
+	                on the command line, this is ignored. if passing a library
+	                with the -l option, this makes parity ignore .so files.
+		            Note: parity does not look at the real type of library on
+		            behalf of this option, but only evaluates the filename.
+	-g				enable debugable output, see config:Debugable
+	-x<lang>		force a specific language to be used (for example -xc++ to
+	                compile even .c files as C++ code), see config:ForcedLanguage
+	-o <file>		sets the output filename. this works for objects, executables,
+					shared libraries and preprocessor output.
+	-subsys <s>		sets the sybsystem, see config:Subsystem
+	-fshort-wc		use unsigned short as type for wchar_t, see config:ShortWchar
+	-fnoshort-w		use built-in type for wchar_t, see config:ShortWchar
+	-M				enable dependency tracking, including system headers.
+	-MM				enable dependency tracking, excluding system headers.
+	-MF <file>		with -M or -MM write output to given file instead of stdout.
+	-MD				the same as -M -MF <file>, but parity does not stop after
+					dependency tracking. the <file> is either taken from a -MF
+					option, or the compiler output name with ".d" appended.
+					This includes system header files.
+	-MMD			Same as -MD, but exclude system headers.
+	-MG				During dependency tracking, assume that missing header files
+					will be generated, and thus output dependency information for
+					them. Normally, missing header files are ignored.
+	-MP				Generate phony targets for every file except the main
+					dependency target. These are usefull to avoid errors when
+					calling make after removing a header file.
+	-MT <target>	change the target for the dependency rule. this can be
+					any string, which is used in the form of "<target>:"
+	-rpath <p>		same as -Wl,-rpath, see config:Runpaths
+	-l<l>			add library. this searches for the library in all library
+					paths given until the -l option is encountered. directories
+					given after -l are ignored. if -static was given before this
+					option, this does not search for .so files. see
+					config:ObjectsLibraries
+	.lib, .obj,		directly add a library or object file to the list of files to
+	.o,	.a, .so		be processed while linking. this ignores the -static option,
+					but rather searches for the given file in all library paths
+					given before this option. see config:ObjectsLibraries
+	.c, .cc, .i,	adds a source file to the list of files to either dependency
+	.ii, .cpp,		track, preprocess or compile, depending on the combination
+	.cxx, .C, .asm,	of -c, -M and -E switches. If neither -c, -E and -M are given
+	.s, .S			each source is compiled to a temporary object file, which is
+					directly passed to the linker. in this case, the output
+					filename does not denote an object, but a final binary.
+	.res			special extension handled by passing it through directly to
+					the linker.
+					
+parity.gnu.ld options:
+----------------------
+
+	-L				add library search path, see config:LibraryPaths
+	-Bstatic		don't look for .so files, see parity.gnu.gcc -static option.
+	-Bdynamic		reverses the above -Bstatic switch at a certain point on the
+					command line. this way it is possible to search for a few
+					libraries without taking .so files into account, and after
+					that return to the default search behaviour.
+	-shared			see parity.gnu.gcc -shared option.
+	-g				enable debugable output. normally the linker determines wether
+					to link debugable, by searching for debug information in object
+					files. passing -g can speed up linking slightly, since the linker
+					does no longer search for that information.
+	-o				sets the output filename.
+	-subsys <s>		see parity.gnu.gcc -subsys option.
+	-rpath <p>		see parity.gnu.gcc -rpath option.
+	-e <e>			see parity.gnu.gcc -Wl,-e option.
+	-l<l>			see parity.gnu.gcc -l option.
+	.lib, .obj,		see parity.gnu.gcc .lib, .obj, etc. option.
+	.o, .a, .so
+	
+parity.ms.cl options:
+---------------------
+
+	

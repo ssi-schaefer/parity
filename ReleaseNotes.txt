@@ -206,3 +206,5 @@ fixed the -fno-rtti switch, which was not working correctly.
 fixed the -ffor-scope switch, which was not working correctly.
 
 fixed the -fshort-wchar switch, which was not working correctly.
+
+fixed the -fsyntax switch, which was not working correctly.
