@@ -183,6 +183,13 @@ namespace paritygraphicalconfigurator {
 
 			++ptr;
 		}
+
+		System::String^ val = System::Convert::ToString(lvSettings->Items->Count);
+		val += " items, ";
+		val += lvSettings->Groups[0]->Items->Count;
+		val += " differ from default.";
+
+		stStatusLabel->Text = val;
 	}
 
 	System::Void Configurator::UpdateConfigurationView(parity::utils::Context& ctx)
@@ -208,6 +215,13 @@ namespace paritygraphicalconfigurator {
 				item->SubItems[colValue->Index]->Font = gcnew System::Drawing::Font(item->SubItems[colValue->Index]->Font, System::Drawing::FontStyle::Bold);
 			}
 		}
+
+		System::String^ val = System::Convert::ToString(lvSettings->Items->Count);
+		val += " items, ";
+		val += lvSettings->Groups[0]->Items->Count;
+		val += " differ from default.";
+
+		stStatusLabel->Text = val;
 	}
 
 	//

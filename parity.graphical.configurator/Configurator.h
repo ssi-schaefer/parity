@@ -59,6 +59,10 @@ namespace paritygraphicalconfigurator {
 	private: System::Windows::Forms::ToolStripMenuItem^  mnuNew;
 	private: System::Windows::Forms::ToolStripMenuItem^  mnuOpen;
 	private: System::Windows::Forms::ToolStripMenuItem^  mnuSaveAs;
+	private: System::Windows::Forms::StatusStrip^  stStatus;
+	private: System::Windows::Forms::ToolStripStatusLabel^  stStatusLabel;
+
+
 	private: System::ComponentModel::IContainer^  components;
 	protected: 
 
@@ -101,8 +105,11 @@ namespace paritygraphicalconfigurator {
 			this->mnuNew = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->mnuOpen = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->mnuSaveAs = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stStatus = (gcnew System::Windows::Forms::StatusStrip());
+			this->stStatusLabel = (gcnew System::Windows::Forms::ToolStripStatusLabel());
 			this->tsToolbar->SuspendLayout();
 			this->msMainMenu->SuspendLayout();
+			this->stStatus->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// tsToolbar
@@ -148,9 +155,11 @@ namespace paritygraphicalconfigurator {
 			// lvSettings
 			// 
 			this->lvSettings->AllowColumnReorder = true;
+			this->lvSettings->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom) 
+				| System::Windows::Forms::AnchorStyles::Left) 
+				| System::Windows::Forms::AnchorStyles::Right));
 			this->lvSettings->Columns->AddRange(gcnew cli::array< System::Windows::Forms::ColumnHeader^  >(4) {this->colName, this->colValue, 
 				this->colType, this->colDefaultValue});
-			this->lvSettings->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->lvSettings->FullRowSelect = true;
 			this->lvSettings->GridLines = true;
 			listViewGroup1->Header = L"Changed Settings";
@@ -162,7 +171,7 @@ namespace paritygraphicalconfigurator {
 			this->lvSettings->Location = System::Drawing::Point(0, 49);
 			this->lvSettings->MultiSelect = false;
 			this->lvSettings->Name = L"lvSettings";
-			this->lvSettings->Size = System::Drawing::Size(815, 353);
+			this->lvSettings->Size = System::Drawing::Size(815, 332);
 			this->lvSettings->SmallImageList = this->ilImages;
 			this->lvSettings->TabIndex = 1;
 			this->lvSettings->UseCompatibleStateImageBehavior = false;
@@ -213,7 +222,7 @@ namespace paritygraphicalconfigurator {
 			this->mnuFile->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->mnuNew, this->mnuOpen, 
 				this->mnuSaveAs});
 			this->mnuFile->Name = L"mnuFile";
-			this->mnuFile->Size = System::Drawing::Size(35, 20);
+			this->mnuFile->Size = System::Drawing::Size(37, 20);
 			this->mnuFile->Text = L"&File";
 			// 
 			// mnuNew
@@ -221,7 +230,7 @@ namespace paritygraphicalconfigurator {
 			this->mnuNew->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"mnuNew.Image")));
 			this->mnuNew->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->mnuNew->Name = L"mnuNew";
-			this->mnuNew->Size = System::Drawing::Size(152, 22);
+			this->mnuNew->Size = System::Drawing::Size(124, 22);
 			this->mnuNew->Text = L"&New";
 			this->mnuNew->Click += gcnew System::EventHandler(this, &Configurator::NewConfiguration);
 			// 
@@ -230,7 +239,7 @@ namespace paritygraphicalconfigurator {
 			this->mnuOpen->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"mnuOpen.Image")));
 			this->mnuOpen->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->mnuOpen->Name = L"mnuOpen";
-			this->mnuOpen->Size = System::Drawing::Size(152, 22);
+			this->mnuOpen->Size = System::Drawing::Size(124, 22);
 			this->mnuOpen->Text = L"&Open";
 			this->mnuOpen->Click += gcnew System::EventHandler(this, &Configurator::OpenConfiguration);
 			// 
@@ -239,15 +248,31 @@ namespace paritygraphicalconfigurator {
 			this->mnuSaveAs->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"mnuSaveAs.Image")));
 			this->mnuSaveAs->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->mnuSaveAs->Name = L"mnuSaveAs";
-			this->mnuSaveAs->Size = System::Drawing::Size(152, 22);
+			this->mnuSaveAs->Size = System::Drawing::Size(124, 22);
 			this->mnuSaveAs->Text = L"&Save as ...";
 			this->mnuSaveAs->Click += gcnew System::EventHandler(this, &Configurator::SaveConfiguration);
+			// 
+			// stStatus
+			// 
+			this->stStatus->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->stStatusLabel});
+			this->stStatus->Location = System::Drawing::Point(0, 380);
+			this->stStatus->Name = L"stStatus";
+			this->stStatus->Size = System::Drawing::Size(815, 22);
+			this->stStatus->TabIndex = 3;
+			this->stStatus->Text = L"\"...\"";
+			// 
+			// stStatusLabel
+			// 
+			this->stStatusLabel->Name = L"stStatusLabel";
+			this->stStatusLabel->Size = System::Drawing::Size(16, 17);
+			this->stStatusLabel->Text = L"...";
 			// 
 			// Configurator
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(815, 402);
+			this->Controls->Add(this->stStatus);
 			this->Controls->Add(this->lvSettings);
 			this->Controls->Add(this->tsToolbar);
 			this->Controls->Add(this->msMainMenu);
@@ -259,6 +284,8 @@ namespace paritygraphicalconfigurator {
 			this->tsToolbar->PerformLayout();
 			this->msMainMenu->ResumeLayout(false);
 			this->msMainMenu->PerformLayout();
+			this->stStatus->ResumeLayout(false);
+			this->stStatus->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 

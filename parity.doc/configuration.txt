@@ -50,6 +50,13 @@ General Format Description:
 	directives are executed after a section definition, so those have to be positioned
 	before the first section definition.
 	
+	Note: Sections are not currently supported by the graphical (and textual)
+	      configurator (and they probably never will be supported). This is due
+	      to the limited architecture of the configurators. The graphical
+	      configurator however provides the capability of chosing which of the
+	      sections available in a confg file to load in adition to the global
+	      scope.
+	
 Configuration directives supported by parity:
 =============================================	
 
