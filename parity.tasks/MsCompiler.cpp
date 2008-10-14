@@ -130,9 +130,9 @@ namespace parity
 			// Decide about the type of wchar_t.
 			//
 			if(ctx.getShortWchar())
-				vec.push_back("/Zc:wchar_t");
-			else
 				vec.push_back("/Zc:wchar_t-");
+			else
+				vec.push_back("/Zc:wchar_t");
 
 			//
 			// Decide about time_t size
