@@ -152,7 +152,7 @@
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
-			ManagedExtensions="1"
+			ManagedExtensions="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"

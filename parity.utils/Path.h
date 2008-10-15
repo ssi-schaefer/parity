@@ -50,8 +50,8 @@ namespace parity
 			const std::string& get() const;
 			void set(const std::string& value);
 
-			void toNative();
-			void toForeign();
+			Path& toNative();
+			Path& toForeign();
 
 			bool isNative() const;
 			bool isForeign() const;

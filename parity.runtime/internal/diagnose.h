@@ -25,6 +25,7 @@
 
 #include "pcrt.h"
 #include <windows.h>
+#include <stdio.h>
 
 //
 // Describes the symbol that is nearest to

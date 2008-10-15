@@ -75,6 +75,8 @@ namespace parity
 			// (i.e. the loader and the runtime).
 			//
 			bool testParityRuntimeDlfcn();
+			bool testParityRuntimeStack();
+			bool testParityRuntimeCore();
 			bool testParityLoaderPreload();
 			bool testParityLoaderRunpaths();
 

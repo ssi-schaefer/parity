@@ -401,7 +401,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\parity.runtime.core.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\parity.runtime.dlfcn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\parity.runtime.stack.cpp"
 				>
 			</File>
 			<File

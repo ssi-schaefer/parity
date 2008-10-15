@@ -133,6 +133,8 @@ int main(int argc, char** argv)
 		{ "parity::binary::Object (write)", &parity::testing::TestSuite::testParityBinaryObjectWrite },
 		{ "parity::binary::Image (write)", &parity::testing::TestSuite::testParityBinaryImageWrite },
 		{ "parity::runtime::dlfcn", &parity::testing::TestSuite::testParityRuntimeDlfcn },
+		{ "parity::runtime::stack", &parity::testing::TestSuite::testParityRuntimeStack },
+		{ "parity::runtime::core", &parity::testing::TestSuite::testParityRuntimeCore },
 		{ "parity::loader::preload", &parity::testing::TestSuite::testParityLoaderPreload },
 		{ "parity::loader::runpaths", &parity::testing::TestSuite::testParityLoaderRunpaths },
 		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile },

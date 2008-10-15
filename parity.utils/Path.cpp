@@ -150,10 +150,10 @@ namespace parity
 				expand();
 		}
 
-		void Path::toNative()
+		Path& Path::toNative()
 		{
 			if(isNative())
-				return;
+				return *this;
 
 			#ifdef __INTERIX
 				/* native:  unix style paths,
@@ -176,12 +176,14 @@ namespace parity
 			#endif
 
 			expand();
+
+			return *this;
 		}
 
-		void Path::toForeign()
+		Path& Path::toForeign()
 		{
 			if(isForeign())
-				return;
+				return *this;
 
 			#ifdef __INTERIX
 				/* native:  unix style paths,
@@ -214,6 +216,8 @@ namespace parity
 				else
 					convertToUnix();
 			#endif
+
+			return *this;
 		}
 
 		bool Path::isNative() const 
