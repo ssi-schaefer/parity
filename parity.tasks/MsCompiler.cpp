@@ -53,11 +53,21 @@ namespace parity
 				switch(it->second)
 				{
 				case utils::LanguageAsssembler:
+					if(ctx.getAssemblerExe().get().empty()) {
+						utils::Log::error("Assembler executable not set, cannot compile assembler source file!\n");
+						exit(1);
+					}
+
 					compileGeneric(native, ctx.getAssemblerExe(), specialized);
 					break;
 				case utils::LanguageC:
 				case utils::LanguageCpp:
 				case utils::LanguageUnknown:
+					if(ctx.getCompilerExe().get().empty()) {
+						utils::Log::error("Compiler executable not set, cannot compile C/C++ source file!\n");
+						exit(1);
+					}
+
 					processCOrCppFile(specialized);
 					compileGeneric(native, ctx.getCompilerExe(), specialized);
 					break;

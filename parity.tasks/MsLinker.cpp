@@ -63,6 +63,11 @@ namespace parity
 			//
 			utils::Task task;
 
+			if(ctx.getLinkerExe().get().empty()) {
+				utils::Log::error("Linker executable not set, cannot link objects!\n");
+				exit(1);
+			}
+
 			//
 			// prepare argument vector
 			//

@@ -128,12 +128,6 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	if(context.getCompilerExe().get().empty() || context.getAssemblerExe().get().empty())
-	{
-		Log::error("compiler or assembler executable not set by configuration, cannot continue!\n");
-		exit(1);
-	}
-
 	//
 	// Initialization complete, startup can proceed.
 	//
@@ -156,12 +150,6 @@ int main(int argc, char** argv)
 
 	Log::verbose("entering linker stage...\n");
 
-	if(context.getLinkerExe().get().empty())
-	{
-		Log::error("linker executable not set by configuration, cannot continue!\n");
-		exit(1);
-	}
-	
 	tasks::runLinkerStage();
 
 	return 0;

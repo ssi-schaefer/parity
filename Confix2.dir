@@ -32,6 +32,8 @@ AC_DEFUN([PARITY_LOOKUP_EXE], [
 	IFS=$PATH_SEPARATOR
 
 	for x in $LookupRoot; do
+		IFS=$LookupIFS
+		
 		if test -f "$x/bin/$LookupFile"; then
 			LookedUp="$x/bin/$LookupFile"
 		fi
@@ -47,12 +49,11 @@ AC_DEFUN([PARITY_LOOKUP_EXE], [
 	IFS=$LookupIFS
 
 	if test -z "$LookedUp" -o ! -f "$LookedUp"; then
-		AC_MSG_ERROR([cannot find $LookupFile])
+		AC_MSG_WARN([cannot find $LookupFile])
+	else
+		AC_MSG_RESULT([$LookedUp])
+		eval "$LookupVar=\\\"$LookedUp\\\""
 	fi
-
-	AC_MSG_RESULT([$LookedUp])
-
-	eval "$LookupVar=\\\"$LookedUp\\\""
 ])
 
 AC_DEFUN([PARITY_LOOKUP_CRT],
@@ -69,6 +70,8 @@ AC_DEFUN([PARITY_LOOKUP_CRT],
 	IFS=$PATH_SEPARATOR
 
 	for x in $CrtPaths; do
+		IFS=$LookupIFS
+	
 		if test -z "$CrtLookedUpInc" -a -f "$x/include/stdio.h"; then
 			CrtLookedUpInc="$x/include"
 		fi
@@ -112,6 +115,8 @@ AC_DEFUN([PARITY_LOOKUP_SDK],
 	IFS=$PATH_SEPARATOR
 
 	for x in $SdkPaths; do
+		IFS=$LookupIFS
+		
 		if test -z "$SdkLookedUpInc" -a -f "$x/platformsdk/include/windows.h"; then
 			SdkLookedUpInc="$x/platformsdk/include"
 		fi
