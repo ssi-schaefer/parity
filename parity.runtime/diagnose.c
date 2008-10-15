@@ -432,7 +432,7 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		// if getting many, many stack traces (or sym infos).
 		//
 		while(symtab->addr && symtab->name) {
-			if(((unsigned long)symtab->addr < (unsigned long)addr)
+			if(((unsigned long)symtab->addr <= (unsigned long)addr)
 				&& ((unsigned long)symtab->addr > (unsigned long)info.addr))
 			{
 				info = *symtab;

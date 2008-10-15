@@ -413,6 +413,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\parity.runtime.symbol.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\parity.tasks.gatherer.debug.switch.cpp"
 				>
 			</File>

@@ -135,6 +135,7 @@ int main(int argc, char** argv)
 		{ "parity::runtime::dlfcn", &parity::testing::TestSuite::testParityRuntimeDlfcn },
 		{ "parity::runtime::stack", &parity::testing::TestSuite::testParityRuntimeStack },
 		{ "parity::runtime::core", &parity::testing::TestSuite::testParityRuntimeCore },
+		{ "parity::runtime::symbol", &parity::testing::TestSuite::testParityRuntimeSymbol },
 		{ "parity::loader::preload", &parity::testing::TestSuite::testParityLoaderPreload },
 		{ "parity::loader::runpaths", &parity::testing::TestSuite::testParityLoaderRunpaths },
 		{ "parity.exe: compile", &parity::testing::TestSuite::testParityExeCompile },

@@ -40,21 +40,21 @@ namespace parity
 		//
 		static const char dataCFile[] = 
 			"#include <internal/diagnose.h>\n"
-			"void func() {\n"
-			"	(*(int*)0) = 0xdeadbeef;\n"
-			"}\n"
+			"int func() { return 0; }\n"
 			"int ma""in(int argc, char** argv) {\n"
-			"	func();\n"
+			"	syminfo_t info = PcrtGetNearestSymbol(func, LookupInternal);\n"
+			"	printf(\"%p %s\\n\", info.addr, info.name);\n"
+			"	if(!info.addr || !info.name) return 1;\n"
 			"	return 0;\n"
 			"}\n";
 
-		bool TestSuite::testParityRuntimeCore()
+		bool TestSuite::testParityRuntimeSymbol()
 		{
 			try {
 				utils::Task::ArgumentVector arguments;
 
-				utils::Path cfile = utils::Path::getTemporary(".parity.testsuite.runtime.core.XXXXXX.c");
-				utils::Path ofile = utils::Path::getTemporary(".parity.testsuite.runtime.core.XXXXXX.exe");
+				utils::Path cfile = utils::Path::getTemporary(".parity.testsuite.runtime.symbol.XXXXXX.c");
+				utils::Path ofile = utils::Path::getTemporary(".parity.testsuite.runtime.symbol.XXXXXX.exe");
 
 				std::ofstream ofs(cfile.get().c_str());
 				ofs << dataCFile;
@@ -81,19 +81,10 @@ namespace parity
 				exe.setOutStream(os);
 				exe.setErrStream(es);
 
-				if(exe.execute(ofile, utils::Task::ArgumentVector()))
-					throw utils::Exception("unexpectedly passed execution!");
-
-				utils::Path corefile("core");
-				
-				if(!corefile.exists())
-					throw utils::Exception("missing core file from crash!");
+				if(!exe.execute(ofile, utils::Task::ArgumentVector()))
+					throw utils::Exception("cannot execute test result!");
 
 				dumpStreams(os.str(), es.str());
-
-				utils::MappedFile cs(corefile, utils::ModeRead);
-				dumpStreams("", std::string((char*)cs.getBase()));
-				cs.close();
 
 				return true;
 			} catch(const utils::Exception& e)

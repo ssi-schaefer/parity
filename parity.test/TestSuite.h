@@ -77,6 +77,7 @@ namespace parity
 			bool testParityRuntimeDlfcn();
 			bool testParityRuntimeStack();
 			bool testParityRuntimeCore();
+			bool testParityRuntimeSymbol();
 			bool testParityLoaderPreload();
 			bool testParityLoaderRunpaths();
 
