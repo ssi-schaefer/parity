@@ -180,12 +180,12 @@ namespace parity
 				CTX_GETSET   (bool			,IgnoreOutputFilters,false			)  /* internal only */ \
 				CTX_GETSET   (PathVector	,AdditionalExecPaths,PathVector()	)  /* internal only */ \
 				CTX_GETSET   (bool			,GeneratePCRTEntry	,true			)  /* internal only */ \
-				CTX_GETSET   (bool			,GenerateSymbols	,true			)  /* internal only */ \
+				CTX_GETSET   (bool			,GenerateSymbols	,false			)  /* internal only */ \
 				CTX_GETSET   (bool			,UseCommandScripts	,true			)  /* internal (MS) */ \
 				CTX_GETSET_I (std::string	,CompilerPassThrough,""				)  /* internal (compiler) */ \
 				CTX_GETSET_I (std::string	,LinkerPassThrough	,""				)  /* internal (linker) */ \
 				CTX_GETSET   (bool			,ExportAll			,false			)  /* internal (linker) */ \
-				CTX_GETSET   (bool			,ExportFromExe		,true			)  /* internal (linker) */ \
+				CTX_GETSET   (bool			,ExportFromExe		,false			)  /* internal (linker) */ \
 				CTX_GETSET_I (bool			,Preprocess			,false			)  /* preprocessor */ \
 				CTX_GETSET   (bool			,KeepComments		,false			)  /* preprocessor */ \
 				CTX_GETSET   (bool			,NoStdIncludes		,false			)  /* preprocessor */ \

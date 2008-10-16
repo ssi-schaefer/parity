@@ -42,7 +42,7 @@ namespace parity
 			"#include <internal/diagnose.h>\n"
 			"int func() { return 0; }\n"
 			"int ma""in(int argc, char** argv) {\n"
-			"	syminfo_t info = PcrtGetNearestSymbol(func, LookupInternal);\n"
+			"	syminfo_t info = PcrtGetNearestSymbol(func, PcrtUseDebugSymbols());\n"
 			"	printf(\"%p %s\\n\", info.addr, info.name);\n"
 			"	if(!info.addr || !info.name) return 1;\n"
 			"	return 0;\n"

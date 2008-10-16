@@ -78,6 +78,7 @@ extern void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack);
 extern stackframe_t* PcrtGetStackTrace();
 extern stackframe_t* PcrtGetStackTraceFrom(void* _bp, void* _ip);
 extern stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace);
+SymbolLookupType PcrtUseDebugSymbols();
 extern syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t);
 extern modinfo_t PcrtGetContainingModule(void* addr);
 extern void PcrtSetupExceptionHandling();

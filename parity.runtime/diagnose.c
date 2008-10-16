@@ -140,7 +140,7 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 	stack = PcrtDestroyStackTrace(stack);
 }
 
-static SymbolLookupType PcrtUseDebugSymbols() {
+SymbolLookupType PcrtUseDebugSymbols() {
 	//
 	// Determine from Environment wether we should use Debug Informations
 	// (slower and maybe unavailable)...
@@ -149,14 +149,14 @@ static SymbolLookupType PcrtUseDebugSymbols() {
 	static DWORD dwSz;
 	
 	if(!checked) {
-		dwSz = GetEnvironmentVariableA("PCRT_DEBUG_SYMBOLS", NULL, 0);
+		dwSz = GetEnvironmentVariableA("PCRT_INTERNAL_SYMBOLS", NULL, 0);
 		checked = 1;
 	}
 
 	if(dwSz != 0)
-		return LookupDebugInfo;
+		return LookupInternal;
 
-	return LookupInternal;
+	return LookupDebugInfo;
 }
 
 stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
@@ -336,8 +336,12 @@ void PcrtInitializeDebugInformation() {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot load dbghelp.dll symbols.\n");
 		}
 
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "initializing debug information, please wait ... ");
+
 		if(!hInit(GetCurrentProcess(), NULL, TRUE)) {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot initialize debug symbol information.\n");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed!\n");
+		} else {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "done.\n");
 		}
 	} else {
 		//
@@ -353,8 +357,9 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 {
 	syminfo_t info = { 0, 0 };
 
-	if(t == LookupDebugInfo && PcrtUseDebugSymbols()) {
-		PcrtInitializeDebugInformation();
+	if(t == LookupDebugInfo && PcrtUseDebugSymbols() == LookupDebugInfo) {
+		if(!PcrtIsDebugInitialized())
+			PcrtInitializeDebugInformation();
 	} else if(t == LookupDebugInfo) {
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "warning: requested debug symbols, but those are not enabled!\n");
 	}
@@ -797,10 +802,4 @@ void PcrtSetupExceptionHandling()
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed to install exception trace handler, exception tracing not enabled.\n");
 		}
 	}
-
-	//
-	// Initialize Debug symbols if required.
-	//
-	if(PcrtUseDebugSymbols())
-		PcrtInitializeDebugInformation();
 }

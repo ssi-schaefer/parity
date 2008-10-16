@@ -85,18 +85,18 @@ Environment Variables:
        "yes", "1" or a filename. If the value is a file, trace output
        is written to that file instead of stderr (which is the case with
        the other values).
-   * PCRT_DEBUG_SYMBOLS
+   * PCRT_INTERNAL_SYMBOLS
        When resolving symbols (either by request from an application, or
        while tracing the stack), parity.runtime uses debug symbols if this
-       variable is set (value ignored). Otherwise parity uses symbol tables
+       variable is not set. Otherwise parity uses symbol tables
        generated during linking if the configuration directive
        "GenerateSymbols" is set. Debug symbols have the advantage of being
        much more accurate on a debugable binary. If the Image for which
        symbol information is to be retrieved is not debugable, there is no
        advantage in using debug symbols, except for name undecoration; The
-       internal mechanism even produces more accurate information on
-       non-debugable binaries, since it does not rely on the export tables.
-       The internal mechanism also has the advantage, that it is much faster,
-       and doesn't require an external library (debug symbols require 
-       dbghelp.dll v5.1 or later).
+       internal mechanism even can - in some cases - produce more accurate
+       information on non-debugable binaries, since it does not rely on the
+       export tables. The internal mechanism also has the advantage, that it
+       is much faster, and doesn't require an external library (debug symbols
+       require dbghelp.dll v5.1 or later).
    

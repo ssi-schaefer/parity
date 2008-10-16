@@ -203,7 +203,9 @@ GenerateSymbols (bool)
 	library on the link line will be linked in, even if it is otherwise unused). This
 	symbol table can be used to get human readable stack traces from release binaries
 	(for example when writing a "core" file).
-	Default: on
+	The default has recently been changed to off, since this can be enabled explicitly
+	if searching for errors, and the dbghelp.dll library is not available.
+	Default: off
 
 UseCommandScripts (bool)
 	Specifies wether command scripts should be used when starting child processes. This
@@ -229,7 +231,9 @@ ExportFromExe (bool)
 	link will fail, since those symbols are unresolved. Without this directive set,
 	the link will go fine, since the linker finds the object inside the library
 	unreferenced, and throws it away for this link.
-	Default: on
+	The default has been switched to off recently, since this is required only for
+	special cases, where it can be turned on.
+	Default: off
 
 KeepComments (bool)
 	Specifies wether to keep comments in preprocessed source files. Enabling this is

@@ -39,7 +39,7 @@ namespace parity
 	{
 		MsPcrtInitEntryGenerator::MsPcrtInitEntryGenerator()
 		{
-			utils::Log::verbose("initialized PcrtInit Entrypoint generator.\n");
+			utils::Log::verbose("initialized PcrtInit entry point generator.\n");
 		}
 
 		static const unsigned char dataEmptyPtr[] = { 0x00, 0x00, 0x00, 0x00 };
