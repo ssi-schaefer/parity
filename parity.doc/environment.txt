@@ -99,4 +99,8 @@ Environment Variables:
        export tables. The internal mechanism also has the advantage, that it
        is much faster, and doesn't require an external library (debug symbols
        require dbghelp.dll v5.1 or later).
+       Beaware that using Debug Symbols is unable to resolve symbols  from exe
+       files if building release executables (without debug information), and
+       the ExportFromExe option disabled. This is because dbghelp.dll uses
+       the Export Tables, which are present in DLLs, but not EXEs by default.
    
