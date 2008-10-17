@@ -1,4 +1,5 @@
 ADD_EXTRA_DIST('parity.loader.vcproj')
+INSTALLDIR_H('parity.loader')
 
 PROVIDE_SYMBOL('parity.loader.lib')
 

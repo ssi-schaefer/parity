@@ -8,3 +8,14 @@ MAKEFILE_AM('CXX=../parity.gnu.gcc/parity.gnu.gcc$(EXEEXT)')
 MAKEFILE_AM('parity_diagnostic_exe_LDADD=')
 MAKEFILE_AM('parity_diagnostic_exe_DEPENDENCIES=')
 MAKEFILE_AM('EXEEXT=')
+
+import os;
+import re;
+
+_re_h = re.compile('^.*\\.h$')
+
+for file in os.listdir('.'):
+	if os.path.isfile(file):
+		if _re_h.match(file):
+			SET_FILE_PROPERTIES(file, { 'PRIVATE_CINCLUDE': 1 })
+
