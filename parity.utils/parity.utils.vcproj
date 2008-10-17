@@ -375,6 +375,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FormatStrings.h"
+				>
+			</File>
+			<File
 				RelativePath=".\GenericFile.h"
 				>
 			</File>

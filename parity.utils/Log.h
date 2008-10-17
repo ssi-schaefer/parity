@@ -28,6 +28,7 @@
 #include <fstream>
 
 #include "Color.h"
+#include "FormatStrings.h"
 
 #ifdef _WIN32
 #  include <windows.h>
@@ -50,10 +51,10 @@ namespace parity
 				Error
 			} Level;
 
-			static int verbose(const char* fmt, ...);
-			static int profile(const char* fmt, ...);
-			static int warning(const char* fmt, ...);
-			static int error(const char* fmt, ...);
+			static int verbose(const char* fmt, ...) FORMAT_CHECK(1, 2);
+			static int profile(const char* fmt, ...) FORMAT_CHECK(1, 2);
+			static int warning(const char* fmt, ...) FORMAT_CHECK(1, 2);
+			static int error(const char* fmt, ...)   FORMAT_CHECK(1, 2);
 
 			static void setLevel(Log::Level lvl);
 			static void setColor(const Color& col) { color_ = col; }

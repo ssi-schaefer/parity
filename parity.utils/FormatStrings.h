@@ -20,41 +20,14 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __EXCEPTION_H__
-#define __EXCEPTION_H__
+#ifndef __FORMATSTRINGS_H__
+#define __FORMATSTRINGS_H__
 
-#include <stdarg.h>
-#include <stdexcept>
-
-#include "FormatStrings.h"
-
-namespace parity
-{
-	namespace utils
-	{
-
-		class Exception {
-		public:
-			Exception(const char*, ...) FORMAT_CHECK(2, 3);
-			~Exception();
-
-			const char* what() const { return buffer_; }
-#ifdef _WIN32
-		private:
+#ifdef __GNUC__
+# define FORMAT_CHECK(a, b) __attribute__((format(printf, a, b)))
+#else
+# define FORMAT_CHECK(a, b)
 #endif
-			Exception(const Exception&) : buffer_(0) { throw "invalid"; }
-			Exception& operator=(const Exception&);
-#ifndef _WIN32
-		private:
-#endif
-
-			char * buffer_;
-
-			size_t getLength(const char*, va_list) const;
-		};
-
-	}
-}
 
 #endif
 
