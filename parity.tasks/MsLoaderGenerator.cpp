@@ -127,6 +127,9 @@ namespace parity
 			if(!ctx.getGenerateLoader())
 				return;
 
+			if(imports_.empty())
+				utils::Log::verbose("skipping loader generator, zero imports to be generated.\n");
+
 			binary::Object obj;
 			binary::FileHeader& hdr = obj.getHeader();
 

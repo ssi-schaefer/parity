@@ -212,3 +212,9 @@ fixed the -fsyntax switch, which was not working correctly.
 the parity.doc documentation project has been added, which provides thorough descriptions of configuration and command line switches, also including some information about the internal workings of parity.
 
 not finding one of the executable (assembler, compiler, linker, manifest tool) during configure, is no longer fatal. also the checks for this executables at runtime have been moved to right before using them, so a missing assembler is now ok, as long as you don't try to assemble something.
+
+fixed a problem with, which caused structures to be misaligned in some parts of parity when using gcc 4.2, causing parity.inspector to crash on import table reads.
+
+parity no longer generates things required for the generated loader, if there are zero symbols to load.
+
+changed parts of the parity.runtime library to use internal output routines in favor of fprintf, to assure full functionality even when calling those functions while initializing binaries, where standard handled may not yet be initialized.

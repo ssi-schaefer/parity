@@ -118,21 +118,23 @@ namespace parity
 					genSectionFound = true;
 
 					pointers = MAKEPTR(InspectorPointerLayoutVA*, mapping.getBase(), it->second.getPointerToRawData());
+
 					genImageName	= reinterpret_cast<const char*>(img.getHeader().getPointerFromVA(pointers->name));
 					genRunPathPtr	= reinterpret_cast<const char*>(img.getHeader().getPointerFromVA(pointers->rpaths));
 					genTablePtr		= reinterpret_cast<unsigned int*>(img.getHeader().getPointerFromVA(pointers->table));
 					genSubsystem	= pointers->subsystem;
 
-					if(*genTablePtr)
+					if(genTablePtr && *genTablePtr)
 						genLibs		= InspectorLayoutToLibraries(reinterpret_cast<InspectorLibrariesPointerLayoutVA*>(img.getHeader().getPointerFromVA(*genTablePtr)), img.getHeader());
 
-					genRunPaths		= ConvertRunPaths(genRunPathPtr);
+					if(genRunPathPtr)
+						genRunPaths	= ConvertRunPaths(genRunPathPtr);
 
 					utils::Log::verbose("%s: found image name %s\n", pth.file().c_str(), genImageName);
 					utils::Log::verbose("%s: found runpaths at location %p\n", pth.file().c_str(), genRunPathPtr);
 
-					if(*genTablePtr)
-						utils::Log::verbose("%s: found generated import table at %p\n", pth.file().c_str(), *genTablePtr);
+					if(genTablePtr && *genTablePtr)
+						utils::Log::verbose("%s: found generated import table at %p\n", pth.file().c_str(), reinterpret_cast<void*>(*genTablePtr));
 					else
 						utils::Log::verbose("%s: image has no import dependencies!\n", pth.file().c_str());
 

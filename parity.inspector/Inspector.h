@@ -38,14 +38,7 @@ namespace parity
 		// LoaderInit.h from parity.loader too!
 		//
 
-		#if defined(_WIN32) || (defined(__INTERIX) && (!defined(__GNUC__) || __GNUC__ == 3 ))
-		#  pragma pack(push, 2)
-		#  define STRUCT_PACKING_ATTRIBUTE
-		#elif defined(__GNUC__)
-		#  define STRUCT_PACKING_ATTRIBUTE __attribute__((packed, aligned(2)))
-		#else
-		#  error "don't know how to handle structure alignment!"
-		#endif
+		#include <CoffHelperPackStart.h>
 
 		typedef struct STRUCT_PACKING_ATTRIBUTE {
 			unsigned int name;
@@ -91,9 +84,7 @@ namespace parity
 			utils::SubsystemType subsystem;
 		} InspectorPointerLayoutVA;
 
-		#if defined(_WIN32) || (defined(__INTERIX) && (!defined(__GNUC__) || __GNUC__ == 3 ))
-		#  pragma pack(pop)
-		#endif
+		#include <CoffHelperPackStop.h>
 
 		#define NAMEOF_SECTION_POINTERS	".p.ptrs"
 

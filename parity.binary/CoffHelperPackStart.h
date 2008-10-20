@@ -58,7 +58,7 @@
 #  pragma pack(push, 2)
 #  define STRUCT_PACKING_ATTRIBUTE
 #elif defined(__GNUC__)
-#  define STRUCT_PACKING_ATTRIBUTE __attribute__((packed, aligned(2)))
+#  define STRUCT_PACKING_ATTRIBUTE __attribute__((gcc_struct, packed, aligned(2)))
 #else
 #  error "don't know how to handle structure alignment!"
 #endif

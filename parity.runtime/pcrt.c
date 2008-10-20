@@ -139,17 +139,17 @@ const char* PcrtPathToNative(const char* ptr) {
 
 				return pRing[iRingNum];
 			} else {
-				fprintf(stderr, "Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!\n");
+				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!\n");
 			}
 		} else {
-			fprintf(stderr, "Neither Interix Installation nor Cygwin DLL found, cannot convert absolute UNIX paths!\n");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither Interix Installation nor Cygwin DLL found, cannot convert absolute UNIX paths!\n");
 		}
 	}
 
 	//
 	// still around?
 	//
-	fprintf(stderr, "would need real path conversion for %s. Please report this!\n", ptr);
+	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "would need real path conversion for %s. Please report this!\n", ptr);
 
 	return ptr;
 #else

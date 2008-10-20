@@ -67,6 +67,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 	DEBUG_EVENT ev;
 	BOOL bDiagnosting = TRUE;
 	std::map<DWORD, HANDLE> process_map;
+	std::map<void*, std::string> dll_names;
 
 	fprintf(out, "starting diagnostic on toplevel process %d...\n", dwTopProcess);
 
@@ -109,6 +110,8 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 				if(!GetFileNameFromHandle(ev.u.LoadDll.hFile, buffer, MAX_PATH)) {
 					fprintf(out, "warning: cannot obtain dll file name!\n");
 					buffer[0] = '\0';
+				} else {
+					dll_names[ev.u.LoadDll.lpBaseOfDll] = buffer;
 				}
 				fprintf(out, "[%d:%d] Loading DLL: %s, Base: %p\n", ev.dwProcessId, ev.dwThreadId, buffer, ev.u.LoadDll.lpBaseOfDll);
 				break;
@@ -139,7 +142,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 				fprintf(out, "[%d:%d] RIP (System Debugging Error): Error: %d, Type: %d\n", ev.dwProcessId, ev.dwThreadId, ev.u.RipInfo.dwError, ev.u.RipInfo.dwType);
 				break;
 			case UNLOAD_DLL_DEBUG_EVENT:
-				fprintf(out, "[%d:%d] Unloading DLL: Base: %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.UnloadDll.lpBaseOfDll);
+				fprintf(out, "[%d:%d] Unloading DLL: %s Base: %p\n", ev.dwProcessId, ev.dwThreadId, dll_names[ev.u.UnloadDll.lpBaseOfDll].c_str(), ev.u.UnloadDll.lpBaseOfDll);
 				break;
 			default:
 				fprintf(out, "[%d:%d] Received unkonwn Debug Event: %d\n", ev.dwProcessId, ev.dwThreadId, ev.dwDebugEventCode);

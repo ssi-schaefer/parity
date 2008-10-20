@@ -147,7 +147,10 @@ void PcrtOutPrint(HANDLE dest, char const* fmt, ...)
 
 	va_end(args);
 
-	WriteFile(dest, buffer, lstrlen(buffer), &iBytesWritten, NULL);
+	if(dest != INVALID_HANDLE_VALUE)
+		WriteFile(dest, buffer, lstrlen(buffer), &iBytesWritten, NULL);
+	else
+		OutputDebugStringA(buffer);
 }
 
 void PcrtOutDebugString(char* buffer)

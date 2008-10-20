@@ -45,26 +45,26 @@ extern void* _ReturnAddress();
 #pragma intrinsic(_ReturnAddress)
 
 int PcrtWaitForDebugger(int timeout) {
-	fprintf(stderr, "Process %d waiting for Debugger to be attached (%d seconds): ", GetCurrentProcessId(), timeout);
+	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Process %d waiting for Debugger to be attached (%d seconds): ", GetCurrentProcessId(), timeout);
 
 	while(timeout > 0 && !IsDebuggerPresent()) {
 		Sleep(1000);
 		if(!(timeout % 5))
-			fprintf(stderr, "%d", timeout);
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "%d", timeout);
 		else
-			fprintf(stderr, ".");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), ".");
 
-		fflush(stderr);
+		FlushFileBuffers(GetStdHandle(STD_ERROR_HANDLE));
 
 		timeout--;
 	}
 
 	if(!IsDebuggerPresent()) {
-		fprintf(stderr, " fail (timeout)\n");
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), " fail (timeout)\n");
 		return -1;
 	}
 
-	fprintf(stderr, " success\n");
+	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), " success\n");
 
 	return 0;
 }
@@ -168,7 +168,7 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 		stackframe_t* frame = (stackframe_t*)malloc(sizeof(stackframe_t));
 
 		if(!frame) {
-			fprintf(stderr, "cannot allocate memory for stack trace!");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot allocate memory for stack trace!");
 			return NULL;
 		}		
 
@@ -207,7 +207,7 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 		} else if(last) {
 			last->next = frame;
 		} else {
-			fprintf(stderr, "internal error creating stack trace (missing nodes).");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "internal error creating stack trace (missing nodes).");
 			return NULL;
 		}
 
@@ -468,7 +468,7 @@ modinfo_t PcrtGetContainingModule(void* addr)
 	//
 	modinfo_t info;
 	if(!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)addr, &info.module)) {
-		fprintf(stderr, "cannot find handle for module containing %p\n", addr);
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot find handle for module containing %p\n", addr);
 		return info;
 	}
 
@@ -685,7 +685,7 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if(hCore == INVALID_HANDLE_VALUE) {
-		char nestedcore[] = "core0";
+		/*char nestedcore[] = "core0";
 		int num = 0;
 
 		while(num < 10 && hCore == INVALID_HANDLE_VALUE) {
@@ -700,7 +700,16 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 		if(hCore == INVALID_HANDLE_VALUE) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error opening core file!\n");
 			return EXCEPTION_CONTINUE_SEARCH;
-		}
+		}*/
+
+		//
+		// instead of writing nested exceptions to a core, simply
+		// output it on stderr, since that means an exception inside
+		// the exception handling code.
+		//
+		hCore = GetStdHandle(STD_ERROR_HANDLE);
+
+		PcrtOutPrint(hCore, "ERROR: internal nested exception: ");
 	}
 
 	PcrtWriteExceptionInformation(hCore, ex, 1);
