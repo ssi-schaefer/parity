@@ -212,6 +212,7 @@ namespace parity
 
 		void BinaryGatherer::processArchive(binary::Archive& arch, const utils::Path& path)
 		{
+			utils::Context ctx = utils::Context::getContext();
 			binary::Archive::ImportMap& imports = arch.getImports();
 
 			if(imports.size() > 0)
@@ -222,12 +223,16 @@ namespace parity
 				// built one, otherwise we ignore it completely.
 				//
 				bool parity_lib = false;
-				for(binary::Archive::ImportMap::iterator it = imports.begin(); it != imports.end(); ++it)
-				{
-					if(it->second.getSymbolName().find("parity_dummy_for") != std::string::npos) {
-						parity_lib = true;
-						break;
+				if(ctx.getIgnoreForeignLibs()) {
+					for(binary::Archive::ImportMap::iterator it = imports.begin(); it != imports.end(); ++it)
+					{
+						if(it->second.getSymbolName().find("parity_dummy_for") != std::string::npos) {
+							parity_lib = true;
+							break;
+						}
 					}
+				} else {
+					parity_lib = true;
 				}
 
 				//

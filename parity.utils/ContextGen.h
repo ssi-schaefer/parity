@@ -166,6 +166,7 @@ namespace parity
 				CTX_GETSET   (Color::ColorMode,ColorMode		,Color::Bright	)  /* internal only */ \
 				CTX_GETSET   (bool			,GatherSystem		,false			)  /* internal only */ \
 				CTX_GETSET   (bool			,GenerateLoader		,true			)  /* internal only */ \
+				CTX_GETSET   (bool			,IgnoreForeignLibs	,true			)  /* internal only */ \
 				CTX_GETSET   (bool			,LazyLoading		,false			)  /* internal only */ \
 				CTX_GETSET   (Path			,ParityLoader		,""				)  /* internal only */ \
 				CTX_GETSET   (Path			,PCRTLibrary		,""				)  /* internal only */ \
