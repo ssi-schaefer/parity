@@ -88,7 +88,7 @@ LoaderStatus ParityLoaderInit()
 
 				//LogDebug(" * %s (0x%x)\n", import->name, import->import);
 			} else {
-				//LogDebug(" * %s (lazy 0x%x)\n", import->name, import->import);
+				//LogDebug(" * %s (lazy, stub at 0x%x)\n", import->name, import->import);
 				++cntLazy;
 			}
 			++import;

@@ -113,6 +113,22 @@ LazyLoading (bool)
 	library at startup time, since it has to load all data symbols. So Lazy loading only
 	pays if there are very many functions to load from shared libraries, where possibly
 	only a few of them are ever called during runtime.
+	Note: There may be hard to find problems with lazy loading, if linking against an
+	      external library, which may export symbols wrongly. For example if the external
+	      library uses a .def file, but does not declare data symbols as DATA, the DLL
+	      will export data symbols as functions. This works without lazy loading, since
+	      all symbols are treated the same, but with lazy loading, data symbols have to
+	      be loaded at startup, and code symbol loading can be delayed. If parity gets
+	      to think a data symbol is a code symbol, it will load it in the wrong order,
+	      which will cause random problem when accessing the data symbol.
+	      This problem is undetectable, since parity initializes the import pointer
+	      used to access those symbols to the address of a generated stub which does the
+	      lazy loading. In the case of a function, this causes an additional function
+	      to be called if the import is called for the first time. This function changes
+	      the import pointer to the real symbol, effectively deactivating itself. If
+	      the symbol is data, it still points to the stub, but accessing the symbol will
+	      cause either an access violation, because the .text section is neither readable
+	      nor writeable, or it will cause random values if reading/writing succeeds.
 	Default: off
 
 ParityLoader (Path)
