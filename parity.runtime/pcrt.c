@@ -31,6 +31,7 @@
 #include <fcntl.h>
 
 #include "internal/diagnose.h"
+#include "internal/output.h"
 #include "unistd.h"
 #include <excpt.h>
 

@@ -212,7 +212,7 @@ namespace parity
 
 		void BinaryGatherer::processArchive(binary::Archive& arch, const utils::Path& path)
 		{
-			utils::Context ctx = utils::Context::getContext();
+			utils::Context& ctx = utils::Context::getContext();
 			binary::Archive::ImportMap& imports = arch.getImports();
 
 			if(imports.size() > 0)
