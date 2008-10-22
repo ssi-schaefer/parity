@@ -647,6 +647,15 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	HANDLE hCore;
 
+	if(GetEnvironmentVariableA("PCRT_ENABLE_CRASHBOXES", NULL, 0) == 0) {
+		//
+		// Disable various error boxes, which we no longer need,
+		// as we create core files after seting up exception
+		// handling.
+		//
+		SetErrorMode(SetErrorMode(0) | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+	}
+
 	switch(ex->ExceptionRecord->ExceptionCode)
 	{
 	case EXCEPTION_ACCESS_VIOLATION:
@@ -671,6 +680,14 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 
 	case EXCEPTION_BREAKPOINT:
 	case EXCEPTION_SINGLE_STEP:
+		//
+		// re-enable error message boxes, to enable debugger attachement.
+		//
+		if(!IsDebuggerPresent()) {
+			SetErrorMode(SetErrorMode(0) & ~SEM_NOGPFAULTERRORBOX);
+		}
+		return EXCEPTION_CONTINUE_SEARCH;
+
 	default:
 		/* those exceptions are not handled (includes C++ exceptions) */
 		return EXCEPTION_CONTINUE_SEARCH;

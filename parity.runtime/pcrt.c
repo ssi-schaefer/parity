@@ -160,15 +160,6 @@ const char* PcrtPathToNative(const char* ptr) {
 
 int PcrtInit()
 {
-	if(GetEnvironmentVariableA("PCRT_ENABLE_CRASHBOXES", NULL, 0) == 0) {
-		//
-		// Disable various error boxes, which we no longer need,
-		// as we create core files after seting up exception
-		// handling.
-		//
-		SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
-	}
-
 	//
 	// Set stream modes to binary to stay compatible with the
 	// rest of the world. this makes some autoconf patches
