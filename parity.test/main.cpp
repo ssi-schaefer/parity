@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 			utils::Timing::instance().start(current->name);
 
 			if(bQuiet)
-				utils::Log::profile(" %s [%2d] %-65s: \r", col.cyan("*").c_str(), numCur, current->name.c_str());
+				utils::Log::profile(" %s [%2ld] %-65s: \r", col.cyan("*").c_str(), numCur, current->name.c_str());
 
 			//
 			// flush to let the user know what happens
@@ -187,13 +187,13 @@ int main(int argc, char** argv)
 				if(!bQuiet)
 					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
-				utils::Log::profile(" %s [%2d] %-65s:   %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.green("ok").c_str());
+				utils::Log::profile(" %s [%2ld] %-65s:   %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.green("ok").c_str());
 				++numPass;
 			} else {
 				if(!bQuiet)
 					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
-				utils::Log::profile(" %s [%2d] %-65s: %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.red("fail").c_str());
+				utils::Log::profile(" %s [%2ld] %-65s: %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.red("fail").c_str());
 				++numFailed;
 			}
 

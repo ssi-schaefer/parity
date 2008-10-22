@@ -92,7 +92,7 @@ namespace parity
 				dumpStreams(os.str(), es.str());
 
 				utils::MappedFile cs(corefile, utils::ModeRead);
-				dumpStreams("", std::string((char*)cs.getBase()));
+				dumpStreams("", std::string(reinterpret_cast<char*>(cs.getBase())));
 				cs.close();
 
 				return true;

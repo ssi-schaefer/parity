@@ -40,7 +40,7 @@ namespace parity
 				int len = decodeNext(position);
 
 				if(len == 0)
-					throw utils::Exception("cannot decode next opcode after successfully decoding %d bytes!", reinterpret_cast<BYTE*>(position) - reinterpret_cast<BYTE*>(what));
+					throw utils::Exception("cannot decode next opcode after successfully decoding %ld bytes!", reinterpret_cast<BYTE*>(position) - reinterpret_cast<BYTE*>(what));
 
 				position = MAKEPTR(void*, position, len);
 			}

@@ -192,7 +192,7 @@ namespace parity
 				int delta = sec.getVirtualAddress() - sec.getPointerToRawData();
 				return reinterpret_cast<void*>(reinterpret_cast<unsigned int>(getBasePointer()) + rva - delta);
 			} catch(const utils::Exception& e) {
-				utils::Log::warning("cannot find pointer for given RVA (%p): %s\n", rva, e.what());
+				utils::Log::warning("cannot find pointer for given RVA (%p): %s\n", reinterpret_cast<void*>(rva), e.what());
 				return 0;
 			}
 		}

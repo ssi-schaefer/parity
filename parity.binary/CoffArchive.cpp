@@ -110,7 +110,7 @@ namespace parity
 						{
 							members_.insert(MemberMap::value_type(name, FileHeader(file_, reinterpret_cast<void*>(imp), true)));
 						} else {
-							utils::Log::warning("invalid object signature: %p in library: %s, member: %s\n", *reinterpret_cast<unsigned short*>(imp), file_->getPath().get().c_str(), name.c_str());
+							utils::Log::warning("invalid object signature: %p in library: %s, member: %s\n", reinterpret_cast<void*>(*reinterpret_cast<unsigned short*>(imp)), file_->getPath().get().c_str(), name.c_str());
 						}
 					}
 				}

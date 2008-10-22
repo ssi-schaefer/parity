@@ -53,7 +53,7 @@ namespace parity
 
 			for(binary::Section::IndexedSectionMap::iterator it = vec.begin(); it != vec.end(); ++it)
 			{
-				utils::Log::verbose("Section: %-10s, addr: %p, size: %p\n", it->second.getName().c_str(), it->second.getVirtualAddress(), it->second.getVirtualSize());
+				utils::Log::verbose("Section: %-10s, addr: %p, size: %p\n", it->second.getName().c_str(), reinterpret_cast<void*>(it->second.getVirtualAddress()), reinterpret_cast<void*>(it->second.getVirtualSize()));
 
 				//
 				// Check if its a directive sections, and handle it
@@ -79,7 +79,7 @@ namespace parity
 				
 				for(binary::Relocation::RelocationVector::iterator rel = relocs.begin(); rel != relocs.end(); ++rel)
 				{
-					utils::Log::verbose(" * RELOC: Address: %p, Index: %d, Type: %d (Symbol: %s)\n", rel->getVirtualAddress(), rel->getSymbolTableIndex(), rel->getType(), syms[rel->getSymbolTableIndex()].getName().c_str());
+					utils::Log::verbose(" * RELOC: Address: %p, Index: %d, Type: %d (Symbol: %s)\n", reinterpret_cast<void*>(rel->getVirtualAddress()), rel->getSymbolTableIndex(), rel->getType(), syms[rel->getSymbolTableIndex()].getName().c_str());
 				}
 
 				for(binary::Symbol::IndexedSymbolMap::iterator sym = syms.begin(); sym != syms.end(); ++sym)
@@ -160,7 +160,7 @@ namespace parity
 
 							for(binary::Section::IndexedSectionMap::iterator it = vec.begin(); it != vec.end(); ++it)
 							{
-								utils::Log::verbose("Section: %-10s, addr: %p, size: %p\n", it->second.getName().c_str(), it->second.getVirtualAddress(), it->second.getVirtualSize());
+								utils::Log::verbose("Section: %-10s, addr: %p, size: %p\n", it->second.getName().c_str(), reinterpret_cast<void*>(it->second.getVirtualAddress()), reinterpret_cast<void*>(it->second.getVirtualSize()));
 							}
 						}
 						break;

@@ -45,18 +45,18 @@ namespace parity
 		{
 			#ifdef _WIN32
 				DWORD exitStatus;
-				Log::verbose("waiting for thread %d...\n", it->first);
+				Log::verbose("waiting for thread %ld...\n", it->first);
 				WaitForSingleObject(it->second, INFINITE);
 				GetExitCodeThread(it->second, &exitStatus);
 				CloseHandle(it->second);
 
 				if(exitStatus != 0)
 				{
-					throw Exception("Thread %d exited abnormally with code: %d!", it->first, exitStatus);
+					throw Exception("Thread %ld exited abnormally with code: %d!", it->first, exitStatus);
 				}
 			#elif POSIX_THREADING_MODEL == POSIX_THREADS
 				void* val;
-				Log::verbose("joining posix thread %d...\n", it->first);
+				Log::verbose("joining posix thread %ld...\n", it->first);
 
 				if(pthread_join(it->first, &val) != 0) {
 					throw Exception("cannot join posix thread %d!", it->first);
@@ -64,22 +64,22 @@ namespace parity
 
 				if((unsigned int)val != 0)
 				{
-					throw Exception("Posix thread %d exited abnormally with code: %d!", it->first, val);
+					throw Exception("Posix thread %ld exited abnormally with code: %d!", it->first, val);
 				}
 			#elif POSIX_THREADING_MODEL == POSIX_FORK
 				int ret = 0;
-				Log::verbose("waiting for forked child %d.\n", it->first);
+				Log::verbose("waiting for forked child %ld.\n", it->first);
 
 				if(waitpid(it->first, &ret, WUNTRACED) != it->first)
 				{
-					throw Exception("cannot wait for forked child %d: %s.", it->first, ::strerror(errno));
+					throw Exception("cannot wait for forked child %ld: %s.", it->first, ::strerror(errno));
 				}
 
 				if(WIFEXITED(ret) && WEXITSTATUS(ret) != 0)
 				{
-					throw Exception("forked child %d exited abnormally with code %d.", it->first, WEXITSTATUS(ret));
+					throw Exception("forked child %ld exited abnormally with code %d.", it->first, WEXITSTATUS(ret));
 				} else if(!WIFEXITED(ret)) {
-					throw Exception("forked child %d did not terminate normally.\n", it->first);
+					throw Exception("forked child %ld did not terminate normally.\n", it->first);
 				}
 			#endif
 		}
@@ -125,14 +125,14 @@ namespace parity
 				if(!handle)
 					throw Exception("cannot create thread: %s", ::strerror(errno));
 
-				Log::verbose("created new thread with ID %d.\n", threadID);
+				Log::verbose("created new thread with ID %ld.\n", threadID);
 
 				handles_[threadID] = (void*)handle;
 			#elif POSIX_THREADING_MODEL == POSIX_THREADS
 				if(pthread_create((pthread_t*)&threadID, 0, (void*(*)(void*))method, data) != 0)
 					throw Exception("cannot create thread: %s", ::strerror(errno));
 
-				Log::verbose("created posix thread with ID %d.\n", threadID);
+				Log::verbose("created posix thread with ID %ld.\n", threadID);
 
 				handles_[threadID] = 0;
 			#elif POSIX_THREADING_MODEL == POSIX_FORK
@@ -148,7 +148,7 @@ namespace parity
 						Statistics::instance().forked();
 						exit(method(data));
 					default:
-						Log::verbose("created forked child with id %d.\n", threadID);
+						Log::verbose("created forked child with id %ld.\n", threadID);
 						handles_[threadID] = 0;
 						break;
 					}
