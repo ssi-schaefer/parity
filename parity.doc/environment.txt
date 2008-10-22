@@ -103,4 +103,8 @@ Environment Variables:
        files if building release executables (without debug information), and
        the ExportFromExe option disabled. This is because dbghelp.dll uses
        the Export Tables, which are present in DLLs, but not EXEs by default.
-   
+   * PCRT_ENABLE_CRASHBOXES
+       Re-enables the error boxes for fatal exceptions, which are disabled
+       by parity.runtime in favor of core file writing. If this variable is
+       set, parity still writes core files, but additionally enables the
+       well known error message boxes on crashes.

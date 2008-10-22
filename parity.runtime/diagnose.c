@@ -494,12 +494,6 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 	PcrtOutPrint(hCore, "Stack Layout at the time the exception occured:\n\n");
 
 	if(detailed) {
-		if(PcrtUseDebugSymbols()) {
-			PcrtOutPrint(hCore, "NOTE: The symbol names are guessed by finding the nearest\n");
-			PcrtOutPrint(hCore, "      known symbol. this may be wrong, since private symbols\n");
-			PcrtOutPrint(hCore, "      are not recognized.\n\n");
-		}
-
 		PcrtOutPrint(hCore, "NOTE: Since the Exception handler sees all exceptions that\n");
 		PcrtOutPrint(hCore, "      fly by, it may create a core file even though the\n");
 		PcrtOutPrint(hCore, "      process can and will continue. so make sure the\n");
@@ -685,30 +679,7 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if(hCore == INVALID_HANDLE_VALUE) {
-		/*char nestedcore[] = "core0";
-		int num = 0;
-
-		while(num < 10 && hCore == INVALID_HANDLE_VALUE) {
-			hCore = CreateFile(nestedcore, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-			if(hCore != INVALID_HANDLE_VALUE)
-				break;
-
-			nestedcore[4] = '0' + (++num);
-		}
-
-		if(hCore == INVALID_HANDLE_VALUE) {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error opening core file!\n");
-			return EXCEPTION_CONTINUE_SEARCH;
-		}*/
-
-		//
-		// instead of writing nested exceptions to a core, simply
-		// output it on stderr, since that means an exception inside
-		// the exception handling code.
-		//
 		hCore = GetStdHandle(STD_ERROR_HANDLE);
-
 		PcrtOutPrint(hCore, "ERROR: internal nested exception: ");
 	}
 
