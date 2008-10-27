@@ -219,4 +219,4 @@ parity no longer generates things required for the generated loader, if there ar
 
 changed parts of the parity.runtime library to use internal output routines in favor of fprintf, to assure full functionality even when calling those functions while initializing binaries, where standard handled may not yet be initialized.
 
-the ignorance of foreign libraries is now configurable through the IgnoreForeignLibs directive.
+the ignorance of foreign libraries is now configurable through the IgnoreForeignLibs configuration directive.
