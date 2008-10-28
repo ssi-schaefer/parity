@@ -1,4 +1,6 @@
 ADD_EXTRA_DIST('parity.sln')
+ADD_EXTRA_DIST('ReleaseNotes.txt')
+ADD_EXTRA_DIST('parity.conf.psx.in')
 
 CONFIGURE_AC(
 	lines=['AC_CONFIG_FILES(parity.conf parity.loader/parity.conf parity.runtime/parity.conf parity.diagnostic/parity.conf)'],

@@ -1,4 +1,7 @@
 ADD_EXTRA_DIST('parity.statistics.vcproj')
+ADD_EXTRA_DIST('DependencyHandler.h')
+ADD_EXTRA_DIST('Stats.h')
+ADD_EXTRA_DIST('TimingHandler.h')
 
 import os;
 import re;

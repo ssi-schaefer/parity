@@ -1,4 +1,6 @@
 ADD_EXTRA_DIST('parity.inspector.vcproj')
+ADD_EXTRA_DIST('Inspector.h')
+ADD_EXTRA_DIST('Options.h')
 
 import os;
 import re;
