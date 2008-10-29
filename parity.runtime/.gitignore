@@ -1,0 +1,6 @@
+/Debug
+/Release
+/Managed Debug
+/Managed Release
+/Makefile.*
+/*.vcproj.*.user

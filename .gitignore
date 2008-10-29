@@ -1,0 +1,14 @@
+/configure*
+/Makefile*
+/parity.ncb
+/parity.repo
+/Release
+/Debug
+/Managed Release
+/Managed Debug
+/config.h.in
+/autom4te.*
+/acinclude.m4
+/aclocal.m4
+/confix-admin
+/parity.suo
