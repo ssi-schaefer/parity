@@ -27,6 +27,7 @@ section default {
 	ParityLoader = @LoaderLibrary@
 	
 	Defines = WIN32_LEAN_AND_MEAN
+	Defines = _WIN32_WINNT=0x0400
 
 	ObjectsLibraries = kernel32.lib
 	ObjectsLibraries = user32.lib
