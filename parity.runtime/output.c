@@ -109,8 +109,7 @@ void PcrtOutFormatStringVa(char* buffer, const char* fmt, va_list args)
 				break;
 			default:
 				{
-					const char msgErrUnsupported[] = "<unsupported specifier>";
-					lstrcat(buffer, msgErrUnsupported);
+					lstrcat(buffer, "<unsupported specifier>");
 				}
 			}
 		}

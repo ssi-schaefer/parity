@@ -97,7 +97,10 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 			case 's':
 				{
 					const char* tmp = va_arg(args, const char*);
-					lstrcat(buffer, tmp);
+					if(tmp)
+						lstrcat(buffer, tmp);
+					else
+						lstrcat(buffer, "(null)");
 				}
 				break;
 			case 'c':
@@ -109,8 +112,7 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 				break;
 			default:
 				{
-					const char msgErrUnsupported[] = "<unsupported specifier>";
-					lstrcat(buffer, msgErrUnsupported);
+					lstrcat(buffer, "<unsupported specifier>");
 				}
 			}
 		}

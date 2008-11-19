@@ -114,6 +114,11 @@ namespace parity
 			if(ctx.getOptimizeLevel() <= 0 && ctx.getInlineFunctions())
 				vec.push_back("/Ob2");
 
+			if(!ctx.getOmitFramePointer())
+				vec.push_back("/Oy-");
+			else if(ctx.getOmitFramePointer() && ctx.getOptimizeLevel() < 1)
+				vec.push_back("/Oy");
+
 			//
 			// Decide about microsoft extensions.
 			//
