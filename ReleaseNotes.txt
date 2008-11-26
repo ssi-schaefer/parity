@@ -228,3 +228,5 @@ parity 1.2.1
 fixed handling of frame pointer omission setting.
 
 fixed a problem in the loader when passing NULL to dlopen.
+
+added a little profiling information to the loader, telling the number of milliseconds it took to load all childs.
