@@ -32,10 +32,10 @@ LoaderStatus ParityLoaderInit()
 {
 	int isBindNow = 0;
 	int bHasPerformanceCounter = 0;
-	unsigned __int64 uPerfBegin, uPerfEnd;
+	unsigned long uPerfBegin, uPerfEnd;
 	LibraryItem* libraries = ParityLoaderGeneratedTable.libraries;
 
-	uPerfBegin = GetTickCount64();
+	uPerfBegin = GetTickCount();
 
 	LogInit();
 
@@ -103,7 +103,7 @@ LoaderStatus ParityLoaderInit()
 		++libraries;
 	}
 
-	uPerfEnd = GetTickCount64();
+	uPerfEnd = GetTickCount();
 
 	LogDebug("=== ParityLoader finishing for %s (%d ms). ===\n", ParityLoaderGeneratedImageName, (uPerfEnd - uPerfBegin));
 
