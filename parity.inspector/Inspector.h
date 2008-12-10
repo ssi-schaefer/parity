@@ -65,6 +65,8 @@ namespace parity
 			_InspectorLibrariesStruct() : name(), imports(), children(), file() {}
 
 			std::string name;
+			unsigned long base;
+			bool native;
 			InspectorImportVector imports;
 			std::vector<struct _InspectorLibrariesStruct> children;
 			utils::Path file;
@@ -87,6 +89,7 @@ namespace parity
 		#include <CoffHelperPackStop.h>
 
 		#define NAMEOF_SECTION_POINTERS	".p.ptrs"
+		#define NAMEOF_SECTION_IMPORTS	".idata"
 
 		bool ProcessFileList(const utils::PathVector& vec, InspectorLibraryVectorMap& map);
 		bool ProcessFile(const utils::Path& pth, InspectorLibraryVector& vec);

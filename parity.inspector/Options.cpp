@@ -38,7 +38,7 @@ namespace parity
 		static bool printHelp(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			std::cout << "parity.inspector [-h | --help] [--verbose] [-s | --symbols]" << std::endl;
-			std::cout << "    [--short] binary [binary ...]" << std::endl;
+			std::cout << "    [--short] [--full] [--flat] binary [binary ...]" << std::endl;
 
 			std::cout << std::endl;
 			std::cout << "How to interpret the output:" << std::endl;
@@ -46,7 +46,9 @@ namespace parity
 			std::cout << "<LoadType> may be either CODE, LAZY or DATA. LAZY means" << std::endl;
 			std::cout << "that the symbol is loaded when it's needed the first time." << std::endl;
 			std::cout << "<ImportType> may be either NAME or ORD. ORD means that the" << std::endl;
-			std::cout << "symbol is imported by ordinal number rather than by name." << std::endl;
+			std::cout << "symbol is imported by ordinal number rather than by name." << std::endl << std::endl;
+			std::cout << "if a library name is marked with a \"*\", this means, that" << std::endl;
+			std::cout << "this library is imported using the standard windows mechanism." << std::endl;
 			exit(0);
 
 			//
@@ -73,14 +75,22 @@ namespace parity
 
 		static bool setShowSymbols(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			gShowSymbols = true;
-			return true;
+			return (gShowSymbols = true);
 		}
 
 		static bool setShortFormat(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			gShortFormat = true;
-			return true;
+			return (gShortFormat = true);
+		}
+
+		static bool setLddLike(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			return (gShowLddLike = false);
+		}
+
+		static bool setLddFlat(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			return (gShowLddFlat = true);
 		}
 
 		static options::ArgumentTableEntry sInspectorOptionTable[] = {
@@ -90,6 +100,9 @@ namespace parity
 			{ "-s"				, setShowSymbols	},
 			{ "--symbols"		, setShowSymbols	},
 			{ "--short"			, setShortFormat	},
+			{ "-l"				, setLddLike		},
+			{ "--full"			, setLddLike		},
+			{ "--flat"			, setLddFlat		},
 			{ ""				, addFile			},
 			{ 0					, 0					}
 		};
@@ -98,6 +111,8 @@ namespace parity
 		utils::PathVector gFilesToProcess;
 		bool gShowSymbols = false;
 		bool gShortFormat = false;
+		bool gShowLddLike = true;
+		bool gShowLddFlat = false;
 
 	}
 }

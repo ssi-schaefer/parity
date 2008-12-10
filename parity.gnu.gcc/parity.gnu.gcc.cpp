@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 					context.setObjectsLibrariesString(pth.get());
 				}
 			} else {
-				Log::verbose("ignoring unknonw argument: %s\n", it->c_str());
+				Log::verbose("ignoring unknown argument: %s\n", it->c_str());
 			}
 		}
 	} catch(const Exception& e) {
@@ -144,6 +144,10 @@ int main(int argc, char** argv)
 
 	if(context.getObjectsLibraries().empty())
 	{
+		//
+		// This should barely ever happen, since ObjectsLibraries contains the
+		// default libraries set by the parity configuration.
+		//
 		Log::error("no input files for linking stage, did the compiler fail?");
 		exit(1);
 	}

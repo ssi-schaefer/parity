@@ -26,12 +26,14 @@
 
 #include <CoffImage.h>
 #include <CoffFile.h>
+#include <CoffImportDirectory.h>
 
 #include <Environment.h>
 #include <Pointer.h>
 #include <MappedFileCache.h>
 
 #include <list>
+#include <sstream>
 
 //
 // CONFIX:EXENAME('parity.inspector')
@@ -59,9 +61,13 @@ int main(int argc, char** argv)
 	//
 	for(parity::inspector::InspectorLibraryVectorMap::iterator it = files.begin(); it != files.end(); ++it)
 	{
-		std::cout << "=== Inspection of " << it->first.get() << " ===" << std::endl;
+		if(!parity::inspector::gShowLddLike)
+			std::cout << "=== Inspection of " << it->first.get() << " ===" << std::endl;
+
 		parity::inspector::DisplayItem(it->second);
-		std::cout << std::endl;
+
+		if(!parity::inspector::gShowLddLike)
+			std::cout << std::endl;
 	}
 
 	return 0;
@@ -140,7 +146,7 @@ namespace parity
 
 					utils::Log::verbose("%s: found subsystem type %d (%s)\n", pth.file().c_str(), genSubsystem, utils::Context::getContext().printable(genSubsystem).c_str());
 
-					break;
+					continue;
 				}
 			}
 
@@ -150,6 +156,27 @@ namespace parity
 			//
 			// Do native library lookup here...
 			//
+			binary::ImportDirectory imp(img);
+
+			for(binary::ImportDirectory::NativeImportVector::const_iterator impit = imp.getNativeImports().begin(); impit != imp.getNativeImports().end(); ++impit) {
+				InspectorLibraries item;
+				
+				item.name = impit->LibraryName;
+				item.native = true;
+				
+				for(binary::ImportDirectory::NativeImportSymbolVector::const_iterator symit = impit->ImportedSymbols.begin(); symit != impit->ImportedSymbols.end(); ++symit) {
+					InspectorImports ii;
+
+					ii.import = NULL;
+					ii.library = NULL; /* redundant information, just there to keep binary compat */
+					ii.name = strdup(symit->Name.c_str()); /* memory leak, i know */
+					ii.ordinal = symit->Ordinal;
+
+					item.imports.push_back(ii);
+				}
+
+				genLibs.push_back(item);
+			}
 
 			//
 			// Here we have all information converted to something usefull:
@@ -184,17 +211,19 @@ namespace parity
 					//
 					// circle detected!
 					//
-					utils::Log::warning("detected circle: %s is allready on the stack. trace of circle:\n", pth.get().c_str());
+					utils::Log::verbose("detected circle: %s is allready on the stack. trace of circle:\n", pth.get().c_str());
 
 					for(CirclePreventionVector::iterator subit = circleStack.begin(); subit != circleStack.end(); ++subit)
 					{
 						utils::Log::verbose(" * %s\n", subit->get().c_str());
 					}
 
+					/*
 					InspectorLibraries item;
 					item.name = "<circle omitted> (" + pth.get() + " already on stack)";
 
 					target.push_back(item);
+					*/
 					return true;
 				}
 			}
@@ -230,9 +259,20 @@ namespace parity
 				{
 					utils::Log::verbose("cannot find file: %s\n", it->name.c_str());
 				} else {
-					ProcessFile(it->file, it->children);
+					//
+					// we want the image base of it->file too!
+					//
+					utils::MappedFile& mapped = cache.get(it->file, utils::ModeRead);
+					binary::Image img(&mapped);
+
+					it->base = img.getOptionalHeader().getImageBase();
+
+					if((gShowLddLike && !gShowLddFlat) || !gShowLddLike)
+						ProcessFile(it->file, it->children);
 				}
 			}
+
+			cache.close(pth);
 
 			target.insert(target.end(), genLibs.begin(), genLibs.end());
 
@@ -277,6 +317,7 @@ namespace parity
 
 				library.name	= reinterpret_cast<const char*>(hdr.getPointerFromVA(ptr->name));
 				library.imports	= imports;
+				library.native	= false;
 
 				libraries.push_back(library);
 
@@ -333,38 +374,62 @@ namespace parity
 		void DisplayItem(const InspectorLibraryVector& vec)
 		{
 			static int level = 0;
+			static std::map<std::string, bool> unique;
 
 			++level;
 
 			for(InspectorLibraryVector::const_iterator it = vec.begin(); it != vec.end(); ++it)
 			{
-				indent(level);
-				std::cout << "* " << it->name << " (" << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : "found, " + it->file.get()));
-				std::cout << ", direct dep.: " << it->children.size() << ", imports: " << it->imports.size() << ")" << std::endl;
+				if(gShowLddLike) {
+					bool& bProc = unique[it->name];
 
-				if(gShowSymbols)
+					if(!bProc) {
+						bProc = true;
+						std::ostringstream oss;
+						if(!it->file.get().empty()) {
+							oss << " (0x" << std::hex << it->base << ")";
+						}
+						std::cout << "\t" << it->name << (it->native ? "*" : "" ) << " => " << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : it->file.get())) << oss.str() << std::endl;
+					}
+				} else {
+					indent(level);
+					std::cout << "* " << it->name << (it->native ? "*" : "" ) << " (" << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : "found, " + it->file.get()));
+					std::cout << ", direct dep.: " << it->children.size() << ", imports: " << it->imports.size() << ")" << std::endl;
+				}
+
+				if(!gShowLddLike && gShowSymbols)
 				{
 					for(InspectorImportVector::const_iterator sym = it->imports.begin(); sym != it->imports.end(); ++sym)
 					{
 						indent(level + 2);
 
-						if(sym->import == 0x00000000)
-							std::cout << "[CODE, ";
-						else if(sym->import == reinterpret_cast<void*>(0xbaadf00d))
-							std::cout << "[DATA, ";
-						else
-							std::cout << "[LAZY, ";
+						if(it->native) {
+							std::cout << "[NAT , ";
+						} else {
+							if(sym->import == 0x00000000)
+								std::cout << "[CODE, ";
+							else if(sym->import == reinterpret_cast<void*>(0xbaadf00d))
+								std::cout << "[DATA, ";
+							else
+								std::cout << "[LAZY, ";
+						}
 
 						if(sym->ordinal)
 							std::cout << "ORD ] ";
 						else
 							std::cout << "NAME] ";
 
-						std::cout << sym->name << std::endl;
+						if(sym->ordinal)
+							std::cout << "{" << sym->ordinal << "} ";
+
+						if(!(it->native && sym->ordinal)) {
+							std::cout << sym->name << std::endl;
+						}
 					}
 				}
 
-				DisplayItem(it->children);
+				if((gShowLddLike && !gShowLddFlat) || !gShowLddLike)
+					DisplayItem(it->children);
 			}
 
 			--level;

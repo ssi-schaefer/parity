@@ -313,6 +313,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\CoffImportDirectory.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\CoffMsDosStub.cpp"
 					>
 				</File>
@@ -388,6 +392,10 @@
 				>
 				<File
 					RelativePath=".\CoffDirectiveSection.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CoffImportDirectory.h"
 					>
 				</File>
 				<File

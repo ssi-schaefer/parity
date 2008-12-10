@@ -230,3 +230,5 @@ fixed handling of frame pointer omission setting.
 fixed a problem in the loader when passing NULL to dlopen.
 
 added a little profiling information to the loader, telling the number of milliseconds it took to load all childs.
+
+parity.inspector has been improved, and now defaults to a more ldd like interface.

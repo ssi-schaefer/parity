@@ -20,25 +20,59 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __INSPECTOR_OPTIONS_H__
-#define __INSPECTOR_OPTIONS_H__
+#ifndef __IMPORTDIRECTORY_H__
+#define __IMPORTDIRECTORY_H__
 
-#include <CommandLine.h>
-#include <Path.h>
-#include <Context.h>
+#include <cstring>
+#include <string>
+#include <vector>
 
-namespace parity 
+#include <Pointer.h>
+#include <Exception.h>
+
+#include "CoffRelocation.h"
+#include "CoffSymbol.h"
+#include "CoffSection.h"
+#include "CoffImage.h"
+
+namespace parity
 {
-	namespace inspector 
+	namespace binary
 	{
+		class ImportDirectory {
+		public:
+			//
+			// Contructors and Destructors
+			//
+			ImportDirectory(Image& file) : vector_() { calcImports(file); }
+			
+			//
+			// Complex Methods
+			//
+			struct NativeImportSymbolEntry {
+				std::string Name;
+				unsigned int Ordinal;
+				bool ByOrdinal;
+			};
 
-		extern options::ArgumentTableEntry* gInspectorOptionTable;
-		extern utils::PathVector gFilesToProcess;
-		extern bool gShowSymbols;
-		extern bool gShortFormat;
-		extern bool gShowLddLike;
-		extern bool gShowLddFlat;
+			typedef std::vector<NativeImportSymbolEntry> NativeImportSymbolVector;
 
+			struct NativeImportEntry {
+				std::string LibraryName;
+				NativeImportSymbolVector ImportedSymbols;
+			};
+
+			typedef std::vector<NativeImportEntry> NativeImportVector;
+
+			NativeImportVector const& getNativeImports() const { return vector_; }
+		private:
+			void calcImports(Image& img);
+
+			//
+			// Attributes
+			//
+			NativeImportVector vector_;
+		};
 	}
 }
 

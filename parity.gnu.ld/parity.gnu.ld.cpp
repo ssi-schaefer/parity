@@ -116,6 +116,10 @@ int main(int argc, char** argv)
 
 	if(context.getObjectsLibraries().empty())
 	{
+		//
+		// This should barely ever happen, since ObjectsLibraries contains the
+		// default libraries set by the parity configuration.
+		//
 		Log::error("no input files for linking stage, did the compiler fail?");
 		exit(1);
 	}
