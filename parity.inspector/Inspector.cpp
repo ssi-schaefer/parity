@@ -21,6 +21,7 @@
 \****************************************************************/
 
 #include <Log.h>
+#include <Color.h>
 #include "Options.h"
 #include "Inspector.h"
 
@@ -41,6 +42,7 @@
 
 int main(int argc, char** argv)
 {
+	parity::utils::Context::getContext().setColored(true);
 	//
 	// initialize from command line:
 	//
@@ -55,6 +57,9 @@ int main(int argc, char** argv)
 
 	if(!parity::inspector::ProcessFileList(parity::inspector::gFilesToProcess, files))
 		exit(1);
+
+	parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
+	parity::utils::Log::verbose(col.green("... done gathering information.\n").c_str());
 
 	//
 	// now somehow display the information....
@@ -79,6 +84,7 @@ namespace parity
 	{
 		bool ProcessFileList(const utils::PathVector& vec, InspectorLibraryVectorMap& map)
 		{
+			parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
 			for(utils::PathVector::const_iterator it = vec.begin(); it != vec.end(); ++it)
 			{
 				try {
@@ -86,7 +92,7 @@ namespace parity
 						return false;
 				} catch(const utils::Exception& ex)
 				{
-					utils::Log::error("while processing %s: %s\n", it->get().c_str(), ex.what());
+					utils::Log::error("while processing %s: %s\n", col.yellow(it->get()).c_str(), col.red(ex.what()));
 					return false;
 				}
 			}
@@ -95,12 +101,13 @@ namespace parity
 
 		bool ProcessFile(const utils::Path& pth, InspectorLibraryVector& target)
 		{
+			parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
 			utils::MappedFileCache& cache = utils::MappedFileCache::getCache();
 			utils::MappedFile& mapping = cache.get(pth, utils::ModeRead);
 			
 			if(binary::File::getType(&mapping) != binary::File::TypeImage)
 			{
-				utils::Log::error("%s: not a PE32 image file.\n", pth.get().c_str());
+				utils::Log::error(col.red("%s: not a PE32 image file.\n").c_str(), pth.get().c_str());
 				return false;
 			}
 
@@ -113,7 +120,7 @@ namespace parity
 			InspectorLibraryVector	genLibs;
 			bool					genSectionFound	= false;
 
-			utils::Log::verbose("%s:\n", pth.file().c_str());
+			utils::Log::verbose("%s:\n", col.green(pth.file()).c_str());
 
 			for(binary::Section::IndexedSectionMap::const_iterator it = sections.begin(); it != sections.end(); ++it)
 			{
@@ -138,7 +145,7 @@ namespace parity
 					if(genRunPathPtr)
 						genRunPaths	= ConvertRunPaths(genRunPathPtr);
 
-					utils::Log::verbose("  * found image name %s\n", genImageName);
+					utils::Log::verbose("  * found image name %s\n", col.green(genImageName).c_str());
 					utils::Log::verbose("  * found runpaths at location %p\n", genRunPathPtr);
 
 					if(genTablePtr && *genTablePtr)
@@ -146,7 +153,7 @@ namespace parity
 					else
 						utils::Log::verbose("  * image has no import dependencies!\n");
 
-					utils::Log::verbose("  * found subsystem type %d (%s)\n", genSubsystem, utils::Context::getContext().printable(genSubsystem).c_str());
+					utils::Log::verbose("  * found subsystem type %d (%s)\n", genSubsystem, col.magenta(utils::Context::getContext().printable(genSubsystem)).c_str());
 
 					continue;
 				}
@@ -186,13 +193,13 @@ namespace parity
 			//
 
 			if(genRunPaths.empty())
-				utils::Log::verbose("  * no runpaths hardcoded.\n");
+				utils::Log::verbose("  * %s\n", col.magenta("no runpaths hardcoded.").c_str());
 			else
 				utils::Log::verbose("  * using the following runpaths:\n");
 
 			for(utils::PathVector::iterator it = genRunPaths.begin(); it != genRunPaths.end(); ++it)
 			{
-				utils::Log::verbose("    * %s\n", it->get().c_str());
+				utils::Log::verbose("    * %s\n", col.yellow(it->get()).c_str());
 			}
 
 			//
@@ -256,7 +263,7 @@ namespace parity
 				
 				if(it->file.get().empty() || !it->file.exists())
 				{
-					utils::Log::verbose("  * cannot find dependency: %s\n", it->name.c_str());
+					utils::Log::verbose("  * %s: %s\n", col.magenta("cannot find dependency").c_str(), col.red(it->name).c_str());
 				} else {
 					//
 					// we want the image base of it->file too!

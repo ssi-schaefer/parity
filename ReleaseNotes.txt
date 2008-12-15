@@ -236,3 +236,7 @@ parity.inspector has been improved, and now defaults to a more ldd like interfac
 parity.inspector now knows about native libraries, not linked with parity.
 
 parity.loader has a much improved loading failure output, which allows for much easier isolation of the real loading problem for shared libraries.
+
+parity.inspector verbose processing status output is now much more readable.
+
+parity.runtime doesn't allow for more than 3 nested exceptions before doing a hard exit. in previous versions exceptions kept flying until stack space was too low.

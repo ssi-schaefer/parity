@@ -696,8 +696,16 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if(hCore == INVALID_HANDLE_VALUE) {
+		static int nested_count = 0;
+
 		hCore = GetStdHandle(STD_ERROR_HANDLE);
-		PcrtOutPrint(hCore, "ERROR: internal nested exception: ");
+
+		if(nested_count++ >= 3) {
+			PcrtOutPrint(hCore, "\nERROR: Too many nested exceptions!\n");
+			ExitProcess(1);
+		}
+
+		PcrtOutPrint(hCore, "ERROR: internal nested exception:\n");
 	}
 
 	PcrtWriteExceptionInformation(hCore, ex, 1);

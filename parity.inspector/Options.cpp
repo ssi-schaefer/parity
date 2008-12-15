@@ -93,6 +93,12 @@ namespace parity
 			return (gShowLddFlat = true);
 		}
 
+		static bool setNoColor(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			parity::utils::Context::getContext().setColored(false);
+			return true;
+		}
+
 		static options::ArgumentTableEntry sInspectorOptionTable[] = {
 			{ "--verbose"		, setVerbose		},
 			{ "-h"				, printHelp			},
@@ -103,6 +109,7 @@ namespace parity
 			{ "-l"				, setLddLike		},
 			{ "--full"			, setLddLike		},
 			{ "--flat"			, setLddFlat		},
+			{ "--nocolor"		, setNoColor		},
 			{ ""				, addFile			},
 			{ 0					, 0					}
 		};
