@@ -25,23 +25,29 @@
 
 #include <internal/pcrt.h>
 
-void LoaderWriteLastWindowsError()
-{
+char* LoaderFormatErrorMessage(unsigned int error) {
 	char* ptrMsg = 0;
 
 	FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
 		FORMAT_MESSAGE_FROM_SYSTEM,
 		NULL,
-		GetLastError(),
+		error,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		(LPSTR)&ptrMsg,
 		0, NULL );
 
-	//
-	// the ptrMsg includes a newline allready!
-	//
-	LogWarning("windows reports the following error: %s", ptrMsg);
+	if(ptrMsg)
+		ptrMsg[strlen(ptrMsg) - 2] = 0; // newline.
+
+	return ptrMsg;
+}
+
+void LoaderWriteLastWindowsError()
+{
+	char* ptrMsg = LoaderFormatErrorMessage(GetLastError());
+
+	LogWarning("windows reports the following error: %s\n", ptrMsg);
 
 	LocalFree(ptrMsg);
 }

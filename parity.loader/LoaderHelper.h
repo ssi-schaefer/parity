@@ -24,6 +24,7 @@
 #define __LOADERHELPER_H__
 
 extern void LoaderWriteLastWindowsError();
+extern char* LoaderFormatErrorMessage(unsigned int error);
 extern const char* LoaderConvertPathToNative(const char* path);
 
 #endif

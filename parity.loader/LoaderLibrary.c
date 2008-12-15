@@ -27,6 +27,9 @@
 
 #include <windows.h>
 
+#define LOADER_MAX_ERRORS 64
+#define LOADER_PATHFIELD_LEN 50
+
 typedef struct {
 	const char* name;
 	void* handle;
@@ -36,16 +39,23 @@ typedef struct {
 	const char* path;
 } LoaderPathCacheNode;
 
+typedef struct {
+	const char* path;
+	unsigned long error;
+} LoaderErrorList;
+
 static LoaderLibraryCacheNode* gHandleCache = 0;
 static LoaderPathCacheNode* gPathCache = 0;
 
 static unsigned int gPathCacheCount = 0;
 static unsigned int gHandleCacheCount = 0;
 
-static void* LibLoad(const char* name)
+static void* LibLoad(const char* name, unsigned int strict)
 {
 	void* handle = 0;
 	unsigned int i;
+	LoaderErrorList lst[LOADER_MAX_ERRORS];
+	unsigned int longest = 0;
 
 	if(!name)
 		return GetModuleHandle(0);
@@ -60,6 +70,17 @@ static void* LibLoad(const char* name)
 
 		handle = LoadLibrary(ptrTry);
 
+		if(!handle && i <= LOADER_MAX_ERRORS) {
+			register int len;
+
+			lst[i].error = GetLastError();
+			lst[i].path  = gPathCache[i].path;
+
+			len = strlen(lst[i].path);
+			if(len > longest)
+				longest = len;
+		}
+
 		HeapFree(GetProcessHeap(), 0, ptrTry);
 
 		if(handle) {
@@ -73,10 +94,39 @@ static void* LibLoad(const char* name)
 	//
 	handle = LoadLibrary(name);
 
+	if(!handle && i < LOADER_MAX_ERRORS) {
+		lst[i].error = GetLastError();
+		lst[i].path = "...";
+	}
+
 	if(handle)
 	{
 		LogDebug("loaded %s through windows default lookup or absolute name\n", name);
 		return handle;
+	}
+
+	if(strict) {
+		unsigned int y = 0;
+		char spaces[MAX_PATH];
+
+		FillMemory(spaces, sizeof(spaces), ' ');
+
+		LogWarning("failed to load %s from following paths (%d in cache):\n", name, gPathCacheCount);
+
+		for(y = 0; y <= i && y <= LOADER_MAX_ERRORS; ++y) {
+			char* tmp = LoaderFormatErrorMessage(lst[y].error);
+			register int index = longest - strlen(lst[y].path);
+
+			spaces[index] = 0;
+
+			LogWarning(" * [%s%d] %s%s (%s)\n", 
+				( lst[y].error < 10000 ? ( lst[y].error < 1000 ? ( lst[y].error < 100 ? ( lst[y].error < 10 ? "    " : "   " ) : "  ") : " ") : ""),
+				lst[y].error, lst[y].path, spaces, tmp);
+
+			spaces[index] = ' ';
+
+			LocalFree(tmp);
+		}
 	}
 
 	return 0;
@@ -255,7 +305,7 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	errormode = SetErrorMode(SEM_FAILCRITICALERRORS);
 	SetErrorMode(errormode | SEM_FAILCRITICALERRORS);
 
-	handle = LibLoad(name);
+	handle = LibLoad(name, strict);
 
 	SetErrorMode(errormode);
 
@@ -263,14 +313,9 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 		LibAddToCache(name, handle);
 		return handle;
 	} else if(strict) {
-		unsigned int i;
-		LogWarning("cannot find library %s in any of the following paths:\n", name);
-		
-		for(i = 0; i < gPathCacheCount; ++i)
-		{
-			LogWarning(" * %s\n", gPathCache[i].path);
-		}
-
+		/*
+		 * Don't issue a warning here, since LibLoad does this already.
+		 */
 		ExitProcess(1);
 	}
 
