@@ -141,6 +141,17 @@ LazyLoading (bool)
 	      by passing them directly to the linker. This means that those libraries won't
 	      be listed when inspecting binaries with parity.inspector. Also see the 
 	      "IgnoreForeignLibs" directive.
+	Note: Enabling lazy loading makes debugging in a shared library environment a little
+	      harder, since the debugger no longer is able to "step into" over library boundaries.
+	      This is because there is a bunch of code in between the two symbols in play,
+	      for which there are no debug informations. This can be worked around, by
+	      executing the "step into" from disassembly mode in developer studio. You will
+	      end up inside a small stub function which is a few lines long. You can do a
+	      "step over" at the "call" instruction you see there, until you get to the next
+	      "jmp" which will take you to the real symbol. Once there, you can switch back
+	      to source mode.
+	      The problem does not affect breakpoints set into another shared library. Those
+	      are hit as always.
 	Default: off
 
 ParityLoader (Path)
