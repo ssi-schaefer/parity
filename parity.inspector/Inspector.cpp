@@ -94,7 +94,7 @@ namespace parity
 						return false;
 				} catch(const utils::Exception& ex)
 				{
-					utils::Log::error("while processing %s: %s\n", col.yellow(it->get()).c_str(), col.red(ex.what()));
+					utils::Log::error("while processing %s: %s\n", col.yellow(it->get()).c_str(), col.red(ex.what()).c_str());
 					return false;
 				}
 			}

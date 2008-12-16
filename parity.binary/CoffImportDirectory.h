@@ -50,6 +50,8 @@ namespace parity
 			// Complex Methods
 			//
 			struct NativeImportSymbolEntry {
+				NativeImportSymbolEntry() : Name(), Ordinal(0), ByOrdinal(false) {}
+
 				std::string Name;
 				unsigned int Ordinal;
 				bool ByOrdinal;
@@ -58,6 +60,8 @@ namespace parity
 			typedef std::vector<NativeImportSymbolEntry> NativeImportSymbolVector;
 
 			struct NativeImportEntry {
+				NativeImportEntry() : LibraryName(), ImportedSymbols() {}
+
 				std::string LibraryName;
 				NativeImportSymbolVector ImportedSymbols;
 			};

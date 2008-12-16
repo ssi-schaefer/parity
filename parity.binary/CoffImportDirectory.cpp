@@ -66,7 +66,7 @@ namespace parity
 					NativeImportSymbolEntry sym;
 
 					sym.ByOrdinal = (pi->IsOrdinal != 0);
-					sym.Ordinal = (pi->IsOrdinal ? ((unsigned short)(pi->Name & 0xFFFF)) : 0);
+					sym.Ordinal = (pi->IsOrdinal ? (static_cast<unsigned int>(pi->Name & 0xFFFF)) : 0);
 					
 					if(!pi->IsOrdinal) {
 						//

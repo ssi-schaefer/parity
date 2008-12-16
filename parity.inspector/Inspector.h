@@ -47,7 +47,9 @@ namespace parity
 			unsigned int library;
 		} InspectorImportsPointerLayoutVA;
 
-		typedef struct {
+		typedef struct _InspectorImports {
+			_InspectorImports() : name(), import(0), library(), ordinal(0) {}
+
 			std::string name;
 			void const* import;
 			std::string library;
@@ -62,7 +64,7 @@ namespace parity
 		} InspectorLibrariesPointerLayoutVA;
 
 		typedef struct _InspectorLibrariesStruct {
-			_InspectorLibrariesStruct() : name(), imports(), children(0), file() {}
+			_InspectorLibrariesStruct() : name(), base(0), native(false), imports(), children(0), file() {}
 
 			std::string name;
 			unsigned long base;
