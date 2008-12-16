@@ -101,6 +101,7 @@ namespace parity
 
 		bool ProcessFile(const utils::Path& pth, InspectorLibraryVector& target)
 		{
+			static unsigned int indent = 0;
 			parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
 			utils::MappedFileCache& cache = utils::MappedFileCache::getCache();
 			utils::MappedFile& mapping = cache.get(pth, utils::ModeRead);
@@ -120,6 +121,8 @@ namespace parity
 			InspectorLibraryVector	genLibs;
 			bool					genSectionFound	= false;
 
+			++indent;
+			for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 			utils::Log::verbose("%s:\n", col.green(pth.file()).c_str());
 
 			for(binary::Section::IndexedSectionMap::const_iterator it = sections.begin(); it != sections.end(); ++it)
@@ -145,14 +148,20 @@ namespace parity
 					if(genRunPathPtr)
 						genRunPaths	= ConvertRunPaths(genRunPathPtr);
 
+					for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 					utils::Log::verbose("  * found image name %s\n", col.green(genImageName).c_str());
+					for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 					utils::Log::verbose("  * found runpaths at location %p\n", genRunPathPtr);
 
-					if(genTablePtr && *genTablePtr)
+					if(genTablePtr && *genTablePtr) {
+						for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 						utils::Log::verbose("  * found generated import table at %p\n", reinterpret_cast<void*>(*genTablePtr));
-					else
+					} else {
+						for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 						utils::Log::verbose("  * image has no import dependencies!\n");
+					}
 
+					for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 					utils::Log::verbose("  * found subsystem type %d (%s)\n", genSubsystem, col.magenta(utils::Context::getContext().printable(genSubsystem)).c_str());
 
 					continue;
@@ -192,13 +201,16 @@ namespace parity
 			//     *) Import Table
 			//
 
-			if(genRunPaths.empty())
+			if(genRunPaths.empty()) {
+				for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 				utils::Log::verbose("  * %s\n", col.magenta("no runpaths hardcoded.").c_str());
-			else
+			} else {
+				for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 				utils::Log::verbose("  * using the following runpaths:\n");
+			}
 
-			for(utils::PathVector::iterator it = genRunPaths.begin(); it != genRunPaths.end(); ++it)
-			{
+			for(utils::PathVector::iterator it = genRunPaths.begin(); it != genRunPaths.end(); ++it) {
+				for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 				utils::Log::verbose("    * %s\n", col.yellow(it->get()).c_str());
 			}
 
@@ -230,6 +242,7 @@ namespace parity
 
 					target.push_back(item);
 					*/
+					--indent;
 					return true;
 				}
 			}
@@ -263,6 +276,7 @@ namespace parity
 				
 				if(it->file.get().empty() || !it->file.exists())
 				{
+					for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
 					utils::Log::verbose("  * %s: %s\n", col.magenta("cannot find dependency").c_str(), col.red(it->name).c_str());
 				} else {
 					//
@@ -286,6 +300,7 @@ namespace parity
 			// finally, pop ourselfs from the stack.
 			//
 			circleStack.pop_back();
+			--indent;
 
 			return true;
 		}
