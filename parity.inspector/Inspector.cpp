@@ -68,8 +68,10 @@ int main(int argc, char** argv)
 	{
 		if(!parity::inspector::gShowLddLike)
 			std::cout << "=== Inspection of " << it->first.get() << " ===" << std::endl;
+		if(parity::inspector::gShowLddLike && parity::inspector::gFilesToProcess.size() > 1)
+			std::cout << col.green(it->first.get()) << ":" << std::endl;
 
-		parity::inspector::DisplayItem(&it->second);
+		parity::inspector::DisplayItem(&it->second, true);
 
 		if(!parity::inspector::gShowLddLike)
 			std::cout << std::endl;
@@ -416,12 +418,18 @@ namespace parity
 			}
 		}
 
-		void DisplayItem(const InspectorLibraryVector* vec)
+		void DisplayItem(const InspectorLibraryVector* vec, bool top)
 		{
 			static int level = 0;
 			static std::map<std::string, bool> unique;
 			static std::map<std::string, bool> circular_check;
 			parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
+
+			if(top) {
+				top = 0;
+				unique.clear();
+				circular_check.clear();
+			}
 
 			++level;
 
@@ -478,12 +486,12 @@ namespace parity
 
 				if((gShowLddLike && !gShowLddFlat) || !gShowLddLike) {
 					if(it->children && !it->children->empty()) {
-						if(!bUnique) {
+						if(!bUnique || gShowLddLike) {
 							bUnique = true;
 
 							if(!bProc) {
 								bProc = true;
-								DisplayItem(it->children);
+								DisplayItem(it->children, false);
 								bProc = false;
 							}
 						} else {

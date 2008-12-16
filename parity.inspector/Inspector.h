@@ -100,7 +100,7 @@ namespace parity
 
 		utils::Path LookupFile(const std::string& file, utils::PathVector& vec);
 
-		void DisplayItem(const InspectorLibraryVector* vec);
+		void DisplayItem(const InspectorLibraryVector* vec, bool toplvl);
 	}
 }
 
