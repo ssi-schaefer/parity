@@ -47,10 +47,10 @@ namespace parity
 			unsigned int library;
 		} InspectorImportsPointerLayoutVA;
 
-		typedef struct STRUCT_PACKING_ATTRIBUTE {
-			const char* name;
-			const void* import;
-			const char* library;
+		typedef struct {
+			std::string name;
+			void const* import;
+			std::string library;
 			unsigned short ordinal;
 		} InspectorImports;
 
@@ -62,18 +62,19 @@ namespace parity
 		} InspectorLibrariesPointerLayoutVA;
 
 		typedef struct _InspectorLibrariesStruct {
-			_InspectorLibrariesStruct() : name(), imports(), children(), file() {}
+			_InspectorLibrariesStruct() : name(), imports(), children(0), file() {}
 
 			std::string name;
 			unsigned long base;
 			bool native;
 			InspectorImportVector imports;
-			std::vector<struct _InspectorLibrariesStruct> children;
+			std::vector<struct _InspectorLibrariesStruct>* children;
 			utils::Path file;
 		} InspectorLibraries;
 
 		typedef std::vector<InspectorLibraries> InspectorLibraryVector;
 		typedef std::map<utils::Path, InspectorLibraryVector> InspectorLibraryVectorMap;
+		typedef std::map<utils::Path, InspectorLibraryVector*> InspectorLibraryVectorPtrMap;
 
 		//
 		// WARNING: keep this in sync with the strucure in LoaderGenerator.cpp from
@@ -99,7 +100,7 @@ namespace parity
 
 		utils::Path LookupFile(const std::string& file, utils::PathVector& vec);
 
-		void DisplayItem(const InspectorLibraryVector& vec);
+		void DisplayItem(const InspectorLibraryVector* vec);
 	}
 }
 

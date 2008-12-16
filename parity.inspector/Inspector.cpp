@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 		if(!parity::inspector::gShowLddLike)
 			std::cout << "=== Inspection of " << it->first.get() << " ===" << std::endl;
 
-		parity::inspector::DisplayItem(it->second);
+		parity::inspector::DisplayItem(&it->second);
 
 		if(!parity::inspector::gShowLddLike)
 			std::cout << std::endl;
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
 namespace parity 
 {
-	namespace inspector 
+	namespace inspector
 	{
 		bool ProcessFileList(const utils::PathVector& vec, InspectorLibraryVectorMap& map)
 		{
@@ -98,6 +98,8 @@ namespace parity
 			}
 			return true;
 		}
+
+		static InspectorLibraryVectorMap children_cache;
 
 		bool ProcessFile(const utils::Path& pth, InspectorLibraryVector& target)
 		{
@@ -173,6 +175,10 @@ namespace parity
 			//
 			binary::ImportDirectory imp(img);
 
+			#ifdef _WIN32
+			#define strdup _strdup
+			#endif
+
 			for(binary::ImportDirectory::NativeImportVector::const_iterator impit = imp.getNativeImports().begin(); impit != imp.getNativeImports().end(); ++impit) {
 				InspectorLibraries item;
 				
@@ -183,8 +189,7 @@ namespace parity
 					InspectorImports ii;
 
 					ii.import = NULL;
-					ii.library = NULL; /* redundant information, just there to keep binary compat */
-					ii.name = strdup(symit->Name.c_str()); /* memory leak, i know */
+					ii.name = symit->Name;
 					ii.ordinal = symit->Ordinal;
 
 					item.imports.push_back(ii);
@@ -192,6 +197,10 @@ namespace parity
 
 				genLibs.push_back(item);
 			}
+
+			#ifdef _WIN32
+			#undef strdup
+			#endif
 
 			//
 			// Here we have all information converted to something usefull:
@@ -229,11 +238,11 @@ namespace parity
 					//
 					// circle detected!
 					//
-					utils::Log::verbose("detected circle: %s is allready on the stack. trace of circle:\n", pth.get().c_str());
+					utils::Log::verbose(col.red("detected circle: %s is allready on the stack. trace of circle:\n").c_str(), col.magenta(pth.get()).c_str());
 
 					for(CirclePreventionVector::iterator subit = circleStack.begin(); subit != circleStack.end(); ++subit)
 					{
-						utils::Log::verbose("  * %s\n", subit->get().c_str());
+						utils::Log::verbose(col.red("  * %s\n").c_str(), col.magenta(subit->get()).c_str());
 					}
 
 					/*
@@ -243,7 +252,7 @@ namespace parity
 					target.push_back(item);
 					*/
 					--indent;
-					return true;
+					return false;
 				}
 			}
 
@@ -285,10 +294,25 @@ namespace parity
 					utils::MappedFile& mapped = cache.get(it->file, utils::ModeRead);
 					binary::Image img(&mapped);
 
+					InspectorLibraryVectorMap::iterator ch = children_cache.find(it->file);
 					it->base = img.getOptionalHeader().getImageBase();
 
-					if((gShowLddLike && !gShowLddFlat) || !gShowLddLike)
-						ProcessFile(it->file, it->children);
+					if(ch != children_cache.end()) {
+						it->children = &ch->second;
+						for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
+						utils::Log::verbose("  * using cached dependency tree for %s\n", col.green(it->file.get()).c_str());
+					} else {
+						if((gShowLddLike && !gShowLddFlat) || !gShowLddLike) {
+							InspectorLibraryVector& ch = children_cache[it->file];
+
+							if(!ProcessFile(it->file, ch)) {
+								children_cache.erase(it->file);
+							} else {
+								it->children = &ch;
+							}
+						}
+
+					}
 				}
 			}
 
@@ -392,30 +416,34 @@ namespace parity
 			}
 		}
 
-		void DisplayItem(const InspectorLibraryVector& vec)
+		void DisplayItem(const InspectorLibraryVector* vec)
 		{
 			static int level = 0;
 			static std::map<std::string, bool> unique;
+			static std::map<std::string, bool> circular_check;
+			parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
 
 			++level;
 
-			for(InspectorLibraryVector::const_iterator it = vec.begin(); it != vec.end(); ++it)
+			for(InspectorLibraryVector::const_iterator it = vec->begin(); it != vec->end(); ++it)
 			{
-				if(gShowLddLike) {
-					bool& bProc = unique[it->name];
+				bool& bProc = circular_check[it->name];
 
-					if(!bProc) {
-						bProc = true;
+				if(gShowLddLike) {
+					bool& bUnique = unique[it->name];
+
+					if(!bUnique) {
+						bUnique = true;
 						std::ostringstream oss;
 						if(!it->file.get().empty()) {
 							oss << " (0x" << std::hex << it->base << ")";
 						}
-						std::cout << "\t" << it->name << (it->native ? "*" : "" ) << " => " << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : it->file.get())) << oss.str() << std::endl;
+						std::cout << "\t" << it->name << (it->native ? col.red("*") : "" ) << " => " << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : it->file.get())) << col.yellow(oss.str()) << std::endl;
 					}
 				} else {
 					indent(level);
-					std::cout << "* " << it->name << (it->native ? "*" : "" ) << " (" << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : "found, " + it->file.get()));
-					std::cout << ", direct dep.: " << it->children.size() << ", imports: " << it->imports.size() << ")" << std::endl;
+					std::cout << col.yellow("* ") << it->name << (it->native ? col.red("*").c_str() : "" ) << ( bProc ? col.red(" {circle}") : "" ) << col.cyan(" (") << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : "found, " + it->file.get()));
+					std::cout << ", direct dep.: " << ( it->children ? it->children->size() : 0 ) << ", imports: " << it->imports.size() << col.cyan(")") << std::endl;
 				}
 
 				if(!gShowLddLike && gShowSymbols)
@@ -425,23 +453,23 @@ namespace parity
 						indent(level + 2);
 
 						if(it->native) {
-							std::cout << "[NAT , ";
+							std::cout << col.blue("[NAT, ");
 						} else {
 							if(sym->import == 0x00000000)
-								std::cout << "[CODE, ";
+								std::cout << col.blue("[CODE, ");
 							else if(sym->import == reinterpret_cast<void*>(0xbaadf00d))
-								std::cout << "[DATA, ";
+								std::cout << col.blue("[DATA, ");
 							else
-								std::cout << "[LAZY, ";
+								std::cout << col.blue("[LAZY, ");
 						}
 
 						if(sym->ordinal)
-							std::cout << "ORD ] ";
+							std::cout << col.blue("ORD] ");
 						else
-							std::cout << "NAME] ";
+							std::cout << col.blue("NAME] ");
 
 						if(sym->ordinal)
-							std::cout << "{" << sym->ordinal << "} ";
+							std::cout << col.yellow("{") << sym->ordinal << col.yellow("} ");
 
 						if(!(it->native && sym->ordinal)) {
 							std::cout << sym->name << std::endl;
@@ -449,8 +477,15 @@ namespace parity
 					}
 				}
 
-				if((gShowLddLike && !gShowLddFlat) || !gShowLddLike)
-					DisplayItem(it->children);
+				if((gShowLddLike && !gShowLddFlat) || !gShowLddLike) {
+					if(it->children) {
+						if(!bProc) {
+							bProc = true;
+							DisplayItem(it->children);
+							bProc = false;
+						}
+					}
+				}
 			}
 
 			--level;
