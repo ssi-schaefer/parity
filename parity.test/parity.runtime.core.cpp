@@ -95,6 +95,8 @@ namespace parity
 				dumpStreams("", std::string(reinterpret_cast<char*>(cs.getBase())));
 				cs.close();
 
+				corefile.remove();
+
 				return true;
 			} catch(const utils::Exception& e)
 			{
