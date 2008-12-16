@@ -242,3 +242,8 @@ parity.inspector verbose processing status output is now much more readable.
 parity.runtime doesn't allow for more than 3 nested exceptions before doing a hard exit. in previous versions exceptions kept flying until stack space was too low.
 
 parity.inspector has now a much improved memory utilization and overal performance.
+
+
+parity 1.2.2
+------------
+
