@@ -428,10 +428,9 @@ namespace parity
 			for(InspectorLibraryVector::const_iterator it = vec->begin(); it != vec->end(); ++it)
 			{
 				bool& bProc = circular_check[it->name];
+				bool& bUnique = unique[it->name];
 
 				if(gShowLddLike) {
-					bool& bUnique = unique[it->name];
-
 					if(!bUnique) {
 						bUnique = true;
 						std::ostringstream oss;
@@ -442,7 +441,7 @@ namespace parity
 					}
 				} else {
 					indent(level);
-					std::cout << col.yellow("* ") << it->name << (it->native ? col.red("*").c_str() : "" ) << ( bProc ? col.red(" {circle}") : "" ) << col.cyan(" (") << (it->file.get().empty() ? "not found" : (gShortFormat ? "found" : "found, " + it->file.get()));
+					std::cout << col.yellow("* ") << col.green(it->name) << (it->native ? col.red("*").c_str() : "" ) << ( bProc ? col.red(" {circle}") : "" ) << col.cyan(" (") << (it->file.get().empty() ? col.red("not found") : (gShortFormat ? col.green("found") : col.green("found, ") + col.magenta(it->file.get())));
 					std::cout << ", direct dep.: " << ( it->children ? it->children->size() : 0 ) << ", imports: " << it->imports.size() << col.cyan(")") << std::endl;
 				}
 
@@ -469,7 +468,7 @@ namespace parity
 							std::cout << col.blue("NAME] ");
 
 						if(sym->ordinal)
-							std::cout << col.yellow("{") << sym->ordinal << col.yellow("} ");
+							std::cout << col.yellow("{") << sym->ordinal << col.yellow("} ") << std::endl;
 
 						if(!(it->native && sym->ordinal)) {
 							std::cout << sym->name << std::endl;
@@ -478,11 +477,18 @@ namespace parity
 				}
 
 				if((gShowLddLike && !gShowLddFlat) || !gShowLddLike) {
-					if(it->children) {
-						if(!bProc) {
-							bProc = true;
-							DisplayItem(it->children);
-							bProc = false;
+					if(it->children && !it->children->empty()) {
+						if(!bUnique) {
+							bUnique = true;
+
+							if(!bProc) {
+								bProc = true;
+								DisplayItem(it->children);
+								bProc = false;
+							}
+						} else {
+							indent(level + 2);
+							std::cout << col.yellow("{ ") << it->children->size() << col.yellow(" direct ") << ( it->children->size() > 1 ? col.yellow("dependencies") : col.yellow("dependency") ) << col.yellow(" already shown }") << std::endl;
 						}
 					}
 				}
