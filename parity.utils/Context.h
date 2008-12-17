@@ -69,27 +69,20 @@ namespace parity
 			//
 			void dump(bool intern);
 
-			//
-			// FIXME: this is public, since the BinaryGatherer needs to lookup
-			// each files implicit dependencies.
-			//
-#if 0
-			bool isBadLinkerPath(const Path &pth);
-			bool isBadCompilerPath(const Path& pth);
-#endif
 			Path lookupLibrary(const std::string& name, bool isMinusL);
-
 			std::string calculateDefaultEntrypoint();
+			bool isTerminal() { return isTty_; }
 
 		private:
 			//
 			// cannot copy!
 			//
-			Context(const Context& rhs) : ContextGen(rhs) {}
+			Context(const Context& rhs) : ContextGen(rhs), isTty_(rhs.isTty_) {}
 
 			void cleanup();
 
 			static const ContextMap mapping_[];
+			bool isTty_;
 		};
 	}
 }

@@ -206,14 +206,7 @@ namespace parity
 			{
 				it->toForeign();
 
-#if 0
-				if(!ctx.isBadLinkerPath(*it))
-					vec.push_back("/LIBPATH:" + it->get());
-				else
-					utils::Log::verbose("skipping bad library path %s\n", it->get().c_str());
-#else
 				vec.push_back("/LIBPATH:" + it->get());
-#endif
 			}
 
 			//
@@ -234,14 +227,7 @@ namespace parity
 			{
 				it->toForeign();
 
-#if 0
-				if(!ctx.isBadLinkerPath(*it))
-					vec.push_back("/LIBPATH:" + it->get());
-				else
-					utils::Log::verbose("skipping bad library path (from environment) %s\n", it->get().c_str());
-#else
 				vec.push_back("/LIBPATH:" + it->get());
-#endif
 			}
 
 			//
@@ -261,14 +247,7 @@ namespace parity
 			{
 				it->toForeign();
 
-#if 0
-				if(!ctx.isBadLinkerPath(*it))
-					vec.push_back(it->get());
-				else
-					utils::Log::verbose("skipping bad file path %s\n", it->get().c_str());
-#else
 				vec.push_back(it->get());
-#endif
 			}
 
 			//

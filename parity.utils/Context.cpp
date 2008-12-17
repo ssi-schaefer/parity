@@ -30,6 +30,10 @@
 
 #include <iomanip>
 
+#ifndef _WIN32
+# include <unistd.h>
+#endif
+
 namespace parity
 {
 	namespace utils
@@ -59,7 +63,7 @@ namespace parity
 		};
 
 		Context::Context()
-			: ContextGen()
+			: ContextGen(), isTty_(true)
 		{
 			#if defined(_WIN32) && !defined(HAVE_CONFIG_H)
 				//
@@ -73,6 +77,16 @@ namespace parity
 				//
 
 				Colored = false;
+			#else
+
+				//
+				// if the output streams are redirected to a file, or a pipe,
+				// disable colored output to enhance readability.
+				//
+				if(!isatty(fileno(stdout)) || !isatty(fileno(stderr))) {
+					isTty_ = false;
+				}
+
 			#endif
 		}
 
@@ -199,39 +213,6 @@ namespace parity
 
 			DefaultOutput = val;
 		}
-
-#if 0
-		bool Context::isBadLinkerPath(const Path &pth)
-		{
-			const std::string& str = pth.get();
-
-			if(BackendType == ToolchainMicrosoft)
-			{
-				if(		str.find("usr/lib") != std::string::npos
-					||	str.find("usr/local/lib") != std::string::npos
-					||	str.find("usr\\lib") != std::string::npos
-					||	str.find("usr\\local\\lib") != std::string::npos)
-					return true;
-			}
-
-			return false;
-		}
-
-		bool Context::isBadCompilerPath(const Path& pth)
-		{
-			const std::string& str = pth.get();
-
-			if(BackendType == ToolchainMicrosoft) {
-				if(		str.find("usr/include") != std::string::npos
-					||	str.find("usr/local/include") != std::string::npos
-					||	str.find("usr\\include") != std::string::npos
-					||	str.find("usr\\local\\include") != std::string::npos)
-					return true;
-			}
-
-			return false;
-		}
-#endif
 
 		Path Context::lookupLibrary(const std::string& name, bool isMinusL)
 		{

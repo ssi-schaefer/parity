@@ -37,7 +37,7 @@ namespace parity
 
 		std::string Color::color(const std::string& value, Color::ColorName color)
 		{
-			if(!Context::getContext().getColored())
+			if(!Context::getContext().getColored() || !Context::getContext().isTerminal())
 				return value;
 
 			std::string result = colors_[mode_].values[color];

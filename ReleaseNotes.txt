@@ -247,3 +247,6 @@ parity.inspector has now a much improved memory utilization and overal performan
 parity 1.2.2
 ------------
 
+colorization of output in all parity executables is now controlled by the output stream type (terminal, file, etc.)
+
+some general cleanup removed dead code.
