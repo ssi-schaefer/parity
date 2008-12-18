@@ -250,3 +250,5 @@ parity 1.2.2
 colorization of output in all parity executables is now controlled by the output stream type (terminal, file, etc.)
 
 some general cleanup removed dead code.
+
+disable stream buffers on stdout and stderr in windows executables. parity may implement line buffering in the future (which is missing on native windows).

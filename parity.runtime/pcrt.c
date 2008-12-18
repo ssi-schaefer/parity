@@ -161,6 +161,17 @@ const char* PcrtPathToNative(const char* ptr) {
 int PcrtInit()
 {
 	//
+	// Set file buffering. On Windows, the default is a fully
+	// buffered stdout and stderr, with a buffer size of 4096.
+	// Line buffering is impossible on windows, since that
+	// behaves the same as full buffering (argh...). So for now
+	// I disable buffering completely, and think about how to
+	// implement line buffering in parity.
+	//
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+
+	//
 	// Set stream modes to binary to stay compatible with the
 	// rest of the world. this makes some autoconf patches
 	// obsolete, which handled line ending conversion in some
