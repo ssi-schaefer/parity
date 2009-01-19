@@ -66,7 +66,7 @@ namespace parity
 			if(pth.exists())
 				gFilesToProcess.push_back(pth);
 			else {
-				utils::Log::verbose("cannot find file or unknown option: %s (rejecting)\n", option);
+				utils::Log::verbose("cannot find file or unknown option: %s (rejecting)\n", pth.get().c_str());
 				return false;
 			}
 
