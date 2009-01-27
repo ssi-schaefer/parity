@@ -506,7 +506,7 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 		// we have to do some of the work per pedes here.
 		//
 		modinfo_t mod = PcrtGetContainingModule(trace->eip);
-		char modname_aligned[ST_FW_MODULE + 1];
+		char modname_aligned[ST_FW_MODULE + 2];
 		char * modname_unaligned = basename(mod.name);
 		long len = lstrlen(modname_unaligned);
 
@@ -514,7 +514,7 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 			len = ST_FW_MODULE;
 
 		memset(modname_aligned, ' ', sizeof(modname_aligned));
-		lstrcpyn(&modname_aligned[ST_FW_MODULE - len], modname_unaligned, ST_FW_MODULE);
+		lstrcpyn(&modname_aligned[ST_FW_MODULE - len], modname_unaligned, ST_FW_MODULE + 1);
 
 		++num;
 
