@@ -255,7 +255,7 @@ UseCommandScripts (bool)
 ExportAll (bool)
 	Specifies wether all symbols should be exported, even from static libraries. This
 	is enabled automatically by parity - if not already enabled, if it detects, that
-	only static libraries are on the command line. Bu default parity does not export
+	only static libraries are on the command line. By default parity does not export
 	symbols from static libraries, since those are treated as private to each binary.
 	Default: off
 
