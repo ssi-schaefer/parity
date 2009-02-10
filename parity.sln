@@ -103,6 +103,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "parity.doc", "parity.doc", 
 	ProjectSection(SolutionItems) = preProject
 		parity.doc\configuration.txt = parity.doc\configuration.txt
 		parity.doc\environment.txt = parity.doc\environment.txt
+		parity.doc\features.lyx = parity.doc\features.lyx
 		parity.doc\options.txt = parity.doc\options.txt
 	EndProjectSection
 EndProject

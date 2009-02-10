@@ -1,0 +1,623 @@
+#LyX 1.5.5 created this file. For more info see http://www.lyx.org/
+\lyxformat 276
+\begin_document
+\begin_header
+\textclass article
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\paperfontsize default
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+The Parity Compiler Wrapper
+\end_layout
+
+\begin_layout Author
+Markus Duft
+\end_layout
+
+\begin_layout Date
+02/09/09
+\end_layout
+
+\begin_layout Standard
+
+\newpage
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\newpage
+
+\end_layout
+
+\begin_layout Section
+Available Versions
+\end_layout
+
+\begin_layout Standard
+Parity is available in two different versions:
+\end_layout
+
+\begin_layout Itemize
+built using the GCC compiler under Interix on native Windows.
+\end_layout
+
+\begin_layout Itemize
+built using Visual Studio [2005/2008 [Express]] under native Windows.
+\end_layout
+
+\begin_layout Standard
+Those two versions can basically do the same thing.
+ The windows version is even capable of handling Interix Paths, so it can
+ be used as a drop-in replacement for the Interix version.
+ The other way is not possible, so if you want to use parity from the native
+ windows world (e.g.
+ in nmake.exe makefiles, etc.), you are bound to the Visual Studio compiled
+ parity executable.
+\end_layout
+
+\begin_layout Standard
+It is recommended to use the Interix compiled version of parity when using
+ Interix as build environment, since launching the parity executable (which
+ is done quite often in a build process) is substantially faster when built
+ for the POSIX subsystem.
+ This does not have anything to do with the executable being built with
+ GCC or Visual Studio, but how windows handles executables in different
+ subsystems.
+\end_layout
+
+\begin_layout Standard
+Both of the available versions bring certain advantages/features to windows
+ executable, not available otherwise when using Visual Studio.
+ This also is the reason why one would want to use parity.cl.exe and parity.link.exe
+ instead of cl.exe and link.exe from Visual Studio.
+ The command line interface is the same, so they can be used as drop-in
+ replacements.
+\end_layout
+
+\begin_layout Section
+Build-process relevant Features
+\end_layout
+
+\begin_layout Standard
+Parity offers quite a few features affecting what can be compiled and linked
+ together.
+ So for example, you don't have to worry about __declspec(dllexport), and
+ there is no need anymore for using fancy defines to distinguish static
+ and shared builds of the same library.
+\end_layout
+
+\begin_layout Subsection
+Shared Library Support
+\end_layout
+
+\begin_layout Standard
+Parity brings along a bunch of patches for libtool, enabling it to fully
+ support parity.
+ This means building static and shared libraries is just as easy as everywhere
+ else on UNIX-like systems.
+ Of course libtool can only be used in an Environment like Interix, but
+ the libtool patches support both the Interix GCC and Visual Studio compiled
+ parity versions.
+\end_layout
+
+\begin_layout Standard
+There is only one Exception (of course): Globals.
+ Those need to explicitly need to be imported when used from another shared
+ library.
+ This usually means, that the header file of the providing shared library
+ contains a __declspec(dllimport) for that variable.
+ Parity cannot somehow hide this from the Programmer for technical reasons.
+ However parity can still make a programmers live easier, by allowing to
+ specify the __declspec(dllimport) 
+\series bold
+unconditionally
+\series default
+.
+ This means there is no need for fancy ifdef's, etc.
+ When used locally, the compiler knows how to handle __declspec(dllimport)
+ variables anyway.
+ Parity adds the support for the linker to find it's symbols even if linking
+ a static version of the same library.
+\end_layout
+
+\begin_layout Standard
+As an example, this is how a global variable declaration in some header
+ file could look like:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Standard
+
+#if defined(__PARITY__) && !defined(BUILDING_MYLIB)
+\end_layout
+
+\begin_layout Standard
+
+# define MYLIB_IMPORT __declspec(dllimport)
+\end_layout
+
+\begin_layout Standard
+
+#else
+\end_layout
+
+\begin_layout Standard
+
+# define MYLIB_IMPORT
+\end_layout
+
+\begin_layout Standard
+
+#endif
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Standard
+
+extern MYLIB_IMPORT int my_variable;
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The __PARITY__ define could be replaced with _WIN32 too, since that's still
+ defined when building with parity.
+ The BUILDING_MYLIB define would be optional (so it would work without such
+ a facility), but it makes a warning about 
+\begin_inset Quotes eld
+\end_inset
+
+using an imported symbol locally
+\begin_inset Quotes erd
+\end_inset
+
+ disappear.
+\end_layout
+
+\begin_layout Subsection
+Automatic Symbol Export
+\end_layout
+
+\begin_layout Standard
+All global Symbols (except some compiler generated things) are automatically
+ exported from DLL's.
+ Optionally one can enable exporting global Symbols from Executables, so
+ that dlopen'ing the executable itself becomes possible.
+\end_layout
+
+\begin_layout Subsubsection
+Optionally export Symbols from static libraries
+\end_layout
+
+\begin_layout Standard
+By default, parity does not export symbols from static libraries, since
+ those are considered private to whoever links them.
+ However when linking multiple static libraries together to form one big
+ shared library, parity automatically exports all symbols found.
+\end_layout
+
+\begin_layout Subsection
+Goodies
+\end_layout
+
+\begin_layout Subsubsection
+Colored Compiler Output
+\end_layout
+
+\begin_layout Standard
+When outputting to a Terminal, parity is capable to colorize the output
+ of the Visual Studio tools, making it way more easy to identify problems
+ while watching terminals from the corner of ones eye.
+\end_layout
+
+\begin_layout Subsubsection
+Precise Timing of Tasks
+\end_layout
+
+\begin_layout Standard
+Parity can be told to output profiling information, making it possible to
+ find performance problems.
+ Setting the Debug Level to either 
+\begin_inset Quotes eld
+\end_inset
+
+Profile
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+Verbose
+\begin_inset Quotes erd
+\end_inset
+
+ will output this information.
+\end_layout
+
+\begin_layout Subsubsection
+Dependency Tracking
+\end_layout
+
+\begin_layout Standard
+Parity is capable of full GCC3 like dependency tracking, which is enabled
+ by default in all Autotools built projects.
+\end_layout
+
+\begin_layout Subsubsection
+Statistical Information
+\end_layout
+
+\begin_layout Standard
+Parity is capable of writing a file containing statistical information (for
+ example information on how many symbols are being processed for which library,
+ how many header dependencies a source file has, etc.).
+\end_layout
+
+\begin_layout Section
+Runtime relevant Features
+\end_layout
+
+\begin_layout Standard
+parity brings along many features at runtime of the compiled executable.
+\end_layout
+
+\begin_layout Subsection
+Dynamic Loader
+\end_layout
+
+\begin_layout Standard
+Parity brings along it's own dynamic loader, which enables it to implement
+ features that are otherwise not available when working in Windows environments.
+\end_layout
+
+\begin_layout Standard
+Please note, that - depending on your configuration - system libraries (at
+ least those coming with Visual Studio or Windows itself) are 
+\series bold
+not
+\series default
+ loaded by parity's dynamic loader, but rather follow the default loading
+ path.
+ The reason for not loading kernel32.dll with parity's loader is simply that
+ the loader already needs it, so parity will refuse to handle this library
+ even if told to do so.
+ All other system Libraries can be loaded using parity's loader, but it
+ will make linking a lot slower, since parity has to gather and look up
+ all Symbols from the involved Libraries.
+\end_layout
+
+\begin_layout Standard
+In newer Versions of parity, the loader by default ignores any library,
+ not created by parity.
+ This is required when linking third party libraries which don't to symbol
+ exporting right (problems occur if the type is not specified correctly,
+ e.g.
+ a variable is exported as function - yes, this does work with the Visual
+ Studio linker!).
+ Those libraries are loaded using the default Windows mechanism.
+\end_layout
+
+\begin_layout Standard
+The loader can be disabled entirely, disabling most of the additional Features
+ of parity too.
+\end_layout
+
+\begin_layout Subsubsection
+Hardcoding Runpaths
+\end_layout
+
+\begin_layout Standard
+The Dynamic Loader included in any parity compiled executable and shared
+ library is capable of hardcoding library search paths into binaries, just
+ like in UNIXish environments.
+ The Dynamic Loader has a fixed search order, which in the last phase also
+ uses the default Windows look up mechanism, so parity built DLL's work
+ the same as any other Windows DLL, with some extensions added to the search
+ order.
+\end_layout
+
+\begin_layout Standard
+Tip: parity recognizes LD_RUN_PATH during linking.
+\end_layout
+
+\begin_layout Subsubsection
+LD_LIBRARY_PATH
+\end_layout
+
+\begin_layout Standard
+Additionally to hardcoding paths, LD_LIBRARY_PATH can be used, although
+ for various reasons not recommended (not only when using parity.
+ I recommend not to use this on 
+\series bold
+all
+\series default
+ platforms).
+\end_layout
+
+\begin_layout Subsubsection
+Different Binding Schemes
+\end_layout
+
+\begin_layout Standard
+parity's loader is capable of binding all symbols immediately during start
+ up, or delaying binding of functions to call time.
+ However, data symbol loading cannot be delayed for technical reasons, so
+ each dependent library has to be loaded during start up anyway, to ensure
+ globals being present.
+ This means that only little performance improvement can be seen.
+ However missing API's don't prevent starting, but produce an abort() at
+ runtime, so if the executable never reaches such a point, even with updated/cha
+nged libraries executables can still run to a certain degree without relinking.
+\end_layout
+
+\begin_layout Subsubsection
+Preloading
+\end_layout
+
+\begin_layout Standard
+Parity add (limited) support for preloading to Windows binaries.
+ It is important to understand how this works if you intend to use it.
+ On Windows, preloading is only possible by instructing the dynamic loader
+ to load symbols to a different address, so preloading symbols is 
+\series bold
+only possible if that symbol is contained within a shared library (DLL)
+\series default
+.
+ If the symbol is linked in from a static library or object file, it is
+ bound during link time, so there is no way to influence the binding at
+ runtime.
+\end_layout
+
+\begin_layout Subsection
+Advanced Exception Handling
+\end_layout
+
+\begin_layout Standard
+parity features advanced exception handling, enabled by default in all parity
+ built Windows executables.
+ Advanced Exception Handling disables the usual Windows Error Notifications,
+ but rather enables writing of 
+\begin_inset Quotes eld
+\end_inset
+
+core
+\begin_inset Quotes erd
+\end_inset
+
+ files.
+ Those core files are - as opposed to minidump images - plain text.
+ They contain a stack trace and some detailed exception information.
+ This is way more useful than the default 
+\begin_inset Quotes eld
+\end_inset
+
+an exception occurred
+\begin_inset Quotes erd
+\end_inset
+
+ notice.
+\end_layout
+
+\begin_layout Subsubsection
+Debug Information Utilization
+\end_layout
+
+\begin_layout Standard
+parity compiled Windows binaries use the dbghelp.dll library provided by
+ Microsoft to (if available) load debugging information for binaries when
+ an exception occurs.
+ By doing this, parity can guarantee the most accurate symbol naming information
+ in stack traces.
+ Be aware that if debug information is not available, the dbghelp.dll library
+ uses export tables to resolve symbol names, in which case private/static
+ symbols are not named correctly, but rather get named like the next neighboring
+ public/exported symbol with a lower address.
+\end_layout
+
+\begin_layout Subsubsection
+Utilizing generated Symbol Tables
+\end_layout
+
+\begin_layout Standard
+parity can optionally generate Symbol tables which are used to look up symbol
+ names instead of debug information.
+ The advantage is, that parity might now some more symbols at link time,
+ than get exported (and thus are seen by dbghelp.dll if not building debug-able).
+ Also table look up is faster than having to initialize all debug information
+ for the process.
+ However time usually is not so critical when just about to crash - so it's
+ recommended to use debug information, since it 
+\series bold
+can
+\series default
+ be more accurate.
+\end_layout
+
+\begin_layout Subsection
+Goodies
+\end_layout
+
+\begin_layout Subsubsection
+LD_DEBUG and LD_DEBUG_OUTPUT
+\end_layout
+
+\begin_layout Standard
+parity's dynamic loader features very verbose output about what it is doing.
+ Setting the environment variable LD_DEBUG to any value (important is, that
+ it is set) will result in verbose output being written to stderr.
+ Setting LD_DEBUG_OUTPUT to a file name will result in the verbose output
+ being written there, to not disturb normal stderr output of the executable.
+\end_layout
+
+\begin_layout Subsubsection
+PCRT_TRACE_EXCEPTIONS
+\end_layout
+
+\begin_layout Standard
+Setting this environment variable (to any value) will result in verbose
+ exception information being printed for 
+\series bold
+every
+\series default
+ exception in parity built windows processes started in the environment.
+ Be aware that this even traces exceptions (C++ too!) that get caught by
+ either C++ catch or structured exception handling.
+\end_layout
+
+\begin_layout Subsubsection
+PCRT_INTERNAL_SYMBOLS
+\end_layout
+
+\begin_layout Standard
+If this if set (to any value), parity built executables will use internal
+ symbol tables for symbol look up instead of debug information.
+ If generating symbol tables was not enabled at build time (it's disabled
+ by default!), this effectively disables usage of debug information, so
+ no symbol names will be available.
+\end_layout
+
+\begin_layout Subsubsection
+PCRT_ENABLE_CRASHBOXES
+\end_layout
+
+\begin_layout Standard
+Setting this environment variable (to any value), will result in re-enabling
+ default windows error message boxes.
+ Writing of 
+\begin_inset Quotes eld
+\end_inset
+
+core
+\begin_inset Quotes erd
+\end_inset
+
+ files is still enabled in this case.
+ During build generation of PCRT Entry points can be disabled.
+ If this was the case this has no effect at all.
+\end_layout
+
+\begin_layout Subsection
+Extra Utilities
+\end_layout
+
+\begin_layout Subsubsection
+Textual and Graphical Configuration Editor
+\end_layout
+
+\begin_layout Standard
+Parity provides a textual and a graphical (.NET based) configuration editor.
+ The graphical one is recommended, since it is capable of at least reading
+ configuration sections, which have been introduced a few releases ago.
+ The textual version simply ignores sections defined in configuration files.
+\end_layout
+
+\begin_layout Subsubsection
+Binary Inspection with parity.inspector
+\end_layout
+
+\begin_layout Standard
+parity.inspector is a utility providing means of gathering information about
+ parity built binaries.
+ The default is a very 
+\begin_inset Quotes eld
+\end_inset
+
+ldd
+\begin_inset Quotes erd
+\end_inset
+
+ like output of dependency information.
+ This information can be bloated up to displaying information on every single
+ symbol involved in an executable and all it's dependencies.
+\end_layout
+
+\begin_layout Standard
+As most parity executables, this utility provides colored output for better
+ readability.
+\end_layout
+
+\begin_layout Subsubsection
+Statistics File Evaluation
+\end_layout
+
+\begin_layout Standard
+Of course parity brings a utility to evaluate statistics files written by
+ the compiler and linker.
+\end_layout
+
+\begin_layout Subsubsection
+Diagnostics of running processes
+\end_layout
+
+\begin_layout Standard
+parity provides a utility called parity.diagnostic, which implements a very
+ basic (non-interactive) debugger.
+ It simply displays debug-relevant events on the Terminal.
+\end_layout
+
+\begin_layout Subsubsection
+The parity Test Suite
+\end_layout
+
+\begin_layout Standard
+Included in the parity package there is a parity test suite.
+ For technical reasons this can only run in an installed parity environment
+ (and not like other packages do it, right after building and before installing).
+ This Test Suite provides an easy way to check wether the parity installation
+ is sane, by testing most of parity's features.
+\end_layout
+
+\end_body
+\end_document
