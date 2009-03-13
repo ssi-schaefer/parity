@@ -87,8 +87,24 @@ int main(int argc, char** argv)
 	context.setFrontendType(utils::ToolchainInterixGNU);
 
 	try {
+		/* backup configuration-set paths. */
+		parity::utils::PathVector cfgIncludePaths = parity::utils::Context::getContext().getIncludePaths();
+		parity::utils::PathVector cfgLibraryPaths = parity::utils::Context::getContext().getLibraryPaths();
+
+		/* clear configuration-set paths. */
+		parity::utils::Context::getContext().getIncludePaths().clear();
+		parity::utils::Context::getContext().getLibraryPaths().clear();
+
 		parity::options::UnknownArgumentVector unknown;
 		parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableGnuGcc, &unknown);
+
+		/* re-enable configuration-set paths. */
+		parity::utils::Context::getContext().getIncludePaths().insert(
+			parity::utils::Context::getContext().getIncludePaths().end(),
+			cfgIncludePaths.begin(), cfgIncludePaths.end());
+		parity::utils::Context::getContext().getLibraryPaths().insert(
+			parity::utils::Context::getContext().getLibraryPaths().end(),
+			cfgLibraryPaths.begin(), cfgLibraryPaths.end());
 
 		for(parity::options::UnknownArgumentVector::iterator it = unknown.begin(); it != unknown.end(); ++it) {
 			parity::utils::Path pth(*it);

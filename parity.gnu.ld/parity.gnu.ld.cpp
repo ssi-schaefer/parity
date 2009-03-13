@@ -87,8 +87,19 @@ int main(int argc, char** argv)
 	context.setFrontendType(utils::ToolchainInterixGNU);
 
 	try {
+		/* backup configuration-set paths. */
+		parity::utils::PathVector cfgLibraryPaths = parity::utils::Context::getContext().getLibraryPaths();
+
+		/* clear configuration-set paths. */
+		parity::utils::Context::getContext().getLibraryPaths().clear();
+
 		parity::options::UnknownArgumentVector unknown;
 		parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableGnuLd, &unknown);
+
+		/* re-enable configuration-set paths. */
+		parity::utils::Context::getContext().getLibraryPaths().insert(
+			parity::utils::Context::getContext().getLibraryPaths().end(),
+			cfgLibraryPaths.begin(), cfgLibraryPaths.end());
 
 		for(parity::options::UnknownArgumentVector::iterator it = unknown.begin(); it != unknown.end(); ++it) {
 			parity::utils::Path pth(*it);

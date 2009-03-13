@@ -252,3 +252,9 @@ colorization of output in all parity executables is now controlled by the output
 some general cleanup removed dead code.
 
 disable stream buffers on stdout and stderr in windows executables. parity may implement line buffering in the future (which is missing on native windows).
+
+
+parity 1.2.3
+------------
+
+changed the behaviour regarding configuration-set include and library paths; configuration set paths are appended in the order of appearance in the file to the set of command line set paths in their order of appearance on the command line.

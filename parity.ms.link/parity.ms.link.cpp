@@ -72,8 +72,19 @@ int main(int argc, char** argv)
 	try {
 		if(context.getBackendType() == utils::ToolchainMicrosoft)
 		{
+			/* backup configuration-set paths. */
+			parity::utils::PathVector cfgLibraryPaths = parity::utils::Context::getContext().getLibraryPaths();
+
+			/* clear configuration-set paths. */
+			parity::utils::Context::getContext().getLibraryPaths().clear();
+
 			parity::options::UnknownArgumentVector vec;
 			parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableMsLink, &vec);
+
+			/* re-enable configuration-set paths. */
+			parity::utils::Context::getContext().getLibraryPaths().insert(
+				parity::utils::Context::getContext().getLibraryPaths().end(),
+				cfgLibraryPaths.begin(), cfgLibraryPaths.end());
 
 			if(vec.size() > 0)
 			{
