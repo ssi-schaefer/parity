@@ -1,99 +1,7 @@
-Index: ChangeLog
-===================================================================
-RCS file: /sources/libtool/libtool/ChangeLog,v
-retrieving revision 1.2590
-diff -u -r1.2590 ChangeLog
---- ChangeLog	11 Feb 2008 21:51:42 -0000	1.2590
-+++ ChangeLog	13 Feb 2008 09:39:24 -0000
-@@ -1,3 +1,50 @@
-+2008-02-12  Markus Duft <markus.duft@salomon.at>
-+
-+	Implemented support for *-winnt*, which is the "parity"
-+	compiler for windows (http://www.sf.net/projects/parity):
-+
-+	* libltdl/config/ltmain.m4sh: recognize winnt as Windows OS,
-+	specially handle parity compiler (force C++), don't handle
-+	.exe extensions like on cygwin and mingw, but like on UNIX.
-+	Disable the use of reloadable objects (not supported).
-+	* libltdl/libltdl/lt_system.h: Only define R_OK if it's not
-+	allready defined elsewhere on Windows.
-+	* libltdl/loaders/dlopen.c: Don't use RTLD_GLOBAL with parity.
-+	* libltdl/loaders/loadlibrary.c: In case LoadLibrary is used
-+	instead of dlopen, convert paths to windows-style for the
-+	Windows API's (dlopen does this otherwise).
-+	* libltdl/m4/argz.m4: Windows (parity) has no argz support.
-+	* libltdl/m4/libtool.m4: Added winnt support.
-+	* libltdl/m4/ltdl.m4: On winnt dlopen opens deplibs.
-+	* tests/configure-iface.at: Fix output for testsuite.
-+	* tests/ctor.at: Use dllimport for correct link.
-+	* tests/destdir.at: Add $EXEEXT to output filenames.
-+	* tests/duplicate_conv.at: Don't execute the part of the test
-+	that relies on reloadable objects (not supported).
-+	* tests/export.at: Need explicit export of uninitialized data,
-+	use the LIBA_SCOPE define instead of extern.
-+	* tests/link-order.at: Use dllimport for correct link.
-+	* tests/link-order2.at: XFAIL on winnt. Windows has no RTL.
-+	* tests/lt_dladvise.at: Fix output for testsuite. Use
-+	dllimport for correct link. Don't test undefined symbols.
-+	* tests/lt_dlexit.at: Use dllimport for correct link.
-+	* tests/need_lib_prefix.at: Fix output for testsuite.
-+	* tests/stresstest.at: Need explicit export of uninitialized
-+	data, use the LIBA_SCOPE define instead of extern. link the
-+	main-static object only when -static is given.
-+	* tests/template.at: Add dependent libs to link line. There
-+	is no support for undefined symbols on winnt.
-+	* tests/testsuite.at: the *_EXEC_CHECK macros know of $EXEEXT
-+	* tests/demo/foo.c tests/demo/foo.h tests/depdemo/l1/l1.c 
-+	tests/depdemo/l1/l1.h tests/depdemo/l2/l2.c
-+	tests/depdemo/l2/l2.h tests/depdemo/l3/l3.c
-+	tests/depdemo/l3/l3.h tests/depdemo/l4/l4.c
-+	tests/depdemo/l4/l4.h: Use dllimport for correct link.
-+	* tests/mdemo/foo1.c tests/mdemo/foo2.c: Initialize global
-+	data, otherwise dllexport would be required.
-+	* tests/pdemo/foo.h tests/pdemo/longer_file_name_foo.c: Use
-+	dllimport for correct link.
-+
- 2008-02-11  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
- 
- 	* tests/mdemo/Makefile.am (@LIBLTDL@): Update outdated
-Index: libltdl/config/ltmain.m4sh
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/config/ltmain.m4sh,v
-retrieving revision 1.97
-diff -u -r1.97 ltmain.m4sh
---- libltdl/config/ltmain.m4sh	28 Jan 2008 15:49:46 -0000	1.97
-+++ libltdl/config/ltmain.m4sh	13 Feb 2008 09:39:25 -0000
-@@ -993,7 +993,7 @@
- } lt_dlsymlist;
- "
- 	  case $host in
--	  *cygwin* | *mingw* )
-+	  *cygwin* | *mingw* | *winnt*)
- 	    $ECHO >> "$output_objdir/$my_dlsyms" "\
- /* DATA imports from DLLs on WIN32 con't be const, because
-    runtime relocations are performed -- see ld's documentation
-@@ -1070,8 +1070,19 @@
- 	  esac
- 	done
- 
-+  #
-+  # if parity is used as compiler, we need to use -xc++ to force
-+  # the C file into C++ to be able to use non-const initializers
-+  # for variables (other variables from shared libraries for example)
-+  #
-+  case "$CC" in
-+  *parity*)
-+    PARITY_CFLAGS="-xc++"
-+    ;;
-+  esac
-+
- 	# Now compile the dynamic symbol file.
--	func_show_eval '(cd $output_objdir && $LTCC$symtab_cflags -c$no_builtin_flag$pic_flag_for_symtable "$my_dlsyms")' 'exit $?'
-+	func_show_eval '(cd $output_objdir && $LTCC$symtab_cflags $PARITY_CFLAGS -c$no_builtin_flag$pic_flag_for_symtable "$my_dlsyms")' 'exit $?'
- 
- 	# Clean up the generated files.
- 	func_show_eval '$RM "$output_objdir/$my_dlsyms" "$nlist" "${nlist}S" "${nlist}T"'
-@@ -2115,16 +2126,21 @@
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/config/ltmain.m4sh libtool-2.2.6/libltdl/config/ltmain.m4sh
+--- libtool-2.2.6.orig/libltdl/config/ltmain.m4sh	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/config/ltmain.m4sh	2009-04-01 16:33:03 +0200
+@@ -1698,14 +1698,19 @@
  	# If the file is missing, and there is a .exe on the end, strip it
  	# because it is most likely a libtool script we actually want to
  	# install
@@ -105,36 +13,62 @@ diff -u -r1.97 ltmain.m4sh
 -	      file=$func_stripname_result
 -	      stripped_ext=".exe"
 -	    fi
--	    ;;
--	esac
-+  case $host in
-+  *winnt*) ;;
-+  *)
-+    stripped_ext=""
-+    case $file in
-+      *.exe)
-+        if test ! -f "$file"; then
-+          func_stripname '' '.exe' "$file"
-+          file=$func_stripname_result
-+          stripped_ext=".exe"
-+        fi
-+        ;;
-+    esac
++	case $host in
++	*winnt*) ;;
++	*)
++	    stripped_ext=""
++	    case $file in
++	      *.exe)
++		if test ! -f "$file"; then
++		  func_stripname '' '.exe' "$file"
++		  file=$func_stripname_result
++		  stripped_ext=".exe"
++		fi
++		;;
++	    esac
+ 	    ;;
+ 	esac
+ 
+@@ -1985,7 +1990,7 @@
+ } lt_dlsymlist;
+ "
+ 	  case $host in
+-	  *cygwin* | *mingw* | *cegcc* )
++	  *cygwin* | *mingw* | *cegcc* | *winnt* )
+ 	    $ECHO >> "$output_objdir/$my_dlsyms" "\
+ /* DATA imports from DLLs on WIN32 con't be const, because
+    runtime relocations are performed -- see ld's documentation
+@@ -2062,8 +2067,19 @@
+ 	  esac
+ 	done
+ 
++  #
++  # if parity is used as compiler, we need to use -xc++ to force
++  # the C file into C++ to be able to use non-const initializers
++  # for variables (other variables from shared libraries for example)
++  #
++  case "$host" in
++  *winnt*)
++    PARITY_CFLAGS="-xc++"
 +    ;;
 +  esac
++
+ 	# Now compile the dynamic symbol file.
+-	func_show_eval '(cd $output_objdir && $LTCC$symtab_cflags -c$no_builtin_flag$pic_flag_for_symtable "$my_dlsyms")' 'exit $?'
++	func_show_eval '(cd $output_objdir && $LTCC$symtab_cflags $PARITY_CFLAGS -c$no_builtin_flag$pic_flag_for_symtable "$my_dlsyms")' 'exit $?'
  
- 	# Do a test to see if this is really a libtool program.
- 	case $host in
-@@ -6102,7 +6118,7 @@
- 	   len=`expr "X$test_cmds" : ".*" 2>/dev/null` &&
- 	   test "$len" -le "$max_cmd_len" || test "$max_cmd_len" -le -1; then
+ 	# Clean up the generated files.
+ 	func_show_eval '$RM "$output_objdir/$my_dlsyms" "$nlist" "${nlist}S" "${nlist}T"'
+@@ -6671,7 +6687,7 @@
+ 	   len=$func_len_result &&
+ 	   test "$len" -lt "$max_cmd_len" || test "$max_cmd_len" -le -1; then
  	  :
 -	else
 +	elif { case $host in *-*-winnt*) false;; *) true;; esac ; }; then
  	  # The command line is too long to link in one step, link piecewise
  	  # or, if using GNU ld and skipped_export is not :, use a linker
  	  # script.
-@@ -6785,10 +6801,15 @@
+@@ -7369,10 +7385,15 @@
        $opt_dry_run || {
  	# win32 will think the script is a binary if it has
  	# a .exe suffix, so we strip it off here.
@@ -154,7 +88,7 @@ diff -u -r1.97 ltmain.m4sh
  	# test for cygwin because mv fails w/o .exe extensions
  	case $host in
  	  *cygwin*)
-@@ -7271,17 +7292,22 @@
+@@ -7867,17 +7888,22 @@
        *)
  	if test "$mode" = clean ; then
  	  noexename=$name
@@ -188,13 +122,9 @@ diff -u -r1.97 ltmain.m4sh
  	  # Do a test to see if this is a libtool program.
  	  if func_ltwrapper_p "$file"; then
  	    if func_ltwrapper_executable_p "$file"; then
-Index: libltdl/libltdl/lt_system.h
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/libltdl/lt_system.h,v
-retrieving revision 1.6
-diff -u -r1.6 lt_system.h
---- libltdl/libltdl/lt_system.h	25 Mar 2007 12:12:43 -0000	1.6
-+++ libltdl/libltdl/lt_system.h	13 Feb 2008 09:39:25 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/libltdl/lt_system.h libtool-2.2.6/libltdl/libltdl/lt_system.h
+--- libtool-2.2.6.orig/libltdl/libltdl/lt_system.h	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/libltdl/lt_system.h	2009-04-01 15:41:40 +0200
 @@ -122,7 +122,9 @@
  # define LT_PATHSEP_CHAR	':'
  #endif
@@ -206,14 +136,10 @@ diff -u -r1.6 lt_system.h
  #  define R_OK 4
  #endif
  
-Index: libltdl/loaders/dlopen.c
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/loaders/dlopen.c,v
-retrieving revision 1.12
-diff -u -r1.12 dlopen.c
---- libltdl/loaders/dlopen.c	12 Jan 2008 17:00:51 -0000	1.12
-+++ libltdl/loaders/dlopen.c	13 Feb 2008 09:39:25 -0000
-@@ -158,7 +158,9 @@
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/loaders/dlopen.c libtool-2.2.6/libltdl/loaders/dlopen.c
+--- libtool-2.2.6.orig/libltdl/loaders/dlopen.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/loaders/dlopen.c	2009-04-01 15:41:40 +0200
+@@ -171,7 +171,9 @@
  
    if (advise)
      {
@@ -223,16 +149,12 @@ diff -u -r1.12 dlopen.c
 +#if defined(RTLD_GLOBAL ) && !defined(__PARITY__)
        /* If there is some means of asking for global symbol resolution,
           do so.  */
-       if (((lt__advise *) advise)->is_symglobal)
-Index: libltdl/loaders/loadlibrary.c
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/loaders/loadlibrary.c,v
-retrieving revision 1.15
-diff -u -r1.15 loadlibrary.c
---- libltdl/loaders/loadlibrary.c	8 May 2007 14:38:50 -0000	1.15
-+++ libltdl/loaders/loadlibrary.c	13 Feb 2008 09:39:25 -0000
-@@ -129,6 +129,11 @@
- #if defined(__CYGWIN__)
+       if (advise->is_symglobal)
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/loaders/loadlibrary.c libtool-2.2.6/libltdl/loaders/loadlibrary.c
+--- libtool-2.2.6.orig/libltdl/loaders/loadlibrary.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/loaders/loadlibrary.c	2009-04-01 15:41:40 +0200
+@@ -146,6 +146,11 @@
+ #elif defined(__CYGWIN__)
        cygwin_conv_to_full_win32_path (filename, wpath);
        len = 0;
 +#elif defined(__PARITY__)
@@ -243,13 +165,9 @@ diff -u -r1.15 loadlibrary.c
  #else
        strcpy(wpath, filename);
  #endif
-Index: libltdl/m4/argz.m4
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/m4/argz.m4,v
-retrieving revision 1.6
-diff -u -r1.6 argz.m4
---- libltdl/m4/argz.m4	26 Apr 2007 22:24:16 -0000	1.6
-+++ libltdl/m4/argz.m4	13 Feb 2008 09:39:25 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/m4/argz.m4 libtool-2.2.6/libltdl/m4/argz.m4
+--- libtool-2.2.6.orig/libltdl/m4/argz.m4	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/m4/argz.m4	2009-04-01 15:41:40 +0200
 @@ -42,6 +42,10 @@
          [if argz actually works],
          [lt_cv_sys_argz_works],
@@ -261,13 +179,9 @@ diff -u -r1.6 argz.m4
  	 *cygwin*)
  	   lt_cv_sys_argz_works=no
  	   if test "$cross_compiling" != no; then
-Index: libltdl/m4/libtool.m4
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/m4/libtool.m4,v
-retrieving revision 1.134
-diff -u -r1.134 libtool.m4
---- libltdl/m4/libtool.m4	9 Feb 2008 07:14:35 -0000	1.134
-+++ libltdl/m4/libtool.m4	13 Feb 2008 09:39:26 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/m4/libtool.m4 libtool-2.2.6/libltdl/m4/libtool.m4
+--- libtool-2.2.6.orig/libltdl/m4/libtool.m4	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/m4/libtool.m4	2009-04-01 15:41:40 +0200
 @@ -152,6 +152,18 @@
  dnl
  AC_REQUIRE([AC_PROG_LN_S])dnl
@@ -287,7 +201,7 @@ diff -u -r1.134 libtool.m4
  _LT_DECL([], [LN_S], [1], [Whether we need soft or hard links])dnl
  dnl
  AC_REQUIRE([LT_CMD_MAX_LEN])dnl
-@@ -1537,6 +1549,12 @@
+@@ -1552,6 +1564,12 @@
      lt_cv_sys_max_cmd_len=196608
      ;;
  
@@ -300,7 +214,7 @@ diff -u -r1.134 libtool.m4
    osf*)
      # Dr. Hans Ekkehard Plesser reports seeing a kernel panic running configure
      # due to this test when exec_disable_arg_limit is 1 on Tru64. It is not
-@@ -1993,9 +2011,19 @@
+@@ -2003,9 +2021,19 @@
  old_striplib=
  AC_MSG_CHECKING([whether stripping libraries is possible])
  if test -n "$STRIP" && $STRIP -V 2>&1 | $GREP "GNU strip" >/dev/null; then
@@ -323,7 +237,7 @@ diff -u -r1.134 libtool.m4
  else
  # FIXME - insert some real tests, host_os isn't really good enough
    case $host_os in
-@@ -2386,6 +2414,104 @@
+@@ -2402,6 +2430,104 @@
    hardcode_into_libs=yes
    ;;
  
@@ -428,7 +342,7 @@ diff -u -r1.134 libtool.m4
  irix5* | irix6* | nonstopux*)
    case $host_os in
      nonstopux*) version_type=nonstopux ;;
-@@ -3038,6 +3164,16 @@
+@@ -3061,6 +3187,16 @@
    lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so|\.a)$'
    ;;
  
@@ -445,7 +359,7 @@ diff -u -r1.134 libtool.m4
  irix5* | irix6* | nonstopux*)
    case $LD in
    *-32|*"-32 ") libmagic=32-bit;;
-@@ -3234,7 +3370,7 @@
+@@ -3256,7 +3392,7 @@
  [AC_REQUIRE([AC_CANONICAL_HOST])dnl
  LIBM=
  case $host in
@@ -454,7 +368,7 @@ diff -u -r1.134 libtool.m4
    # These system don't have libm, or don't need it
    ;;
  *-ncr-sysv4.3*)
-@@ -3346,6 +3482,25 @@
+@@ -3367,6 +3503,25 @@
  # so use this general approach.
  lt_cv_sys_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern int \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
  
@@ -480,7 +394,7 @@ diff -u -r1.134 libtool.m4
  # Transform an extracted symbol line into symbol name and symbol address
  lt_cv_sys_global_symbol_to_c_name_address="sed -n -e 's/^: \([[^ ]]*\) $/  {\\\"\1\\\", (void *) 0},/p' -e 's/^$symcode* \([[^ ]]*\) \([[^ ]]*\)$/  {\"\2\", (void *) \&\2},/p'"
  lt_cv_sys_global_symbol_to_c_name_address_lib_prefix="sed -n -e 's/^: \([[^ ]]*\) $/  {\\\"\1\\\", (void *) 0},/p' -e 's/^$symcode* \([[^ ]]*\) \(lib[[^ ]]*\)$/  {\"\2\", (void *) \&\2},/p' -e 's/^$symcode* \([[^ ]]*\) \([[^ ]]*\)$/  {\"lib\2\", (void *) \&\2},/p'"
-@@ -3458,6 +3613,18 @@
+@@ -3479,6 +3634,18 @@
  	  lt_save_CFLAGS="$CFLAGS"
  	  LIBS="conftstm.$ac_objext"
  	  CFLAGS="$CFLAGS$_LT_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)"
@@ -499,7 +413,7 @@ diff -u -r1.134 libtool.m4
  	  if AC_TRY_EVAL(ac_link) && test -s conftest${ac_exeext}; then
  	    pipe_works=yes
  	  fi
-@@ -3652,6 +3819,19 @@
+@@ -3682,6 +3849,19 @@
  	# This is c89, which is MS Visual C++ (no shared libs)
  	# Anyone wants to do a port?
  	;;
@@ -519,7 +433,7 @@ diff -u -r1.134 libtool.m4
        irix5* | irix6* | nonstopux*)
  	case $cc_basename in
  	  CC*)
-@@ -3927,6 +4107,18 @@
+@@ -3971,6 +4151,18 @@
        _LT_TAGVAR(lt_prog_compiler_static, $1)='${wl}-a ${wl}archive'
        ;;
  
@@ -538,7 +452,7 @@ diff -u -r1.134 libtool.m4
      irix5* | irix6* | nonstopux*)
        _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
        # PIC (with -KPIC) is the default.
-@@ -4185,6 +4377,12 @@
+@@ -4243,6 +4435,12 @@
      # we just hope/assume this is gcc and not c89 (= MSVC++)
      with_gnu_ld=yes
      ;;
@@ -551,7 +465,7 @@ diff -u -r1.134 libtool.m4
    openbsd*)
      with_gnu_ld=no
      ;;
-@@ -4456,6 +4654,15 @@
+@@ -4516,6 +4714,15 @@
    else
      # PORTME fill in a description of your system's linker (not GNU ld)
      case $host_os in
@@ -567,7 +481,7 @@ diff -u -r1.134 libtool.m4
      aix3*)
        _LT_TAGVAR(allow_undefined_flag, $1)=unsupported
        _LT_TAGVAR(always_export_symbols, $1)=yes
-@@ -5746,6 +5953,15 @@
+@@ -5813,6 +6020,15 @@
  	_LT_TAGVAR(archive_cmds, $1)='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
  	_LT_TAGVAR(archive_expsym_cmds, $1)='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
  	;;
@@ -583,7 +497,7 @@ diff -u -r1.134 libtool.m4
        irix5* | irix6*)
          case $cc_basename in
            CC*)
-@@ -6422,6 +6638,17 @@
+@@ -6489,6 +6705,17 @@
    _LT_TAGVAR(postdeps,$1)=
    ;;
  
@@ -601,14 +515,10 @@ diff -u -r1.134 libtool.m4
  linux*)
    case `$CC -V 2>&1 | sed 5q` in
    *Sun\ C*)
-Index: libltdl/m4/ltdl.m4
-===================================================================
-RCS file: /sources/libtool/libtool/libltdl/m4/ltdl.m4,v
-retrieving revision 1.43
-diff -u -r1.43 ltdl.m4
---- libltdl/m4/ltdl.m4	31 Jan 2008 16:17:06 -0000	1.43
-+++ libltdl/m4/ltdl.m4	13 Feb 2008 09:39:27 -0000
-@@ -537,6 +537,9 @@
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/libltdl/m4/ltdl.m4 libtool-2.2.6/libltdl/m4/ltdl.m4
+--- libtool-2.2.6.orig/libltdl/m4/ltdl.m4	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/libltdl/m4/ltdl.m4	2009-04-01 15:41:40 +0200
+@@ -524,6 +524,9 @@
    sysv5* | sco3.2v5* | sco5v6* | unixware* | OpenUNIX* | sysv4*uw2*)
      libltdl_cv_sys_dlopen_deplibs=yes
      ;;
@@ -618,13 +528,9 @@ diff -u -r1.43 ltdl.m4
    esac
    ])
  if test "$lt_cv_sys_dlopen_deplibs" != yes; then
-Index: tests/configure-iface.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/configure-iface.at,v
-retrieving revision 1.6
-diff -u -r1.6 configure-iface.at
---- tests/configure-iface.at	17 Jan 2008 05:32:42 -0000	1.6
-+++ tests/configure-iface.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/configure-iface.at libtool-2.2.6/tests/configure-iface.at
+--- libtool-2.2.6.orig/tests/configure-iface.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/configure-iface.at	2009-04-01 15:41:40 +0200
 @@ -31,6 +31,11 @@
  [[#include <ltdl.h>
  #include <stdio.h>
@@ -652,13 +558,9 @@ diff -u -r1.6 configure-iface.at
    if (lt_dlinit () != 0)
      {
        fprintf (stderr, "error during initialization: %s\n", lt_dlerror ());
-Index: tests/ctor.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/ctor.at,v
-retrieving revision 1.2
-diff -u -r1.2 ctor.at
---- tests/ctor.at	12 Jan 2008 14:07:02 -0000	1.2
-+++ tests/ctor.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/ctor.at libtool-2.2.6/tests/ctor.at
+--- libtool-2.2.6.orig/tests/ctor.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/ctor.at	2009-04-01 15:41:40 +0200
 @@ -30,13 +30,24 @@
  
  AT_DATA(class.h,
@@ -685,13 +587,201 @@ diff -u -r1.2 ctor.at
  ]])
  
  AT_DATA(libctor.cpp,
-Index: tests/destdir.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/destdir.at,v
-retrieving revision 1.6
-diff -u -r1.6 destdir.at
---- tests/destdir.at	19 Jun 2007 05:43:16 -0000	1.6
-+++ tests/destdir.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/demo/foo.c libtool-2.2.6/tests/demo/foo.c
+--- libtool-2.2.6.orig/tests/demo/foo.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/demo/foo.c	2009-04-01 15:41:40 +0200
+@@ -22,6 +22,11 @@
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+ 
++/* On Windows (with parity) we need to manually import data, but only
++ * if not compiling the data itsself, so tell the header that here
++ * we don't import the variable, but define it */
++#define FOO_EXPORTS
++
+ #include "foo.h"
+ 
+ #include <stdio.h>
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/demo/foo.h libtool-2.2.6/tests/demo/foo.h
+--- libtool-2.2.6.orig/tests/demo/foo.h	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/demo/foo.h	2009-04-01 15:41:40 +0200
+@@ -62,6 +62,15 @@
+ # define lt_ptr_t     char*
+ #endif
+ 
++/* On Windows (with parity) we need to manually import data symbols.
++ * This can be done even when building static libraries, since parity
++ * handles those invalid imports correctly */
++#if defined(__PARITY__) && !defined(FOO_EXPORTS)
++# define FOO_IMPORT __declspec(dllimport)
++#else
++# define FOO_IMPORT
++#endif
++
+ /* Silly constants that the functions return. */
+ #define HELLO_RET 0xe110
+ #define FOO_RET 0xf00
+@@ -71,7 +80,7 @@
+ __BEGIN_DECLS
+ int foo LT_PARAMS((void));
+ int hello LT_PARAMS((void));
+-extern int nothing;
++extern FOO_IMPORT int nothing;
+ __END_DECLS
+ 
+ #endif /* !_FOO_H_ */
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l1/l1.c libtool-2.2.6/tests/depdemo/l1/l1.c
+--- libtool-2.2.6.orig/tests/depdemo/l1/l1.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l1/l1.c	2009-04-01 15:41:40 +0200
+@@ -23,6 +23,12 @@
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+ 
++
++/* On Windows (with parity) we need to manually import data, but only
++ * if not compiling the data itsself, so tell the header that here
++ * we don't import the variable, but define it */
++#define L1_EXPORTS
++
+ #include "l1/l1.h"
+ #include <stdio.h>
+ 
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l1/l1.h libtool-2.2.6/tests/depdemo/l1/l1.h
+--- libtool-2.2.6.orig/tests/depdemo/l1/l1.h	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l1/l1.h	2009-04-01 15:41:40 +0200
+@@ -29,8 +29,17 @@
+ 
+ #include "sysdep.h"
+ 
++/* On Windows (with parity) we need to manually import data symbols.
++ * This can be done even when building static libraries, since parity
++ * handles those invalid imports correctly */
++#if defined(__PARITY__) && !defined(L1_EXPORTS)
++# define L1_IMPORT __declspec(dllimport)
++#else
++# define L1_IMPORT
++#endif
++
+ __BEGIN_DECLS
+-extern int var_l1;
++extern L1_IMPORT int var_l1;
+ int	func_l1 __P((int));
+ __END_DECLS
+ 
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l2/l2.c libtool-2.2.6/tests/depdemo/l2/l2.c
+--- libtool-2.2.6.orig/tests/depdemo/l2/l2.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l2/l2.c	2009-04-01 15:41:40 +0200
+@@ -23,6 +23,11 @@
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+ 
++/* On Windows (with parity) we need to manually import data, but only
++ * if not compiling the data itsself, so tell the header that here
++ * we don't import the variable, but define it */
++#define L2_EXPORTS
++
+ #include "l2/l2.h"
+ 
+ #include "l1/l1.h"
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l2/l2.h libtool-2.2.6/tests/depdemo/l2/l2.h
+--- libtool-2.2.6.orig/tests/depdemo/l2/l2.h	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l2/l2.h	2009-04-01 15:41:40 +0200
+@@ -29,8 +29,17 @@
+ 
+ #include "sysdep.h"
+ 
++/* On Windows (with parity) we need to manually import data symbols.
++ * This can be done even when building static libraries, since parity
++ * handles those invalid imports correctly */
++#if defined(__PARITY__) && !defined(L2_EXPORTS)
++# define L2_IMPORT __declspec(dllimport)
++#else
++# define L2_IMPORT
++#endif
++
+ __BEGIN_DECLS
+-extern int var_l2;
++extern L2_IMPORT int var_l2;
+ int	func_l2 __P((int));
+ __END_DECLS
+ 
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l3/l3.c libtool-2.2.6/tests/depdemo/l3/l3.c
+--- libtool-2.2.6.orig/tests/depdemo/l3/l3.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l3/l3.c	2009-04-01 15:41:40 +0200
+@@ -23,6 +23,11 @@
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+ 
++/* On Windows (with parity) we need to manually import data, but only
++ * if not compiling the data itsself, so tell the header that here
++ * we don't import the variable, but define it */
++#define L3_EXPORTS
++
+ #include "l3/l3.h"
+ 
+ #include "l1/l1.h"
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l3/l3.h libtool-2.2.6/tests/depdemo/l3/l3.h
+--- libtool-2.2.6.orig/tests/depdemo/l3/l3.h	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l3/l3.h	2009-04-01 15:41:40 +0200
+@@ -29,8 +29,17 @@
+ 
+ #include "sysdep.h"
+ 
++/* On Windows (with parity) we need to manually import data symbols.
++ * This can be done even when building static libraries, since parity
++ * handles those invalid imports correctly */
++#if defined(__PARITY__) && !defined(L3_EXPORTS)
++# define L3_IMPORT __declspec(dllimport)
++#else
++# define L3_IMPORT
++#endif
++
+ __BEGIN_DECLS
+-extern int var_l3;
++extern L3_IMPORT int var_l3;
+ int	func_l3 __P((int));
+ __END_DECLS
+ 
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l4/l4.c libtool-2.2.6/tests/depdemo/l4/l4.c
+--- libtool-2.2.6.orig/tests/depdemo/l4/l4.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l4/l4.c	2009-04-01 15:41:40 +0200
+@@ -23,6 +23,11 @@
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+ 
++/* On Windows (with parity) we need to manually import data, but only
++ * if not compiling the data itsself, so tell the header that here
++ * we don't import the variable, but define it */
++#define L4_EXPORTS
++
+ #include "l4/l4.h"
+ 
+ #include "l3/l3.h"
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/depdemo/l4/l4.h libtool-2.2.6/tests/depdemo/l4/l4.h
+--- libtool-2.2.6.orig/tests/depdemo/l4/l4.h	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/depdemo/l4/l4.h	2009-04-01 15:41:40 +0200
+@@ -29,8 +29,17 @@
+ 
+ #include "sysdep.h"
+ 
++/* On Windows (with parity) we need to manually import data symbols.
++ * This can be done even when building static libraries, since parity
++ * handles those invalid imports correctly */
++#if defined(__PARITY__) && !defined(L4_EXPORTS)
++# define L4_IMPORT __declspec(dllimport)
++#else
++# define L4_IMPORT
++#endif
++
+ __BEGIN_DECLS
+-extern int var_l4;
++extern L4_IMPORT int var_l4;
+ int	func_l4 __P((int));
+ __END_DECLS
+ 
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/destdir.at libtool-2.2.6/tests/destdir.at
+--- libtool-2.2.6.orig/tests/destdir.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/destdir.at	2009-04-01 15:41:40 +0200
 @@ -56,7 +56,7 @@
  $LIBTOOL --mode=link $CC $CFLAGS $LDFLAGS -o liba.la a.lo -rpath $libdir
  echo 'extern int a(); int main() { return a(); }' > m.c
@@ -710,13 +800,9 @@ diff -u -r1.6 destdir.at
  mkdir $DESTDIR$libdir $DESTDIR${libdir}2 $DESTDIR$bindir
  AT_CHECK([$LIBTOOL --mode=install cp liba1dep.la $DESTDIR$libdir/liba1dep.la],
  	 [], [ignore], [ignore])
-Index: tests/duplicate_conv.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/duplicate_conv.at,v
-retrieving revision 1.2
-diff -u -r1.2 duplicate_conv.at
---- tests/duplicate_conv.at	25 Mar 2007 12:12:43 -0000	1.2
-+++ tests/duplicate_conv.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/duplicate_conv.at libtool-2.2.6/tests/duplicate_conv.at
+--- libtool-2.2.6.orig/tests/duplicate_conv.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/duplicate_conv.at	2009-04-01 15:41:40 +0200
 @@ -75,12 +75,17 @@
  LT_AT_EXEC_CHECK([./main],[0],[ignore],[ignore])
  $LIBTOOL --mode=clean rm -f libcee.la
@@ -741,13 +827,9 @@ diff -u -r1.2 duplicate_conv.at
  
  # TODO: test dlpreloading of duplicates (when it is implemented)
  
-Index: tests/export.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/export.at,v
-retrieving revision 1.4
-diff -u -r1.4 export.at
---- tests/export.at	25 Mar 2007 12:12:43 -0000	1.4
-+++ tests/export.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/export.at libtool-2.2.6/tests/export.at
+--- libtool-2.2.6.orig/tests/export.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/export.at	2009-04-01 15:41:40 +0200
 @@ -45,7 +45,19 @@
  extern "C" {
  #endif
@@ -817,13 +899,9 @@ diff -u -r1.4 export.at
  
  int main (void)
  {
-Index: tests/link-order.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/link-order.at,v
-retrieving revision 1.14
-diff -u -r1.14 link-order.at
---- tests/link-order.at	25 Mar 2007 12:12:43 -0000	1.14
-+++ tests/link-order.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/link-order.at libtool-2.2.6/tests/link-order.at
+--- libtool-2.2.6.orig/tests/link-order.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/link-order.at	2009-04-01 15:41:40 +0200
 @@ -48,13 +48,33 @@
    mkdir src
  
@@ -860,13 +938,9 @@ diff -u -r1.14 link-order.at
  int b_$i() { return 1 + c; }
  EOF
  
-Index: tests/link-order2.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/link-order2.at,v
-retrieving revision 1.6
-diff -u -r1.6 link-order2.at
---- tests/link-order2.at	25 Mar 2007 12:12:43 -0000	1.6
-+++ tests/link-order2.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/link-order2.at libtool-2.2.6/tests/link-order2.at
+--- libtool-2.2.6.orig/tests/link-order2.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/link-order2.at	2009-04-01 15:41:40 +0200
 @@ -97,6 +97,15 @@
  $LIBTOOL --mode=install cp liba0.la $deflibdir/liba0.la
  $LIBTOOL --mode=clean rm -f liba0.la
@@ -883,13 +957,9 @@ diff -u -r1.6 link-order2.at
  for type_of_depdepl in libtool non-libtool; do
    echo "type of depdepl: $type_of_depdepl"
    if test $type_of_depdepl = non-libtool; then
-Index: tests/lt_dladvise.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/lt_dladvise.at,v
-retrieving revision 1.4
-diff -u -r1.4 lt_dladvise.at
---- tests/lt_dladvise.at	12 Jan 2008 14:07:02 -0000	1.4
-+++ tests/lt_dladvise.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/lt_dladvise.at libtool-2.2.6/tests/lt_dladvise.at
+--- libtool-2.2.6.orig/tests/lt_dladvise.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/lt_dladvise.at	2009-04-01 15:45:27 +0200
 @@ -31,6 +31,10 @@
  AT_DATA([main.c],
  [[#include <ltdl.h>
@@ -901,7 +971,7 @@ diff -u -r1.4 lt_dladvise.at
  
  typedef int funcp (int);
  
-@@ -192,6 +196,13 @@
+@@ -212,6 +216,13 @@
  int
  main (void)
  {
@@ -915,7 +985,7 @@ diff -u -r1.4 lt_dladvise.at
  
    LTDL_SET_PRELOADED_SYMBOLS();
  
-@@ -249,7 +260,19 @@
+@@ -270,7 +281,19 @@
  [[#ifdef __cplusplus
  extern "C" {
  #endif
@@ -936,27 +1006,24 @@ diff -u -r1.4 lt_dladvise.at
  int g (int x) { return f (i) + x - 3; }
  int j = 4;
  #ifdef __cplusplus
-@@ -281,6 +304,12 @@
- case $host_os in
- cygwin*)
+@@ -323,6 +346,13 @@
    # These hosts do not support linking without -no-undefined
-+	;;
-+winnt*)
-+	# This host has implicit -no-undefine behaviour. it would in
-+	# theory be possible to implement linking with undefined symbols
-+	# (but only at shared library boundaries!), but at the moment
-+	# i don't see any advantage in doing so.
+   CPPFLAGS="$CPPFLAGS -DHAVE_UNDEFINED_SYMBOLS=0"
    ;;
++winnt*)
++  # This host has implicit -no-undefine behaviour. it would in
++  # theory be possible to implement linking with undefined symbols
++  # (but only at shared library boundaries!), but at the moment
++  # i don't see any advantage in doing so.
++  CPPFLAGS="$CPPFLAGS -DHAVE_UNDEFINED_SYMBOLS=0"
++  ;;
  *)
+   CPPFLAGS="$CPPFLAGS -DHAVE_UNDEFINED_SYMBOLS=1"
    dlopenable="$dlopen depend"
-Index: tests/lt_dlexit.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/lt_dlexit.at,v
-retrieving revision 1.9
-diff -u -r1.9 lt_dlexit.at
---- tests/lt_dlexit.at	12 Jan 2008 14:07:02 -0000	1.9
-+++ tests/lt_dlexit.at	13 Feb 2008 09:39:27 -0000
-@@ -108,7 +108,19 @@
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/lt_dlexit.at libtool-2.2.6/tests/lt_dlexit.at
+--- libtool-2.2.6.orig/tests/lt_dlexit.at	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/lt_dlexit.at	2009-04-01 15:41:40 +0200
+@@ -117,7 +117,19 @@
  [[#ifdef __cplusplus
  extern "C" {
  #endif
@@ -977,13 +1044,41 @@ diff -u -r1.9 lt_dlexit.at
  int fb1 (int x) { return f1 (v1) + x - 3; }
  int vb1 = 3;
  #ifdef __cplusplus
-Index: tests/need_lib_prefix.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/need_lib_prefix.at,v
-retrieving revision 1.2
-diff -u -r1.2 need_lib_prefix.at
---- tests/need_lib_prefix.at	12 Jan 2008 11:25:03 -0000	1.2
-+++ tests/need_lib_prefix.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/mdemo/foo1.c libtool-2.2.6/tests/mdemo/foo1.c
+--- libtool-2.2.6.orig/tests/mdemo/foo1.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/mdemo/foo1.c	2009-04-01 15:41:40 +0200
+@@ -31,7 +31,11 @@
+ #define hello	foo1_LTX_hello
+ 
+ /* Give a global variable definition. */
+-int nothing;
++
++/* When working on Windows (with or without parity) the variable needs
++ * to be initialized here (or used elsewhere in the file) to be
++ * defined in the object, otherwise its "UNDEF" */
++int nothing = 0;
+ 
+ /* private function */
+ int
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/mdemo/foo2.c libtool-2.2.6/tests/mdemo/foo2.c
+--- libtool-2.2.6.orig/tests/mdemo/foo2.c	2009-04-01 15:37:20 +0200
++++ libtool-2.2.6/tests/mdemo/foo2.c	2009-04-01 15:41:40 +0200
+@@ -31,7 +31,11 @@
+ #define hello	libfoo2_LTX_hello
+ 
+ /* Give a global variable definition. */
+-int nothing;
++
++/* When working on Windows (with or without parity) the variable needs
++ * to be initialized here (or used elsewhere in the file) to be
++ * defined in the object, otherwise its "UNDEF" */
++int nothing = 0;
+ 
+ /* private function */
+ int
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/need_lib_prefix.at libtool-2.2.6/tests/need_lib_prefix.at
+--- libtool-2.2.6.orig/tests/need_lib_prefix.at	2009-04-01 15:37:21 +0200
++++ libtool-2.2.6/tests/need_lib_prefix.at	2009-04-01 15:41:40 +0200
 @@ -29,6 +29,11 @@
  [[#include <ltdl.h>
  #include <stdio.h>
@@ -1011,13 +1106,54 @@ diff -u -r1.2 need_lib_prefix.at
    if (lt_dlinit() != 0)
      {
        fprintf (stderr, "error during initialization: %s\n", lt_dlerror());
-Index: tests/stresstest.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/stresstest.at,v
-retrieving revision 1.16
-diff -u -r1.16 stresstest.at
---- tests/stresstest.at	3 Apr 2007 19:09:39 -0000	1.16
-+++ tests/stresstest.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/pdemo/foo.h libtool-2.2.6/tests/pdemo/foo.h
+--- libtool-2.2.6.orig/tests/pdemo/foo.h	2009-04-01 15:37:21 +0200
++++ libtool-2.2.6/tests/pdemo/foo.h	2009-04-01 15:41:40 +0200
+@@ -79,6 +79,17 @@
+ #  define EXTERN extern
+ #endif
+ 
++/* On Windows (with parity) we need to manually import data symbols.
++ * This can be done even when building static libraries, since parity
++ * handles those invalid imports correctly */
++#if defined(__PARITY__) && !defined(FOO_EXPORTS)
++# define FOO_IMPORT __declspec(dllimport)
++#else
++# define FOO_IMPORT
++#endif
++
++/* Silly constants that the functions return. */
++
+ /* Silly constants that the functions return. */
+ #define HELLO_RET 0xe110
+ #define FOO_RET 0xf00
+@@ -89,7 +100,7 @@
+ int foo LT_PARAMS((void));
+ int foo2 LT_PARAMS((void));
+ int hello LT_PARAMS((void));
+-EXTERN int nothing;
++EXTERN FOO_IMPORT int nothing;
+ __END_DECLS
+ 
+ #endif /* !_FOO_H_ */
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/pdemo/longer_file_name_foo.c libtool-2.2.6/tests/pdemo/longer_file_name_foo.c
+--- libtool-2.2.6.orig/tests/pdemo/longer_file_name_foo.c	2009-04-01 15:37:21 +0200
++++ libtool-2.2.6/tests/pdemo/longer_file_name_foo.c	2009-04-01 15:41:40 +0200
+@@ -22,6 +22,11 @@
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+ 
++/* On Windows (with parity) we need to manually import data, but only
++ * if not compiling the data itsself, so tell the header that here
++ * we don't import the variable, but define it */
++#define FOO_EXPORTS
++
+ #define _LIBFOO_COMPILATION_
+ #include "foo.h"
+ #undef _LIBFOO_COMPILATION_
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/stresstest.at libtool-2.2.6/tests/stresstest.at
+--- libtool-2.2.6.orig/tests/stresstest.at	2009-04-01 15:37:21 +0200
++++ libtool-2.2.6/tests/stresstest.at	2009-04-01 15:41:40 +0200
 @@ -39,7 +39,20 @@
  #ifdef __cplusplus
  extern "C" {
@@ -1116,13 +1252,9 @@ diff -u -r1.16 stresstest.at
  	  esac
  
  	  LT_AT_CHECK([$LIBTOOL --mode=link $CC $CFLAGS $LDFLAGS $st -o "$rel"main "$rel"main$mst.lo "$rel"sub2/liba.la],
-Index: tests/template.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/template.at,v
-retrieving revision 1.13
-diff -u -r1.13 template.at
---- tests/template.at	11 Jan 2008 07:08:28 -0000	1.13
-+++ tests/template.at	13 Feb 2008 09:39:27 -0000
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/template.at libtool-2.2.6/tests/template.at
+--- libtool-2.2.6.orig/tests/template.at	2009-04-01 15:37:21 +0200
++++ libtool-2.2.6/tests/template.at	2009-04-01 15:41:40 +0200
 @@ -236,14 +236,14 @@
  # both convenience
  AT_CHECK([$LIBTOOL --tag=CXX --mode=link $CXX $CXXFLAGS $LDFLAGS -o lib/liba.la lib/a.lo],
@@ -1149,357 +1281,28 @@ diff -u -r1.13 template.at
  	 [0], [ignore], [ignore])
  AT_CHECK([$LIBTOOL --tag=CXX --mode=link $CXX $CXXFLAGS $LDFLAGS -o sub/main $main_o lib2/libb.la lib/liba.la],
  	 [0], [ignore], [ignore])
-Index: tests/testsuite.at
-===================================================================
-RCS file: /sources/libtool/libtool/tests/testsuite.at,v
-retrieving revision 1.51
-diff -u -r1.51 testsuite.at
---- tests/testsuite.at	1 Feb 2008 19:06:42 -0000	1.51
-+++ tests/testsuite.at	13 Feb 2008 09:39:27 -0000
-@@ -164,7 +164,9 @@
- # LT_AT_EXEC_CHECK(EXECUTABLE, [STATUS = 0], [STDOUT], [STDERR])
- # --------------------------------------------------------------
+diff -ru -x configure -x Makefile -x Makefile.in -x aclocal.m4 -x 'config.*' -x ltmain.sh -x testsuite -x '*.tex' libtool-2.2.6.orig/tests/testsuite.at libtool-2.2.6/tests/testsuite.at
+--- libtool-2.2.6.orig/tests/testsuite.at	2009-04-01 15:37:21 +0200
++++ libtool-2.2.6/tests/testsuite.at	2009-04-01 16:17:31 +0200
+@@ -205,7 +205,9 @@
  m4_define([LT_AT_EXEC_CHECK],
--[AT_CHECK([$1; lt_status=$?; if test $lt_status -eq 0; then :;
-+[AT_CHECK([set dummy "$1"; set $][@; shift; lt_exe=$][1; shift;
+ [m4_if([$3], [expout], [_LT_AT_TRANSLATE_TEXT_OUTPUT([$3])])
+ m4_if([$4], [experr], [_LT_AT_TRANSLATE_TEXT_OUTPUT([$4])])
+-AT_CHECK([$1; lt_status=$?; if test $lt_status -eq 0; then :;
++AT_CHECK([set dummy "$1"; set $][@; shift; lt_exe=$][1; shift;
 +       if test -x $lt_exe$EXEEXT; then lt_exe=$lt_exe$EXEEXT; fi
 +       eval $lt_exe "$][@"; lt_status=$?; if test $lt_status -eq 0; then :;
  	   elif test "X$host" != "X$build" && \
  	        { test -x "$1" || test -x "$1"$EXEEXT; }
  	   then (exit 77); else (exit $lt_status); fi],[$2],[$3],[$4])
-@@ -175,7 +177,9 @@
- # 			  [STATUS = 0], [STDOUT], [STDERR])
- # ---------------------------------------------------------
+@@ -218,7 +220,9 @@
  m4_define([LT_AT_NOINST_EXEC_CHECK],
--[AT_CHECK([$LIBTOOL --mode=execute $2 $1; lt_status=$?;
-+[AT_CHECK([set dummy "$1"; set $][@; shift; lt_exe=$][1; shift; 
+ [m4_if([$4], [expout], [_LT_AT_TRANSLATE_TEXT_OUTPUT([$4])])
+ m4_if([$5], [experr], [_LT_AT_TRANSLATE_TEXT_OUTPUT([$5])])
+-AT_CHECK([$LIBTOOL --mode=execute $2 $1; lt_status=$?;
++AT_CHECK([set dummy "$1"; set $][@; shift; lt_exe=$][1; shift; 
 +       if test -x $lt_exe$EXEEXT; then lt_exe=$lt_exe$EXEEXT; fi
 +       eval $LIBTOOL --mode=execute $2 $lt_exe "$][@"; lt_status=$?;
  	   if test $lt_status -eq 0; then :;
  	   elif test "X$host" != "X$build" && \
  	        { test -x "$1" || test -x "$1"$EXEEXT; }
-Index: tests/demo/foo.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/demo/foo.c,v
-retrieving revision 1.4
-diff -u -r1.4 foo.c
---- tests/demo/foo.c	25 Mar 2007 12:12:43 -0000	1.4
-+++ tests/demo/foo.c	13 Feb 2008 09:39:27 -0000
-@@ -22,6 +22,11 @@
- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
- 
-+/* On Windows (with parity) we need to manually import data, but only
-+ * if not compiling the data itsself, so tell the header that here
-+ * we don't import the variable, but define it */
-+#define FOO_EXPORTS
-+
- #include "foo.h"
- 
- #include <stdio.h>
-Index: tests/demo/foo.h
-===================================================================
-RCS file: /sources/libtool/libtool/tests/demo/foo.h,v
-retrieving revision 1.3
-diff -u -r1.3 foo.h
---- tests/demo/foo.h	25 Mar 2007 12:12:43 -0000	1.3
-+++ tests/demo/foo.h	13 Feb 2008 09:39:27 -0000
-@@ -62,6 +62,15 @@
- # define lt_ptr_t     char*
- #endif
- 
-+/* On Windows (with parity) we need to manually import data symbols.
-+ * This can be done even when building static libraries, since parity
-+ * handles those invalid imports correctly */
-+#if defined(__PARITY__) && !defined(FOO_EXPORTS)
-+# define FOO_IMPORT __declspec(dllimport)
-+#else
-+# define FOO_IMPORT
-+#endif
-+
- /* Silly constants that the functions return. */
- #define HELLO_RET 0xe110
- #define FOO_RET 0xf00
-@@ -71,7 +80,7 @@
- __BEGIN_DECLS
- int foo LT_PARAMS((void));
- int hello LT_PARAMS((void));
--extern int nothing;
-+extern FOO_IMPORT int nothing;
- __END_DECLS
- 
- #endif /* !_FOO_H_ */
-Index: tests/depdemo/l1/l1.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l1/l1.c,v
-retrieving revision 1.4
-diff -u -r1.4 l1.c
---- tests/depdemo/l1/l1.c	25 Mar 2007 12:12:43 -0000	1.4
-+++ tests/depdemo/l1/l1.c	13 Feb 2008 09:39:27 -0000
-@@ -23,6 +23,12 @@
- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
- 
-+
-+/* On Windows (with parity) we need to manually import data, but only
-+ * if not compiling the data itsself, so tell the header that here
-+ * we don't import the variable, but define it */
-+#define L1_EXPORTS
-+
- #include "l1/l1.h"
- #include <stdio.h>
- 
-Index: tests/depdemo/l1/l1.h
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l1/l1.h,v
-retrieving revision 1.3
-diff -u -r1.3 l1.h
---- tests/depdemo/l1/l1.h	25 Mar 2007 12:12:43 -0000	1.3
-+++ tests/depdemo/l1/l1.h	13 Feb 2008 09:39:27 -0000
-@@ -29,8 +29,17 @@
- 
- #include "sysdep.h"
- 
-+/* On Windows (with parity) we need to manually import data symbols.
-+ * This can be done even when building static libraries, since parity
-+ * handles those invalid imports correctly */
-+#if defined(__PARITY__) && !defined(L1_EXPORTS)
-+# define L1_IMPORT __declspec(dllimport)
-+#else
-+# define L1_IMPORT
-+#endif
-+
- __BEGIN_DECLS
--extern int var_l1;
-+extern L1_IMPORT int var_l1;
- int	func_l1 __P((int));
- __END_DECLS
- 
-Index: tests/depdemo/l2/l2.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l2/l2.c,v
-retrieving revision 1.4
-diff -u -r1.4 l2.c
---- tests/depdemo/l2/l2.c	25 Mar 2007 12:12:43 -0000	1.4
-+++ tests/depdemo/l2/l2.c	13 Feb 2008 09:39:27 -0000
-@@ -23,6 +23,11 @@
- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
- 
-+/* On Windows (with parity) we need to manually import data, but only
-+ * if not compiling the data itsself, so tell the header that here
-+ * we don't import the variable, but define it */
-+#define L2_EXPORTS
-+
- #include "l2/l2.h"
- 
- #include "l1/l1.h"
-Index: tests/depdemo/l2/l2.h
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l2/l2.h,v
-retrieving revision 1.3
-diff -u -r1.3 l2.h
---- tests/depdemo/l2/l2.h	25 Mar 2007 12:12:43 -0000	1.3
-+++ tests/depdemo/l2/l2.h	13 Feb 2008 09:39:27 -0000
-@@ -29,8 +29,17 @@
- 
- #include "sysdep.h"
- 
-+/* On Windows (with parity) we need to manually import data symbols.
-+ * This can be done even when building static libraries, since parity
-+ * handles those invalid imports correctly */
-+#if defined(__PARITY__) && !defined(L2_EXPORTS)
-+# define L2_IMPORT __declspec(dllimport)
-+#else
-+# define L2_IMPORT
-+#endif
-+
- __BEGIN_DECLS
--extern int var_l2;
-+extern L2_IMPORT int var_l2;
- int	func_l2 __P((int));
- __END_DECLS
- 
-Index: tests/depdemo/l3/l3.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l3/l3.c,v
-retrieving revision 1.4
-diff -u -r1.4 l3.c
---- tests/depdemo/l3/l3.c	25 Mar 2007 12:12:43 -0000	1.4
-+++ tests/depdemo/l3/l3.c	13 Feb 2008 09:39:27 -0000
-@@ -23,6 +23,11 @@
- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
- 
-+/* On Windows (with parity) we need to manually import data, but only
-+ * if not compiling the data itsself, so tell the header that here
-+ * we don't import the variable, but define it */
-+#define L3_EXPORTS
-+
- #include "l3/l3.h"
- 
- #include "l1/l1.h"
-Index: tests/depdemo/l3/l3.h
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l3/l3.h,v
-retrieving revision 1.3
-diff -u -r1.3 l3.h
---- tests/depdemo/l3/l3.h	25 Mar 2007 12:12:43 -0000	1.3
-+++ tests/depdemo/l3/l3.h	13 Feb 2008 09:39:27 -0000
-@@ -29,8 +29,17 @@
- 
- #include "sysdep.h"
- 
-+/* On Windows (with parity) we need to manually import data symbols.
-+ * This can be done even when building static libraries, since parity
-+ * handles those invalid imports correctly */
-+#if defined(__PARITY__) && !defined(L3_EXPORTS)
-+# define L3_IMPORT __declspec(dllimport)
-+#else
-+# define L3_IMPORT
-+#endif
-+
- __BEGIN_DECLS
--extern int var_l3;
-+extern L3_IMPORT int var_l3;
- int	func_l3 __P((int));
- __END_DECLS
- 
-Index: tests/depdemo/l4/l4.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l4/l4.c,v
-retrieving revision 1.5
-diff -u -r1.5 l4.c
---- tests/depdemo/l4/l4.c	25 Mar 2007 12:12:43 -0000	1.5
-+++ tests/depdemo/l4/l4.c	13 Feb 2008 09:39:27 -0000
-@@ -23,6 +23,11 @@
- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
- 
-+/* On Windows (with parity) we need to manually import data, but only
-+ * if not compiling the data itsself, so tell the header that here
-+ * we don't import the variable, but define it */
-+#define L4_EXPORTS
-+
- #include "l4/l4.h"
- 
- #include "l3/l3.h"
-Index: tests/depdemo/l4/l4.h
-===================================================================
-RCS file: /sources/libtool/libtool/tests/depdemo/l4/l4.h,v
-retrieving revision 1.3
-diff -u -r1.3 l4.h
---- tests/depdemo/l4/l4.h	25 Mar 2007 12:12:43 -0000	1.3
-+++ tests/depdemo/l4/l4.h	13 Feb 2008 09:39:27 -0000
-@@ -29,8 +29,17 @@
- 
- #include "sysdep.h"
- 
-+/* On Windows (with parity) we need to manually import data symbols.
-+ * This can be done even when building static libraries, since parity
-+ * handles those invalid imports correctly */
-+#if defined(__PARITY__) && !defined(L4_EXPORTS)
-+# define L4_IMPORT __declspec(dllimport)
-+#else
-+# define L4_IMPORT
-+#endif
-+
- __BEGIN_DECLS
--extern int var_l4;
-+extern L4_IMPORT int var_l4;
- int	func_l4 __P((int));
- __END_DECLS
- 
-Index: tests/mdemo/foo1.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/mdemo/foo1.c,v
-retrieving revision 1.5
-diff -u -r1.5 foo1.c
---- tests/mdemo/foo1.c	25 Mar 2007 12:12:44 -0000	1.5
-+++ tests/mdemo/foo1.c	13 Feb 2008 09:39:27 -0000
-@@ -31,7 +31,11 @@
- #define hello	foo1_LTX_hello
- 
- /* Give a global variable definition. */
--int nothing;
-+
-+/* When working on Windows (with or without parity) the variable needs
-+ * to be initialized here (or used elsewhere in the file) to be
-+ * defined in the object, otherwise its "UNDEF" */
-+int nothing = 0;
- 
- /* private function */
- int
-Index: tests/mdemo/foo2.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/mdemo/foo2.c,v
-retrieving revision 1.5
-diff -u -r1.5 foo2.c
---- tests/mdemo/foo2.c	25 Mar 2007 12:12:44 -0000	1.5
-+++ tests/mdemo/foo2.c	13 Feb 2008 09:39:27 -0000
-@@ -31,7 +31,11 @@
- #define hello	libfoo2_LTX_hello
- 
- /* Give a global variable definition. */
--int nothing;
-+
-+/* When working on Windows (with or without parity) the variable needs
-+ * to be initialized here (or used elsewhere in the file) to be
-+ * defined in the object, otherwise its "UNDEF" */
-+int nothing = 0;
- 
- /* private function */
- int
-Index: tests/pdemo/foo.h
-===================================================================
-RCS file: /sources/libtool/libtool/tests/pdemo/foo.h,v
-retrieving revision 1.4
-diff -u -r1.4 foo.h
---- tests/pdemo/foo.h	25 Mar 2007 12:12:44 -0000	1.4
-+++ tests/pdemo/foo.h	13 Feb 2008 09:39:27 -0000
-@@ -79,6 +79,17 @@
- #  define EXTERN extern
- #endif
- 
-+/* On Windows (with parity) we need to manually import data symbols.
-+ * This can be done even when building static libraries, since parity
-+ * handles those invalid imports correctly */
-+#if defined(__PARITY__) && !defined(FOO_EXPORTS)
-+# define FOO_IMPORT __declspec(dllimport)
-+#else
-+# define FOO_IMPORT
-+#endif
-+
-+/* Silly constants that the functions return. */
-+
- /* Silly constants that the functions return. */
- #define HELLO_RET 0xe110
- #define FOO_RET 0xf00
-@@ -89,7 +100,7 @@
- int foo LT_PARAMS((void));
- int foo2 LT_PARAMS((void));
- int hello LT_PARAMS((void));
--EXTERN int nothing;
-+EXTERN FOO_IMPORT int nothing;
- __END_DECLS
- 
- #endif /* !_FOO_H_ */
-Index: tests/pdemo/longer_file_name_foo.c
-===================================================================
-RCS file: /sources/libtool/libtool/tests/pdemo/longer_file_name_foo.c,v
-retrieving revision 1.4
-diff -u -r1.4 longer_file_name_foo.c
---- tests/pdemo/longer_file_name_foo.c	25 Mar 2007 12:12:44 -0000	1.4
-+++ tests/pdemo/longer_file_name_foo.c	13 Feb 2008 09:39:27 -0000
-@@ -22,6 +22,11 @@
- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
- 
-+/* On Windows (with parity) we need to manually import data, but only
-+ * if not compiling the data itsself, so tell the header that here
-+ * we don't import the variable, but define it */
-+#define FOO_EXPORTS
-+
- #define _LIBFOO_COMPILATION_
- #include "foo.h"
- #undef _LIBFOO_COMPILATION_
