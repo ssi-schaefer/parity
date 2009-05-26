@@ -346,13 +346,30 @@ namespace parity
 			if(ctx.getUseCommandScripts())
 				task.createCommandScript(vec);
 
+
+			out.toNative();
+
 			//
 			// execute linker.
 			//
-			if(!task.execute(ctx.getLinkerExe(), vec))
-				throw utils::Exception("cannot execute: %s", ctx.getLinkerExe().get().c_str());
+			if(!task.execute(ctx.getLinkerExe(), vec)) {
+				utils::Log::verbose("cleaning up after failed link!");
+				out.remove();
 
-			out.toNative();
+				utils::Path exp = out.get().substr(0, outFile.rfind('.')) + ".exp";
+				exp.remove();
+				
+				utils::Path mf;
+				if(ctx.getSharedLink())
+					mf = out.get() + ".dll.mf";
+				else
+					mf = out.get() + ".mf";
+
+				mf.remove();
+
+				throw utils::Exception("cannot execute: %s", ctx.getLinkerExe().get().c_str());
+			}
+
 			utils::Log::verbose("changing mode of %s.\n", out.get().c_str());
 
 			if(out.exists())
