@@ -356,7 +356,7 @@ namespace parity
 				utils::Log::verbose("cleaning up after failed link!");
 				out.remove();
 
-				utils::Path exp = out.get().substr(0, outFile.rfind('.')) + ".exp";
+				utils::Path exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
 				exp.remove();
 				
 				utils::Path mf;
