@@ -14,7 +14,7 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyConfigurationAttribute("")];
 [assembly:AssemblyCompanyAttribute("Salomon Automation GmbH.")];
 [assembly:AssemblyProductAttribute("parity.graphical.configurator")];
-[assembly:AssemblyCopyrightAttribute("Copyright (c) Salomon Automation GmbH. 2008")];
+[assembly:AssemblyCopyrightAttribute("Copyright (c) 2008 - 2009 Salomon Automation GmbH.")];
 [assembly:AssemblyTrademarkAttribute("")];
 [assembly:AssemblyCultureAttribute("")];
 

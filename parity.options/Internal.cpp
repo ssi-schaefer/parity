@@ -96,7 +96,7 @@ namespace parity
 #elif defined(__CYGWIN__)
 			std::cout << "cygwin g++ build" << std::endl;
 #endif
-			std::cout << "Copyright (c) 2007, 2008 Markus Duft <markus.duft@salomon.at>" << std::endl;
+			std::cout << "Copyright (c) 2007 - 2009 Markus Duft <markus.duft@salomon.at>" << std::endl;
 
 			std::cout << PACKAGE_NAME << " comes with ABSOLUTELY NO WARRANTY; This is free software, and you are" << std::endl;
 			std::cout << "welcome to redistribute it under certain conditions; see COPYING.LESSER for details." << std::endl;
