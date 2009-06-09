@@ -239,7 +239,7 @@ namespace parity
 			} else {
 				Path direct(name);
 				direct.toNative();
-				if(direct.exists())
+				if(direct.exists() && direct.isFile())
 					return direct;
 
 				names.push_back(name);
@@ -267,11 +267,7 @@ namespace parity
 
 						Path pth(*it);
 						pth.append(*lib);
-#if 0
-						if(pth.exists() && !isBadLinkerPath(pth))
-#else
-						if(pth.exists())
-#endif
+						if(pth.exists() && pth.isFile())
 							return pth;
 					}
 				}

@@ -260,3 +260,5 @@ parity 1.2.3
 changed the behaviour regarding configuration-set include and library paths; configuration set paths are appended in the order of appearance in the file to the set of command line set paths in their order of appearance on the command line.
 
 after failing to link, stray files are cleaned up properly now.
+
+fixed a bug making the linker find a directory instead of a file while looking up libraries.
