@@ -33,6 +33,7 @@
 \tracking_changes false
 \output_changes false
 \author "" 
+\author "" 
 \end_header
 
 \begin_body
@@ -303,6 +304,15 @@ Statistical Information
 Parity is capable of writing a file containing statistical information (for
  example information on how many symbols are being processed for which library,
  how many header dependencies a source file has, etc.).
+\end_layout
+
+\begin_layout Subsubsection
+Processing from stdin
+\end_layout
+
+\begin_layout Standard
+In contrast to the untouched VC++ compiler, parity is capable of reading
+ input files from stdin.
 \end_layout
 
 \begin_layout Section
