@@ -115,6 +115,7 @@ namespace parity
 			{ ".s"			,addSource					},
 			{ ".S"			,addSource					},
 			{ ".res"		,setUnhandledObjectFilePassthrough	},
+			{ "-"			,addSourceFromStdin			},
 			// --- must be last ---
 			{ 0				,0							}
 		};

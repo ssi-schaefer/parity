@@ -119,6 +119,37 @@ namespace parity
 
 			return true;
 		}
+		
+		bool addSourceFromStdin(const char* option, const char* argument, bool& used)
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			utils::Path pth = utils::Path::getTemporary(".parity.stdin.XXXXXX.c");
+			std::ofstream tmp_src(pth.get().c_str());
+
+			while(!std::cin.eof()) {
+				char buffer[4096]; // uh oh... will this suffice *always*?
+
+				std::cin.getline(buffer, sizeof(buffer));
+
+				if(std::cin.fail())
+					break;
+
+				tmp_src << buffer << std::endl;
+			}
+
+			tmp_src.close();
+
+			if(ctx.getForcedLanguage() != utils::LanguageInvalid)
+				ctx.getSources()[pth] = ctx.getForcedLanguage();
+			else
+				ctx.getSources()[pth] = utils::LanguageC;
+
+			ctx.getTemporaryFiles().push_back(pth);
+
+			utils::Statistics::instance().addInformation("file-source", pth.get());
+
+			return true;
+		}
 
 		bool setShortWchar(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{

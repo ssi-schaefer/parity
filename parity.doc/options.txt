@@ -109,6 +109,9 @@ parity.gnu.gcc options:
 					given after -l are ignored. if -static was given before this
 					option, this does not search for .so files. see
 					config:ObjectsLibraries
+	-				read the source file from stdin rather than from a file.
+					parity assumes C as the input languag if not otherwise specified
+					with a -x switch *before* the "-" option.
 	.lib, .obj,		directly add a library or object file to the list of files to
 	.o,	.a, .so		be processed while linking. this ignores the -static option,
 					but rather searches for the given file in all library paths

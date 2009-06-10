@@ -262,3 +262,5 @@ changed the behaviour regarding configuration-set include and library paths; con
 after failing to link, stray files are cleaned up properly now.
 
 fixed a bug making the linker find a directory instead of a file while looking up libraries.
+
+added support for reading source files from stdin. any valid source file can be passed via stdin by passing the "-" argument to parity. this only works if parity operates using the GCC type frontend.
