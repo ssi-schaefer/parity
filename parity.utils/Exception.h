@@ -36,18 +36,12 @@ namespace parity
 		class Exception {
 		public:
 			Exception(const char*, ...) FORMAT_CHECK(2, 3);
+			Exception(const Exception& rhs) : buffer_(rhs.buffer_) {}
 			~Exception();
 
 			const char* what() const { return buffer_; }
-#ifdef _WIN32
-		private:
-#endif
-			Exception(const Exception&) : buffer_(0) { throw "invalid"; }
 			Exception& operator=(const Exception&);
-#ifndef _WIN32
 		private:
-#endif
-
 			char * buffer_;
 
 			size_t getLength(const char*, va_list) const;
