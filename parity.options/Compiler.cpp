@@ -122,6 +122,9 @@ namespace parity
 		
 		bool addSourceFromStdin(const char* option, const char* argument, bool& used)
 		{
+			if(argument[0] != '-' || argument[1] != '\0')
+				return false;
+
 			utils::Context& ctx = utils::Context::getContext();
 			utils::Path pth = utils::Path::getTemporary(".parity.stdin.XXXXXX.c");
 			std::ofstream tmp_src(pth.get().c_str());
