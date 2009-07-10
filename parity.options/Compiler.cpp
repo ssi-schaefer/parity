@@ -122,7 +122,7 @@ namespace parity
 		
 		bool addSourceFromStdin(const char* option, const char* argument, bool& used)
 		{
-			if(argument[0] != '-' || argument[1] != '\0')
+			if(option[0] != '-' || option[1] != '\0')
 				return false;
 
 			utils::Context& ctx = utils::Context::getContext();
