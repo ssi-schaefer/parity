@@ -226,6 +226,48 @@ namespace parity
 			}
 
 			//
+			// SPECIAL case: If we're in raw output mode, we just output
+			// all the information gathered until here, and return, without
+			// looking up children.
+			//
+			if(gDumpRaw) {
+				#ifdef _WIN32
+					// rpath output format not compatible with windows paths.
+					std::cout << "--raw is not currently supported in native win32 builds of parity!" << std::endl;
+					return false;
+				#endif
+
+				// soname - ATM == filename
+				std::cout << pth.file() << ";";
+
+				// rpath
+				bool first = true;
+				for(utils::PathVector::iterator it = genRunPaths.begin(); it != genRunPaths.end(); ++it) {
+					it->toNative();
+					
+					if(!first) { std::cout << ":"; }
+					if(first) { first = false; }
+
+					std::cout << it->get();
+				}
+
+				std::cout << ";";
+
+				// needed
+				first = true;
+				for(InspectorLibraryVector::iterator it = genLibs.begin(); it != genLibs.end(); ++it) {
+					if(!first) { std::cout << ","; }
+					if(first) { first = false; }
+
+					std::cout << it->name;
+				}
+
+				std::cout << std::endl;
+
+				return true;
+			}
+
+			//
 			// recurse down a level, but prevent circles.
 			// (i use list instead of stack to be able to
 			// output kind of a stack trace, and be able to search)

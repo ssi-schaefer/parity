@@ -264,3 +264,5 @@ after failing to link, stray files are cleaned up properly now.
 fixed a bug making the linker find a directory instead of a file while looking up libraries.
 
 added support for reading source files from stdin. any valid source file can be passed via stdin by passing the "-" argument to parity. this only works if parity operates using the GCC type frontend.
+
+parity.inspector has been extended with the --raw option, which allows to output information about a shared library in a more machine readable fashion.

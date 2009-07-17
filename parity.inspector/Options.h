@@ -38,6 +38,7 @@ namespace parity
 		extern bool gShortFormat;
 		extern bool gShowLddLike;
 		extern bool gShowLddFlat;
+		extern bool gDumpRaw;
 
 	}
 }

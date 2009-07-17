@@ -37,8 +37,8 @@ namespace parity
 
 		static bool printHelp(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			std::cout << "parity.inspector [-h | --help] [--verbose] [-s | --symbols]" << std::endl;
-			std::cout << "    [--short] [--full] [--flat] binary [binary ...]" << std::endl;
+			std::cout << "parity.inspector [-h | --help] [--verbose] [[-s | --symbols]" << std::endl;
+			std::cout << "    [--short] [--full] [--flat] | [--raw]] binary [binary ...]" << std::endl;
 
 			std::cout << std::endl;
 			std::cout << "How to interpret the output:" << std::endl;
@@ -49,6 +49,9 @@ namespace parity
 			std::cout << "symbol is imported by ordinal number rather than by name." << std::endl << std::endl;
 			std::cout << "if a library name is marked with a \"*\", this means, that" << std::endl;
 			std::cout << "this library is imported using the standard windows mechanism." << std::endl;
+			std::cout << std::endl;
+			std::cout << "In raw mode, the requested information is output in the following" << std::endl;
+			std::cout << "format: [soname];[rpath1:rpathN];[needed1,neededN]" << std::endl;
 			exit(0);
 
 			//
@@ -99,6 +102,11 @@ namespace parity
 			return true;
 		}
 
+		static bool setRawMode(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			return (gDumpRaw = true);
+		}
+
 		static options::ArgumentTableEntry sInspectorOptionTable[] = {
 			{ "--verbose"		, setVerbose		},
 			{ "-h"				, printHelp			},
@@ -110,6 +118,7 @@ namespace parity
 			{ "--full"			, setLddLike		},
 			{ "--flat"			, setLddFlat		},
 			{ "--nocolor"		, setNoColor		},
+			{ "--raw"			, setRawMode		},
 			{ ""				, addFile			},
 			{ 0					, 0					}
 		};
@@ -120,6 +129,7 @@ namespace parity
 		bool gShortFormat = false;
 		bool gShowLddLike = true;
 		bool gShowLddFlat = false;
+		bool gDumpRaw	  = false;
 
 	}
 }
