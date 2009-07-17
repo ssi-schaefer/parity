@@ -238,7 +238,7 @@ namespace parity
 				#endif
 
 				// soname
-				std::cout << genImageName << ".dll;";
+				std::cout << pth.file() << ";";
 
 				// rpath
 				bool first = true;
