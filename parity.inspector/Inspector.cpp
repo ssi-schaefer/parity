@@ -237,8 +237,8 @@ namespace parity
 					return false;
 				#endif
 
-				// soname - ATM == filename
-				std::cout << pth.file() << ";";
+				// soname
+				std::cout << genImageName << ".dll;";
 
 				// rpath
 				bool first = true;
