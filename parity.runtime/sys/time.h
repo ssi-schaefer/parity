@@ -24,8 +24,13 @@
 #define __PCRT_SYS_TIME_H__
 
 #include "../netdb.h"
+#include "internal/pcrt.h"
+
+PCRT_BEGIN_C
 
 int gettimeofday(struct timeval *tv, void*);
+
+PCRT_END_C
 
 #endif
 

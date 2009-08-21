@@ -265,4 +265,6 @@ fixed a bug making the linker find a directory instead of a file while looking u
 
 added support for reading source files from stdin. any valid source file can be passed via stdin by passing the "-" argument to parity. this only works if parity operates using the GCC type frontend.
 
-parity.inspector has been extended with the --raw option, which allows to output information about a shared library in a more machine readable fashion.
+parity.inspector has been extended with the --raw option, which allows to output information about a shared library in a more machine readable fashion. initially required to more easely implement the preserve-libs feature of portage for native windows.
+
+added missing extern C in sys/time.h, fixing gettimeofday for C++ users.
