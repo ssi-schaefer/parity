@@ -137,7 +137,7 @@ void ParityLoaderPreloadSymbols()
 		LibraryItem* libs = ParityLoaderGeneratedTable.libraries;
 
 		if(!handle) {
-			LogWarning("cannot load preload library %s, skipping\n", gPreloadLibCache[i].name);
+			LogDebug("cannot load preload library %s, skipping\n", gPreloadLibCache[i].name);
 			continue;
 		}
 
