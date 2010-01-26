@@ -268,3 +268,5 @@ added support for reading source files from stdin. any valid source file can be 
 parity.inspector has been extended with the --raw option, which allows to output information about a shared library in a more machine readable fashion. initially required to more easely implement the preserve-libs feature of portage for native windows.
 
 added missing extern C in sys/time.h, fixing gettimeofday for C++ users.
+
+made the dynamic loader a little less loud, when it fails to preload a library. this is required, since windows executables fail to preload interix libraries, which use the same variable.
