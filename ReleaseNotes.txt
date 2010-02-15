@@ -270,3 +270,9 @@ parity.inspector has been extended with the --raw option, which allows to output
 added missing extern C in sys/time.h, fixing gettimeofday for C++ users.
 
 made the dynamic loader a little less loud, when it fails to preload a library. this is required, since windows executables fail to preload interix libraries, which use the same variable.
+
+
+parity 1.2.4
+------------
+
+fixed crash with empty archives, and nameless archive members.

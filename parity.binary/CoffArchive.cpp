@@ -66,8 +66,10 @@ namespace parity
 				//
 				std::string name;
 
-				if(hdr->Name[0] == '/')
-				{
+				if(hdr->Name[0] == '\0') {
+					// oups - member without a name? we'll just skip that...
+					utils::Log::verbose("Skipping unnamed member from archive '%s'\n", file_->getPath().get().c_str());
+				} else if(hdr->Name[0] == '/') {
 					if(hdr->Name[1] == ' ') {}
 					else if(hdr->Name[1] == '/') {
 						longnames = reinterpret_cast<const char*>((hdr+1));
