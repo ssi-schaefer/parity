@@ -287,9 +287,12 @@ AC_DEFUN([PARITY_CONFIGURE],
 	echo "	SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
 	echo "	SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
 
-	PcrtInclude="$prefix/include/parity.runtime"
-	PcrtLibrary="$prefix/lib/libparity_parity.runtime.a"
-	LoaderLibrary="$prefix/lib/libparity_parity.loader.a"
+	pfx="${prefix}"
+	test "x$prefix" = xNONE && pfx=$ac_default_prefix
+
+	PcrtInclude="$pfx/include/parity.runtime"
+	PcrtLibrary="$pfx/lib/libparity_parity.runtime.a"
+	LoaderLibrary="$pfx/lib/libparity_parity.loader.a"
 
 	#
 	# Lookup required paths.
