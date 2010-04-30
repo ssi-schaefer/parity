@@ -276,3 +276,5 @@ parity 1.2.4
 ------------
 
 fixed crash with empty archives, and nameless archive members.
+
+added support for visual studio 2010.
