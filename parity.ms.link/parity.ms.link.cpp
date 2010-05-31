@@ -78,13 +78,13 @@ int main(int argc, char** argv)
 			/* clear configuration-set paths. */
 			parity::utils::Context::getContext().getLibraryPaths().clear();
 
+			/* ATTENTION: see parity.gnu.gcc.cpp for comments on this: */
+			parity::utils::Context::getContext().getSysLibraryPaths().insert(
+				parity::utils::Context::getContext().getSysLibraryPaths().begin(),
+				cfgLibraryPaths.begin(), cfgLibraryPaths.end());
+
 			parity::options::UnknownArgumentVector vec;
 			parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableMsLink, &vec);
-
-			/* re-enable configuration-set paths. */
-			parity::utils::Context::getContext().getLibraryPaths().insert(
-				parity::utils::Context::getContext().getLibraryPaths().end(),
-				cfgLibraryPaths.begin(), cfgLibraryPaths.end());
 
 			if(vec.size() > 0)
 			{

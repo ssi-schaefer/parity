@@ -278,3 +278,7 @@ parity 1.2.4
 fixed crash with empty archives, and nameless archive members.
 
 added support for visual studio 2010.
+
+fixed library searching during command line parsing, which mistakingly ignored library paths set in the configuration files.
+
+increased value of _WIN32_WINNT from 0x0400 (Windows NT 4.0) to 0x0501 (Windows XP), which was the minimum supported windows version anyway.

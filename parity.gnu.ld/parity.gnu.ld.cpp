@@ -93,13 +93,13 @@ int main(int argc, char** argv)
 		/* clear configuration-set paths. */
 		parity::utils::Context::getContext().getLibraryPaths().clear();
 
+		/* ATTENTION: see parity.gnu.gcc.cpp for comments on this: */
+		parity::utils::Context::getContext().getSysLibraryPaths().insert(
+			parity::utils::Context::getContext().getSysLibraryPaths().begin(),
+			cfgLibraryPaths.begin(), cfgLibraryPaths.end());
+
 		parity::options::UnknownArgumentVector unknown;
 		parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableGnuLd, &unknown);
-
-		/* re-enable configuration-set paths. */
-		parity::utils::Context::getContext().getLibraryPaths().insert(
-			parity::utils::Context::getContext().getLibraryPaths().end(),
-			cfgLibraryPaths.begin(), cfgLibraryPaths.end());
 
 		for(parity::options::UnknownArgumentVector::iterator it = unknown.begin(); it != unknown.end(); ++it) {
 			parity::utils::Path pth(*it);

@@ -95,16 +95,23 @@ int main(int argc, char** argv)
 		parity::utils::Context::getContext().getIncludePaths().clear();
 		parity::utils::Context::getContext().getLibraryPaths().clear();
 
+		/* Avoid interference with the command line set library paths. If configuration set
+		 * library paths are still set, the order will be wrong (command line set paths
+		 * should take precedence. For this reason (as system library paths are already set),
+		 * configuration set library paths are prepended to the system library paths. this
+		 * way we end up with the desired result.
+		 * The old method was to append the paths to library paths again after command line
+		 * parsing, which broke, because during command line parsing, library search is already
+		 * done, which may not work if the configuration set paths are absent. */
+		parity::utils::Context::getContext().getSysIncludePaths().insert(
+			parity::utils::Context::getContext().getSysIncludePaths().begin(),
+			cfgIncludePaths.begin(), cfgIncludePaths.end());
+		parity::utils::Context::getContext().getSysLibraryPaths().insert(
+			parity::utils::Context::getContext().getSysLibraryPaths().begin(),
+			cfgLibraryPaths.begin(), cfgLibraryPaths.end());
+
 		parity::options::UnknownArgumentVector unknown;
 		parity::options::CommandLine::process(argc - 1, &argv[1], parity::options::OptionTableGnuGcc, &unknown);
-
-		/* re-enable configuration-set paths. */
-		parity::utils::Context::getContext().getIncludePaths().insert(
-			parity::utils::Context::getContext().getIncludePaths().end(),
-			cfgIncludePaths.begin(), cfgIncludePaths.end());
-		parity::utils::Context::getContext().getLibraryPaths().insert(
-			parity::utils::Context::getContext().getLibraryPaths().end(),
-			cfgLibraryPaths.begin(), cfgLibraryPaths.end());
 
 		for(parity::options::UnknownArgumentVector::iterator it = unknown.begin(); it != unknown.end(); ++it) {
 			parity::utils::Path pth(*it);
