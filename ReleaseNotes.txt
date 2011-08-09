@@ -284,3 +284,7 @@ fixed library searching during command line parsing, which mistakingly ignored l
 increased value of _WIN32_WINNT from 0x0400 (Windows NT 4.0) to 0x0501 (Windows XP), which was the minimum supported windows version anyway.
 
 fixed linking against various different CRT versions (the static ones especially).
+
+parity 1.2.5
+------------
+
