@@ -34,6 +34,9 @@ General options (these apply to parity.gnu.* and parity.ms.*):
 	-cfg <directve> parses configuration directive. everything described
 					in configuration.txt is valid as argument. Use it
 					like in this example: -cfg "DebugLevel=verbose".
+	-<section_name>	loads the given section from the configuration file in
+					use. for example "-windows" tries to load a section
+					called "windows" from the configuration file.
 					
 parity.gnu.gcc options:
 -----------------------

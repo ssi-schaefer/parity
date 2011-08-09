@@ -530,3 +530,8 @@ DefaultOutput (Path)
 	Specifies the default output name. Be aware that this name is also valid for shared
 	libraries, which can result in misleading binary names!
 	Default: a.exe
+
+DefaultConfigSection (std::string)
+	Specifies the name of the default section, which is the section that is loaded if
+	no other section is specified explicitly on the command line.
+	Default: default

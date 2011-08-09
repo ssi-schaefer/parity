@@ -767,7 +767,7 @@ void PcrtSetupExceptionHandling()
 			}
 
 			if(GetEnvironmentVariableA("PCRT_TRACE_EXCEPTIONS", buffer, sz) == 0) {
-				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot read exception trace location from environment, exception tracing not enables.\n");
+				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot read exception trace location from environment, exception tracing not enabled.\n");
 				HeapFree(GetProcessHeap(), 0, buffer);
 				return;
 			}
