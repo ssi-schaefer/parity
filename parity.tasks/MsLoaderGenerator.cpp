@@ -555,7 +555,16 @@ namespace parity
 					// generate entry point for void entry point without arguments
 					//
 
-					sectText.addData(dataExeEntryPart1, sizeof(dataExeEntryPart1));
+					switch(ctx.getRuntime()) {
+					case parity::utils::RuntimeDynamic:
+					case parity::utils::RuntimeDynamicDebug:
+						sectText.addData(dataExeEntryPart1, sizeof(dataExeEntryPart1));
+						break;
+					case parity::utils::RuntimeStatic:
+					case parity::utils::RuntimeStaticDebug:
+						sectText.addData(dataExeEntryPart1StaticCrt, sizeof(dataExeEntryPart1StaticCrt));
+						break;
+					}
 					sectText.markRelocation(symLoaderInit, binary::Relocation::i386Relative32);
 					sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 					sectText.addData(dataExeEntryPart2, sizeof(dataExeEntryPart2));

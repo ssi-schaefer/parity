@@ -24,3 +24,12 @@ LinkerExe = @ParityLinker@
 
 # PCRTInclude (Path): Initial Value: ""
 PCRTInclude = @top_srcdir@/parity.runtime
+
+# Manually added: Stuff to make runtime link and run with
+# both the static and shared runtimes.
+
+# Omit default library names from objects.
+CompilerDefaults = /nologo /Zl
+
+# Don't use __declspec(import) for CRT symbols.
+Runtime = static

@@ -41,16 +41,30 @@ namespace parity
 		//
 
 			//
-			// part1:
+			// part1 (shared CRT):
 			//   55                 push        ebp
 			//	 8B EC              mov         ebp,esp
+			//   6A 01				push		0 ; -- not static CRT.
 			//   E8 00 00 00 00     call        _ParityLoaderInit
 			//
 			// last four bytes not included!
 			//
-			static const unsigned char dataExeEntryPart1[] = { 0x55, 0x8B, 0xEC, 0xE8 };
+			static const unsigned char dataExeEntryPart1[] = { 0x55, 0x8B, 0xEC, 0x6A, 0x00, 0xE8 };
+
+			//
+			// part1 (static CRT):
+			//   55                 push        ebp
+			//	 8B EC              mov         ebp,esp
+			//   6A 01				push		1 ; -- static CRT.
+			//   E8 00 00 00 00     call        _ParityLoaderInit
+			//
+			// last four bytes not included!
+			//
+			static const unsigned char dataExeEntryPart1StaticCrt[] = { 0x55, 0x8B, 0xEC, 0x6A, 0x01, 0xE8 };
+
 			//
 			// part2:
+			//   83 C4 04			add			esp, 4 ; -- remove crt indicator
 			//   85 C0              test        eax,eax
 			//   75 02              jne         (2 bytes forward, call to real entry point)
 			//   EB 05              jmp         (5 bytes forward, to exit of function)
@@ -58,7 +72,7 @@ namespace parity
 			//
 			// last four bytes not included!
 			//
-			static const unsigned char dataExeEntryPart2[] = { 0x85, 0xC0, 0x75, 0x02, 0xEB, 0x05, 0xE8 };
+			static const unsigned char dataExeEntryPart2[] = { 0x83, 0xC4, 0x04, 0x85, 0xC0, 0x75, 0x02, 0xEB, 0x05, 0xE8 };
 			//
 			// part3:
 			//   5D                 pop         ebp

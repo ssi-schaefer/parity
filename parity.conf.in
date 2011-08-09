@@ -14,31 +14,31 @@ ManifestExe = @ParityManifest@
 
 @ParityAdditionalExecPaths@
 
-#
-# The default section is a setup for normal native Win32 builds.
-#
-section default {
-	@ParitySysIncludePaths@
+@ParitySysIncludePaths@
 
-	@ParitySysLibraryPaths@
-	
-	PCRTInclude = @PcrtInclude@
-	PCRTLibrary = @PcrtLibrary@
-	ParityLoader = @LoaderLibrary@
-	
-	Defines = WIN32_LEAN_AND_MEAN
-	Defines = _WIN32_WINNT=0x0501
+@ParitySysLibraryPaths@
 
-	ObjectsLibraries = kernel32.lib
-	ObjectsLibraries = user32.lib
-	ObjectsLibraries = advapi32.lib
-	ObjectsLibraries = gdi32.lib
-	ObjectsLibraries = ws2_32.lib
-	ObjectsLibraries = shell32.lib
-	ObjectsLibraries = ole32.lib
-	ObjectsLibraries = winspool.lib
-	ObjectsLibraries = comctl32.lib
-	ObjectsLibraries = comdlg32.lib
-	ObjectsLibraries = userenv.lib
-	ObjectsLibraries = uuid.lib
+PCRTInclude = @PcrtInclude@
+PCRTLibrary = @PcrtLibrary@
+ParityLoader = @LoaderLibrary@
+
+Defines = WIN32_LEAN_AND_MEAN
+Defines = _WIN32_WINNT=0x0501
+
+ObjectsLibraries = kernel32.lib
+ObjectsLibraries = user32.lib
+ObjectsLibraries = advapi32.lib
+ObjectsLibraries = gdi32.lib
+ObjectsLibraries = ws2_32.lib
+ObjectsLibraries = shell32.lib
+ObjectsLibraries = ole32.lib
+ObjectsLibraries = winspool.lib
+ObjectsLibraries = comctl32.lib
+ObjectsLibraries = comdlg32.lib
+ObjectsLibraries = userenv.lib
+ObjectsLibraries = uuid.lib
+
+section windows {
+	Subsystem = Windows
 }
+

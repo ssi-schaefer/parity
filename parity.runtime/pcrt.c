@@ -158,29 +158,35 @@ const char* PcrtPathToNative(const char* ptr) {
 #endif
 }
 
-int PcrtInit()
+int PcrtInit(int staticCrt)
 {
 	//
-	// Set file buffering. On Windows, the default is a fully
-	// buffered stdout and stderr, with a buffer size of 4096.
-	// Line buffering is impossible on windows, since that
-	// behaves the same as full buffering (argh...). So for now
-	// I disable buffering completely, and think about how to
-	// implement line buffering in parity.
+	// The static CRT is not yet initialized when we reach this
+	// code. This means that trying to do the following will
+	// result in a program failure.
 	//
-	setvbuf(stdout, NULL, _IONBF, 0);
-	setvbuf(stderr, NULL, _IONBF, 0);
+	if(!staticCrt) {
+		//
+		// Set file buffering. On Windows, the default is a fully
+		// buffered stdout and stderr, with a buffer size of 4096.
+		// Line buffering is impossible on windows, since that
+		// behaves the same as full buffering (argh...). So for now
+		// I disable buffering completely, and think about how to
+		// implement line buffering in parity.
+		//
+		setvbuf(stdout, NULL, _IONBF, 0);
+		setvbuf(stderr, NULL, _IONBF, 0);
 
-	//
-	// Set stream modes to binary to stay compatible with the
-	// rest of the world. this makes some autoconf patches
-	// obsolete, which handled line ending conversion in some
-	// check macros which rely on a single \n
-	//
-	_setmode(STDIN_FILENO, _O_BINARY);
-	_setmode(STDOUT_FILENO, _O_BINARY);
-	_setmode(STDERR_FILENO, _O_BINARY);
-
+		//
+		// Set stream modes to binary to stay compatible with the
+		// rest of the world. this makes some autoconf patches
+		// obsolete, which handled line ending conversion in some
+		// check macros which rely on a single \n
+		//
+		_setmode(STDIN_FILENO, _O_BINARY);
+		_setmode(STDOUT_FILENO, _O_BINARY);
+		_setmode(STDERR_FILENO, _O_BINARY);
+	}
 	//
 	// This effectively adds a VecoredExceptionHandler to the
 	// process' chain, which enables us to watch all exceptions

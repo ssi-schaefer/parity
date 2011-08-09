@@ -119,7 +119,19 @@ namespace parity
 				// generate entry point for void entry point without arguments
 				//
 
-				sectText.addData(dataExeEntryPart1, sizeof(dataExeEntryPart1));
+				switch(ctx.getRuntime()) {
+					case parity::utils::RuntimeDynamic:
+					case parity::utils::RuntimeDynamicDebug:
+						sectText.addData(dataExeEntryPart1, sizeof(dataExeEntryPart1));
+						break;
+					case parity::utils::RuntimeStatic:
+					case parity::utils::RuntimeStaticDebug:
+						utils::Log::warning("with the static CRT, I/O will have windows defaults (buffering, line ending)\n");
+						utils::Log::warning("(with the shared CRT, parity would default to UNIX like buffering and ending)\n");
+						sectText.addData(dataExeEntryPart1StaticCrt, sizeof(dataExeEntryPart1StaticCrt));
+						break;
+				}
+				
 				sectText.markRelocation(symPcrtInit, binary::Relocation::i386Relative32);
 				sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 				sectText.addData(dataExeEntryPart2, sizeof(dataExeEntryPart2));

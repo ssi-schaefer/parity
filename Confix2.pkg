@@ -1,4 +1,3 @@
-from libconfix.plugins.c.library_dependencies import LibraryDependenciesFinderSetup
 import re
 
 PACKAGE_NAME('parity')
@@ -8,4 +7,13 @@ PACKAGE_VERSION(re.sub(
 	, '$URL$'
 ))
 
-ADD_SETUP(LibraryDependenciesFinderSetup())
+from libconfix.setups.boilerplate import AutoBoilerplate
+from libconfix.setups.c import AutoC
+from libconfix.setups.automake import Automake
+from libconfix.setups.cmake import CMake
+
+SETUP([AutoBoilerplate(),
+       AutoC(),
+       Automake(use_libtool=False, library_dependencies=True),
+       CMake(library_dependencies=True)])
+

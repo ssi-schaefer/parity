@@ -81,7 +81,7 @@ namespace parity
 				if(iLoadedSections)
 					return;
 
-				pos = m.find("default");
+				pos = m.find(ctx.getDefaultConfigSection());
 
 				if(pos != m.end() && pos->second.second > 0) {
 					utils::Log::verbose("loading default information from %s\n", file.getPath().get().c_str());

@@ -298,11 +298,11 @@ AC_DEFUN([PARITY_CONFIGURE],
 	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
 	rm -f $ParityAdditionalExecPaths > /dev/null 2>&1
 
-	echo "	SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
-	echo "	SysIncludePaths = $SdkIncludeDir" >> $ParitySysIncludePaths
+	echo "SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
+	echo "SysIncludePaths = $SdkIncludeDir" >> $ParitySysIncludePaths
 
-	echo "	SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
-	echo "	SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
+	echo "SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
+	echo "SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
 
 	pfx="${prefix}"
 	test "x$prefix" = xNONE && pfx=$ac_default_prefix

@@ -46,8 +46,6 @@ namespace parity
 
 		private:
 			Config();
-
-
 			static bool parseLine(Context& ctx, const char* data, size_t len);
 		};
 	}
