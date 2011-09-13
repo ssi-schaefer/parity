@@ -27,7 +27,6 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <intrin.h>
 #include <fcntl.h>
 
 #include "internal/diagnose.h"
