@@ -53,6 +53,8 @@ namespace parity
 			{ "/c"			,setCompileOnly				},
 			{ "/DLL"		,setSharedLink				},
 			{ "/dll"		,setSharedLink				},
+			{ "/EH"			,setExceptionHandling		},
+			{ "/GR"			,setRuntimeTypes			},
 			{ "/E"			,setPreprocess				},
 			{ "/P"			,setPreprocess				},
 			{ "/I"			,addIncludePath				},
