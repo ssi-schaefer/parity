@@ -23,9 +23,11 @@
 #include "CommandLine.h"
 
 #include <Log.h>
+#include <Context.h>
 
 #include <string>
 #include <cstring>
+#include <fstream>
 
 namespace parity
 {
@@ -55,7 +57,8 @@ namespace parity
 						(entry->option[0] == '.' && /* (breaks gcc abs. paths) argv[i][0] != '/' && */ argv[i][0] != '-' 
 							&& argvLen > entryLen && ::strncmp(entry->option, &argv[i][argvLen - entryLen], entryLen) == 0) ||
 						(entry->option[0] == '.' && /* (breaks gcc abs. paths) argv[i][0] != '/' && */ argv[i][0] != '-' 
-							&& argvLen > entryLen && ::strstr(argv[i], entry->option) && ::strstr(argv[i], entry->option)[entryLen] == '.'))
+							&& argvLen > entryLen && ::strstr(argv[i], entry->option) && ::strstr(argv[i], entry->option)[entryLen] == '.') ||
+						(argvLen >= entryLen && ::strncmp(entry->option, argv[i], entryLen) == 0))
 					{
 						const char* argument = 0;
 						bool argumentUsed = false;
@@ -99,9 +102,109 @@ namespace parity
 						parity::utils::Log::verbose("ignoring unknown option: %s!\n", argv[i]);
 					}
 				}
+
+				//
+				// recursively process contents of argument files
+				//
+				utils::ArgumentVector extraArguments = utils::Context::getContext().pullExtraArguments();
+				std::vector<char *> extraArgv;
+				for(utils::ArgumentVector::const_iterator it = extraArguments.begin()
+				  ; it != extraArguments.end()
+				  ; ++ it
+				) {
+					extraArgv.push_back(const_cast<char*>(it->c_str()));
+				}
+				extraArgv.push_back(0);
+				process(extraArgv.size() - 1, &extraArgv.front(), triggers, vec);
 			}
 
 			return bRet;
+		}
+
+		class CommandFile {
+		public:
+			CommandFile(std::string const &filename);
+			int read();
+			utils::ArgumentVector const& arguments() const { return arguments_; }
+		private:
+			parity::utils::Path file_;
+			utils::ArgumentVector arguments_;
+		};
+
+		CommandFile::CommandFile(std::string const &filename)
+		  : file_(filename)
+		  , arguments_()
+		{
+			file_.toNative();
+		}
+
+		int CommandFile::read()
+		{
+			std::ifstream argsFile;
+			argsFile.exceptions(std::ifstream::badbit);
+			try {
+				parity::utils::Log::verbose("reading argument file \"%s\"\n", file_.get().c_str());
+				argsFile.open(file_.get().c_str(), std::fstream::in);
+
+				std::vector<char*> toParse;
+
+				while(argsFile.good() && !argsFile.eof()) {
+					std::string line;
+					getline(argsFile, line);
+
+					bool quoting = false;
+					std::string::iterator begin;
+					std::string::iterator current;
+					begin = current = line.begin();
+					while(current != line.end()) {
+						bool isEnd = false;
+						if (*current == '"') {
+							quoting = !quoting;
+							current = line.erase(current);
+							continue;
+						}
+						if (!quoting && isspace(*current)) {
+							isEnd = true;
+						}
+
+						if (isEnd) {
+							if (begin != current) {
+								arguments_.push_back(std::string(begin, current));
+							}
+							begin = current;
+							++ begin;
+							quoting = false;
+						}
+						++ current;
+					}
+
+					if (current != begin) {
+						arguments_.push_back(std::string(begin, current));
+					}
+				}
+			}
+			catch (std::ifstream::failure e) {
+				throw; // throw the file error
+			}
+
+			return arguments_.size();
+		}
+
+		bool setCommandFile(const char *option, const char *argument, bool &used)
+		{
+			if (option[0] != '@') {
+				return false;
+			}
+			used = true;
+			if (option[1]) {
+				used = false;
+				argument = &option[1];
+			}
+
+			CommandFile file(argument);
+			file.read();
+			utils::Context::getContext().storeExtraArguments(file.arguments());
+			return true;
 		}
 
 		#ifdef stristr

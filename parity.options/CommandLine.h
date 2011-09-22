@@ -42,6 +42,8 @@ namespace parity
 		public:
 			static bool process(int argc, char** argv, ArgumentTableEntry* triggers, UnknownArgumentVector* vec);
 		};
+
+		bool setCommandFile(const char *option, const char *argument, bool& used);
 	}
 }
 
