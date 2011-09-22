@@ -86,6 +86,7 @@ namespace parity
 			{ ".S"			,addSource					},
 			{ "/Tp"			,addSource					},
 			{ "/Tc"			,addSource					},
+			{ "@"			,setCommandFile				},
 
 			// --- must be last ---
 			{ 0				,0							}

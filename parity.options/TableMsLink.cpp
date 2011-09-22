@@ -62,6 +62,7 @@ namespace parity
 			{ ".o"			,addObjectsLibraries		},
 			{ ".a"			,addObjectsLibraries		},
 			{ ".so"			,addObjectsLibraries		},
+			{ "@"			,setCommandFile				},
 
 			// --- must be last ---
 			{ 0				,0							}
