@@ -3,5 +3,6 @@ INSTALLDIR_H('parity.runtime')
 
 REQUIRE_SYMBOL('parity.gnu.gcc.exe', REQUIRED)
 MAKEFILE_AM('CC=../parity.gnu.gcc/parity.gnu.gcc$(EXEEXT)')
+MAKEFILE_AM('CXX=../parity.gnu.gcc/parity.gnu.gcc$(EXEEXT)')
 
 PROVIDE_SYMBOL('parity.runtime.lib')

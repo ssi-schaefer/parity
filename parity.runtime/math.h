@@ -56,7 +56,10 @@ PCRT_BEGIN_C
 #undef remainder
 
 static PCRT_INLINE double copysign(double x, double y) { return _copysign(x, y); }
+#if (_MSC_VER-0) >= 1400
+/* available since Visual Studio 2005 */
 static PCRT_INLINE long double copysignl(long double x, long double y) { return _copysignl(x, y); }
+#endif
 
 static PCRT_INLINE int finite(double x) { return _finite(x); }
 
