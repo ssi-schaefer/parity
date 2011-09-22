@@ -63,7 +63,7 @@ namespace parity
 		};
 
 		Context::Context()
-			: ContextGen(), isTty_(true)
+			: ContextGen(), isTty_(true), extraArguments_()
 		{
 			#if defined(_WIN32) && !defined(HAVE_CONFIG_H)
 				//
@@ -365,6 +365,17 @@ namespace parity
 			}
 		}
 
+		void Context::storeExtraArguments(ArgumentVector const& args)
+		{
+			extraArguments_.insert(extraArguments_.end(), args.begin(), args.end());
+		}
+
+		ArgumentVector Context::pullExtraArguments()
+		{
+			std::vector<std::string> ret;
+			ret.swap(extraArguments_);
+			return ret;
+		}
 	}
 }
 
