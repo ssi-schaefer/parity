@@ -22,6 +22,8 @@ PCRTInclude = @PcrtInclude@
 PCRTLibrary = @PcrtLibrary@
 ParityLoader = @LoaderLibrary@
 
+Runtime = @RuntimeType@
+
 Defines = WIN32_LEAN_AND_MEAN
 Defines = _WIN32_WINNT=0x0501
 

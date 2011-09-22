@@ -248,15 +248,25 @@ AC_DEFUN([PARITY_CONFIGURE],
 		fi
 	fi
 
+	AC_MSG_CHECKING([for version of Visual Studio used])
+
+	MsvcVersion=
 	if test -n "$MsvcRoot71"; then
 		MsvcRoot="$MsvcRoot71/Vc7"
+		MsvcVersion=0x0701
 	elif test -n "$MsvcRoot80"; then
 		MsvcRoot="$MsvcRoot80/VC"
+		MsvcVersion=0x0800
 	elif test -n "$MsvcRoot90"; then
 		MsvcRoot="$MsvcRoot90/VC"
+		MsvcVersion=0x0900
 	elif test -n "$MsvcRoot100"; then
 		MsvcRoot="$MsvcRoot100/VC"
+		MsvcVersion=0x1000
 	fi
+
+	AC_DEFINE([MSVC_VERSION], [$MsvcVersion], [Version of Visual Studio building for])
+	AC_MSG_RESULT([$MsvcVersion])
 
 	MsSdkDir=
 
@@ -304,6 +314,11 @@ AC_DEFUN([PARITY_CONFIGURE],
 	echo "SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
 	echo "SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
 
+	AC_MSG_CHECKING([for default runtime type])
+	RuntimeType=dynamic
+	test -n "$MsvcRoot71" && RuntimeType=static
+	AC_MSG_RESULT([$RuntimeType])
+
 	pfx="${prefix}"
 	test "x$prefix" = xNONE && pfx=$ac_default_prefix
 
@@ -328,6 +343,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST(PcrtInclude)
 	AC_SUBST(PcrtLibrary)
 	AC_SUBST(LoaderLibrary)
+	AC_SUBST(RuntimeType)
 
 	AC_SUBST_FILE(ParityAdditionalExecPaths)
 	AC_SUBST_FILE(ParitySysIncludePaths)
