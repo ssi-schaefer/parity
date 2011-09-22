@@ -28,6 +28,7 @@
 #include "Preprocessor.h"
 #include "Linker.h"
 #include "Compiler.h"
+#include "CommandLine.h"
 
 namespace parity
 {
