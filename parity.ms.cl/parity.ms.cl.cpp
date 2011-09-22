@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 			if(vec.size() > 0)
 			{
 				for(parity::options::UnknownArgumentVector::iterator it = vec.begin(); it != vec.end(); ++it)
-					context.setLinkerPassThrough(context.getLinkerPassThrough() + " " + *it);
+					context.setCompilerPassThrough(context.getCompilerPassThrough() + " " + *it);
 			}
 		} else {
 			throw utils::Exception("Microsoft frontend may only be used with Microsoft backend!");
