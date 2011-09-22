@@ -114,9 +114,12 @@ namespace parity
 			if(ctx.getOptimizeLevel() <= 0 && ctx.getInlineFunctions())
 				vec.push_back("/Ob2");
 
+#if (MSVC_VERSION-0) >= 0x0800
 			if(!ctx.getOmitFramePointer())
 				vec.push_back("/Oy-");
-			else if(ctx.getOmitFramePointer() && ctx.getOptimizeLevel() < 1)
+			else
+#endif
+			if(ctx.getOmitFramePointer() && ctx.getOptimizeLevel() < 1)
 				vec.push_back("/Oy");
 
 			//
