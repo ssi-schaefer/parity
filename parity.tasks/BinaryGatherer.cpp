@@ -33,6 +33,8 @@
 #include <CoffObject.h>
 #include <CoffDirectiveSection.h>
 
+#include <locale>
+
 namespace parity
 {
 	namespace tasks
@@ -46,6 +48,7 @@ namespace parity
 			, staticImports_()
 			, localSymbols_()
 			, loadedImports_()
+			, directivesDone_()
 			, implicits_()
 			, processed_()
 			, hybrids_()
@@ -400,6 +403,8 @@ namespace parity
 			//
 			binary::Section::IndexedSectionMap& sec = hdr.getSections();
 
+			std::locale Clocale("C");
+
 			for(binary::Section::IndexedSectionMap::iterator it = sec.begin(); it != sec.end(); ++it)
 			{
 				if((it->second.getCharacteristics() & binary::Section::CharLinkInfo) && it->second.getName() == ".drectve")
@@ -414,11 +419,23 @@ namespace parity
 
 							if(pos != std::string::npos)
 							{
+								if (directivesDone_.count(*d) > 0) {
+									continue;
+								}
+								directivesDone_[*d] = true;
+
 								pos += 11; // D,E,F,A,U,L,T,L,I,B,: = 11 chars
 								std::string lib = d->substr(pos);
 								
 								while((pos = lib.find('"')) != std::string::npos)
 									lib.replace(pos, 1, "");
+
+								/* traditionally, windows filesystem is case insensitive, and so
+								 * are the library names (especially the one found in directives).
+								 */
+								for(std::string::iterator ch = lib.begin(); ch != lib.end(); ++ch) {
+									*ch = tolower(*ch, Clocale);
+								}
 
 								utils::Path pth = ctx.lookupLibrary(lib, true);
 

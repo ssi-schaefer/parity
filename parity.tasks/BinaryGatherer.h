@@ -81,6 +81,7 @@ namespace parity
 			typedef std::map<std::string, ImportUsagePair> ImportUsageMap;
 			typedef std::map<utils::Path, bool> PathUsageMap;
 			typedef std::map<std::string, LibraryPathHybridityPair> LibraryHybridityMap;
+			typedef std::map<std::string, bool> StringBoolMap;
 
 			SymbolUsageMap unresolved_;
 			SymbolUsageMap local_;
@@ -92,6 +93,7 @@ namespace parity
 			binary::Symbol::SymbolVector localSymbols_;
 			ImportHybridityMap loadedImports_;
 
+			StringBoolMap directivesDone_;
 			PathUsageMap implicits_;
 			PathUsageMap processed_;
 
