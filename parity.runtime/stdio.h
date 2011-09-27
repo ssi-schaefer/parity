@@ -27,7 +27,7 @@
 
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
-#  ifndef _POSIX_
+#  if !defined(_POSIX_) && defined(__PARITY_GNU__)
 #    define _POSIX_ 1
 #  endif
 #  ifdef __STDC__

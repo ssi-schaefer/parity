@@ -26,7 +26,7 @@
 #include "internal/pcrt.h"
 
 #pragma push_macro("_POSIX_")
-#  ifndef _POSIX_
+#  if !defined(_POSIX_) && defined(__PARITY_GNU__)
 #    define _POSIX_ 1
 #  endif
 #  include RUNTIME_INC(Fcntl.h)
