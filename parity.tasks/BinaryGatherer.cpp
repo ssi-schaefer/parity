@@ -51,6 +51,7 @@ namespace parity
 			, directivesDone_()
 			, implicits_()
 			, processed_()
+			, nodefaultlibs_()
 			, hybrids_()
 		{
 			if(utils::Context::getContext().getObjectsLibraries().empty())
@@ -158,7 +159,9 @@ namespace parity
 			//
 			for(PathUsageMap::iterator it = implicits_.begin(); it != implicits_.end(); ++it)
 			{
-				all.push_back(it->first);
+				if (it->second && nodefaultlibs_.count(it->first) == 0) {
+					all.push_back(it->first);
+				}
 			}
 
 			//
@@ -415,7 +418,7 @@ namespace parity
 
 						for(binary::DirectiveSection::DirectiveVector::const_iterator d = directives.begin(); d != directives.end(); ++d)
 						{
-							std::string::size_type pos = d->find("DEFAULTLIB", 1);
+							std::string::size_type pos = d->find("DEFAULTLIB:", 1);
 
 							if(pos != std::string::npos)
 							{
@@ -423,6 +426,8 @@ namespace parity
 									continue;
 								}
 								directivesDone_[*d] = true;
+
+								bool isNodefault = (d->at(pos-1) == 'O'); // "/NODEFAULTLIB:"
 
 								pos += 11; // D,E,F,A,U,L,T,L,I,B,: = 11 chars
 								std::string lib = d->substr(pos);
@@ -444,6 +449,10 @@ namespace parity
 								//
 								bool& ref = implicits_[pth];
 
+								if (isNodefault) {
+									nodefaultlibs_[pth] = true;
+									utils::Log::verbose("implicit library to ignore: %s\n", pth.get().c_str());
+								} else
 								if(!ref)
 								{
 									ref = true;

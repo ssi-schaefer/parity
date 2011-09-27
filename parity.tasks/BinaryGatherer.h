@@ -96,6 +96,7 @@ namespace parity
 			StringBoolMap directivesDone_;
 			PathUsageMap implicits_;
 			PathUsageMap processed_;
+			PathUsageMap nodefaultlibs_;
 
 			LibraryHybridityMap hybrids_;
 		};
