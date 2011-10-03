@@ -300,11 +300,13 @@ static void PcrtGuardDebugInitialization() {
 typedef BOOL (WINAPI * SymInitFunc)(HANDLE, PCTSTR, BOOL);
 typedef BOOL (WINAPI * SymAddrFunc)(HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*);
 typedef BOOL (WINAPI * SymRefreshFunc)(HANDLE);
+typedef BOOL (WINAPI * EnumModulesFunc)(HANDLE, PENUMLOADED_MODULES_CALLBACK64, PVOID);
 
-HANDLE			hDbgLib;
-SymInitFunc		hInit;
-SymAddrFunc		hSym;
-SymRefreshFunc	hRefresh;
+static HANDLE			hDbgLib;
+static SymInitFunc		hInit;
+static SymAddrFunc		hSym;
+static SymRefreshFunc	hRefresh;
+static EnumModulesFunc	hEnumModules;
 
 void PcrtInitializeDebugInformation() {
 	if(!PcrtIsDebugInitialized())
@@ -321,6 +323,7 @@ void PcrtInitializeDebugInformation() {
 		hInit	= (SymInitFunc)		GetProcAddress(hDbgLib, "SymInitialize");
 		hSym	= (SymAddrFunc)		GetProcAddress(hDbgLib, "SymFromAddr");
 		hRefresh= (SymRefreshFunc)	GetProcAddress(hDbgLib, "SymRefreshModuleList");
+		hEnumModules= (EnumModulesFunc)	GetProcAddress(hDbgLib, "EnumerateLoadedModules64");
 
 		//
 		// don't check for hRefresh, since this requires dbghelp.dll v6.5
@@ -645,6 +648,35 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 	}
 }
 
+static BOOL CALLBACK PcrtWriteModuleInformationCb(PCTSTR name, DWORD64 base, ULONG size, PVOID calldata)
+{
+	HANDLE hCore = (HANDLE)calldata;
+	DWORD64 last = base + size;
+	if (sizeof(PVOID) <= 4) {
+		/* 32bit */
+		PcrtOutPrint(hCore, "  %p - %p %s\n", (DWORD)base, (DWORD)last, name);
+	} else {
+		/* 64bit */
+		PcrtOutPrint(hCore, "  %p%p - %p%p %s\n",
+			(DWORD)(base >> 32), (DWORD)base,
+			(DWORD)(last >> 32), (DWORD)last,
+			name);
+	}
+	return TRUE;
+}
+
+static void PcrtWriteModulesInformation(HANDLE hCore)
+{
+	PcrtOutPrint(hCore, "Loaded Modules:\n");
+
+	if (!hEnumModules) {
+		PcrtOutPrint(hCore, "  Enumerating loaded modules not available.\n");
+		return;
+	}
+
+	hEnumModules(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
+}
+
 static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	HANDLE hCore;
 
@@ -710,6 +742,9 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	}
 
 	PcrtWriteExceptionInformation(hCore, ex, 1);
+	PcrtOutPrint(hCore, "\n");
+	PcrtWriteModulesInformation(hCore);
+	PcrtOutPrint(hCore, "\n");
 
 	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Exception %p at %p (core dumped)\n", ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
 
