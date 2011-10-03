@@ -22,13 +22,7 @@
 
 /* require at least windows XP API for GetModuleHandleEx to
  * behave as we expect it for symbol searching... */
-#if defined(_WIN32_WINNT) && _WIN32_WINNT <= 0x0500
-# undef _WIN32_WINNT
-#endif
-
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
+#define WINBASE_DECLARE_GET_MODULE_HANDLE_EX
 
 #include <windows.h>
 #include <stdio.h>
@@ -467,12 +461,19 @@ modinfo_t PcrtGetContainingModule(void* addr)
 	// the handle to the outside world or FreeLibrary.
 	//
 	modinfo_t info;
-	if(!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)addr, &info.module)) {
+	static PGET_MODULE_HANDLE_EXA fGetModuleHandleExA = 0;
+
+	if (!fGetModuleHandleExA) {
+		fGetModuleHandleExA = (PGET_MODULE_HANDLE_EXA)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetModuleHandleExA");
+	}
+
+	if(fGetModuleHandleExA
+	&& !fGetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)addr, &info.module)) {
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot find handle for module containing %p\n", addr);
 		return info;
 	}
 
-	if(!GetModuleFileNameA(info.module, info.name, MAX_PATH)) {
+	if(!fGetModuleHandleExA || !GetModuleFileNameA(info.module, info.name, MAX_PATH)) {
 		strcpy(info.name, "<unknown>");
 	}
 
@@ -741,13 +742,27 @@ static LONG CALLBACK PcrtHandleExceptionTrace(struct _EXCEPTION_POINTERS* ex) {
 
 void PcrtSetupExceptionHandling()
 {
+	typedef 
+	PVOID
+	(WINAPI* AddVectoredExceptionHandler_t)(
+		IN ULONG FirstHandler,
+		IN PVECTORED_EXCEPTION_HANDLER VectoredHandler
+		);
+	AddVectoredExceptionHandler_t fAddVectoredExceptionHandler;
 	unsigned long sz;
 	//
 	// WARNING: only very basic initialization can be done here,
 	// since mainCRTStartup has not run yet, and thus std streams
 	// etc. may not be initialized yet.
 	//
-	if(!AddVectoredExceptionHandler(0, PcrtHandleException)) {
+	
+	fAddVectoredExceptionHandler = (AddVectoredExceptionHandler_t)
+		GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "AddVectoredExceptionHandler");
+
+	if (!fAddVectoredExceptionHandler) {
+		return;
+	}
+	if(!fAddVectoredExceptionHandler(0, PcrtHandleException)) {
 		//
 		// i know, std streams...
 		//
@@ -803,7 +818,7 @@ void PcrtSetupExceptionHandling()
 			PcrtOutPrint(hTraceFile, "Exception Tracing started at %d:%d:%d.%d.\n\n", time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
 		}
 
-		if(!AddVectoredExceptionHandler(1, PcrtHandleExceptionTrace)) {
+		if(!fAddVectoredExceptionHandler(1, PcrtHandleExceptionTrace)) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed to install exception trace handler, exception tracing not enabled.\n");
 		}
 	}
