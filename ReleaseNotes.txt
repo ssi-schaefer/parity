@@ -10,6 +10,28 @@ parity ships with a little runtime enhancement library called parity.runtime. Th
 parity 1.2.5
 ------------
 
+Add support for legacy Visual Studio 2005, but with static runtime only.
+
+parity.ms.cl.exe, parity.ms.link.exe: Support '@filename' commandline argument, for 'filename' containing additional commandline arguments.
+
+parity.ms.cl.exe, parity.ms.link.exe: Accept '/EH' (exception handling) and '/GR' (runtime types) commandline argument.
+
+parity.ms.cl.exe: Accept /LD and /LDd instead of /DLL to link a dll.
+
+parity.ms.cl.exe: Wrap VC-headers without _POSIX_ being defined.
+
+Ignore case when searching for implicit libraries (/DEFAULTLIB directive), using lowercase by "C" locale.
+
+Identify duplicate /DEFAULTLIB directives by the directive value, not the complete resolved library filename. Have seen this improving link speed by a factor of 10 here.
+
+Fix handling of /NODEFAULTLIB directive to actually ignore specified default libraries.
+
+Dynamically load procedures for exception handling from kernel32.dll to allow binaries built with up to Visual Studio 2005 to actually run on Windows NT, where those procedures are missing.
+
+List loaded modules to core-file when available (not on Windows NT).
+
+Reorder ReleaseNotes to have most recent version first.
+
 
 parity 1.2.4
 ------------
