@@ -7,109 +7,72 @@ The most effort has been put into shared library handling, which now behaves nea
 parity ships with a little runtime enhancement library called parity.runtime. This library abstracts away the need to take care of what kind of paths are used. This means you can now give a UNIX-style path to an executable built with parity, and it will understand it. Previously this was not possible, and all Windows executables would need Windows-style paths to work.
 
 
-parity 1.0.0
+parity 1.2.5
 ------------
 
-This is the initial Release of parity, which offers feature completeness in regard to it's predecessor WGCC.
 
-
-parity 1.0.1
+parity 1.2.4
 ------------
 
-This intermediate release fixes path conversion issues in the parity.runtime. now the functions chdir, mkdir, rmdir, all spawn and all exec support on-the-fly path conversion from Interix to Windows correctly.
+fixed crash with empty archives, and nameless archive members.
 
-There is a new WIKI available on how to build parity at http://parity.wiki.sourceforge.net/Building+parity+from+Interix
+added support for visual studio 2010.
+
+fixed library searching during command line parsing, which mistakingly ignored library paths set in the configuration files.
+
+increased value of _WIN32_WINNT from 0x0400 (Windows NT 4.0) to 0x0501 (Windows XP), which was the minimum supported windows version anyway.
+
+fixed linking against various different CRT versions (the static ones especially).
 
 
-parity 1.0.2
+parity 1.2.3
 ------------
 
-This release fixes minor issues with Visul Studio .NET 2003. It also introduces a brand new statistic collection mechanism, which allows for much more informations to be collected during a parity run. To enable statistics collection, simply add a line containing "StatisticsFile=/path/to/stat.file" to your parity.conf.
+changed the behaviour regarding configuration-set include and library paths; configuration set paths are appended in the order of appearance in the file to the set of command line set paths in their order of appearance on the command line.
 
-parity now supports setting the Stack and Heap reserve and commit sizes via configuration.
+after failing to link, stray files are cleaned up properly now.
+
+fixed a bug making the linker find a directory instead of a file while looking up libraries.
+
+added support for reading source files from stdin. any valid source file can be passed via stdin by passing the "-" argument to parity. this only works if parity operates using the GCC type frontend.
+
+parity.inspector has been extended with the --raw option, which allows to output information about a shared library in a more machine readable fashion. initially required to more easely implement the preserve-libs feature of portage for native windows.
+
+added missing extern C in sys/time.h, fixing gettimeofday for C++ users.
+
+made the dynamic loader a little less loud, when it fails to preload a library. this is required, since windows executables fail to preload interix libraries, which use the same variable.
 
 
-parity 1.0.3
+parity 1.2.2
 ------------
 
-Configuration File lookup and loading has been reviewed. now it is possible to load partial configuration files, which only contain additions to an allready loaded one.
+colorization of output in all parity executables is now controlled by the output stream type (terminal, file, etc.)
 
-Fixed an issue, where parity would use a lot of CPU time, while waiting for external tasks.
+some general cleanup removed dead code.
 
-Added support for Visual Studio 2008 (allthough not throughout tested yet).
-
-The parity.loader allways logs to debug output (using OutputDebugStringA). This can be monitored using a tool like the DbgView utility from SysInternals.
-
-Minor improvements to parity.runtime made the whole package behave better with existing code.
-
-Added support for Cygwin (not throughout tested yes). See the wiki http://parity.wiki.sourceforge.net/Building+parity+from+Cygwin on how to install, and http://parity.wiki.sourceforge.net/HowTo+Use+parity+and+libtool+together on how to use parity.
-Cygwin support was also added to the native Windows build of parity. This means, that you can build parity using cl.exe (instead of gcc) and still be able to use parity inside cygwin with full patch conversion capabilities.
-
-Added a new graphical configuration editor, writte in managed C++. This has it's own configuration inside the solution, since it need to build parity.utils as managed code.
-
-Fixed an issue, where the -rpath option was not recognized correctly.
-
-Fixed an issue, where the loader would output junk to the console.
-
-Fixed an issue, where the order of option recognition made parity fail to recognize some options correctly
-
-The Libtool 1.5.24 patch (contained within the parity package in parity.patches) has been reviewed, and now only supports parity if the host is i586-pc-winnt (really *-*-winnt*).
+disable stream buffers on stdout and stderr in windows executables. parity may implement line buffering in the future (which is missing on native windows).
 
 
-parity 1.0.4
+parity 1.2.1
 ------------
 
-added propper support for the RTLD_NOW flag in dlopen.
+fixed handling of frame pointer omission setting.
 
-added supporting patches for a lot of packages. these patches are not all required for a working environment, but make live easier. each of the patches need to be applied to the respective packages before building and installing them. some patches might require a re-bootstrap of the respective package.
+fixed a problem in the loader when passing NULL to dlopen.
 
-path conversion using the cygwin dll has been fixed to only initialize the dll once.
+added a little profiling information to the loader, telling the number of milliseconds it took to load all childs.
 
-fixed the parsing of PATH style environment variables while creating caches for the dynamic loader.
+parity.inspector has been improved, and now defaults to a more ldd like interface.
 
+parity.inspector now knows about native libraries, not linked with parity.
 
-parity 1.0.5
-------------
+parity.loader has a much improved loading failure output, which allows for much easier isolation of the real loading problem for shared libraries.
 
-fixed support for Interix 6.0. Support for Visual Studio 2008 tested.
+parity.inspector verbose processing status output is now much more readable.
 
-Migrated Project Files and Solutions to Visual Studio 2008.
+parity.runtime doesn't allow for more than 3 nested exceptions before doing a hard exit. in previous versions exceptions kept flying until stack space was too low.
 
-Enabled color support for native windows builds, if it is built using autotools (i.e. build parity with itself).
-
-Parity no longer decides wether certain paths are "bad", like /usr/local. This fixes issues with a Gentoo Prefix installation.
-
-Fixed the -O switches, which had no effect until now. Now proper optimizations are performed by the target compiler.
-
-Added an x86 binary decoder to support fixing certain instructions at link time. Insertion of instructions in unlinked code is now fully supported. This is the basic building block for beeing able to avoid the __declspec(dllimport)'s. The plan is, to fix every instruction that accesses a global data symbol to use a symbol that possibly comes from a DLL by adding an additional indirection. There is still lot of work to be done, since every x86 instruction that can access such a global data symbol (every instruction that can take an address as operand) needs to be recognized and patched.
-
-
-parity 1.0.6
-------------
-
-corrected a spelling mistake, which made parity ignore LD_LIBRARY_PATH.
-
-Slightly adjusted the output of the -v switch, to identify the platform parity was built on/for, since now the windows version is not so easily distinguishable from the interix version.
-
-When automatically exporting symbols from an object file, ignore symbols which where introduced by the compiler for strings. All symbols starting with (mangled) ??_C@ are now ignored.
-
-
-parity 1.1.0
-------------
-
-fixed a bug, which made parity crash, if a file given to the dependency tracker had exactly the size of a page in memory.
-
-parity now allows passing .res files through to the compiler/linker.
-
-The search order for libraries has been corrected. Previously parity would look for all possible names of a library in each directory before advancing to the next one. The new (and correct) behaviour is, to look for each possible library name in each directory, before advancing to the next best library name.
-
-Using the preload feature of parity binaries with an interix library set in LD_PRELOAD made parity crash in previous versions. This has been fixed. Since interix Libraries are still valid windows binaries, loading them succeeds, but no symbols are found to preload. This could still cause troubles in special cases.
-
-Resolved some internal inter-library dependency mess, which caused too many libraries to be linked, even if the parity loader was not generated. Path conversion has been moved to the runtime library to achieve this.
-
-The Configuration loading code has been extended to support profiles. This way multiple configurations can be saved to a single file. The Graphical Configurator has been updated to be able to read such files, but cannot write them (yet) due to architectural limitations.
-
-Added internal capabilities and configuration profiles to support compiling of POSIX subsystem and MixedMode Interix applications. This has the great advantage over gcc, that the result can be debugged in Visual Studio, rather than gdb. The main difference to native Windows builds is the dependency to the SUA subsystem, and the use of the POSIX libc (and thus the availablility of fork(), etc.). The full POSIX mode does not support C++ or shared libraries. The MixedMode does not (yet) support C++, but shared libraries work.
+parity.inspector has now a much improved memory utilization and overal performance.
 
 
 parity 1.2.0
@@ -222,69 +185,106 @@ changed parts of the parity.runtime library to use internal output routines in f
 the ignorance of foreign libraries is now configurable through the IgnoreForeignLibs configuration directive.
 
 
-parity 1.2.1
+parity 1.1.0
 ------------
 
-fixed handling of frame pointer omission setting.
+fixed a bug, which made parity crash, if a file given to the dependency tracker had exactly the size of a page in memory.
 
-fixed a problem in the loader when passing NULL to dlopen.
+parity now allows passing .res files through to the compiler/linker.
 
-added a little profiling information to the loader, telling the number of milliseconds it took to load all childs.
+The search order for libraries has been corrected. Previously parity would look for all possible names of a library in each directory before advancing to the next one. The new (and correct) behaviour is, to look for each possible library name in each directory, before advancing to the next best library name.
 
-parity.inspector has been improved, and now defaults to a more ldd like interface.
+Using the preload feature of parity binaries with an interix library set in LD_PRELOAD made parity crash in previous versions. This has been fixed. Since interix Libraries are still valid windows binaries, loading them succeeds, but no symbols are found to preload. This could still cause troubles in special cases.
 
-parity.inspector now knows about native libraries, not linked with parity.
+Resolved some internal inter-library dependency mess, which caused too many libraries to be linked, even if the parity loader was not generated. Path conversion has been moved to the runtime library to achieve this.
 
-parity.loader has a much improved loading failure output, which allows for much easier isolation of the real loading problem for shared libraries.
+The Configuration loading code has been extended to support profiles. This way multiple configurations can be saved to a single file. The Graphical Configurator has been updated to be able to read such files, but cannot write them (yet) due to architectural limitations.
 
-parity.inspector verbose processing status output is now much more readable.
-
-parity.runtime doesn't allow for more than 3 nested exceptions before doing a hard exit. in previous versions exceptions kept flying until stack space was too low.
-
-parity.inspector has now a much improved memory utilization and overal performance.
+Added internal capabilities and configuration profiles to support compiling of POSIX subsystem and MixedMode Interix applications. This has the great advantage over gcc, that the result can be debugged in Visual Studio, rather than gdb. The main difference to native Windows builds is the dependency to the SUA subsystem, and the use of the POSIX libc (and thus the availablility of fork(), etc.). The full POSIX mode does not support C++ or shared libraries. The MixedMode does not (yet) support C++, but shared libraries work.
 
 
-parity 1.2.2
+parity 1.0.6
 ------------
 
-colorization of output in all parity executables is now controlled by the output stream type (terminal, file, etc.)
+corrected a spelling mistake, which made parity ignore LD_LIBRARY_PATH.
 
-some general cleanup removed dead code.
+Slightly adjusted the output of the -v switch, to identify the platform parity was built on/for, since now the windows version is not so easily distinguishable from the interix version.
 
-disable stream buffers on stdout and stderr in windows executables. parity may implement line buffering in the future (which is missing on native windows).
+When automatically exporting symbols from an object file, ignore symbols which where introduced by the compiler for strings. All symbols starting with (mangled) ??_C@ are now ignored.
 
 
-parity 1.2.3
+parity 1.0.5
 ------------
 
-changed the behaviour regarding configuration-set include and library paths; configuration set paths are appended in the order of appearance in the file to the set of command line set paths in their order of appearance on the command line.
+fixed support for Interix 6.0. Support for Visual Studio 2008 tested.
 
-after failing to link, stray files are cleaned up properly now.
+Migrated Project Files and Solutions to Visual Studio 2008.
 
-fixed a bug making the linker find a directory instead of a file while looking up libraries.
+Enabled color support for native windows builds, if it is built using autotools (i.e. build parity with itself).
 
-added support for reading source files from stdin. any valid source file can be passed via stdin by passing the "-" argument to parity. this only works if parity operates using the GCC type frontend.
+Parity no longer decides wether certain paths are "bad", like /usr/local. This fixes issues with a Gentoo Prefix installation.
 
-parity.inspector has been extended with the --raw option, which allows to output information about a shared library in a more machine readable fashion. initially required to more easely implement the preserve-libs feature of portage for native windows.
+Fixed the -O switches, which had no effect until now. Now proper optimizations are performed by the target compiler.
 
-added missing extern C in sys/time.h, fixing gettimeofday for C++ users.
-
-made the dynamic loader a little less loud, when it fails to preload a library. this is required, since windows executables fail to preload interix libraries, which use the same variable.
+Added an x86 binary decoder to support fixing certain instructions at link time. Insertion of instructions in unlinked code is now fully supported. This is the basic building block for beeing able to avoid the __declspec(dllimport)'s. The plan is, to fix every instruction that accesses a global data symbol to use a symbol that possibly comes from a DLL by adding an additional indirection. There is still lot of work to be done, since every x86 instruction that can access such a global data symbol (every instruction that can take an address as operand) needs to be recognized and patched.
 
 
-parity 1.2.4
+parity 1.0.4
 ------------
 
-fixed crash with empty archives, and nameless archive members.
+added propper support for the RTLD_NOW flag in dlopen.
 
-added support for visual studio 2010.
+added supporting patches for a lot of packages. these patches are not all required for a working environment, but make live easier. each of the patches need to be applied to the respective packages before building and installing them. some patches might require a re-bootstrap of the respective package.
 
-fixed library searching during command line parsing, which mistakingly ignored library paths set in the configuration files.
+path conversion using the cygwin dll has been fixed to only initialize the dll once.
 
-increased value of _WIN32_WINNT from 0x0400 (Windows NT 4.0) to 0x0501 (Windows XP), which was the minimum supported windows version anyway.
+fixed the parsing of PATH style environment variables while creating caches for the dynamic loader.
 
-fixed linking against various different CRT versions (the static ones especially).
 
-parity 1.2.5
+parity 1.0.3
 ------------
 
+Configuration File lookup and loading has been reviewed. now it is possible to load partial configuration files, which only contain additions to an allready loaded one.
+
+Fixed an issue, where parity would use a lot of CPU time, while waiting for external tasks.
+
+Added support for Visual Studio 2008 (allthough not throughout tested yet).
+
+The parity.loader allways logs to debug output (using OutputDebugStringA). This can be monitored using a tool like the DbgView utility from SysInternals.
+
+Minor improvements to parity.runtime made the whole package behave better with existing code.
+
+Added support for Cygwin (not throughout tested yes). See the wiki http://parity.wiki.sourceforge.net/Building+parity+from+Cygwin on how to install, and http://parity.wiki.sourceforge.net/HowTo+Use+parity+and+libtool+together on how to use parity.
+Cygwin support was also added to the native Windows build of parity. This means, that you can build parity using cl.exe (instead of gcc) and still be able to use parity inside cygwin with full patch conversion capabilities.
+
+Added a new graphical configuration editor, writte in managed C++. This has it's own configuration inside the solution, since it need to build parity.utils as managed code.
+
+Fixed an issue, where the -rpath option was not recognized correctly.
+
+Fixed an issue, where the loader would output junk to the console.
+
+Fixed an issue, where the order of option recognition made parity fail to recognize some options correctly
+
+The Libtool 1.5.24 patch (contained within the parity package in parity.patches) has been reviewed, and now only supports parity if the host is i586-pc-winnt (really *-*-winnt*).
+
+
+parity 1.0.2
+------------
+
+This release fixes minor issues with Visul Studio .NET 2003. It also introduces a brand new statistic collection mechanism, which allows for much more informations to be collected during a parity run. To enable statistics collection, simply add a line containing "StatisticsFile=/path/to/stat.file" to your parity.conf.
+
+parity now supports setting the Stack and Heap reserve and commit sizes via configuration.
+
+
+parity 1.0.1
+------------
+
+This intermediate release fixes path conversion issues in the parity.runtime. now the functions chdir, mkdir, rmdir, all spawn and all exec support on-the-fly path conversion from Interix to Windows correctly.
+
+There is a new WIKI available on how to build parity at http://parity.wiki.sourceforge.net/Building+parity+from+Interix
+
+
+parity 1.0.0
+------------
+
+This is the initial Release of parity, which offers feature completeness in regard to it's predecessor WGCC.
