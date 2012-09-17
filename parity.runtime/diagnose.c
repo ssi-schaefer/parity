@@ -157,8 +157,12 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 {
 	stackframe_t* trace = NULL;
 	stackframe_t* last = NULL;
+	int numCallers = 0;
 
-	while(_bp && _ip) {
+	while(numCallers++ < 100 && _bp && _ip
+	 /* stack growing still valid */
+	 && (intptr_t)_bp >= (last ? ( ((intptr_t)last->ebp) + (sizeof(void*)*2) ) : (intptr_t)0)
+	) {
 		stackframe_t* frame = (stackframe_t*)malloc(sizeof(stackframe_t));
 
 		if(!frame) {
@@ -488,117 +492,6 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 	long num = 0;
 	stackframe_t* trace;
 
-	//
-	// cannot use the PcrtPrintStackTrace, since we should not rely
-	// on the CRT working after an exception. the kernel functions
-	// should still work i guess ;)
-	//
-	trace = PcrtGetStackTraceFrom((void*)ex->ContextRecord->Ebp, (void*)ex->ContextRecord->Eip);
-
-	PcrtOutPrint(hCore, "Stack Layout at the time the exception occured:\n\n");
-
-	if(detailed) {
-		PcrtOutPrint(hCore, "NOTE: Since the Exception handler sees all exceptions that\n");
-		PcrtOutPrint(hCore, "      fly by, it may create a core file even though the\n");
-		PcrtOutPrint(hCore, "      process can and will continue. so make sure the\n");
-		PcrtOutPrint(hCore, "      process really terminated after writing the core file.\n\n");
-	}
-
-	while(trace) {
-		//
-		// PcrtOutPrint does not know too extensive formatting stuff, so
-		// we have to do some of the work per pedes here.
-		//
-		modinfo_t mod = PcrtGetContainingModule(trace->eip);
-		char modname_aligned[ST_FW_MODULE + 2];
-		char * modname_unaligned = basename(mod.name);
-		long len = lstrlen(modname_unaligned);
-
-		if(len > ST_FW_MODULE)
-			len = ST_FW_MODULE;
-
-		memset(modname_aligned, ' ', sizeof(modname_aligned));
-		lstrcpyn(&modname_aligned[ST_FW_MODULE - len], modname_unaligned, ST_FW_MODULE + 1);
-
-		++num;
-
-		PcrtOutPrint(hCore, " [%s%d]", ( num < 100000 ? ( num < 10000 ? ( num < 1000 ? ( num < 100 ? ( num < 10 ? "     " : "    " ) : "   ") : "  ") : " ") : ""), num);
-		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n", modname_aligned, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
-
-		if(!trace->next)
-			break;
-
-		if(num >= STACKTRACE_MAX_NONDETAILED_FRAMES && !detailed) {
-			PcrtOutPrint(hCore, " ... additional frames omitted in non-detailed mode ...\n");
-			break;
-		}
-
-		trace = trace->next;
-	}
-
-	trace = PcrtDestroyStackTrace(trace);
-
-	if(detailed) {
-		PcrtOutPrint(hCore, "\n");
-		PcrtOutPrint(hCore, "CPU Context at the time the exception occured:\n");
-
-		PcrtOutPrint(hCore, "  Flags : %p\n", ex->ContextRecord->ContextFlags);
-		
-		if(ex->ContextRecord->ContextFlags & CONTEXT_DEBUG_REGISTERS) {
-			PcrtOutPrint(hCore, "  DR0   : %p,", ex->ContextRecord->Dr0);
-			PcrtOutPrint(hCore, "  DR1   : %p,", ex->ContextRecord->Dr1);
-			PcrtOutPrint(hCore, "  DR2   : %p\n", ex->ContextRecord->Dr2);
-			PcrtOutPrint(hCore, "  DR3   : %p,", ex->ContextRecord->Dr3);
-			PcrtOutPrint(hCore, "  DR6   : %p,", ex->ContextRecord->Dr6);
-			PcrtOutPrint(hCore, "  DR7   : %p\n", ex->ContextRecord->Dr7);
-		}
-		
-		if(ex->ContextRecord->ContextFlags & CONTEXT_SEGMENTS) {
-			PcrtOutPrint(hCore, "  SegGS : %p,", ex->ContextRecord->SegGs);
-			PcrtOutPrint(hCore, "  SegFS : %p,", ex->ContextRecord->SegFs);
-			PcrtOutPrint(hCore, "  SegES : %p\n", ex->ContextRecord->SegEs);
-			PcrtOutPrint(hCore, "  SegDS : %p\n", ex->ContextRecord->SegDs);
-		}
-
-		if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
-			PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
-			PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
-			PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
-			PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
-			PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
-			PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
-		}
-
-		if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
-			PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
-			PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
-			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
-			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
-			PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
-			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
-		}
-	}
-
-	PcrtOutPrint(hCore, "\n");
-	PcrtOutPrint(hCore, "General Exception Information:\n");
-
-	PcrtOutPrint(hCore, "  Exception Code    : %p\n", ex->ExceptionRecord->ExceptionCode);
-	PcrtOutPrint(hCore, "  Exception Address : %p\n", ex->ExceptionRecord->ExceptionAddress);
-	PcrtOutPrint(hCore, "  Exception Flags   : %p (%s)\n", ex->ExceptionRecord->ExceptionFlags, (ex->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE ? "non-continueable" : "continueable"));
-	PcrtOutPrint(hCore, "  Nested Exception  : %p (%d at %p)\n", ex->ExceptionRecord->ExceptionRecord, (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionCode : 0), (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionAddress : 0));
-	PcrtOutPrint(hCore, "  Number of Params  : %d\n", ex->ExceptionRecord->NumberParameters);
-	
-	if(ex->ExceptionRecord->NumberParameters > 0) {
-		unsigned int i = 0;
-		PcrtOutPrint(hCore, "  Parameters:\n");
-
-		for(i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
-		{
-			PcrtOutPrint(hCore, "    [%d] %p\n", i, ex->ExceptionRecord->ExceptionInformation[i]);
-		}
-	}
-
-	PcrtOutPrint(hCore, "\n");
 	PcrtOutPrint(hCore, "Specific Exception Information:\n");
 
 	switch(ex->ExceptionRecord->ExceptionCode)
@@ -646,6 +539,111 @@ static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTE
 	case 0xE0434F4D:							PcrtOutPrint(hCore, "  Managed C++ (CLR) Exception.\n"); break;
 	default:									PcrtOutPrint(hCore, "  Unrecognized Structured Exception.\n"); break;
 	}
+
+	PcrtOutPrint(hCore, "\n");
+	PcrtOutPrint(hCore, "General Exception Information:\n");
+
+	PcrtOutPrint(hCore, "  Exception Code    : %p\n", ex->ExceptionRecord->ExceptionCode);
+	PcrtOutPrint(hCore, "  Exception Address : %p\n", ex->ExceptionRecord->ExceptionAddress);
+	PcrtOutPrint(hCore, "  Exception Flags   : %p (%s)\n", ex->ExceptionRecord->ExceptionFlags, (ex->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE ? "non-continueable" : "continueable"));
+	PcrtOutPrint(hCore, "  Nested Exception  : %p (%d at %p)\n", ex->ExceptionRecord->ExceptionRecord, (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionCode : 0), (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionAddress : 0));
+	PcrtOutPrint(hCore, "  Number of Params  : %d\n", ex->ExceptionRecord->NumberParameters);
+	
+	if(ex->ExceptionRecord->NumberParameters > 0) {
+		unsigned int i = 0;
+		PcrtOutPrint(hCore, "  Parameters:\n");
+
+		for(i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
+		{
+			PcrtOutPrint(hCore, "    [%d] %p\n", i, ex->ExceptionRecord->ExceptionInformation[i]);
+		}
+	}
+
+	if(detailed) {
+		PcrtOutPrint(hCore, "\n");
+		PcrtOutPrint(hCore, "CPU Context at the time the exception occured:\n");
+
+		PcrtOutPrint(hCore, "  Flags : %p\n", ex->ContextRecord->ContextFlags);
+		
+		if(ex->ContextRecord->ContextFlags & CONTEXT_DEBUG_REGISTERS) {
+			PcrtOutPrint(hCore, "  DR0   : %p,", ex->ContextRecord->Dr0);
+			PcrtOutPrint(hCore, "  DR1   : %p,", ex->ContextRecord->Dr1);
+			PcrtOutPrint(hCore, "  DR2   : %p\n", ex->ContextRecord->Dr2);
+			PcrtOutPrint(hCore, "  DR3   : %p,", ex->ContextRecord->Dr3);
+			PcrtOutPrint(hCore, "  DR6   : %p,", ex->ContextRecord->Dr6);
+			PcrtOutPrint(hCore, "  DR7   : %p\n", ex->ContextRecord->Dr7);
+		}
+		
+		if(ex->ContextRecord->ContextFlags & CONTEXT_SEGMENTS) {
+			PcrtOutPrint(hCore, "  SegGS : %p,", ex->ContextRecord->SegGs);
+			PcrtOutPrint(hCore, "  SegFS : %p,", ex->ContextRecord->SegFs);
+			PcrtOutPrint(hCore, "  SegES : %p\n", ex->ContextRecord->SegEs);
+			PcrtOutPrint(hCore, "  SegDS : %p\n", ex->ContextRecord->SegDs);
+		}
+
+		if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
+			PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
+			PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
+			PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
+			PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
+			PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
+			PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
+		}
+
+		if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
+			PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
+			PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
+			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
+			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
+			PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
+			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+		}
+	}
+
+	PcrtOutPrint(hCore, "\n");
+
+	//
+	// cannot use the PcrtPrintStackTrace, since we should not rely
+	// on the CRT working after an exception. the kernel functions
+	// should still work i guess ;)
+	//
+	trace = PcrtGetStackTraceFrom((void*)ex->ContextRecord->Ebp, (void*)ex->ContextRecord->Eip);
+
+	PcrtOutPrint(hCore, "Stack Layout at the time the exception occured:\n\n");
+
+	while(trace) {
+		//
+		// PcrtOutPrint does not know too extensive formatting stuff, so
+		// we have to do some of the work per pedes here.
+		//
+		modinfo_t mod = PcrtGetContainingModule(trace->eip);
+		char modname_aligned[ST_FW_MODULE + 2];
+		char * modname_unaligned = basename(mod.name);
+		long len = lstrlen(modname_unaligned);
+
+		if(len > ST_FW_MODULE)
+			len = ST_FW_MODULE;
+
+		memset(modname_aligned, ' ', sizeof(modname_aligned));
+		lstrcpyn(&modname_aligned[ST_FW_MODULE - len], modname_unaligned, ST_FW_MODULE + 1);
+
+		++num;
+
+		PcrtOutPrint(hCore, " [%s%d]", ( num < 100000 ? ( num < 10000 ? ( num < 1000 ? ( num < 100 ? ( num < 10 ? "     " : "    " ) : "   ") : "  ") : " ") : ""), num);
+		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n", modname_aligned, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
+
+		if(!trace->next)
+			break;
+
+		if(num >= STACKTRACE_MAX_NONDETAILED_FRAMES && !detailed) {
+			PcrtOutPrint(hCore, " ... additional frames omitted in non-detailed mode ...\n");
+			break;
+		}
+
+		trace = trace->next;
+	}
+
+	trace = PcrtDestroyStackTrace(trace);
 }
 
 static BOOL CALLBACK PcrtWriteModuleInformationCb(PCTSTR name, DWORD64 base, ULONG size, PVOID calldata)
@@ -677,7 +675,9 @@ static void PcrtWriteModulesInformation(HANDLE hCore)
 	hEnumModules(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
 }
 
-static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
+static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
+{
+	static int nested_count = 0;
 	HANDLE hCore;
 
 	if(GetEnvironmentVariableA("PCRT_ENABLE_CRASHBOXES", NULL, 0) == 0) {
@@ -709,6 +709,7 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 	case EXCEPTION_INT_DIVIDE_BY_ZERO:
 	case EXCEPTION_INT_OVERFLOW:
 	case EXCEPTION_INVALID_DISPOSITION:
+		// write coredump and abort
 		break;
 
 	case EXCEPTION_BREAKPOINT:
@@ -726,33 +727,27 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex) {
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 
-	hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if(nested_count++ == 0) {
+		hCore = CreateFile("core", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-	if(hCore == INVALID_HANDLE_VALUE) {
-		static int nested_count = 0;
-
-		hCore = GetStdHandle(STD_ERROR_HANDLE);
-
-		if(nested_count++ >= 3) {
-			PcrtOutPrint(hCore, "\nERROR: Too many nested exceptions!\n");
-			ExitProcess(1);
+		if(hCore == INVALID_HANDLE_VALUE) {
+			hCore = GetStdHandle(STD_ERROR_HANDLE);
+			PcrtOutPrint(hCore, "ERROR: internal nested exception:\n");
 		}
 
-		PcrtOutPrint(hCore, "ERROR: internal nested exception:\n");
+		PcrtWriteExceptionInformation(hCore, ex, 1);
+		PcrtOutPrint(hCore, "\n");
+		PcrtWriteModulesInformation(hCore);
+		PcrtOutPrint(hCore, "\nEnd of core file.\n");
+
+		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Exception %p at %p (core dumped)\n", ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
+
+		CloseHandle(hCore);
 	}
 
-	PcrtWriteExceptionInformation(hCore, ex, 1);
-	PcrtOutPrint(hCore, "\n");
-	PcrtWriteModulesInformation(hCore);
-	PcrtOutPrint(hCore, "\n");
-
-	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Exception %p at %p (core dumped)\n", ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
-
-	CloseHandle(hCore);
-
-	//
-	// this should result in process termination in most cases.
-	//
+	// abort on fatal exceptions
+	TerminateProcess(GetCurrentProcess(), 1);
+	ExitProcess(1);
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
