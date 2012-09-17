@@ -51,14 +51,34 @@ namespace parity
 				{
 					size_t entryLen = ::strlen(entry->option);
 
-					if(entryLen == 0 ||	(entryLen >= 1 && argvLen >= 1 && ((entry->option[0] == '-' && argv[i][0] == '-') ||
-						(entry->option[0] == '/' && (argv[i][0] == '-' || argv[i][0] == '/'))) &&
-						::strncmp(&entry->option[1], &argv[i][1], entryLen - 1) == 0) ||
-						(entry->option[0] == '.' && /* (breaks gcc abs. paths) argv[i][0] != '/' && */ argv[i][0] != '-' 
-							&& argvLen > entryLen && ::strncmp(entry->option, &argv[i][argvLen - entryLen], entryLen) == 0) ||
-						(entry->option[0] == '.' && /* (breaks gcc abs. paths) argv[i][0] != '/' && */ argv[i][0] != '-' 
-							&& argvLen > entryLen && ::strstr(argv[i], entry->option) && ::strstr(argv[i], entry->option)[entryLen] == '.') ||
-						(argvLen >= entryLen && ::strncmp(entry->option, argv[i], entryLen) == 0))
+					if ( entryLen == 0
+					  || ( ( ( entry->option[0] == '-'
+					        && argv[i][0] == '-'
+							)
+						  || ( entry->option[0] == '/'
+							&& ( argv[i][0] == '-'
+							  || argv[i][0] == '/'
+							  )
+							)
+						  )
+						&& ::strncmp(&entry->option[1], &argv[i][1], entryLen - 1) == 0
+						)
+					  || ( entry->option[0] == '.'
+//						&& argv[i][0] != '/' (breaks gcc abs. paths)
+						&& argv[i][0] != '-' 
+						&& argvLen > entryLen
+						&& ::strncmp(entry->option, &argv[i][argvLen - entryLen], entryLen) == 0
+						)
+					  || ( entry->option[0] == '.'
+//						&& argv[i][0] != '/' (breaks gcc abs. paths)
+						&& argv[i][0] != '-' 
+						&& argvLen > entryLen
+						&& ::strstr(argv[i], entry->option) && ::strstr(argv[i], entry->option)[entryLen] == '.'
+						)
+					  || ( argvLen >= entryLen
+						&& ::strncmp(entry->option, argv[i], entryLen) == 0
+						)
+					  )
 					{
 						const char* argument = 0;
 						bool argumentUsed = false;
