@@ -7,6 +7,20 @@ The most effort has been put into shared library handling, which now behaves nea
 parity ships with a little runtime enhancement library called parity.runtime. This library abstracts away the need to take care of what kind of paths are used. This means you can now give a UNIX-style path to an executable built with parity, and it will understand it. Previously this was not possible, and all Windows executables would need Windows-style paths to work.
 
 
+parity 1.2.6
+------------
+
+parity.runtime: Terminate process on fatal exceptions caught by parity.
+
+parity.runtime: Stop backtrace generation on obviously invalid stack pointer.
+
+parity.runtime: Stop backtrace generation at a depth of 100.
+
+parity.runtime: Reorder contents of core file, to be more readable hopefully.
+
+Stop matching ".a.c" or "x.a.c" and similar filenames as ".a"-argument.
+
+
 parity 1.2.5
 ------------
 
