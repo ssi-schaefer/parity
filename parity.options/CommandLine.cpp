@@ -69,13 +69,10 @@ namespace parity
 						&& argvLen > entryLen
 						&& ::strncmp(entry->option, &argv[i][argvLen - entryLen], entryLen) == 0
 						)
-					  || ( entry->option[0] == '.'
-//						&& argv[i][0] != '/' (breaks gcc abs. paths)
-						&& argv[i][0] != '-' 
-						&& argvLen > entryLen
-						&& ::strstr(argv[i], entry->option) && ::strstr(argv[i], entry->option)[entryLen] == '.'
-						)
-					  || ( argvLen >= entryLen
+					  || ( entry->option[0] != '.'
+					    && entry->option[0] != '-'
+					    && entry->option[0] != '/'
+					    && argvLen >= entryLen
 						&& ::strncmp(entry->option, argv[i], entryLen) == 0
 						)
 					  )
