@@ -745,9 +745,11 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 		CloseHandle(hCore);
 	}
 
-	// abort on fatal exceptions
-	TerminateProcess(GetCurrentProcess(), 1);
-	ExitProcess(1);
+	if (!IsDebuggerPresent()) {
+		// abort on fatal exceptions
+		TerminateProcess(GetCurrentProcess(), 1);
+		ExitProcess(1);
+	}
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
