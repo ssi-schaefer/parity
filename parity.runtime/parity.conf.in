@@ -29,7 +29,7 @@ PCRTInclude = @top_srcdir@/parity.runtime
 # both the static and shared runtimes.
 
 # Omit default library names from objects.
-CompilerDefaults = /nologo /Zl
+CompilerDefaults = /nologo /Zl /Z7
 
 # Don't use __declspec(import) for CRT symbols.
 Runtime = static

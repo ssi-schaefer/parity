@@ -33,6 +33,7 @@
 #include "internal/output.h"
 #include "libgen.h"
 
+#define EXCEPTION_DEBUG_OUT 0x40010006
 #define STACKTRACE_MAX_NONDETAILED_FRAMES 99
 
 extern void* _ReturnAddress();
@@ -487,7 +488,7 @@ modinfo_t PcrtGetContainingModule(void* addr)
 	return info;
 }
 
-static void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex, int detailed)
+void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex, int detailed)
 {
 	long num = 0;
 	stackframe_t* trace;
@@ -675,7 +676,7 @@ static void PcrtWriteModulesInformation(HANDLE hCore)
 	hEnumModules(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
 }
 
-static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
+LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 {
 	static int nested_count = 0;
 	HANDLE hCore;
@@ -745,11 +746,6 @@ static LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 		CloseHandle(hCore);
 	}
 
-	if (!IsDebuggerPresent()) {
-		// abort on fatal exceptions
-		TerminateProcess(GetCurrentProcess(), 1);
-		ExitProcess(1);
-	}
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
@@ -760,7 +756,7 @@ static LONG CALLBACK PcrtHandleExceptionTrace(struct _EXCEPTION_POINTERS* ex) {
 	//
 	// Only do something if we're enabled
 	//
-	if(hTraceFile == INVALID_HANDLE_VALUE)
+	if(hTraceFile == INVALID_HANDLE_VALUE || ex->ExceptionRecord->ExceptionCode == EXCEPTION_DEBUG_OUT)
 		return EXCEPTION_CONTINUE_SEARCH;
 
 	GetSystemTime(&time);
@@ -793,12 +789,6 @@ void PcrtSetupExceptionHandling()
 
 	if (!fAddVectoredExceptionHandler) {
 		return;
-	}
-	if(!fAddVectoredExceptionHandler(0, PcrtHandleException)) {
-		//
-		// i know, std streams...
-		//
-		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed to install exception handler!\n");
 	}
 
 	//
@@ -855,3 +845,4 @@ void PcrtSetupExceptionHandling()
 		}
 	}
 }
+

@@ -82,6 +82,8 @@ SymbolLookupType PcrtUseDebugSymbols();
 extern syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t);
 extern modinfo_t PcrtGetContainingModule(void* addr);
 extern void PcrtSetupExceptionHandling();
+extern void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex, int detailed);
+extern LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex);
 
 PCRT_END_C
 

@@ -67,12 +67,19 @@ namespace parity
 			//   83 C4 04			add			esp, 4 ; -- remove crt indicator
 			//   85 C0              test        eax,eax
 			//   75 02              jne         (2 bytes forward, call to real entry point)
-			//   EB 05              jmp         (5 bytes forward, to exit of function)
-			//   E8 00 00 00 00     call        <real entry point>
+			//   EB 0A              jmp         (10 bytes forward, to exit of function)
+			//   68 00 00 00 00     push offset <real entry point>
 			//
 			// last four bytes not included!
 			//
-			static const unsigned char dataExeEntryPart2[] = { 0x83, 0xC4, 0x04, 0x85, 0xC0, 0x75, 0x02, 0xEB, 0x05, 0xE8 };
+			static const unsigned char dataExeEntryPart2[] = { 0x83, 0xC4, 0x04, 0x85, 0xC0, 0x75, 0x02, 0xEB, 0x0A, 0x68 };
+
+			//
+			// part2a:
+			//   E8 00 00 00 00    call			PcrtCxxEhStartup
+			//
+			static const unsigned char dataExeEntryPart2a[] = { 0xE8 };
+
 			//
 			// part3:
 			//   5D                 pop         ebp

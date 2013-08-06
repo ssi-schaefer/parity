@@ -88,6 +88,14 @@ namespace parity
 			symRealEntry.setStorageClass(binary::Symbol::ClassExternal);
 			symRealEntry.setType(binary::Symbol::ComplexFunction);
 
+			//
+			// extern definition for PcrtCxxEhStartup.
+			//
+			binary::Symbol& symCxxEhEntry = hdr.addSymbol("_PcrtCxxEhStartup");
+			symCxxEhEntry.setSectionNumber(0);
+			symCxxEhEntry.setStorageClass(binary::Symbol::ClassExternal);
+			symCxxEhEntry.setType(binary::Symbol::ComplexFunction);
+
 			std::string ename = "ParityPcrtInitEntry";
 
 			if(ctx.getSharedLink())
@@ -134,9 +142,17 @@ namespace parity
 				
 				sectText.markRelocation(symPcrtInit, binary::Relocation::i386Relative32);
 				sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
+
+				// push real entry point
 				sectText.addData(dataExeEntryPart2, sizeof(dataExeEntryPart2));
-				sectText.markRelocation(symRealEntry, binary::Relocation::i386Relative32);
+				sectText.markRelocation(symRealEntry, binary::Relocation::i386Direct32);
 				sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
+				
+				//PcrtCxxEhStartup
+				sectText.addData(dataExeEntryPart2a, sizeof(dataExeEntryPart2a));
+				sectText.markRelocation(symCxxEhEntry, binary::Relocation::i386Relative32);
+				sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
+
 				sectText.addData(dataExeEntryPart3, sizeof(dataExeEntryPart3));
 
 				sectText.padSection();
