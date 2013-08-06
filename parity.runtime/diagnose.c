@@ -546,21 +546,22 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 
 	PcrtOutPrint(hCore, "  Exception Code    : %p\n", ex->ExceptionRecord->ExceptionCode);
 	PcrtOutPrint(hCore, "  Exception Address : %p\n", ex->ExceptionRecord->ExceptionAddress);
-	PcrtOutPrint(hCore, "  Exception Flags   : %p (%s)\n", ex->ExceptionRecord->ExceptionFlags, (ex->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE ? "non-continueable" : "continueable"));
-	PcrtOutPrint(hCore, "  Nested Exception  : %p (%d at %p)\n", ex->ExceptionRecord->ExceptionRecord, (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionCode : 0), (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionAddress : 0));
-	PcrtOutPrint(hCore, "  Number of Params  : %d\n", ex->ExceptionRecord->NumberParameters);
-	
-	if(ex->ExceptionRecord->NumberParameters > 0) {
-		unsigned int i = 0;
-		PcrtOutPrint(hCore, "  Parameters:\n");
-
-		for(i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
-		{
-			PcrtOutPrint(hCore, "    [%d] %p\n", i, ex->ExceptionRecord->ExceptionInformation[i]);
-		}
-	}
 
 	if(detailed) {
+		PcrtOutPrint(hCore, "  Exception Flags   : %p (%s)\n", ex->ExceptionRecord->ExceptionFlags, (ex->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE ? "non-continueable" : "continueable"));
+		PcrtOutPrint(hCore, "  Nested Exception  : %p (%d at %p)\n", ex->ExceptionRecord->ExceptionRecord, (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionCode : 0), (ex->ExceptionRecord->ExceptionRecord ? ex->ExceptionRecord->ExceptionRecord->ExceptionAddress : 0));
+		PcrtOutPrint(hCore, "  Number of Params  : %d\n", ex->ExceptionRecord->NumberParameters);
+		
+		if(ex->ExceptionRecord->NumberParameters > 0) {
+			unsigned int i = 0;
+			PcrtOutPrint(hCore, "  Parameters:\n");
+
+			for(i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
+			{
+				PcrtOutPrint(hCore, "    [%d] %p\n", i, ex->ExceptionRecord->ExceptionInformation[i]);
+			}
+		}
+
 		PcrtOutPrint(hCore, "\n");
 		PcrtOutPrint(hCore, "CPU Context at the time the exception occured:\n");
 
@@ -676,6 +677,10 @@ static void PcrtWriteModulesInformation(HANDLE hCore)
 	hEnumModules(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
 }
 
+//
+// Handler that writes a core file out of an exception. This handler should
+// only be called immediately before terminating the application.
+//
 LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 {
 	static int nested_count = 0;
@@ -692,27 +697,6 @@ LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 
 	switch(ex->ExceptionRecord->ExceptionCode)
 	{
-	case EXCEPTION_ACCESS_VIOLATION:
-	case EXCEPTION_IN_PAGE_ERROR:
-	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-	case EXCEPTION_ILLEGAL_INSTRUCTION:
-	case EXCEPTION_STACK_OVERFLOW:
-	case EXCEPTION_PRIV_INSTRUCTION:
-	case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-	case EXCEPTION_DATATYPE_MISALIGNMENT:
-	case EXCEPTION_FLT_DENORMAL_OPERAND:
-	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-	case EXCEPTION_FLT_INEXACT_RESULT:
-	case EXCEPTION_FLT_INVALID_OPERATION:
-	case EXCEPTION_FLT_OVERFLOW:
-	case EXCEPTION_FLT_STACK_CHECK:
-	case EXCEPTION_FLT_UNDERFLOW:
-	case EXCEPTION_INT_DIVIDE_BY_ZERO:
-	case EXCEPTION_INT_OVERFLOW:
-	case EXCEPTION_INVALID_DISPOSITION:
-		// write coredump and abort
-		break;
-
 	case EXCEPTION_BREAKPOINT:
 	case EXCEPTION_SINGLE_STEP:
 		//
@@ -721,10 +705,6 @@ LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 		if(!IsDebuggerPresent()) {
 			SetErrorMode(SetErrorMode(0) & ~SEM_NOGPFAULTERRORBOX);
 		}
-		return EXCEPTION_CONTINUE_SEARCH;
-
-	default:
-		/* those exceptions are not handled (includes C++ exceptions) */
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 
@@ -744,8 +724,14 @@ LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Exception %p at %p (core dumped)\n", ex->ExceptionRecord->ExceptionCode, ex->ExceptionRecord->ExceptionAddress);
 
 		CloseHandle(hCore);
+		--nested_count;
 	}
 
+	// the handler "would" be transparent (i.e. writing a core file is 
+	// not "handling" the exception). However still, this function should
+	// not be registered directly with microsofts runtime, but rather be
+	// called "manually" from another handler that "really" handles
+	// things (i.e. terminate the process).
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
