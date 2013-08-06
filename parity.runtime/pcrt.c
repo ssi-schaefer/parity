@@ -36,8 +36,6 @@
 
 #define RING_SIZE 8
 
-extern int PcrtCxxInitDummy();
-
 typedef void (*cygwin_init_func_t)();
 typedef void (*cygwin_conv_func_t)(const char*, char*);
 

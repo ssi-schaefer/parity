@@ -8,7 +8,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		COPYING.LESSER = COPYING.LESSER
 		parity.conf.in = parity.conf.in
 		parity.conf.psx.in = parity.conf.psx.in
-		ReleaseNotes.txt = ReleaseNotes.txt
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parity.options", "parity.options\parity.options.vcproj", "{47113F7B-E0B6-4522-943A-FA1AC30CD860}"
@@ -108,10 +107,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "parity.doc", "parity.doc", 
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Managed Debug|Win32 = Managed Debug|Win32
@@ -289,5 +284,9 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FA4388DC-A374-4EE2-9752-2F8A05A8C3CC} = {244C46AE-9C21-4DA8-A4FD-DD768B63FC76}
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
 	EndGlobalSection
 EndGlobal

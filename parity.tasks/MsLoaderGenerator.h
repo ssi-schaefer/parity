@@ -81,6 +81,12 @@ namespace parity
 			static const unsigned char dataExeEntryPart2a[] = { 0xE8 };
 
 			//
+			// part2b: (for loader entry)
+			//   combination of 2 and 2a: don't push and jump but directly jump.
+			//
+			static const unsigned char dataExeEntryPart2b[] = { 0x83, 0xC4, 0x04, 0x85, 0xC0, 0x75, 0x02, 0xEB, 0x0A, 0xE8 };
+
+			//
 			// part3:
 			//   5D                 pop         ebp
 			//   C3                 ret

@@ -567,7 +567,7 @@ namespace parity
 					}
 					sectText.markRelocation(symLoaderInit, binary::Relocation::i386Relative32);
 					sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
-					sectText.addData(dataExeEntryPart2, sizeof(dataExeEntryPart2));
+					sectText.addData(dataExeEntryPart2b, sizeof(dataExeEntryPart2b));
 					sectText.markRelocation(symRealEntry, binary::Relocation::i386Relative32);
 					sectText.addData(dataEmptyPtr, sizeof(dataEmptyPtr));
 					sectText.addData(dataExeEntryPart3, sizeof(dataExeEntryPart3));

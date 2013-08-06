@@ -320,6 +320,10 @@
 				Name="internal"
 				>
 				<File
+					RelativePath=".\cxxeh.cc"
+					>
+				</File>
+				<File
 					RelativePath=".\diagnose.c"
 					>
 				</File>
