@@ -32,5 +32,12 @@
 #  include RUNTIME_INC(Time.h)
 #pragma pop_macro("_POSIX_")
 
+PCRT_BEGIN_C
+
+extern size_t _pcrt_strftime_safe(char* buf, size_t size, const char* fmt, const struct tm* time);
+#define strftime _pcrt_strftime_safe
+
+PCRT_END_C
+
 #endif
 

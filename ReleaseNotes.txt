@@ -13,6 +13,10 @@ parity.runtime: greatly improve exception handling, both for SEH and (especially
 
 parity.runtime: introduce new entry point wrapper that wraps application code into the new exception handling
 
+parity.runtime: introduce "safer" version of strftime - don't choke on zeroe'd out struct tm
+
+parity.runtime: add invalid parameter handler for C-runtime which gives console feedback.
+
 Add required code to generate "better" entry point code that forwards initialization to the new PcrtCxxEhStartup
 
 parity 1.2.6

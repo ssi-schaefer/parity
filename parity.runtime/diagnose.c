@@ -686,15 +686,6 @@ LONG CALLBACK PcrtHandleException(struct _EXCEPTION_POINTERS* ex)
 	static int nested_count = 0;
 	HANDLE hCore;
 
-	if(GetEnvironmentVariableA("PCRT_ENABLE_CRASHBOXES", NULL, 0) == 0) {
-		//
-		// Disable various error boxes, which we no longer need,
-		// as we create core files after seting up exception
-		// handling.
-		//
-		SetErrorMode(SetErrorMode(0) | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
-	}
-
 	switch(ex->ExceptionRecord->ExceptionCode)
 	{
 	case EXCEPTION_BREAKPOINT:

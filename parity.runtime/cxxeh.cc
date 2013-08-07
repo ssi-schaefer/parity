@@ -25,6 +25,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <process.h>
 #include <windows.h>
 #include "internal/output.h"
@@ -105,6 +106,13 @@ static LONG CALLBACK PcrtUnhandledException(struct _EXCEPTION_POINTERS* ex) {
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
+static void PcrtInvalidCRTParameter(const wchar_t* exp, const wchar_t* func, const wchar_t* file, unsigned int line, uintptr_t pRes) {
+	// arguments only valid on DEBUG CRT! for now, ignore them.
+	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Invalid parameter to C-Runtime function detected. Terminating.\n");
+	PcrtBreakIfDebugged();
+	terminate();
+}
+
 //
 // Runs the real entry point given to the linker, guarding it with a __try
 // __except to catch any exceptions that happen to fly by. This prevents the
@@ -114,6 +122,17 @@ static LONG CALLBACK PcrtUnhandledException(struct _EXCEPTION_POINTERS* ex) {
 //
 static int PcrtCxxEhRunEntryGuarded(int(*realEntry)()) {
 	__try {
+		if(GetEnvironmentVariableA("PCRT_ENABLE_CRASHBOXES", NULL, 0) == 0) {
+			//
+			// Disable various error boxes, which we no longer need,
+			// as we create core files after seting up exception
+			// handling.
+			//
+			SetErrorMode(SetErrorMode(0) | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+		}
+
+		_set_invalid_parameter_handler(PcrtInvalidCRTParameter);
+
 		return realEntry();
 	} __except(PcrtUnhandledException(GetExceptionInformation())) {
 		PcrtBreakIfDebugged();
