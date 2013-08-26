@@ -60,6 +60,8 @@ const char* PcrtPathToNative(const char* ptr) {
 	if(pRing[iRingNum])
 		HeapFree(GetProcessHeap(), 0, pRing[iRingNum]);
 
+	pRing[iRingNum] = NULL;
+
 	//
 	// try converting ourselves if possible.
 	//
