@@ -1,11 +1,7 @@
 import re
 
 PACKAGE_NAME('parity')
-PACKAGE_VERSION(re.sub(
-	r'^.*/(?:(?:[^-]*-)*([^/]*))/Confix2\.pkg.*$'
-	, r'\1'
-	, '$URL$'
-))
+PACKAGE_VERSION('1.3.0')
 
 from libconfix.setups.boilerplate import AutoBoilerplate
 from libconfix.setups.c import AutoC
