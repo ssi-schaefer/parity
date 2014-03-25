@@ -12,3 +12,17 @@
 /aclocal.m4
 /confix-admin
 /parity.suo
+CMakeLists.txt
+Makefile.am
+Makefile.in
+Makefile
+.deps
+config.h
+config.log
+config.status
+*.swp
+*.swo
+__parity.*
+parity.conf
+stamp-h1
+
