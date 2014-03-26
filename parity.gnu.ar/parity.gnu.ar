@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# TODO: this is merely a hack to get things rolling - implement as real part of parity.
+
+opts="$1"
+archive="$2"
+
+shift
+shift
+
+_verbose=no
+_test=no
+_warn_create=yes
+_extract=no
+_delete=no
+_replace=no
+
+for letter in $(echo "${opts}" | grep -o .); do
+    case "${letter}" in
+    v) _verbose=yes     ;;
+    d) _delete=yes      ;;
+    t) _test=yes        ;;
+    c) _warn_create=no  ;;
+    r) _replace=yes     ;;
+    x) _extract=yes     ;;
+    u|o|f) echo "warn: ignoring unsupported option '$letter'" ;;
+    *) { echo "unrecognized option '$letter'"; exit 1; } ;;
+    esac
+done
+
+_action_cnt=0
+[[ ${_test} == yes ]] && ((_action_cnt++))
+[[ ${_extract} == yes ]] && ((_action_cnt++))
+[[ ${_delete} == yes ]] && ((_action_cnt++))
+[[ ${_replace} == yes ]] && ((_action_cnt++))
+
+if [[ ${_action_cnt} -gt 1 ]]; then
+    echo "more than one action given (${_action_cnt}), not valid!"
+    exit 1
+fi
+
+LIB="lib.exe /nologo"
+
+if [[ ${_test} == yes ]]; then
+    ${LIB} /LIST "${archive}"
+elif [[ ${_replace} == yes ]]; then
+    [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
+    ${LIB} "/OUT:${archive}" "$@"
+elif [[ ${_extract} == yes ]]; then
+    members=()
+    for x in "$@"; do
+        members[${#members[@]}]="/EXTRACT:${x}"
+    done
+    ${LIB} "${archive}" "${members[@]}"
+elif [[ ${_delete} == yes ]]; then
+    tmplib="${archive}.old"
+    mv "${archive}" "${tmplib}"
+    members=()
+    for x in "$@"; do
+        members[${#members[@]}]="/REMOVE:${x}"
+    done
+    ${LIB} "/OUT:${archive}" "${tmplib}" "${members[@]}"
+fi
