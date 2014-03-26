@@ -43,6 +43,9 @@
 #  include <config.h>
 #endif
 
+#define WAIT_SLEEP_USEC 2000
+#define WAIT_SLEEP_RETRIES 1000
+
 namespace parity
 {
 	namespace tasks
@@ -247,12 +250,29 @@ namespace parity
 			//
 			if(!context.getSources().empty())
 			{
-				//threading.run(TaskStubs::runCompiler);
 				if(TaskStubs::runCompiler(0) != 0)
 				{
 					utils::Log::error("error executing compiler!\n");
 					exit(1);
 				}
+
+                if(context.getWaitForOutputFile()) {
+                    utils::PathVector& paths = context.getObjectsLibraries();
+                    utils::PathVector::iterator pos;
+
+                    for(pos = paths.begin(); pos != paths.end(); ++pos)
+                    {   
+                        int count = 0;
+                        while(!pos->exists() && count <= WAIT_SLEEP_RETRIES) {
+                            count++;
+                            usleep(WAIT_SLEEP_USEC);
+                        }
+
+                        if(count >= WAIT_SLEEP_RETRIES) {
+                            utils::Log::error("cannot await appearing of %s\n", pos->get().c_str());
+                        }
+                    }
+                }
 			}
 
 			if(context.getCompileOnly())
@@ -474,6 +494,18 @@ namespace parity
 				utils::Log::error("cannot run linker!\n");
 				exit(1);
 			}
+
+            if(ctx.getWaitForOutputFile()) {
+                int count = 0;
+                while(!ctx.getOutputFile().exists() && count <= WAIT_SLEEP_RETRIES) {
+                    count++;
+                    usleep(WAIT_SLEEP_USEC);
+                }
+
+                if(count >= WAIT_SLEEP_RETRIES) {
+                    utils::Log::error("cannot await appearing of %s\n", ctx.getOutputFile().get().c_str());
+                }
+            }
 		}
 	}
 }
