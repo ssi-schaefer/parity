@@ -24,6 +24,7 @@
 #define __THREADING_H__
 
 #include <map>
+#include <config.h>
 
 #ifdef _WIN32
 #  include <windows.h>
@@ -46,7 +47,11 @@
 // another thing to consider with threads is shared memory, and
 // the various singletons used in parity!
 //
-#define POSIX_THREADING_MODEL POSIX_FORK
+#if defined(linux) && defined(HAVE_PTHREAD)
+#  define POSIX_THREADING_MODEL POSIX_NONE
+#else
+#  define POSIX_THREADING_MODEL POSIX_FORK
+#endif
 
 namespace parity
 {

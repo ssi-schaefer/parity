@@ -28,6 +28,9 @@
 #include <sys/timeb.h>
 #include <cstdlib>
 #include <sstream>
+#include <cerrno>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #ifdef _WIN32
 #  include <windows.h>
@@ -50,6 +53,16 @@
 
 #ifdef __CYGWIN__
 #  include <sys/cygwin.h>
+#endif
+
+#if defined(__INTERIX) || defined(__CYGWIN__) || defined(_WIN32)
+#  define USE_LIBRARIES
+#elif defined(linux)
+#  define USE_NOCONV
+#elif defined(HAVE_UNIXPATH2WIN) && defined(HAVE_WINPATH2UNIX)
+#  define USE_EXEC
+#else
+#  error no path conversion available
 #endif
 
 #ifndef PATH_MAX
@@ -222,27 +235,29 @@ namespace parity
 
 		bool Path::isNative() const 
 		{
-			#ifdef __INTERIX
-				/* native:  unix style paths,
-				 * foreign: windows style paths */
-				return isUnix();
-			#elif defined(__CYGWIN__)
-				/* Theiretically cygwin understands both, so we could
-				 * use isWindows() here to save conversion time. */
-				return isUnix();
-			#else
+            #if defined(USE_NOCONV)
+                return true;
+			#elif defined(_WIN32)
 				/* native:  windows style paths,
 				 * foreign: windows style paths */
 				return isWindows();
+            #else
+				/* native:  unix style paths,
+				 * foreign: windows style paths */
+                return isUnix();
 			#endif
 		}
 
 		bool Path::isForeign() const
 		{
-			if(isBackendWindows())
-				return isWindows();
-			else
-				return isUnix();
+            #if defined(USE_NOCONV)
+                return true;
+            #else
+                if(isBackendWindows())
+                    return isWindows();
+                else
+                    return isUnix();
+            #endif
 		}
 
 		bool Path::isFile() const
@@ -721,18 +736,19 @@ namespace parity
 			#endif
 		}
 
+		#ifndef _WIN32
+		# define PTH_MAYBE_UNUSED(x)
+		#else
+		# define PTH_MAYBE_UNUSED(x) x
+		#endif
+
+    #ifdef USE_LIBRARIES
 		typedef char* (__stdcall * psx3_unixpath2win_func_t)(const char*, int, char*, size_t);
 		typedef int   (* psx5_unixpath2win_func_t)(const char*, int, char*, size_t);
 		typedef void  (*cygwin_init_func_t)();
 		typedef void  (*cygwin_conv_func_t)(const char*, char*);
 
 		bool Path::convert_ = true;
-
-		#ifndef _WIN32
-		# define PTH_MAYBE_UNUSED(x)
-		#else
-		# define PTH_MAYBE_UNUSED(x) x
-		#endif
 
 		bool Path::convertGeneric(bool PTH_MAYBE_UNUSED(bWindows))
 		{
@@ -924,6 +940,57 @@ namespace parity
 				return true;
 			}
 		}
+    #elif defined(USE_EXEC)
+		bool Path::convertGeneric(bool bWindows)
+		{
+            int pfd[2];
+
+            if((bWindows && isWindows()) || (!bWindows && isUnix())) {
+                return true;
+            }
+
+            pipe(pfd);
+
+            pid_t child = fork();
+            if(child == -1) {
+                utils::Log::error("failed to vfork for path conversion: %s\n", strerror(errno));
+            } else if(child == 0) {
+                // child
+                close(pfd[0]);
+                dup2(pfd[1], 1); // send stdout to pipe
+                dup2(pfd[1], 2); // send stderr to pipe
+
+                const char* exe = bWindows ? "unixpath2win" : "winpath2unix";
+                if(execlp(exe, exe, path_.c_str(), NULL) == -1) {
+                    utils::Log::error("failed to exec: %d - %s\n", errno, strerror(errno));
+                }
+            } else {
+                // parent
+                char buffer[4096];
+                close(pfd[1]);
+
+                int ret = read(pfd[0], buffer, sizeof(buffer));
+                close(pfd[0]);
+
+                if(ret == -1) {
+                    utils::Log::error("failed to read result from path conversion: %s\n", strerror(errno));
+                } else {
+                    char* nl = strchr(buffer, '\n');
+                    if(nl) {
+                        *nl = 0;
+                    }
+                    utils::Log::warning("conv: %s -> %s\n", path_.c_str(), buffer);
+                    path_ = buffer;
+                }
+            }
+            return false;
+        }
+    #elif defined(USE_NOCONV)
+		bool Path::convertGeneric(bool bWindows)
+		{
+            return true;
+        }
+    #endif
 
 		bool Path::isWindows() const
 		{

@@ -254,18 +254,21 @@ AC_DEFUN([PARITY_CONFIGURE],
 	if test -n "$MsvcRoot71"; then
 		MsvcRoot="$MsvcRoot71/Vc7"
 		MsvcVersion=0x0701
+        AC_DEFINE([MSVC_VERSION], [0x0701], [Version of Visual Studio building for])
 	elif test -n "$MsvcRoot80"; then
 		MsvcRoot="$MsvcRoot80/VC"
 		MsvcVersion=0x0800
+        AC_DEFINE([MSVC_VERSION], [0x0800], [Version of Visual Studio building for])
 	elif test -n "$MsvcRoot90"; then
 		MsvcRoot="$MsvcRoot90/VC"
 		MsvcVersion=0x0900
+        AC_DEFINE([MSVC_VERSION], [0x0900], [Version of Visual Studio building for])
 	elif test -n "$MsvcRoot100"; then
 		MsvcRoot="$MsvcRoot100/VC"
 		MsvcVersion=0x1000
+        AC_DEFINE([MSVC_VERSION], [0x1000], [Version of Visual Studio building for])
 	fi
 
-	AC_DEFINE([MSVC_VERSION], [$MsvcVersion], [Version of Visual Studio building for])
 	AC_MSG_RESULT([$MsvcVersion])
 
 	MsSdkDir=
@@ -331,6 +334,23 @@ AC_DEFUN([PARITY_CONFIGURE],
 	#
 	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
 
+    #
+    # Check for availability of path conversion scripts/executables
+    #
+    AC_MSG_CHECKING([for winpath2unix])
+    w2u=$(type winpath2unix)
+    if test -n "$w2u"; then
+        AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
+    fi
+    AC_MSG_RESULT([$w2u])
+
+    AC_MSG_CHECKING([for unixpath2win])
+    u2w=$(type unixpath2win)
+    if test -n "$u2w"; then
+        AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
+    fi
+    AC_MSG_RESULT([$u2w])
+
 	#
 	# Finally Substitute Variables
 	#
@@ -358,5 +378,9 @@ ACINCLUDE_M4(lines=[acm4])
 CONFIGURE_AC(
 	lines=['PARITY_CONFIGURE'],
 	order=AC_PROGRAMS)
+
+CONFIGURE_AC(
+    lines=['ACX_PTHREAD'],
+    order=AC_PROGRAMS)
 
 MAKEFILE_AM(line='sysconf_DATA=parity.conf')

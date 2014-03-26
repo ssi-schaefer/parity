@@ -111,7 +111,7 @@ namespace parity
 				#ifdef _WIN32
 					| _O_BINARY
 				#endif
-				);
+				, 0664);
 
 			if(fd == -1)
 				throw Exception("Cannot open %s: %s", dest.get().c_str(), strerror(errno));
