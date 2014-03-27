@@ -372,7 +372,7 @@ namespace parity
 
 			utils::Log::verbose("changing mode of %s.\n", out.get().c_str());
 
-			if(out.exists())
+			if(out.waitForAppearance())
 				out.mode(0777);
 			else
 				throw utils::Exception("missing output from linker: %s", out.get().c_str());
@@ -389,7 +389,7 @@ namespace parity
 				
 				exp = outFile.substr(0, outFile.rfind('.')) + ".exp";
 
-				if(exp.exists())
+				if(exp.waitForAppearance())
 					ctx.getTemporaryFiles().push_back(exp);
 
 				if(!ctx.getSharedLink())
@@ -398,7 +398,7 @@ namespace parity
 					// executable may produce .lib file in some cases
 					//
 					utils::Path lib = outFile.substr(0, outFile.rfind('.')) + ".lib";
-					if(lib.exists())
+					if(lib.waitForAppearance())
 						ctx.getTemporaryFiles().push_back(lib);
 				} else {
 					//
@@ -416,7 +416,7 @@ namespace parity
 			utils::Path manifest = out.get() + ".mf";
 			utils::Log::verbose("looking for manifest: %s\n", manifest.get().c_str());
 
-			if(manifest.exists() && ctx.getBackendType() == utils::ToolchainMicrosoft)
+			if(manifest.waitForAppearance() && ctx.getBackendType() == utils::ToolchainMicrosoft)
 			{
 				//
 				// embed manifest

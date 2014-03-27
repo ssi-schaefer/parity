@@ -73,6 +73,9 @@
 #  endif
 #endif
 
+#define WAIT_SLEEP_USEC 4000
+#define WAIT_SLEEP_RETRIES 2000
+
 namespace parity
 {
 	namespace utils
@@ -1062,6 +1065,23 @@ namespace parity
 		{
 			return !isBackendWindows();
 		}
+
+        bool Path::waitForAppearance() const
+        {
+			Context& ctx = Context::getContext();
+
+            if(!ctx.getWaitForOutputFile() && !exists()) {
+                return false;
+            }
+
+            int count = 0;
+            while(!exists() && count <= WAIT_SLEEP_RETRIES) {
+                ++count;
+                usleep(WAIT_SLEEP_USEC);
+            }
+
+            return count <= WAIT_SLEEP_RETRIES;
+        }
 
 	}
 }

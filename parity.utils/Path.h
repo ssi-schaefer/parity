@@ -61,6 +61,7 @@ namespace parity
 
 			bool exists() const;
 			bool remove() const;
+            bool waitForAppearance() const;
 	
 			bool createPath() const;
 

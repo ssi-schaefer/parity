@@ -39,6 +39,13 @@ if [[ ${_action_cnt} -gt 1 ]]; then
     exit 1
 fi
 
+function wait_for() {
+    local f="$1"
+    while [[ ! -e "${f}" ]]; do
+        sleep 0.1
+    done
+}
+
 LIB="lib.exe /nologo"
 
 if [[ ${_test} == yes ]]; then
@@ -46,18 +53,24 @@ if [[ ${_test} == yes ]]; then
 elif [[ ${_replace} == yes ]]; then
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
     ${LIB} "/OUT:${archive}" "$@"
+    wait_for "${archive}"
 elif [[ ${_extract} == yes ]]; then
     members=()
+    waitFor="$1"
     for x in "$@"; do
         members[${#members[@]}]="/EXTRACT:${x}"
     done
     ${LIB} "${archive}" "${members[@]}"
+    wait_for "${waitFor}"
 elif [[ ${_delete} == yes ]]; then
     tmplib="${archive}.old"
     mv "${archive}" "${tmplib}"
     members=()
+    waitFor="$1"
     for x in "$@"; do
         members[${#members[@]}]="/REMOVE:${x}"
     done
     ${LIB} "/OUT:${archive}" "${tmplib}" "${members[@]}"
+    wait_for "${waitFor}"
 fi
+
