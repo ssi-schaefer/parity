@@ -47,11 +47,7 @@
 // another thing to consider with threads is shared memory, and
 // the various singletons used in parity!
 //
-#if defined(linux) && defined(HAVE_PTHREAD)
-#  define POSIX_THREADING_MODEL POSIX_NONE
-#else
-#  define POSIX_THREADING_MODEL POSIX_FORK
-#endif
+#define POSIX_THREADING_MODEL POSIX_FORK
 
 namespace parity
 {

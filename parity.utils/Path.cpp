@@ -1074,11 +1074,15 @@ namespace parity
                 return false;
             }
 
+            utils::Log::verbose("waiting for %s\n", get().c_str());
+
             int count = 0;
             while(!exists() && count <= WAIT_SLEEP_RETRIES) {
                 ++count;
                 usleep(WAIT_SLEEP_USEC);
             }
+
+            utils::Log::verbose("waited %d times (%d ms)\n", count, (WAIT_SLEEP_USEC * count) / 1000);
 
             return count <= WAIT_SLEEP_RETRIES;
         }
