@@ -60,6 +60,12 @@ elif [[ ${_extract} == yes ]]; then
     for x in "$@"; do
         members[${#members[@]}]="/EXTRACT:${x}"
     done
+    if [[ ${#members[@]} -eq 0 ]]; then
+        # no memebers given, extract all
+        for x in $(${LIB} /LIST "${archive}"); do
+            members[${#members[@]}]="$(echo "/EXTRACT:${x}" | tr -d '\r')"
+        done
+    fi
     ${LIB} "${archive}" "${members[@]}"
     [[ -n "${wait_for}" ]] && wait_for "${waitFor}"
     [[ -z "${wait_for}" ]] && sleep 1 # safety... :(

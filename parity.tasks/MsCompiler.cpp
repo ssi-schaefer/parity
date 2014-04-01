@@ -233,11 +233,13 @@ namespace parity
 			if(!tsk.execute(executable, vec))
 				throw utils::Exception("cannot execute %s", executable.get().c_str());
 
-            if(!output.waitForAppearance()) {
-                throw utils::Exception("cannot await appearance of %s\n", output.get().c_str());
+            if(!output.get().length() < 1) {
+                output.toNative();
+                if(!output.waitForAppearance()) {
+                    throw utils::Exception("cannot await appearance of %s\n", output.get().c_str());
+                }
+                output.mode(0777);
             }
-			output.toNative();
-			output.mode(0777);
 		}
 
 		void MsCompiler::prepareGenericFile(utils::Path file, utils::Task::ArgumentVector& vec, utils::LanguageType lang)
