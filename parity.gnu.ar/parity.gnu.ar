@@ -61,16 +61,15 @@ elif [[ ${_extract} == yes ]]; then
         members[${#members[@]}]="/EXTRACT:${x}"
     done
     ${LIB} "${archive}" "${members[@]}"
-    wait_for "${waitFor}"
+    [[ -n "${wait_for}" ]] && wait_for "${waitFor}"
+    [[ -z "${wait_for}" ]] && sleep 1 # safety... :(
 elif [[ ${_delete} == yes ]]; then
     tmplib="${archive}.old"
     mv "${archive}" "${tmplib}"
     members=()
-    waitFor="$1"
     for x in "$@"; do
         members[${#members[@]}]="/REMOVE:${x}"
     done
     ${LIB} "/OUT:${archive}" "${tmplib}" "${members[@]}"
-    wait_for "${waitFor}"
 fi
 
