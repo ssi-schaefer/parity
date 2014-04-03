@@ -1,1 +1,2 @@
 ADD_SCRIPT(filename='parity.gnu.ar')
+ADD_SCRIPT(filename='parity.gnu.ranlib')
