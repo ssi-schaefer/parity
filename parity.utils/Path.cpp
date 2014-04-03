@@ -94,10 +94,14 @@ namespace parity
 			// hopefully no more required...
 			//::memset(&stat_, 0, sizeof(stat_));
 
-			if(!path_.empty())
-				expand();
-
-			resolveLink();
+			if(!path_.empty()
+            #ifdef USE_NOCONV
+                && !isAbsolute() // when using no conversion, only expand if the path is not absolute
+            #endif
+            )
+				expand(); // calls resolveLink()!
+            else
+                resolveLink();
 		}
 
 		#ifdef _WIN32
@@ -318,15 +322,15 @@ namespace parity
 			if(path_.empty())
 				return false;
 
-			#ifdef _WIN32
-			#  define access _access
-			#endif
+            if(!stated_)
+			{
+				if(stat(path_.c_str(), const_cast<struct stat*>(&stat_)) == -1)
+					return false;
 
-			return (access(path_.c_str(), 0) == 0);
+				*(const_cast<bool*>(&stated_)) = true;
+			}
 
-			#ifdef access
-			#  undef access
-			#endif
+            return true;
 		}
 
 		bool Path::remove() const
@@ -1085,6 +1089,23 @@ namespace parity
             utils::Log::verbose("waited %d times (%d ms)\n", count, (WAIT_SLEEP_USEC * count) / 1000);
 
             return count <= WAIT_SLEEP_RETRIES;
+        }
+
+        bool Path::isAbsolute() const
+        {
+            bool isWin = isWindows();
+            bool isUnx = isUnix();
+            int len = get().length();
+            if((isWin && len < 2) || (isUnx && len < 1)) {
+                return false;
+            }
+            char const* str = get().c_str();
+            if(isWin && str[1] == ':') {
+                return true;
+            } else if (isUnx && str[0] == '/') {
+                return true;
+            }
+            return false;
         }
 
 	}

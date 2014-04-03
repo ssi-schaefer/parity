@@ -56,6 +56,8 @@ namespace parity
 			bool isNative() const;
 			bool isForeign() const;
 
+            bool isAbsolute() const;
+
 			bool isFile() const;
 			bool isDirectory() const;
 
