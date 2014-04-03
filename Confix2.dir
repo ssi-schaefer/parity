@@ -201,11 +201,37 @@ AC_DEFUN([PARITY_CONFIGURE],
 	ParitySysLibraryPaths="__parity.library"
 	ParityAdditionalExecPaths="__parity.paths"
 
+    #
+    # Check for availability of path conversion scripts/executables
+    #
+    AC_MSG_CHECKING([for winpath2unix])
+    type winpath2unix > /dev/null 2>&1
+    w2u=$?
+    if test "$w2u" -eq 0; then
+        AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+
+    AC_MSG_CHECKING([for unixpath2win])
+    type unixpath2win > /dev/null 2>&1
+    u2w=$?
+    if test "$u2w" -eq 0; then
+        AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+
 	case $host in
-	*-*-interix*|*-*-winnt*) PathConversion='winpath2unix' ;;
 	*-*-cygwin*) PathConversion='cygpath -u' ;;
 	*) PathConversion='echo' ;;
 	esac
+
+    if test "$w2u" -eq 0; then
+        PathConversion='winpath2unix'
+    fi
 
 	#
 	# Lookup paths to visual studio installations
@@ -333,23 +359,6 @@ AC_DEFUN([PARITY_CONFIGURE],
 	# Lookup required paths.
 	#
 	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
-
-    #
-    # Check for availability of path conversion scripts/executables
-    #
-    AC_MSG_CHECKING([for winpath2unix])
-    w2u=$(type winpath2unix)
-    if test -n "$w2u"; then
-        AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
-    fi
-    AC_MSG_RESULT([$w2u])
-
-    AC_MSG_CHECKING([for unixpath2win])
-    u2w=$(type unixpath2win)
-    if test -n "$u2w"; then
-        AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
-    fi
-    AC_MSG_RESULT([$u2w])
 
 	#
 	# Finally Substitute Variables
