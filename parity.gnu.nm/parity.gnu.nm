@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# TODO: this is merely a hack to get things rolling - implement as real part of parity.
+
+vsvar=
+[[ -n "${VS71COMNTOOLS}" ]] && vsvar=VS71COMNTOOLS
+[[ -n "${VS80COMNTOOLS}" ]] && vsvar=VS80COMNTOOLS
+[[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
+[[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
+
+vscom="$(eval echo "\${${vsvar}}")"
+vsroot="$(cd ${vscom}/../../; pwd)"
+
+[[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
+PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}
+
+NM="dumpbin.exe /symbols"
+
+${NM} "$@"
+
