@@ -41,10 +41,23 @@ fi
 
 function wait_for() {
     local f="$1"
+    [[ -z "${f}" ]] && return
     while [[ ! -e "${f}" ]]; do
         sleep 0.1
     done
 }
+
+vsvar=
+[[ -n "${VS71COMNTOOLS}" ]] && vsvar=VS71COMNTOOLS
+[[ -n "${VS80COMNTOOLS}" ]] && vsvar=VS80COMNTOOLS
+[[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
+[[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
+
+vscom="$(eval echo "\${${vsvar}}")"
+vsroot="$(cd ${vscom}/../../; pwd)"
+
+[[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
+PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}
 
 LIB="lib.exe /nologo"
 
@@ -67,8 +80,7 @@ elif [[ ${_extract} == yes ]]; then
         done
     fi
     ${LIB} "${archive}" "${members[@]}"
-    [[ -n "${wait_for}" ]] && wait_for "${waitFor}"
-    [[ -z "${wait_for}" ]] && sleep 1 # safety... :(
+    wait_for "${waitFor}"
 elif [[ ${_delete} == yes ]]; then
     tmplib="${archive}.old"
     mv "${archive}" "${tmplib}"
