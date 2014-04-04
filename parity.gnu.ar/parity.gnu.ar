@@ -21,7 +21,7 @@ for letter in $(echo "${opts}" | grep -o .); do
     d) _delete=yes      ;;
     t) _test=yes        ;;
     c) _warn_create=no  ;;
-    r) _replace=yes     ;;
+    r|q) _replace=yes     ;;
     x) _extract=yes     ;;
     u|o|f) echo "warn: ignoring unsupported option '$letter'" ;;
     *) { echo "unrecognized option '$letter'"; exit 1; } ;;
