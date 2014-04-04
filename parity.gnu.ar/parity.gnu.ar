@@ -53,6 +53,8 @@ vsvar=
 [[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
 [[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
 
+[[ -z ${vsvar} ]] && { echo "cannot find visual studio (no VSxxCOMNTOOLS set!)"; exit 1; }
+
 vscom="$(eval echo "\${${vsvar}}")"
 vsroot="$(cd ${vscom}/../../; pwd)"
 
