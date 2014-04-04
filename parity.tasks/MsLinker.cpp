@@ -370,11 +370,7 @@ namespace parity
 				throw utils::Exception("cannot execute: %s", ctx.getLinkerExe().get().c_str());
 			}
 
-			utils::Log::verbose("changing mode of %s.\n", out.get().c_str());
-
-			if(out.waitForAppearance())
-				out.mode(0777);
-			else
+			if(!out.waitForAppearance())
 				throw utils::Exception("missing output from linker: %s", out.get().c_str());
 
 			//
@@ -446,6 +442,11 @@ namespace parity
 					}
 				}
 			}
+
+            out.toNative();
+
+            utils::Log::verbose("changing mode of %s.\n", out.get().c_str());
+            out.mode(0777);
 		}
 	}
 }
