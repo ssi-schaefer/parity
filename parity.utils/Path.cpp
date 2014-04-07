@@ -971,7 +971,6 @@ namespace parity
                     if(nl) {
                         *nl = 0;
                     }
-                    utils::Log::warning("conv: %s -> %s\n", path_.c_str(), buffer);
                     path_ = buffer;
                 }
             }
