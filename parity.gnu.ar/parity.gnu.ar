@@ -80,6 +80,7 @@ elif [[ ${_extract} == yes ]]; then
         waitFor="$(basename "$x")"
         ${LIB} "${archive}" "${xtr}"
         wait_for "${waitFor}"
+        [[ ${_verbose} == yes ]] && echo "$x"
     done
     if [[ "${doneOne}" == no ]]; then
         # no memebers given, extract all
@@ -89,6 +90,7 @@ elif [[ ${_extract} == yes ]]; then
             waitFor="$(basename "$x")"
             ${LIB} "${archive}" "${xtr}"
             wait_for "${waitFor}"
+            [[ ${_verbose} == yes ]] && echo "$x"
         done
     fi
 elif [[ ${_delete} == yes ]]; then
