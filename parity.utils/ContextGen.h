@@ -60,12 +60,6 @@
 #define CTX_GETSET_I(type, name, init) CTX_GETSET(type, name, init)
 #define CTX_GETSET_CI(type, name, init) CTX_GETSET_C(type, name, init)
 
-#ifdef linux
-#  define DEF_USE_SCRIPTS false
-#else
-#  define DEF_USE_SCRIPTS true
-#endif
-
 namespace parity
 {
 	namespace utils
@@ -188,7 +182,7 @@ namespace parity
 				CTX_GETSET   (PathVector	,AdditionalExecPaths,PathVector()	)  /* internal only */ \
 				CTX_GETSET   (bool			,GeneratePCRTEntry	,true			)  /* internal only */ \
 				CTX_GETSET   (bool			,GenerateSymbols	,false			)  /* internal only */ \
-				CTX_GETSET   (bool			,UseCommandScripts	,DEF_USE_SCRIPTS)  /* internal (MS) */ \
+				CTX_GETSET   (bool			,UseCommandScripts	,true           )  /* internal (MS) */ \
 				CTX_GETSET_I (std::string	,CompilerPassThrough,""				)  /* internal (compiler) */ \
 				CTX_GETSET_I (std::string	,LinkerPassThrough	,""				)  /* internal (linker) */ \
 				CTX_GETSET   (bool			,ExportAll			,false			)  /* internal (linker) */ \

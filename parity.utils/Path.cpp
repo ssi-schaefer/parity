@@ -57,12 +57,10 @@
 
 #if defined(__INTERIX) || defined(__CYGWIN__) || defined(_WIN32)
 #  define USE_LIBRARIES
-#elif defined(linux)
-#  define USE_NOCONV
 #elif defined(HAVE_UNIXPATH2WIN) && defined(HAVE_WINPATH2UNIX)
 #  define USE_EXEC
 #else
-#  error no path conversion available
+#  define USE_NOCONV
 #endif
 
 #ifndef PATH_MAX
@@ -135,27 +133,6 @@ namespace parity
 		#  undef getpid
 		#endif
 
-		/*
-		 * not required ATM. keep for the future.
-		 *
-		Path Path::getTemporaryDirectory()
-		{
-#if defined(_WIN32)
-			char pth[PATH_MAX];
-			GetTempPath(PATH_MAX, pth);
-
-			return Path(pth);
-#else
-			const char* env = getenv("TMPDIR");
-
-			if(env)
-				return Path(env);
-			else
-				return Path("/tmp");
-#endif
-		}
-		 */
-
 		const std::string& Path::get() const
 		{
 			return path_;
@@ -175,25 +152,11 @@ namespace parity
 			if(isNative())
 				return *this;
 
-			#ifdef __INTERIX
-				/* native:  unix style paths,
-				 * foreign: depends on backend */
-
-				char buf[PATH_MAX];
-
-				if(winpath2unix(path_.c_str(), 0, buf, PATH_MAX) != -1)
-					path_ = buf;
-			#elif defined(__CYGWIN__)
-				/* same as interix */
-				char buf[PATH_MAX];
-
-				cygwin_conv_to_full_win32_path(path_.c_str(), buf);
-				path_ = buf;
-			#else
-				/* native:  windows style paths,
-				 * foreign: depends on backend */
-				convertToWindows();
-			#endif
+            #ifdef _WIN32
+            convertToWindows();
+            #else
+            convertToUnix();
+            #endif
 
 			expand();
 
@@ -205,37 +168,7 @@ namespace parity
 			if(isForeign())
 				return *this;
 
-			#ifdef __INTERIX
-				/* native:  unix style paths,
-				 * foreign: depends on backend */
-
-				char buf[PATH_MAX];
-
-				if(isBackendWindows()) {
-					if(unixpath2win(path_.c_str(), 0, buf, PATH_MAX) != -1)
-						path_ = buf;
-				} else {
-					if(winpath2unix(path_.c_str(), 0, buf, PATH_MAX) != -1)
-						path_ = buf;
-				}
-			#elif defined(__CYGWIN__)
-				/* same as interix */
-				char buf[PATH_MAX];
-
-				if(isBackendWindows()) {
-					cygwin_conv_to_full_win32_path(path_.c_str(), buf);
-				} else {
-					cygwin_conv_to_full_posix_path(path_.c_str(), buf);
-				}
-				path_ = buf;
-			#else
-				/* native:  windows style paths,
-				 * foreign: depends on backend */
-				if(isBackendWindows())
-					convertToWindows();
-				else
-					convertToUnix();
-			#endif
+            convertGeneric(isBackendWindows());
 
 			return *this;
 		}
@@ -277,6 +210,10 @@ namespace parity
 			if(path_.empty())
 				return false;
 
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
+
 			if(!stated_)
 			{
 				if(stat(path_.c_str(), const_cast<struct stat*>(&stat_)) == -1)
@@ -302,6 +239,10 @@ namespace parity
 			if(path_.empty())
 				return false;
 
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
+
 			if(!stated_)
 			{
 				if(stat(path_.c_str(), const_cast<struct stat*>(&stat_)) == -1)
@@ -322,6 +263,10 @@ namespace parity
 			if(path_.empty())
 				return false;
 
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
+
             if(!stated_)
 			{
 				if(stat(path_.c_str(), const_cast<struct stat*>(&stat_)) == -1)
@@ -337,6 +282,10 @@ namespace parity
 		{
 			if(path_.empty())
 				return false;
+
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
 
 			if(isFile()) {
 				return removeFile(path_);
@@ -356,6 +305,10 @@ namespace parity
 #ifdef _WIN32
 # define rmdir _rmdir
 #endif
+
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
 
 			if(rmdir(path.c_str()) != 0)
 				return false;
@@ -388,11 +341,11 @@ namespace parity
 
 		bool Path::move(Path dest)
 		{
-			if(!exists())
-				return false;
-
 			toNative();
 			dest.toNative();
+
+			if(!exists())
+				return false;
 
 			mode(0777);
 
@@ -411,11 +364,11 @@ namespace parity
 
 		bool Path::moveCopy(Path dest)
 		{
-			if(!exists())
-				return false;
-
 			toNative();
 			dest.toNative();
+
+			if(!exists())
+				return false;
 
 			mode(0777);
 
@@ -469,6 +422,10 @@ namespace parity
 
 		void Path::changeMode(std::string const& file, int mode) const
 		{
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
+
 			#ifdef _WIN32
 			#  define chmod _chmod
 			#  define umask _umask
@@ -562,6 +519,10 @@ namespace parity
 		}
 
 		bool Path::createPath() const {
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
+
 			if(exists()) {
 				return true;
 			}
@@ -890,8 +851,32 @@ namespace parity
 				}
 
 				return false;
-			#else
-			return true;
+			#elif defined(__INTERIX)
+                char buf[PATH_MAX];
+
+                if(bWindows) {
+                    if(unixpath2win(path_.c_str(), 0, buf, PATH_MAX) != -1) {
+                        path_ = buf;
+                        return true;
+                    }
+                } else {
+                    if(winpath2unix(path_.c_str(), 0, buf, PATH_MAX) != -1) {
+                        path_ = buf;
+                        return true;
+                    }
+                }
+
+                return false;
+            #elif defined(__CYGWIN__)
+                char buf[PATH_MAX];
+
+				if(bWindows) {
+					cygwin_conv_to_full_win32_path(path_.c_str(), buf);
+				} else {
+					cygwin_conv_to_full_posix_path(path_.c_str(), buf);
+				}
+				path_ = buf;
+                return true;
 			#endif
 		}
 
@@ -1073,6 +1058,10 @@ namespace parity
         bool Path::waitForAppearance() const
         {
 			Context& ctx = Context::getContext();
+
+            if(!isNative()) {
+                throw Exception("path is not native!");
+            }
 
             if(!ctx.getWaitForOutputFile() && !exists()) {
                 return false;

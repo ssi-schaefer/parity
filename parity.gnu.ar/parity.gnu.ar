@@ -41,9 +41,11 @@ fi
 
 function wait_for() {
     local f="$1"
+    local cnt=100
     [[ -z "${f}" ]] && return
-    while [[ ! -e "${f}" ]]; do
+    while [[ ! -e "${f}" && ${cnt} -gt 0 ]]; do
         sleep 0.1
+        ((cnt--))
     done
 }
 
@@ -69,7 +71,7 @@ elif [[ ${_replace} == yes ]]; then
     arg_arch=
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
     [[ -e ${archive} ]] && arg_arch="${archive}"
-    ${LIB} "/OUT:${archive}" ${arg_arch} "$@"
+    ${LIB} "/OUT:${archive}" ${arg_arch} "$@" || exit 1
     wait_for "${archive}"
 elif [[ ${_extract} == yes ]]; then
     members=()
@@ -78,7 +80,7 @@ elif [[ ${_extract} == yes ]]; then
         doneOne=yes
         xtr="/EXTRACT:${x}"
         waitFor="$(basename "$x")"
-        ${LIB} "${archive}" "${xtr}"
+        ${LIB} "${archive}" "${xtr}" || exit 1
         wait_for "${waitFor}"
         [[ ${_verbose} == yes ]] && echo "$x"
     done
@@ -88,7 +90,7 @@ elif [[ ${_extract} == yes ]]; then
             x="$(echo "${x}" | tr -d '\r')"
             xtr="/EXTRACT:${x}"
             waitFor="$(basename "$x")"
-            ${LIB} "${archive}" "${xtr}"
+            ${LIB} "${archive}" "${xtr}" || exit 1
             wait_for "${waitFor}"
             [[ ${_verbose} == yes ]] && echo "$x"
         done
@@ -100,6 +102,8 @@ elif [[ ${_delete} == yes ]]; then
     for x in "$@"; do
         members[${#members[@]}]="/REMOVE:${x}"
     done
-    ${LIB} "/OUT:${archive}" "${tmplib}" "${members[@]}"
+    ${LIB} "/OUT:${archive}" "${tmplib}" "${members[@]}" || exit 1
 fi
+
+exit 0
 
