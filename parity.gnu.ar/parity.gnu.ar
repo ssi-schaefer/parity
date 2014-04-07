@@ -73,18 +73,24 @@ elif [[ ${_replace} == yes ]]; then
     wait_for "${archive}"
 elif [[ ${_extract} == yes ]]; then
     members=()
-    waitFor="$1"
+    doneOne=no
     for x in "$@"; do
-        members[${#members[@]}]="/EXTRACT:${x}"
+        doneOne=yes
+        xtr="/EXTRACT:${x}"
+        waitFor="$(basename "$x")"
+        ${LIB} "${archive}" "${xtr}"
+        wait_for "${waitFor}"
     done
-    if [[ ${#members[@]} -eq 0 ]]; then
+    if [[ "${doneOne}" == no ]]; then
         # no memebers given, extract all
         for x in $(${LIB} /LIST "${archive}"); do
-            members[${#members[@]}]="$(echo "/EXTRACT:${x}" | tr -d '\r')"
+            x="$(echo "${x}" | tr -d '\r')"
+            xtr="/EXTRACT:${x}"
+            waitFor="$(basename "$x")"
+            ${LIB} "${archive}" "${xtr}"
+            wait_for "${waitFor}"
         done
     fi
-    ${LIB} "${archive}" "${members[@]}"
-    wait_for "${waitFor}"
 elif [[ ${_delete} == yes ]]; then
     tmplib="${archive}.old"
     mv "${archive}" "${tmplib}"
