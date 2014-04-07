@@ -25,6 +25,7 @@
 
 #include <Exception.h>
 #include <Context.h>
+#include <Log.h>
 
 namespace parity
 {
@@ -37,7 +38,7 @@ namespace parity
 			//
 			// Contructors and Destructors
 			//
-			OptionalHeader(void* ptr) : hdr_(*reinterpret_cast<OHStruct*>(ptr)) { if(hdr_.Magic != 0x10b) throw utils::Exception("unsupported or invalid optional header magic: %x\n", hdr_.Magic); }
+			OptionalHeader(void* ptr) : hdr_(*reinterpret_cast<OHStruct*>(ptr)) { if(hdr_.Magic != 0x10b) utils::Log::warning("unknown or invalid optional header magic: %x\n", hdr_.Magic); }
 			OptionalHeader() : hdr_() { /* should not be neccessary: ::memset(&hdr_, 0, sizeof(OHStruct)); */ }
 
 			//
