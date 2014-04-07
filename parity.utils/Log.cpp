@@ -35,7 +35,7 @@ namespace parity
 	namespace utils
 	{
 
-		Log::Level Log::level_ = Log::Verbose;
+		Log::Level Log::level_ = Log::Warning;
 		Color Log::color_ = Color(Color::Bright);
 		int Log::lock_;
 
