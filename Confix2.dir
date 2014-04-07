@@ -360,6 +360,11 @@ AC_DEFUN([PARITY_CONFIGURE],
 	#
 	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
 
+    #
+    # MS SDK library directory
+    #
+    MsSdkLibDir=$MsSdkDir/lib
+
 	#
 	# Finally Substitute Variables
 	#
@@ -373,6 +378,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST(PcrtLibrary)
 	AC_SUBST(LoaderLibrary)
 	AC_SUBST(RuntimeType)
+
+    AC_SUBST(MsSdkLibDir)
 
 	AC_SUBST_FILE(ParityAdditionalExecPaths)
 	AC_SUBST_FILE(ParitySysIncludePaths)

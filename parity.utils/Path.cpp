@@ -971,6 +971,7 @@ namespace parity
                     if(nl) {
                         *nl = 0;
                     }
+                    utils::Log::verbose("convert path: %s -> %s\n", path_.c_str(), buffer);
                     path_ = buffer;
                 }
             }
@@ -994,7 +995,7 @@ namespace parity
 			if(path_[0] == '.')
 				return true;
 
-			if(::strchr(path_.c_str(), '\\'))
+			if(::strchr(path_.c_str(), '\\') || ::strchr(path_.c_str(), ':'))
 				return true;
 
 			if(!::strchr(path_.c_str(), '/'))
@@ -1011,7 +1012,7 @@ namespace parity
 			if(path_[0] == '.')
 				return true;
 
-			if(::strchr(path_.c_str(), '\\'))
+			if(::strchr(path_.c_str(), '\\') || ::strchr(path_.c_str(), ':'))
 				return false;
 
 			return true;

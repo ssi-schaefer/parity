@@ -370,13 +370,13 @@ namespace parity
 				throw utils::Exception("cannot execute: %s", ctx.getLinkerExe().get().c_str());
 			}
 
-			if(!out.waitForAppearance())
-				throw utils::Exception("missing output from linker: %s", out.get().c_str());
-
 			//
 			// remove unwanted stuff.
 			//
 			out.toNative();
+
+			if(!out.waitForAppearance())
+				throw utils::Exception("missing output from linker: %s", out.get().c_str());
 
 			if(ctx.getFrontendType() != utils::ToolchainMicrosoft)
 			{
