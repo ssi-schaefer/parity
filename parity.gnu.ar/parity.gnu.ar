@@ -66,8 +66,10 @@ LIB="lib.exe /nologo"
 if [[ ${_test} == yes ]]; then
     ${LIB} /LIST "${archive}"
 elif [[ ${_replace} == yes ]]; then
+    arg_arch=
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
-    ${LIB} "/OUT:${archive}" "$@"
+    [[ -e ${archive} ]] && arg_arch="${archive}"
+    ${LIB} "/OUT:${archive}" ${arg_arch} "$@"
     wait_for "${archive}"
 elif [[ ${_extract} == yes ]]; then
     members=()
