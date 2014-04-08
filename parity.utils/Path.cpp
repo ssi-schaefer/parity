@@ -1009,7 +1009,7 @@ namespace parity
 			if(path_.empty())
 				return true;
 
-			if(path_[0] == '.')
+			if(path_[0] == '.' || path_[0] == '/')
 				return true;
 
 			if(::strchr(path_.c_str(), '\\') || ::strchr(path_.c_str(), ':'))

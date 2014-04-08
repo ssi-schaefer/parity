@@ -110,6 +110,74 @@ const char* PcrtPathToNative(const char* ptr) {
 
 			return pRing[iRingNum];
 		}
+    } else if((szRoot = GetEnvironmentVariable("REX_ROOTS", 0, 0)) != 0) {
+        char* ptrRoots = HeapAlloc(GetProcessHeap(), 0, szRoot);
+
+        if(GetEnvironmentVariable("REX_ROOTS", ptrRoots, szRoot)) {
+            // pair separated by ',' values in pair separated by ';', server path first, then client path
+            //  -> <server1>;<client1>,<server2>;<client2>,...
+            int lenClient, lenServer, found = 0;
+            char lookBehind = 0;
+            char *ptrServer, *ptrClient, *ptrFix, *ptrPairEnd;
+            char* ptrWalk = ptrRoots;
+
+            do {
+                ptrPairEnd = strchr(ptrWalk, ',');
+                if(ptrPairEnd != NULL) {
+                    *ptrPairEnd = 0;
+                }
+
+                ptrServer = ptrWalk;
+                ptrClient = strchr(ptrServer, ';');
+
+                if(!ptrClient) {
+                    continue;
+                }
+
+                *ptrClient = 0;
+                ++ptrClient;
+
+                // now we have one client -> server mapping pair available
+                lenClient = lstrlen(ptrClient);
+                if(CompareString(LOCALE_USER_DEFAULT, 0, ptrClient, lenClient, ptr, lenClient) == CSTR_EQUAL) {
+                    found = 1;
+                    pRing[iRingNum] = HeapAlloc(GetProcessHeap(), 0, lstrlen(ptr) + lstrlen(ptrServer) + 2);
+
+                    lenServer = lstrlen(ptrServer);
+                    lstrcpyn(pRing[iRingNum], ptrServer, lenServer + 1);
+                    lstrcpyn(&pRing[iRingNum][lenServer + 1], &ptr[lenClient], lstrlen(&ptr[lenClient]) + 1);
+                    pRing[iRingNum][lenServer] = '/';
+
+                    // consolidate string - convert '/' -> '\' and remove all duplicate '/' and '\'
+                    ptrFix = pRing[iRingNum];
+                    ptrWalk = pRing[iRingNum];
+                    while(*ptrWalk != 0) {
+                        switch(*ptrWalk) {
+                        case '/':
+                        case '\\':
+                            if(lookBehind != '\\') {
+                                *ptrFix++ = '\\';
+                            }
+                            break;
+                        default:
+                            *ptrFix++ = *ptrWalk;
+                        }
+
+                        lookBehind = *(ptrFix - 1);
+                        ptrWalk++;
+                    }
+                    *ptrFix = 0;
+
+                    HeapFree(GetProcessHeap(), 0, ptrRoots);
+                    return pRing[iRingNum];
+                }
+
+                if(ptrPairEnd != NULL) {
+                    ptrWalk = ptrPairEnd + 1;
+                }
+            } while(ptrPairEnd != NULL);
+        }
+        HeapFree(GetProcessHeap(), 0, ptrRoots);
 	} else {
 		static HMODULE hCygLib = NULL;
 		static int inited = 0;
@@ -144,7 +212,7 @@ const char* PcrtPathToNative(const char* ptr) {
 				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!\n");
 			}
 		} else {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither Interix Installation nor Cygwin DLL found, cannot convert absolute UNIX paths!\n");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither REX, Interix Installation, or Cygwin DLL found, cannot convert absolute UNIX paths!\n");
 		}
 	}
 
