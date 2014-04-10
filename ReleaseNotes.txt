@@ -6,6 +6,11 @@ The most effort has been put into shared library handling, which now behaves nea
 
 parity ships with a little runtime enhancement library called parity.runtime. This library abstracts away the need to take care of what kind of paths are used. This means you can now give a UNIX-style path to an executable built with parity, and it will understand it. Previously this was not possible, and all Windows executables would need Windows-style paths to work.
 
+parity 1.3.0
+------------
+
+This release adds support for REX (https://github.com/mduft/rex). This allows to run parity on a Linux host to compile windows binaries remotely on a windows box.
+
 parity 1.2.7
 ------------
 
