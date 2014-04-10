@@ -1,1 +1,3 @@
 ADD_SCRIPT(filename='parity.gnu.nm')
+
+ADD_EXTRA_DIST('parity.gnu.nm')
