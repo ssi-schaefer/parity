@@ -704,12 +704,6 @@ namespace parity
 			#endif
 		}
 
-		#ifndef _WIN32
-		# define PTH_MAYBE_UNUSED(x)
-		#else
-		# define PTH_MAYBE_UNUSED(x) x
-		#endif
-
     #ifdef USE_LIBRARIES
 		typedef char* (__stdcall * psx3_unixpath2win_func_t)(const char*, int, char*, size_t);
 		typedef int   (* psx5_unixpath2win_func_t)(const char*, int, char*, size_t);
@@ -718,7 +712,7 @@ namespace parity
 
 		bool Path::convert_ = true;
 
-		bool Path::convertGeneric(bool PTH_MAYBE_UNUSED(bWindows))
+		bool Path::convertGeneric(bool bWindows)
 		{
 			if(path_.empty())
 				return true;
