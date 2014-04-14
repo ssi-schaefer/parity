@@ -8,7 +8,7 @@ vsvar=
 [[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
 [[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
 
-vscom="$(eval echo "\${${vsvar}}")"
+vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
 vsroot="$(cd ${vscom}/../../; pwd)"
 
 [[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }

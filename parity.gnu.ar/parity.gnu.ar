@@ -57,7 +57,7 @@ vsvar=
 
 [[ -z ${vsvar} ]] && { echo "cannot find visual studio (no VSxxCOMNTOOLS set!)"; exit 1; }
 
-vscom="$(eval echo "\${${vsvar}}")"
+vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
 vsroot="$(cd ${vscom}/../../; pwd)"
 
 [[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
