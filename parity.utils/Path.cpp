@@ -848,6 +848,11 @@ namespace parity
 			#elif defined(__INTERIX)
                 char buf[PATH_MAX];
 
+				if(bWindows && path_[0] != '/')
+					return true;
+				if(!bWindows && path_[1] != ':')
+					return true;
+
                 if(bWindows) {
                     if(unixpath2win(path_.c_str(), 0, buf, PATH_MAX) != -1) {
                         path_ = buf;
