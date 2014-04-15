@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # TODO: this is merely a hack to get things rolling - implement as real part of parity.
+# TODO: no path conversion in here - only works with relative paths (should be mostly ok).
 
 opts="$1"
 archive="$2"
@@ -71,8 +72,15 @@ elif [[ ${_replace} == yes ]]; then
     arg_arch=
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
     [[ -e ${archive} ]] && arg_arch="${archive}"
-    ${LIB} "/OUT:${archive}" ${arg_arch} "$@" || exit 1
+    tmpfile=.ar.tmp.$$
+    echo "/OUT:${archive}" >> ${tmpfile}
+    echo ${arg_arch} >> ${tmpfile}
+    for arg in "$@"; do
+        echo "${arg}" >> ${tmpfile}
+    done
+    ${LIB} "@${tmpfile}" || exit 1
     wait_for "${archive}"
+    rm -f "${tmpfile}"
 elif [[ ${_extract} == yes ]]; then
     members=()
     doneOne=no
