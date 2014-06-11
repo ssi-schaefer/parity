@@ -27,18 +27,18 @@ Runtime = @RuntimeType@
 Defines = WIN32_LEAN_AND_MEAN
 Defines = _WIN32_WINNT=0x0501
 
-ObjectsLibraries = @MsSdkLibDir@/kernel32.lib
-ObjectsLibraries = @MsSdkLibDir@/user32.lib
-ObjectsLibraries = @MsSdkLibDir@/advapi32.lib
-ObjectsLibraries = @MsSdkLibDir@/gdi32.lib
-ObjectsLibraries = @MsSdkLibDir@/ws2_32.lib
-ObjectsLibraries = @MsSdkLibDir@/shell32.lib
-ObjectsLibraries = @MsSdkLibDir@/ole32.lib
-ObjectsLibraries = @MsSdkLibDir@/winspool.lib
-ObjectsLibraries = @MsSdkLibDir@/comctl32.lib
-ObjectsLibraries = @MsSdkLibDir@/comdlg32.lib
-ObjectsLibraries = @MsSdkLibDir@/userenv.lib
-ObjectsLibraries = @MsSdkLibDir@/uuid.lib
+ObjectsLibraries = @LIB_KERNEL32@
+ObjectsLibraries = @LIB_USER32@
+ObjectsLibraries = @LIB_ADVAPI32@
+ObjectsLibraries = @LIB_GDI32@
+ObjectsLibraries = @LIB_WS2_32@
+ObjectsLibraries = @LIB_SHELL32@
+ObjectsLibraries = @LIB_OLE32@
+ObjectsLibraries = @LIB_WINSPOOL@
+ObjectsLibraries = @LIB_COMCTL32@
+ObjectsLibraries = @LIB_COMDLG32@
+ObjectsLibraries = @LIB_USERENV@
+ObjectsLibraries = @LIB_UUID@
 
 section windows {
 	Subsystem = Windows

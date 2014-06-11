@@ -24,15 +24,17 @@ ParityLoader = @top_builddir@/parity.loader/libparity_parity.loader.a
 
 Defines = WIN32_LEAN_AND_MEAN
 
-ObjectsLibraries = kernel32.lib
-ObjectsLibraries = user32.lib
-ObjectsLibraries = advapi32.lib
-ObjectsLibraries = gdi32.lib
-ObjectsLibraries = ws2_32.lib
-ObjectsLibraries = shell32.lib
-ObjectsLibraries = ole32.lib
-ObjectsLibraries = winspool.lib
-ObjectsLibraries = comctl32.lib
-ObjectsLibraries = comdlg32.lib
-ObjectsLibraries = userenv.lib
-ObjectsLibraries = uuid.lib
+ObjectsLibraries = @LIB_KERNEL32@
+ObjectsLibraries = @LIB_USER32@
+ObjectsLibraries = @LIB_ADVAPI32@
+ObjectsLibraries = @LIB_GDI32@
+ObjectsLibraries = @LIB_WS2_32@
+ObjectsLibraries = @LIB_SHELL32@
+ObjectsLibraries = @LIB_OLE32@
+ObjectsLibraries = @LIB_WINSPOOL@
+ObjectsLibraries = @LIB_COMCTL32@
+ObjectsLibraries = @LIB_COMDLG32@
+ObjectsLibraries = @LIB_USERENV@
+ObjectsLibraries = @LIB_UUID@
+
+

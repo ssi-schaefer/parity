@@ -22,40 +22,96 @@ AC_DEFUN([PARITY_DIR], [
 ])
 
 AC_DEFUN([PARITY_LOOKUP_EXE], [
-	LookupRoot=$1
-	LookupVar=$2
-	LookupFile=$3
+	eLookupRoot=$1
+	eLookupVar=$2
+	eLookupFile=$3
 
-	LookedUp=
+	eLookedUp=
 
-	AC_MSG_CHECKING([for $LookupFile])
+	AC_MSG_CHECKING([for $eLookupFile])
 
-	LookupIFS=$IFS
+	eLookupIFS=$IFS
 	IFS=$PATH_SEPARATOR
 
-	for x in $LookupRoot; do
-		IFS=$LookupIFS
-		
-		if test -f "$x/bin/$LookupFile"; then
-			LookedUp="$x/bin/$LookupFile"
-		fi
-		if test -f "$x/$LookupFile"; then
-			LookedUp="$x/$LookupFile"
-		fi
+	for x in $eLookupRoot; do
+		IFS=$eLookupIFS
 
-		if test -n "$LookedUp"; then
+        [[ -d "$x" ]] || continue
+		
+        PARITY_LOOKUP_PATH_IC([$x], [eLookedUp], [bin/$eLookupFile])
+        PARITY_LOOKUP_PATH_IC([$x], [eLookedUp], [$eLookupFile])
+
+		if test -n "$eLookedUp"; then
 			break
 		fi
 	done
 
-	IFS=$LookupIFS
+	IFS=$eLookupIFS
 
-	if test -z "$LookedUp" -o ! -f "$LookedUp"; then
-		AC_MSG_WARN([cannot find $LookupFile])
+	if test -z "$eLookedUp" -o ! -f "$eLookedUp"; then
+		AC_MSG_WARN([cannot find $eLookupFile])
 	else
-		AC_MSG_RESULT([$LookedUp])
-		eval "$LookupVar=\\\"$LookedUp\\\""
+		AC_MSG_RESULT([$eLookedUp])
+		eval "$eLookupVar=\\\"$eLookedUp\\\""
 	fi
+])
+
+AC_DEFUN([PARITY_LOOKUP_PATH_IC], [
+    pLookupRoot=$1
+    pLookupVar=$2
+    pLookupPath=$3
+
+    pLookupIFS=$IFS
+    IFS=$'\n'
+
+    pSlCnt=$(( $(echo "${pLookupPath}" | grep -o '/' | wc -l) + 1 ))
+
+    for y in $(find "${pLookupRoot}" -maxdepth ${pSlCnt} -mindepth ${pSlCnt} -iwholename "*/$pLookupPath"); do
+        IFS=$pLookupIFS
+
+        if [[ -n "${pLookedUp}" ]]; then
+            echo "WARN: multiple matches for \"$pLookupPath\". Found \"${y}\", using \"${pLookedUp}\""
+        else
+            eval "$pLookupVar=\\\"${y}\\\""
+        fi
+    done
+
+    IFS=$pLookupIFS
+])
+
+AC_DEFUN([PARITY_LOOKUP_PATH_BY_FILE_IC], [
+    fLookupRoot=$1
+    fLookupVar=$2
+    fLookupPath=$3
+
+    fLookedUp=
+
+    PARITY_LOOKUP_PATH_IC([$fLookupRoot], [fLookedUp], [$fLookupPath])
+
+    if [[ -n "$fLookedUp" ]]; then
+        eval "$fLookupVar=\\\"${fLookedUp%/*}\\\""
+    fi
+])
+
+AC_DEFUN([PARITY_LOOKUP_FILE_SUBST], [
+    sLookupRoot=$1
+    sLookupSubst=$2
+    sLookupPath=$3
+
+    AC_MSG_CHECKING([for ${sLookupPath}])
+
+    sLookedUp=
+
+    PARITY_LOOKUP_PATH_IC([${sLookupRoot}], [sLookedUp], [${sLookupPath}])
+
+    eval "${sLookupSubst}=\\\"${sLookedUp}\\\""
+    AC_MSG_RESULT([${sLookedUp}])
+
+    if test -z "${sLookedUp}" -o ! -e "${sLookedUp}"; then
+        AC_MSG_ERROR([cannot find "${sLookupPath}" in "${sLookupRoot}"])
+    fi
+
+    AC_SUBST([$2])
 ])
 
 AC_DEFUN([PARITY_LOOKUP_CRT],
@@ -74,12 +130,12 @@ AC_DEFUN([PARITY_LOOKUP_CRT],
 	for x in $CrtPaths; do
 		IFS=$LookupIFS
 	
-		if test -z "$CrtLookedUpInc" -a -f "$x/include/stdio.h"; then
-			CrtLookedUpInc="$x/include"
+		if test -z "$CrtLookedUpInc"; then
+            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [CrtLookedUpInc], [include/stdio.h])
 		fi
 
 		if test -z "$CrtLookedUpLib" -a -f "$x/lib/msvcrt.lib"; then
-			CrtLookedUpLib="$x/lib"
+            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [CrtLookedUpLib], [lib/msvcrt.lib])
 		fi
 
 		if test -n "$CrtLookedUpInc" -a -n "$CrtLookedUpLib"; then
@@ -119,18 +175,18 @@ AC_DEFUN([PARITY_LOOKUP_SDK],
 	for x in $SdkPaths; do
 		IFS=$LookupIFS
 		
-		if test -z "$SdkLookedUpInc" -a -f "$x/platformsdk/include/windows.h"; then
-			SdkLookedUpInc="$x/platformsdk/include"
+		if test -z "$SdkLookedUpInc"; then
+            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpInc], [platformsdk/include/windows.h])
 		fi
-		if test -z "$SdkLookedUpInc" -a -f "$x/include/windows.h"; then
-			SdkLookedUpInc="$x/include"
+		if test -z "$SdkLookedUpInc"; then
+            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpInc], [include/windows.h])
 		fi
 
-		if test -z "$SdkLookedUpLib" -a -f "$x/platformsdk/lib/kernel32.lib"; then
-			SdkLookedUpLib="$x/platformsdk/lib"
+		if test -z "$SdkLookedUpLib"; then
+            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpLib], [platformsdk/lib/kernel32.lib])
 		fi
-		if test -z "$SdkLookedUpLib" -a -f "$x/lib/kernel32.lib"; then
-			SdkLookedUpLib="$x/lib"
+		if test -z "$SdkLookedUpLib"; then
+            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpLib], [lib/kernel32.lib])
 		fi
 
 		if test -n "$SdkLookedUpInc" -a -n "$SdkLookedUpLib"; then
@@ -361,9 +417,20 @@ AC_DEFUN([PARITY_CONFIGURE],
 	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
 
     #
-    # MS SDK library directory
+    # MS SDK libraries
     #
-    MsSdkLibDir=$MsSdkDir/lib
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_KERNEL32], [kernel32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_USER32], [user32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_ADVAPI32], [advapi32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_GDI32], [gdi32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_WS2_32], [ws2_32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_SHELL32], [shell32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_OLE32], [ole32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_WINSPOOL], [winspool.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_COMCTL32], [comctl32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_COMDLG32], [comdlg32.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_USERENV], [userenv.lib])
+    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_UUID], [uuid.lib])
 
 	#
 	# Finally Substitute Variables
@@ -379,12 +446,9 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST(LoaderLibrary)
 	AC_SUBST(RuntimeType)
 
-    AC_SUBST(MsSdkLibDir)
-
 	AC_SUBST_FILE(ParityAdditionalExecPaths)
 	AC_SUBST_FILE(ParitySysIncludePaths)
 	AC_SUBST_FILE(ParitySysLibraryPaths)
-
 ])
 
 """
