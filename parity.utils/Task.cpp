@@ -266,12 +266,12 @@ namespace parity
 				if(pipe(stdErrPipe) == -1)
 					throw Exception("cannot open pipes for stderr redirection: %s", ::strerror(errno));
 
-				pid_t child = vfork();
+				pid_t child = fork();
 
 				switch(child)
 				{
 				case -1:
-					throw Exception("cannot vfork child process: %s", strerror(errno));
+					throw Exception("cannot fork child process: %s", strerror(errno));
 				case 0:
 					{
 						//

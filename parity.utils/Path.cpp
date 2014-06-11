@@ -944,7 +944,7 @@ namespace parity
 
             pid_t child = fork();
             if(child == -1) {
-                utils::Log::error("failed to vfork for path conversion: %s\n", strerror(errno));
+                utils::Log::error("failed to fork for path conversion: %s\n", strerror(errno));
             } else if(child == 0) {
                 // child
                 close(pfd[0]);
