@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #  include <windows.h>
@@ -304,9 +305,15 @@ namespace parity
 
 						translated[i + 1] = 0;
 
-						execv(pth.get().c_str(), const_cast<char* const*>(translated));
+                        int t = 0;
+                        while(t++ < 50) {
+                            execv(pth.get().c_str(), const_cast<char* const*>(translated));
+                            std::cerr << "warn: cannot execute " << pth.get().c_str() << " (retrying): " << strerror(errno) << std::endl;
+                            usleep(100000);
+                        }
 
-						std::cerr << "cannot execute process: " << strerror(errno) << std::endl;
+                        std::cerr << "giving up..." << std::endl;
+
 						exit(1);
 					}
 				default:

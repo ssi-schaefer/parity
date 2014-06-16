@@ -515,7 +515,7 @@ namespace parity
 			path_.append(component);
 			stated_ = false;
 
-			resolveLink();
+			expand();
 		}
 
 		bool Path::createPath() const {

@@ -70,13 +70,14 @@ if [[ ${_test} == yes ]]; then
     ${LIB} /LIST "${archive}"
 elif [[ ${_replace} == yes ]]; then
     arg_arch=
+    archive_win="$(unixpath2win "${archive}")"
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
-    [[ -e ${archive} ]] && arg_arch="${archive}"
+    [[ -e ${archive} ]] && arg_arch="${archive_win}"
     tmpfile=.ar.tmp.$$
-    echo "/OUT:${archive}" >> ${tmpfile}
+    echo "/OUT:${archive_win}" >> ${tmpfile}
     echo ${arg_arch} >> ${tmpfile}
     for arg in "$@"; do
-        echo "${arg}" >> ${tmpfile}
+        echo "$(unixpath2win "${arg}")" >> ${tmpfile}
     done
     ${LIB} "@${tmpfile}" || exit 1
     wait_for "${archive}"
