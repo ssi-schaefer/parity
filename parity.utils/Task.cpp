@@ -306,10 +306,12 @@ namespace parity
 						translated[i + 1] = 0;
 
                         int t = 0;
-                        while(t++ < 50) {
+                        int sleep = 100000;
+                        while(t++ < 100) {
                             execv(pth.get().c_str(), const_cast<char* const*>(translated));
                             std::cerr << "warn: cannot execute " << pth.get().c_str() << " (retrying): " << strerror(errno) << std::endl;
-                            usleep(100000);
+                            usleep(sleep);
+                            sleep += 100000;
                         }
 
                         std::cerr << "giving up..." << std::endl;
