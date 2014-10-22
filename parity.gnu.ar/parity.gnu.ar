@@ -5,6 +5,7 @@
 
 opts="$1"
 archive="$2"
+archive_win="$(unixpath2win "${archive}")"
 
 shift
 shift
@@ -67,17 +68,17 @@ PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}
 LIB="lib.exe /nologo"
 
 if [[ ${_test} == yes ]]; then
-    ${LIB} /LIST "${archive}"
+    ${LIB} /LIST "${archive_win}"
 elif [[ ${_replace} == yes ]]; then
     arg_arch=
-    archive_win="$(unixpath2win "${archive}")"
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
     [[ -e ${archive} ]] && arg_arch="${archive_win}"
     tmpfile=.ar.tmp.$$
     echo "/OUT:${archive_win}" >> ${tmpfile}
     echo ${arg_arch} >> ${tmpfile}
     for arg in "$@"; do
-        echo "$(unixpath2win "${arg}")" >> ${tmpfile}
+        [[ ${arg} == /* ]] && arg="$(unixpath2win "${arg}")"
+        echo "${arg}" >> ${tmpfile}
     done
     ${LIB} "@${tmpfile}" || exit 1
     wait_for "${archive}"
@@ -87,31 +88,31 @@ elif [[ ${_extract} == yes ]]; then
     doneOne=no
     for x in "$@"; do
         doneOne=yes
-        xtr="/EXTRACT:${x}"
-        waitFor="$(basename "$x")"
-        ${LIB} "${archive}" "${xtr}" || exit 1
-        wait_for "${waitFor}"
+        out="$(basename "$(winpath2unix "${x}")")"
+        ${LIB} "${archive_win}" "/EXTRACT:${x}" "/OUT:${out}" || exit 1
+        wait_for "${out}"
         [[ ${_verbose} == yes ]] && echo "$x"
     done
     if [[ "${doneOne}" == no ]]; then
         # no memebers given, extract all
-        for x in $(${LIB} /LIST "${archive}"); do
+        for x in $(${LIB} /LIST "${archive_win}"); do
             x="$(echo "${x}" | tr -d '\r')"
-            xtr="/EXTRACT:${x}"
-            waitFor="$(basename "$x")"
-            ${LIB} "${archive}" "${xtr}" || exit 1
-            wait_for "${waitFor}"
+            out="$(basename "$(winpath2unix "${x}")")"
+            waitFor=$(basename "$(winpath2unix "$x")")
+            ${LIB} "${archive_win}" "/EXTRACT:${x}" "/OUT:${out}" || exit 1
+            wait_for "${out}"
             [[ ${_verbose} == yes ]] && echo "$x"
         done
     fi
 elif [[ ${_delete} == yes ]]; then
     tmplib="${archive}.old"
+    trap "rm -f ${tmplib}" 0
     mv "${archive}" "${tmplib}"
     members=()
     for x in "$@"; do
         members[${#members[@]}]="/REMOVE:${x}"
     done
-    ${LIB} "/OUT:${archive}" "${tmplib}" "${members[@]}" || exit 1
+    ${LIB} "/OUT:${archive_win}" "$(unixpath2win "${tmplib}")" "${members[@]}" || exit 1
 fi
 
 exit 0
