@@ -73,6 +73,9 @@ lib_exe() { (
 
 LIB="lib_exe /nologo"
 
+export TMP=${TMP:-${TMPDIR:-/tmp}}
+[[ ${TMP} == /* ]] && TMP=$(unixpath2win "${TMP}")
+
 if [[ ${_test} == yes ]]; then
     ${LIB} /LIST "${archive_win}"
 elif [[ ${_replace} == yes ]]; then
