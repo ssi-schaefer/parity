@@ -65,7 +65,13 @@ vsroot="$(cd ${vscom}/../../; pwd)"
 [[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
 PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}
 
-LIB="lib.exe /nologo"
+# need to redirect stdout/stderr of windows binary via file
+lib_exe() { (
+    trap "cat .lib_exe.out.$$; cat .lib_exe.err.$$ >&2; rm -f .lib_exe.out.$$ .lib_exe.err.$$" 0
+    lib.exe "$@" >> .lib_exe.out.$$ 2>> .lib_exe.err.$$
+); }
+
+LIB="lib_exe /nologo"
 
 if [[ ${_test} == yes ]]; then
     ${LIB} /LIST "${archive_win}"
