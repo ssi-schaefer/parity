@@ -299,6 +299,15 @@ AC_DEFUN([PARITY_CONFIGURE],
 	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo "$($PathConversion "$VS90COMNTOOLS")")")")
 	test -n "$VS100COMNTOOLS" && MsvcRoot100=$(dirname "$(dirname "$(echo "$($PathConversion "$VS100COMNTOOLS")")")")
 
+	if test -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/.; then
+		# Cygwin provides easy registry access
+		if [[ -z "$MsvcRoot90" -a -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0 ]]; then
+			MsvcRoot90=$($PathConversion "$(tr -d $"\\0" </proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0)")
+			MsvcRoot90=${MsvcRoot90%%/}
+		fi
+		# FIXME: more versions
+	fi
+
 	MsvcRoot=
 
 	if test -n "$MsvcRoot71" -a -n "$MsvcRoot80"; then
@@ -363,6 +372,11 @@ AC_DEFUN([PARITY_CONFIGURE],
 		fi
 	else
 		MsSdkDir=$MSSDK
+	fi
+
+	if test -z "$MSSDK" -a -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/Microsoft SDKs/Windows/CurrentInstallFolder"; then
+		# Cygwin provides easy registry access
+		MsSdkDir=$($PathConversion "$(tr -d $"\\0" <"/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/Microsoft SDKs/Windows/CurrentInstallFolder")")
 	fi
 
 	#
