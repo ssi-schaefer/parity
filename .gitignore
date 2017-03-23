@@ -28,6 +28,7 @@ stamp-h1
 *.o
 *.a
 *.exe
+*.exe.mf
 *.pdb
 
 parity.configurator/parity.configurator
