@@ -44,7 +44,7 @@ namespace parity
 					throw Exception("cannot parse configuration file %s", file.getPath().get().c_str());
 			} else {
 				int iLoadedSections = 0;
-				utils::Log::verbose("found %d sections, give -<section name> to activate on command line\n", m.size());
+				utils::Log::verbose("found %ld sections, give -<section name> to activate on command line\n", m.size());
 
 				ConfigSectionMap::iterator pos = m.find(GENERAL_CONFIG_KEY);
 

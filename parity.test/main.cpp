@@ -154,8 +154,8 @@ int main(int argc, char** argv)
 	unsigned long numFailed = 0;
 	unsigned long numCur = 0;
 
-	utils::Log::profile(col.magenta("\n   Running Tests...\n").c_str());
-	utils::Log::profile(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+	utils::Log::profile("%s", col.magenta("\n   Running Tests...\n").c_str());
+	utils::Log::profile("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
 	while(current->func)
 	{
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 			{
 				utils::Log::setLevel(utils::Log::Verbose);
 
-				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 				utils::Log::verbose(" * Running %s verbosely\n", col.yellow(current->name).c_str());
 			}
 
@@ -185,13 +185,13 @@ int main(int argc, char** argv)
 			if((suite.*current->func)())
 			{
 				if(!bQuiet)
-					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+					utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
 				utils::Log::profile(" %s [%2ld] %-65s:   %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.green("ok").c_str());
 				++numPass;
 			} else {
 				if(!bQuiet)
-					utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+					utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
 				utils::Log::profile(" %s [%2ld] %-65s: %s\n", col.cyan("*").c_str(), numCur, current->name.c_str(), col.red("fail").c_str());
 				++numFailed;
@@ -203,14 +203,14 @@ int main(int argc, char** argv)
 		++current;
 	}
 
-	utils::Log::profile(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+	utils::Log::profile("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 	if(numFailed == 0)
 	{
 		std::cerr << "   All " << numPass << " Tests passed." << std::endl;
 	} else {
 		std::cerr << "   " << numFailed << " out of " << (numPass + numFailed) << " Tests failed." << std::endl;
 	}
-	utils::Log::profile(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+	utils::Log::profile("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 
 	if(!bQuiet) {
 		utils::Log::setLevel(utils::Log::Profile);

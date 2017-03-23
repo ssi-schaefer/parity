@@ -26,6 +26,8 @@
 
 #include <Log.h>
 
+#include <climits>
+
 #define SIZEOF_RELOCATION 10
 
 #define BUFFER_GROWSTEP			4096
@@ -308,7 +310,7 @@ namespace parity
 			Decoder dec(MAKEPTR(void*, data_, lower->getValue()), end - lower->getValue());
 			Decoder::InstructionVector const& instructions = dec.getInstructions();
 
-			utils::Log::verbose("decoded content of section no. %d, %d instructions.\n", lower->getSectionNumber(), instructions.size());
+			utils::Log::verbose("decoded content of section no. %d, %ld instructions.\n", lower->getSectionNumber(), instructions.size());
 
 			//
 			// for fast lookup i prepare a map of addresses and booleans which indicate wether

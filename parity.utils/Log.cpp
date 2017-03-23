@@ -101,7 +101,7 @@ namespace parity
 				while(lock_ > 0) usleep(10);
 
 				++lock_;
-				fprintf(stderr, col.yellow("warning: ").c_str());
+				fprintf(stderr, "%s", col.yellow("warning: ").c_str());
 				ret = vfprintf(stderr, fmt, args);
 				--lock_;
 
@@ -122,7 +122,7 @@ namespace parity
 			while(lock_ > 0) usleep(10);
 
 			++lock_;
-			fprintf(stderr, col.red("error  : ").c_str());
+			fprintf(stderr, "%s", col.red("error  : ").c_str());
 			ret = vfprintf(stderr, fmt, args);
 			--lock_;
 

@@ -34,7 +34,7 @@ namespace parity
 		MsStaticImportGenerator::MsStaticImportGenerator(parity::binary::Symbol::SymbolVector &imp)
 			: imports_(imp)
 		{
-			utils::Log::verbose("generating static imports for %d symbols..\n", imp.size());
+			utils::Log::verbose("generating static imports for %ld symbols..\n", imp.size());
 		}
 
 		void MsStaticImportGenerator::doWork()

@@ -418,7 +418,7 @@ namespace parity
 
 		void Task::terminateRunningProcesses() {
 			if(running_.size() > 0) {
-				utils::Log::warning("%d child processes are still alive, terminating them.\n", running_.size());
+				utils::Log::warning("%ld child processes are still alive, terminating them.\n", running_.size());
 			} else {
 				return;
 			}

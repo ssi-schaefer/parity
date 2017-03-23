@@ -116,7 +116,7 @@ namespace parity
 					return;
 				}
 
-				Log::verbose("cleaning %d files.\n", TemporaryFiles.size());
+				Log::verbose("cleaning %ld files.\n", TemporaryFiles.size());
 
 				for(PathVector::iterator it = TemporaryFiles.begin(); it != TemporaryFiles.end(); ++it)
 				{
@@ -192,7 +192,7 @@ namespace parity
 			#undef  CTX_GETSET
 			#define CTX_GETSET(type, name, init) utils::Log::verbose("%s%-20s%s%s%s%*s: %s\n", \
 				col.green(" * ").c_str(), #name, col.cyan("(").c_str(), #type, col.cyan(")").c_str(), \
-				20 - strlen(#type), "", printable(name).c_str());
+				20 - (int)strlen(#type), "", printable(name).c_str());
 
 			utils::Log::verbose("\n%s\n", col.red("   Automatic Dump of Context Members:").c_str());
 			utils::Log::verbose("%s\n", col.red("   ----------------------------------").c_str());
@@ -273,7 +273,7 @@ namespace parity
 				}
 			}
 
-			throw utils::Exception("cannot find %s in any of the %d library paths", name.c_str(), LibraryPaths.size() + SysLibraryPaths.size());
+			throw utils::Exception("cannot find %s in any of the %ld library paths", name.c_str(), LibraryPaths.size() + SysLibraryPaths.size());
 		}
 
 		void Context::setObjectsLibrariesString(const std::string& val)

@@ -94,9 +94,9 @@ namespace parity
 			}
 
 			if(ctx.getGenerateLoader())
-				utils::Log::verbose("Loader generator initialized for %d imports.\n", imports.size());
+				utils::Log::verbose("Loader generator initialized for %ld imports.\n", imports.size());
 			else
-				utils::Log::verbose("Loader generator to be skipped (disabled). %d imports not loaded.\n", imports.size());
+				utils::Log::verbose("Loader generator to be skipped (disabled). %ld imports not loaded.\n", imports.size());
 		}
 
 		static std::string symbolifyName(std::string str)

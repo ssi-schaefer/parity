@@ -5,6 +5,9 @@
 
 opts="$1"
 archive="$2"
+type unixpath2win >/dev/null 2>&1 || unixpath2win() { cygpath -w "$1"; }
+type winpath2unix >/dev/null 2>&1 || winpath2unix() { cygpath -u "$1"; }
+
 archive_win="$(unixpath2win "${archive}")"
 
 shift
@@ -57,10 +60,18 @@ vsvar=
 [[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
 [[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
 
-[[ -z ${vsvar} ]] && { echo "cannot find visual studio (no VSxxCOMNTOOLS set!)"; exit 1; }
 
-vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
-vsroot="$(cd ${vscom}/../../; pwd)"
+if [[ -n ${vsvar} ]]; then
+    vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
+    vsroot="$(cd ${vscom}/../../; pwd)"
+elif [[ -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0 ]]; then
+    vsroot=$(winpath2unix "$(tr -d $"\0" </proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0)")
+    vsroot=${vsroot%%/}
+    vscom=${vsroot}/Common7/Tools
+else
+    echo "cannot find visual studio (no VSxxCOMNTOOLS set!)"
+    exit 1
+fi
 
 [[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
 PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}

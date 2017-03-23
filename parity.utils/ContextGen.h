@@ -26,6 +26,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cstdlib>
 
 #include "Path.h"
 #include "Color.h"

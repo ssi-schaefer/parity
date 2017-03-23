@@ -191,8 +191,8 @@ namespace parity
 			utils::Statistics::instance().addInformation("symbols-local", local_.size());
 			utils::Statistics::instance().addInformation("symbols-import", imports_.size());
 
-			utils::Log::verbose("gathered %d unresolved symbols, %d local symbols and %d imports\n", unresolved_.size(), local_.size(), imports_.size());
-			utils::Log::verbose("prepared %d symbols for export and %d symbols for static import\n", exports_.size(), staticImports_.size());
+			utils::Log::verbose("gathered %ld unresolved symbols, %ld local symbols and %ld imports\n", unresolved_.size(), local_.size(), imports_.size());
+			utils::Log::verbose("prepared %ld symbols for export and %ld symbols for static import\n", exports_.size(), staticImports_.size());
 		}
 
 		bool BinaryGatherer::isSystemToSkip(std::string const& str) const {

@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 		exit(1);
 
 	parity::utils::Color col(parity::utils::Context::getContext().getColorMode());
-	parity::utils::Log::verbose(col.green("... done gathering information.\n").c_str());
+	parity::utils::Log::verbose("%s", col.green("... done gathering information.\n").c_str());
 
 	//
 	// now somehow display the information....

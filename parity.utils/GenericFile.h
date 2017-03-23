@@ -47,7 +47,7 @@ namespace parity
 			virtual void* getBase() const = 0;
 			virtual void* getTop() const = 0;
 
-			virtual size_t getSize() { return reinterpret_cast<unsigned int>(getTop()) - reinterpret_cast<unsigned int>(getBase()); }
+			virtual size_t getSize() { return reinterpret_cast<char *>(getTop()) - reinterpret_cast<char *>(getBase()); }
 
 			virtual bool isInRange(void* ptr) const = 0;
 

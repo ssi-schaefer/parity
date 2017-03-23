@@ -301,7 +301,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	if test -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/.; then
 		# Cygwin provides easy registry access
-		if [[ -z "$MsvcRoot90" -a -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0 ]]; then
+		if test -z "$MsvcRoot90" -a -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0; then
 			MsvcRoot90=$($PathConversion "$(tr -d $"\\0" </proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0)")
 			MsvcRoot90=${MsvcRoot90%%/}
 		fi

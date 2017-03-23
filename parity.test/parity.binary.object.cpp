@@ -171,7 +171,7 @@ namespace parity
 							binary::Archive::MemberMap members = arch.getMembers();
 							binary::Archive::ImportMap imports = arch.getImports();
 
-							utils::Log::verbose("found %d members, and %d imports.\n", members.size(), imports.size());
+							utils::Log::verbose("found %ld members, and %ld imports.\n", members.size(), imports.size());
 
 							for(binary::Archive::MemberMap::iterator it = members.begin(); it != members.end(); ++it)
 							{
