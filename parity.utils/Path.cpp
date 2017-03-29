@@ -868,7 +868,7 @@ namespace parity
                 return false;
             #elif defined(__CYGWIN__)
 				cygwin_conv_path_t how = CCP_RELATIVE |
-					bWindows ? CCP_POSIX_TO_WIN_A : CCP_WIN_A_TO_POSIX;
+					(bWindows ? CCP_POSIX_TO_WIN_A : CCP_WIN_A_TO_POSIX);
 
 				std::string buf;
 				ssize_t size = cygwin_conv_path(how, path_.c_str(), NULL, 0);
