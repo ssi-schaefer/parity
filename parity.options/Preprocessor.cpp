@@ -46,10 +46,17 @@ namespace parity
 		{
 			utils::Context& ctx = utils::Context::getContext();
 
-			const char* posD = ::strchr(option, 'D');
+			const char* posD = NULL;
+			if (strncmp(option, "--define", 8) == 0) {
+				if (option[8] == '=') {
+					posD = option + 9;
+				}
+			} else
+			if (strlen(option) > 2) {
+				posD = &option[2];
+			}
 
-			if(*(++posD) == '\0')
-			{
+			if (!posD) {
 				posD = argument;
 				used = true;
 			}
@@ -62,10 +69,17 @@ namespace parity
 		{
 			utils::Context& ctx = utils::Context::getContext();
 
-			const char* posU = ::strchr(option, 'U');
+			const char* posU = NULL;
+			if (strncmp(option, "--undefine", 10) == 0) {
+				if (option[10] == '=') {
+					posU = option + 11;
+				}
+			} else
+			if (strlen(option) > 2) {
+				posU = &option[2];
+			}
 
-			if(*(++posU) == '\0')
-			{
+			if (!posU) {
 				posU = argument;
 				used = true;
 			}
@@ -82,7 +96,7 @@ namespace parity
 				if(!val.empty())
 					val.append(" ");
 
-				val.append(std::string(option, 2));
+				val.append("/U");
 				val.append(posU);
 
 				ctx.setCompilerPassThrough(val);
