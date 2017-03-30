@@ -1,5 +1,6 @@
 ADD_SCRIPT(filename='parity.gnu.ar')
 ADD_SCRIPT(filename='parity.gnu.ranlib')
+ADD_SCRIPT(filename='parity.gnu.strip')
 
 ADD_EXTRA_DIST('parity.gnu.ar')
 ADD_EXTRA_DIST('parity.gnu.ranlib')
