@@ -99,7 +99,7 @@ namespace parity
 					if(dll.exists())
 						dll.remove();
 
-					exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
+					exp = dll.get().substr(0, dll.get().rfind('.')) + ".exp";
 
 					dll.toForeign();
 					vec.push_back("/OUT:" + dll.get());
