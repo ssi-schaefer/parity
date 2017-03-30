@@ -149,6 +149,14 @@ namespace parity
 				task.addFilter(outFile.substr(0, outFile.rfind(".")) + ".lib", false);
 			}
 
+			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it) {
+				if (it->second == utils::LanguageModuleDefinition) {
+					utils::Path pth(it->first);
+					pth.toForeign();
+					vec.push_back("/DEF:" + pth.get());
+				}
+			}
+
 			//
 			// determine wether to link debugable.
 			//

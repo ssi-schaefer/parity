@@ -114,6 +114,9 @@ namespace parity
 			{ ".asm"		,addSource					},
 			{ ".s"			,addSource					},
 			{ ".S"			,addSource					},
+			{ ".def"		,addSource					},
+			{ ".Def"		,addSource					},
+			{ ".DEF"		,addSource					},
 			{ ".res"		,setUnhandledObjectFilePassthrough	},
 			{ "-"			,addSourceFromStdin			},
 			// --- must be last ---

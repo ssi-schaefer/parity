@@ -213,6 +213,9 @@ namespace parity
 			} else if (_stricmp(ref.substr(ref.length() - 4).c_str(), ".res") == 0) {
 				Log::verbose("adding compiled resource file: %s\n", ref.c_str());
 				target[ref] = LanguageCompiledResource;
+			} else if (_stricmp(ref.substr(ref.length() - 4).c_str(), ".def") == 0) {
+				Log::verbose("adding module definition file: %s\n", ref.c_str());
+				target[ref] = LanguageModuleDefinition;
 			} else {
 				target[ref] = LanguageUnknown;
 			}
@@ -348,6 +351,8 @@ namespace parity
 				return "C";
 			case LanguageCpp:
 				return "C++";
+			case LanguageModuleDefinition:
+				return "DEF";
 			case LanguageResource:
 				return "RC";
 			case LanguageCompiledResource:
@@ -409,6 +414,9 @@ namespace parity
 					break;
 				case LanguageCpp:
 					ret.append(col.blue("[C++] "));
+					break;
+				case LanguageModuleDefinition:
+					ret.append(col.blue("[DEF] "));
 					break;
 				case LanguageResource:
 					ret.append(col.blue("[RC ] "));

@@ -44,6 +44,9 @@ namespace parity
 
 			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it)
 			{
+				if (it->second == utils::LanguageModuleDefinition)
+					continue;
+
 				utils::Path native(it->first);
 				native.toNative();
 

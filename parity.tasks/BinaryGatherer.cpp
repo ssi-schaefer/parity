@@ -68,6 +68,14 @@ namespace parity
 			//
 
 			utils::Context& ctx = utils::Context::getContext();
+
+			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it) {
+				if (it->second == utils::LanguageModuleDefinition) {
+					utils::Log::verbose("found def file, not collecting symbols for export\n");
+					return;
+				}
+			}
+
 			utils::PathVector& all = ctx.getObjectsLibraries();
 			bool bSeenObject = false;
 
