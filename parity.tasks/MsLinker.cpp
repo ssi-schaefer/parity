@@ -86,6 +86,7 @@ namespace parity
 			// determine wether to link a dll and output filenames.
 			//
 			utils::Path out;
+			utils::Path exp;
 			if(ctx.getSharedLink()) {
 				vec.push_back("/DLL");
 
@@ -98,6 +99,8 @@ namespace parity
 					if(dll.exists())
 						dll.remove();
 
+					exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
+
 					dll.toForeign();
 					vec.push_back("/OUT:" + dll.get());
 
@@ -108,6 +111,8 @@ namespace parity
 						lib.toNative();
 						if (lib.exists())
 							lib.remove();
+
+						exp = lib.get().substr(0, lib.get().rfind('.')) + ".exp";
 
 						lib.toForeign();
 						vec.push_back("/IMPLIB:" + lib.get());
@@ -124,6 +129,8 @@ namespace parity
 					
 					if(lib.exists())
 						lib.remove();
+
+					exp = lib.get().substr(0, lib.get().rfind('.')) + ".exp";
 
 					dll.toForeign();
 					lib.toForeign();
@@ -149,9 +156,10 @@ namespace parity
 				out = ctx.getOutputFile();
 
 				out.toNative();
-
 				if(out.exists())
 					out.remove();
+
+				exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
 
 				out.toForeign();
 				vec.push_back("/OUT:" + out.get());
@@ -375,7 +383,6 @@ namespace parity
 				utils::Log::verbose("cleaning up after failed link!");
 				out.remove();
 
-				utils::Path exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
 				exp.remove();
 				
 				utils::Path mf;
@@ -400,10 +407,7 @@ namespace parity
 			if(ctx.getFrontendType() != utils::ToolchainMicrosoft)
 			{
 				std::string outFile = out.get();
-				utils::Path exp;
 				
-				exp = outFile.substr(0, outFile.rfind('.')) + ".exp";
-
 				if(exp.waitForAppearance())
 					ctx.getTemporaryFiles().push_back(exp);
 
@@ -415,7 +419,8 @@ namespace parity
 					utils::Path lib = outFile.substr(0, outFile.rfind('.')) + ".lib";
 					if(lib.waitForAppearance())
 						ctx.getTemporaryFiles().push_back(lib);
-				} else {
+				} else
+				if (ctx.getOutImplib().get().empty()) {
 					//
 					// above out is set to the import lib, from here on this
 					// needs the .dll attached. (only if not microsoft frontend
