@@ -99,7 +99,8 @@ namespace parity
 					if(dll.exists())
 						dll.remove();
 
-					exp = dll.get().substr(0, dll.get().rfind('.')) + ".exp";
+					exp.set(dll.base());
+					exp.append(dll.file().substr(0, dll.file().rfind('.')) + ".exp");
 
 					dll.toForeign();
 					vec.push_back("/OUT:" + dll.get());
@@ -112,7 +113,8 @@ namespace parity
 						if (lib.exists())
 							lib.remove();
 
-						exp = lib.get().substr(0, lib.get().rfind('.')) + ".exp";
+						exp.set(lib.base());
+						exp.append(lib.file().substr(0, lib.file().rfind('.')) + ".exp");
 
 						lib.toForeign();
 						vec.push_back("/IMPLIB:" + lib.get());
@@ -130,7 +132,8 @@ namespace parity
 					if(lib.exists())
 						lib.remove();
 
-					exp = lib.get().substr(0, lib.get().rfind('.')) + ".exp";
+					exp.set(lib.base());
+					exp.append(lib.file().substr(0, lib.file().rfind('.')) + ".exp");
 
 					dll.toForeign();
 					lib.toForeign();
@@ -159,7 +162,8 @@ namespace parity
 				if(out.exists())
 					out.remove();
 
-				exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
+				exp.set(out.base());
+				exp.append(out.file().substr(0, out.file().rfind(".")) + ".exp");
 
 				out.toForeign();
 				vec.push_back("/OUT:" + out.get());
@@ -416,7 +420,9 @@ namespace parity
 					//
 					// executable may produce .lib file in some cases
 					//
-					utils::Path lib = outFile.substr(0, outFile.rfind('.')) + ".lib";
+					utils::Path lib;
+					lib.set(out.base());
+					lib.append(out.file().substr(0, out.file().rfind('.')) + ".lib");
 					if(lib.waitForAppearance())
 						ctx.getTemporaryFiles().push_back(lib);
 				} else

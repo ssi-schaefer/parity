@@ -476,6 +476,9 @@ namespace parity
 			if(path_.empty())
 				return path_;
 
+			size_t sep = path_.rfind(getSeperator());
+			if (sep == std::string::npos)
+				return "";
 			return path_.substr(0, path_.rfind(getSeperator()));
 		}
 
@@ -493,7 +496,7 @@ namespace parity
 			char ch = getSeperator();
 			char str[2] = { ch, '\0' };
 
-			if(path_[path_.length()] != ch)
+			if(!path_.empty() && path_[path_.length()] != ch)
 				path_.append(str);
 
 			appendDirect(component);
@@ -1026,7 +1029,11 @@ namespace parity
 			// Should never be called on an empty path!
 			//
 			if(path_.empty())
-				throw Exception("Cannot determine seperator of empty path!");
+				#ifdef _WIN32
+					return '\\';
+				#else
+					return '/';
+				#endif
 
 			if(isWindows())
 				return '\\';
@@ -1062,7 +1069,7 @@ namespace parity
 			Context& ctx = Context::getContext();
 
             if(!isNative()) {
-                throw Exception("path is not native!");
+                throw Exception("%s: path is not native!", path_.c_str());
             }
 
             if(!ctx.getWaitForOutputFile() && !exists()) {
