@@ -28,6 +28,10 @@
 
 #include <cstdio>
 
+#ifndef _WIN32
+#  define _stricmp strcasecmp
+#endif
+
 namespace parity
 {
 	namespace utils
@@ -76,10 +80,6 @@ namespace parity
 				throw Exception("cannot convert %s to a boolean value!", val.c_str());
 		}
 
-		#ifndef _WIN32
-		#  define _stricmp strcasecmp
-		#endif
-
 		void ContextGen::convert(Color::ColorMode &target, const std::string &val)
 		{
 			if(_stricmp(val.c_str(), "bright") == 0)
@@ -124,10 +124,6 @@ namespace parity
 			else
 				throw Exception("cannot convert %s to a valid SubsystemType!", val.c_str());
 		}
-
-		#ifndef _WIN32
-		#  undef _stricmp
-		#endif
 
 		void ContextGen::convert(DefineMap& target, const std::string& ref)
 		{
@@ -211,12 +207,10 @@ namespace parity
 					Log::warning("ignoring forced language for assembler, continuing normally!\n");
 				Log::verbose("adding assembler source file: %s\n", ref.c_str());
 				target[ref] = LanguageAsssembler;
-			} else if (ref.compare(ref.length() - 3, 3, ".rc") == 0
-				|| ref.compare(ref.length() - 3, 3, ".RC") == 0) {
+			} else if (_stricmp(ref.substr(ref.length() - 3).c_str(), ".rc") == 0) {
 				Log::verbose("adding resource file: %s\n", ref.c_str());
 				target[ref] = LanguageResource;
-			} else if (ref.compare(ref.length() - 4, 4, ".res") == 0
-				|| ref.compare(ref.length() - 4, 4, ".RES") == 0) {
+			} else if (_stricmp(ref.substr(ref.length() - 4).c_str(), ".res") == 0) {
 				Log::verbose("adding compiled resource file: %s\n", ref.c_str());
 				target[ref] = LanguageCompiledResource;
 			} else {
