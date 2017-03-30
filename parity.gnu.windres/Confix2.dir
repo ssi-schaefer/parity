@@ -1,0 +1,3 @@
+ADD_EXTRA_DIST('parity.gnu.windres.vcproj')
+
+PROVIDE_SYMBOL('parity.gnu.windres.exe')

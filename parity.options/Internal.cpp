@@ -156,6 +156,16 @@ namespace parity
 			return true;
 		}
 
+		bool ignoreOption(const char* option, const char* argument, bool& used)
+		{
+			return true;
+		}
+
+		bool ignoreWithArgument(const char* option, const char* argument, bool& used)
+		{
+			used = true;
+			return true;
+		}
 	}
 }
 

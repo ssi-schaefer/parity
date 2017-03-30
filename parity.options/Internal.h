@@ -41,6 +41,8 @@ namespace parity
 		bool setCtxDump(const char* option, const char* argument, bool& used);
 		bool setColorMode(const char* option, const char* argument, bool& used);
 		bool addConfigString(const char* option, const char* argument, bool& used);
+		bool ignoreOption(const char* option, const char* argument, bool& used);
+		bool ignoreWithArgument(const char* option, const char* argument, bool& used);
 	}
 }
 

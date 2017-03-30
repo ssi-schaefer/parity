@@ -20,30 +20,23 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __COLLECTORSTUBS_H__
-#define __COLLECTORSTUBS_H__
+#ifndef __WINDRES_H__
+#define __WINDRES_H__
 
-#include <Threading.h>
+#include "Argument.h"
+
+#include <Context.h>
+#include <Exception.h>
 
 namespace parity
 {
-	namespace tasks
+	namespace options
 	{
-
-		class TaskStubs {
-		public:
-			static unsigned int THREADINGAPI runDependencyTracking(void*);
-			static unsigned int THREADINGAPI runCompiler(void*);
-			static unsigned int THREADINGAPI runLinker(void*);
-			static unsigned int THREADINGAPI runMsExportGenerator(void*);
-			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
-			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
-			static unsigned int THREADINGAPI runMsSymbolTableGenerator(void*);
-			static unsigned int THREADINGAPI runMsPcrtInitEntryGenerator(void*);
-			static unsigned int THREADINGAPI runMsResourceCompiler(void*);
-			static unsigned int THREADINGAPI runMsResourceConverter(void*);
-		};
-
+		bool setInputFormat(const char* option, const char* argument, bool& used);
+		bool setOutputFormat(const char* option, const char* argument, bool& used);
+		bool setBfdTarget(const char* option, const char* argument, bool& used);
+		bool setCodepage(const char* option, const char* argument, bool& used);
+		bool setLanguage(const char* option, const char* argument, bool& used);
 	}
 }
 

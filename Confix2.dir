@@ -252,6 +252,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	ParityAssembler=
 	ParityLinker=
 	ParityManifest=
+	ParityResourceCompiler=
+	ParityResourceConverter=
 
 	ParitySysIncludePaths="__parity.include"
 	ParitySysLibraryPaths="__parity.library"
@@ -386,6 +388,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityCompiler], [cl.exe])
 	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityAssembler], [ml.exe])
 	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityLinker], [link.exe])
+	PARITY_LOOKUP_EXE([$MsvcRoot:$MsSdkDir:$PATH], [ParityResourceCompiler], [rc.exe])
+	PARITY_LOOKUP_EXE([$MsvcRoot:$MsSdkDir:$PATH], [ParityResourceConverter], [cvtres.exe])
 
 	if test -n "$MsvcRoot80" -o -n "$MsvcRoot90" -o -n "$MsvcRoot100"; then
 		# only if using visual studio 2005 or 2008 or 2010
@@ -454,6 +458,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST(ParityAssembler)
 	AC_SUBST(ParityLinker)
 	AC_SUBST(ParityManifest)
+	AC_SUBST(ParityResourceCompiler)
+	AC_SUBST(ParityResourceConverter)
 	
 	AC_SUBST(PcrtInclude)
 	AC_SUBST(PcrtLibrary)

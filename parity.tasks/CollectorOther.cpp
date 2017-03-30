@@ -35,6 +35,9 @@
 #include <Threading.h>
 #include <Statistics.h>
 
+#include <MsResourceCompiler.h>
+#include <MsResourceConverter.h>
+
 #include <CoffObject.h>
 #include <CoffFileHeader.h>
 #include <CoffDirectiveSection.h>
@@ -473,6 +476,113 @@ namespace parity
 				utils::Log::error("cannot run linker!\n");
 				exit(1);
 			}
+		}
+
+		void runResourceCompilerStage()
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			utils::Threading threading;
+
+			utils::Timing::instance().start("Resource compiling");
+
+			/* find the output file for the resource compiler */
+			std::string outputFormat = ctx.getOutputFormat();
+			if (outputFormat.empty()) {
+				if (ctx.getOutputFile() == ctx.getDefaultOutput()) {
+					utils::Log::error("unknown output format for resource compiler!\n");
+					exit(1);
+				}
+				std::string out = ctx.getOutputFile().get();
+				if (out.substr(out.rfind('.')) == ".res") {
+					outputFormat = "res";
+				} else {
+					outputFormat = "coff";
+				}
+			}
+
+			utils::SourceMap sources = ctx.getSources();
+			int cvtsources = 0;
+
+			for(utils::SourceMap::iterator it = sources.begin(); it != sources.end(); ++it) {
+				if (it->second == utils::LanguageCompiledResource)
+					++cvtsources;
+				if (it->second != utils::LanguageResource)
+					continue;
+
+				tasks::MsResourceCompiler::Constructible c;
+				c.sourceFile = it->first.get();
+
+				utils::Path output;
+
+				if (outputFormat == "coff") {
+					output = utils::Path::getTemporary(".parity.resource.XXXXXX.res");
+					ctx.getTemporaryFiles().push_back(output);
+					++cvtsources;
+				} else
+				if (outputFormat != "res") {
+					utils::Log::error("unknown output format for resource compiler!\n");
+					exit(1);
+				} else /* --output-format=res */
+				if (ctx.getOutputFile() == ctx.getDefaultOutput()) {
+					output = utils::Path(c.sourceFile.substr(0, c.sourceFile.rfind('.')) + ".res");
+				} else
+				if (sources.size() > 1) {
+					utils::Log::error("single output file for multiple input files for resource compiler!\n");
+					exit(1);
+				} else {
+					output = ctx.getOutputFile();
+				}
+
+				output.toForeign();
+				c.outputFile = output.get();
+
+				if (TaskStubs::runMsResourceCompiler(&c) != 0) {
+					utils::Log::error("cannot run resource compiler!\n");
+					exit(1);
+				}
+
+				ctx.setSourcesString(output.get()); // add when file exists
+			}
+			utils::Timing::instance().stop("Resource compiling");
+
+			utils::Log::verbose("done resource compiling\n");
+
+			if (outputFormat != "coff")
+				return;
+
+			utils::Timing::instance().start("Resource converting");
+
+			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it) {
+				if (it->second != utils::LanguageCompiledResource)
+					continue;
+
+				tasks::MsResourceConverter::Constructible c;
+				c.sourceFile = it->first.get();
+
+				utils::Path output;
+
+				/* find the output file for the resource converter */
+				if (ctx.getOutputFile() == ctx.getDefaultOutput()) {
+					output = utils::Path(c.sourceFile.substr(0, c.sourceFile.rfind('.')) + ".o");
+				} else
+				if (cvtsources > 1) {
+					utils::Log::error("single output file for multiple input files for resource converter!\n");
+					exit(1);
+				} else {
+					output = ctx.getOutputFile();
+				}
+
+				output.toForeign();
+				c.outputFile = output.get();
+
+				utils::Log::verbose("now for resource converting for %s to %s\n", c.sourceFile.c_str(), c.outputFile.c_str());
+
+				if (TaskStubs::runMsResourceConverter(&c) != 0) {
+					utils::Log::error("cannot run resource converter!\n");
+					exit(1);
+				}
+			}
+			utils::Timing::instance().stop("Resource converting");
 		}
 	}
 }

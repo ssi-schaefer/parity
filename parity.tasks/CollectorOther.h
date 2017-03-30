@@ -31,6 +31,7 @@ namespace parity
 		void runConfigurationLoading(int argc, char* const* argv);
 		void runCompilerStage();
 		void runLinkerStage();
+		void runResourceCompilerStage();
 
 	}
 }

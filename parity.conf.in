@@ -11,6 +11,8 @@ CompilerExe = @ParityCompiler@
 AssemblerExe = @ParityAssembler@
 LinkerExe = @ParityLinker@
 ManifestExe = @ParityManifest@
+ResourceCompilerExe = @ParityResourceCompiler@
+ResourceConverterExe = @ParityResourceConverter@
 
 @ParityAdditionalExecPaths@
 

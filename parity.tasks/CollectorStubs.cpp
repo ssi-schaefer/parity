@@ -30,6 +30,8 @@
 #include "MsLoaderGenerator.h"
 #include "MsSymbolTableGenerator.h"
 #include "MsPcrtInitEntryGenerator.h"
+#include "MsResourceCompiler.h"
+#include "MsResourceConverter.h"
 
 #include <Timing.h>
 #include <Log.h>
@@ -201,6 +203,66 @@ namespace parity
 			}
 
 			utils::Timing::instance().stop("PcrtInit Entrypoint Generator");
+			return 0;
+		}
+
+		unsigned int THREADINGAPI TaskStubs::runMsResourceCompiler(void* rcargs)
+		{
+			utils::Timing::instance().start("Resource Compiler");
+
+			try {
+				if(!rcargs)
+					throw utils::Exception("missing arguments for MsResourceCompiler!");
+
+				switch(utils::Context::getContext().getBackendType()) {
+				case utils::ToolchainMicrosoft:
+				case utils::ToolchainInterixMS:
+					{
+						parity::tasks::MsResourceCompiler compiler(*reinterpret_cast<MsResourceCompiler::Constructible*>(rcargs));
+						compiler.doWork();
+					}
+					break;
+				case utils::ToolchainInterixGNU:
+				default:
+					throw utils::Exception("Invalid backend type requested, or backend not implemented!");
+				}
+			} catch(const utils::Exception& e) {
+				utils::Log::error("while resource compiling: %s\n", e.what());
+				return 1;
+			}
+
+			utils::Timing::instance().stop("Resource Compiler");
+
+			return 0;
+		}
+
+		unsigned int THREADINGAPI TaskStubs::runMsResourceConverter(void* rcargs)
+		{
+			utils::Timing::instance().start("Resource Converter");
+
+			try {
+				if(!rcargs)
+					throw utils::Exception("missing arguments for MsResourceConverter!");
+
+				switch(utils::Context::getContext().getBackendType()) {
+				case utils::ToolchainMicrosoft:
+				case utils::ToolchainInterixMS:
+					{
+						parity::tasks::MsResourceConverter compiler(*reinterpret_cast<MsResourceConverter::Constructible*>(rcargs));
+						compiler.doWork();
+					}
+					break;
+				case utils::ToolchainInterixGNU:
+				default:
+					throw utils::Exception("Invalid backend type requested, or backend not implemented!");
+				}
+			} catch(const utils::Exception& e) {
+				utils::Log::error("while resource compiling: %s\n", e.what());
+				return 1;
+			}
+
+			utils::Timing::instance().stop("Resource Converter");
+
 			return 0;
 		}
 	}

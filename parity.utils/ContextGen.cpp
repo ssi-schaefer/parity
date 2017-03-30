@@ -211,6 +211,14 @@ namespace parity
 					Log::warning("ignoring forced language for assembler, continuing normally!\n");
 				Log::verbose("adding assembler source file: %s\n", ref.c_str());
 				target[ref] = LanguageAsssembler;
+			} else if (ref.compare(ref.length() - 3, 3, ".rc") == 0
+				|| ref.compare(ref.length() - 3, 3, ".RC") == 0) {
+				Log::verbose("adding resource file: %s\n", ref.c_str());
+				target[ref] = LanguageResource;
+			} else if (ref.compare(ref.length() - 4, 4, ".res") == 0
+				|| ref.compare(ref.length() - 4, 4, ".RES") == 0) {
+				Log::verbose("adding compiled resource file: %s\n", ref.c_str());
+				target[ref] = LanguageCompiledResource;
 			} else {
 				target[ref] = LanguageUnknown;
 			}
@@ -346,6 +354,10 @@ namespace parity
 				return "C";
 			case LanguageCpp:
 				return "C++";
+			case LanguageResource:
+				return "RC";
+			case LanguageCompiledResource:
+				return "RES";
 			case LanguageUnknown:
 			case LanguageInvalid:
 				return "None";
@@ -403,6 +415,12 @@ namespace parity
 					break;
 				case LanguageCpp:
 					ret.append(col.blue("[C++] "));
+					break;
+				case LanguageResource:
+					ret.append(col.blue("[RC ] "));
+					break;
+				case LanguageCompiledResource:
+					ret.append(col.blue("[RES] "));
 					break;
 				default:
 					throw Exception("disallowed source file type found in %s: %d", it->first.get().c_str(), it->second);

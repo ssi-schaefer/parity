@@ -77,7 +77,9 @@ namespace parity
 			LanguageUnknown,
 			LanguageC,
 			LanguageCpp,
-			LanguageAsssembler
+			LanguageAsssembler,
+			LanguageResource, // .rc
+			LanguageCompiledResource // .res
 		} LanguageType;
 
 		typedef enum {
@@ -228,6 +230,13 @@ namespace parity
 				CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
 				CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
 				CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \
+				CTX_GETSET   (Path			,ResourceCompilerExe,""				)  /* resource compiler */ \
+				CTX_GETSET   (Path			,ResourceConverterExe,""			)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,InputFormat		,""				)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,OutputFormat		,""				)  /* resource compiler */ \
+				CTX_GETSET   (std::string	,BfdTarget			,""				)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,Codepage			,""				)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,Language			,""				)  /* resource compiler */ \
 				CTX_GETSET   (long			,StackReserve		,10485760		)  /* linker (default: 10MB) */ \
 				CTX_GETSET   (long			,StackCommit		,65536			)  /* linker (default: 64KB) */ \
 				CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \

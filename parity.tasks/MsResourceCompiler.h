@@ -20,30 +20,42 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __COLLECTORSTUBS_H__
-#define __COLLECTORSTUBS_H__
+#ifndef __MSRESOURCECOMPILERTASK_H__
+#define __MSRESOURCECOMPILERTASK_H__
 
-#include <Threading.h>
+#include <Context.h>
+#include <Path.h>
+#include <Task.h>
+
+#include <fstream>
 
 namespace parity
 {
 	namespace tasks
 	{
-
-		class TaskStubs {
+		class MsResourceCompiler {
 		public:
-			static unsigned int THREADINGAPI runDependencyTracking(void*);
-			static unsigned int THREADINGAPI runCompiler(void*);
-			static unsigned int THREADINGAPI runLinker(void*);
-			static unsigned int THREADINGAPI runMsExportGenerator(void*);
-			static unsigned int THREADINGAPI runMsStaticImportGenerator(void*);
-			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
-			static unsigned int THREADINGAPI runMsSymbolTableGenerator(void*);
-			static unsigned int THREADINGAPI runMsPcrtInitEntryGenerator(void*);
-			static unsigned int THREADINGAPI runMsResourceCompiler(void*);
-			static unsigned int THREADINGAPI runMsResourceConverter(void*);
-		};
+			struct Constructible {
+				std::string sourceFile;
+				std::string outputFile;
+			};
 
+			MsResourceCompiler(Constructible & c)
+				: sourceFile_(c.sourceFile)
+				, outputFile_(c.outputFile)
+			{}
+
+			void doWork();
+
+		private:
+			void compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec);
+
+			void prepareGeneric(utils::Task::ArgumentVector& vec);
+			void prepareGenericFile(utils::Path file, utils::Task::ArgumentVector& vec);
+
+			std::string sourceFile_;
+			std::string outputFile_;
+		};
 	}
 }
 
