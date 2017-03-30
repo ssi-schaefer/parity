@@ -389,7 +389,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	if test -n "$MsvcRoot80" -o -n "$MsvcRoot90" -o -n "$MsvcRoot100"; then
 		# only if using visual studio 2005 or 2008 or 2010
-		PARITY_LOOKUP_EXE([$MsvcRoot:$PATH:$MsSdkDir], [ParityManifest], [mt.exe])
+		PARITY_LOOKUP_EXE([$MsvcRoot:$MsSdkDir:$PATH], [ParityManifest], [mt.exe])
 	fi
 
 	#
