@@ -53,6 +53,8 @@ namespace parity
 			{ "/out:"		,setOutputFile				},
 			{ "/SUBSYSTEM:"	,setSubsystem				},
 			{ "/subsystem:"	,setSubsystem				},
+			{ "/IMPLIB:"	,setOutImplib				},
+			{ "/implib:"	,setOutImplib				},
 			{ ".lib"		,addObjectsLibraries		},
 			{ ".Lib"		,addObjectsLibraries		},
 			{ ".LIB"		,addObjectsLibraries		},

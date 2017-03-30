@@ -89,7 +89,8 @@ namespace parity
 			if(ctx.getSharedLink()) {
 				vec.push_back("/DLL");
 
-				if(ctx.getFrontendType() == utils::ToolchainMicrosoft)
+				if (ctx.getFrontendType() == utils::ToolchainMicrosoft
+				 || !ctx.getOutImplib().get().empty())
 				{
 					utils::Path dll = ctx.getOutputFile();
 
@@ -101,6 +102,16 @@ namespace parity
 					vec.push_back("/OUT:" + dll.get());
 
 					out = dll;
+
+					if (!ctx.getOutImplib().get().empty()) {
+						utils::Path lib = ctx.getOutImplib();
+						lib.toNative();
+						if (lib.exists())
+							lib.remove();
+
+						lib.toForeign();
+						vec.push_back("/IMPLIB:" + lib.get());
+					}
 				} else {
 					utils::Path dll = ctx.getOutputFile().get() + ".dll";
 					utils::Path lib = ctx.getOutputFile();
@@ -337,7 +348,7 @@ namespace parity
 			{
 				utils::Path mf;
 
-				if(ctx.getSharedLink())
+				if(ctx.getSharedLink() && ctx.getOutImplib().get().empty())
 					mf = out.get() + ".dll.mf";
 				else
 					mf = out.get() + ".mf";

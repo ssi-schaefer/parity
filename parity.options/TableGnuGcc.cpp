@@ -60,6 +60,7 @@ namespace parity
 			{ "-ansi"		,setAnsiMode				},
 			{ "-Wl,-rpath"	,addRunPath					},  // must be before -W to match correctly
 			{ "-Wl,-e"		,setEntryPoint				},  // -- " --
+			{ "-Wl,--out-implib",setOutImplib			},  // must be before -W to match correctly
 			{ "-Werror"		,setWarningAsError			},	// -- " --
 			{ "-w"			,setWarningLevel			},
 			{ "-W"			,setWarningLevel			},

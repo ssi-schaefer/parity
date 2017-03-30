@@ -40,6 +40,7 @@ namespace parity
 		bool setSubsystem(const char* option, const char* argument, bool& used);
 		bool addRunPath(const char* option, const char* argument, bool& used);
 		bool setEntryPoint(const char* option, const char* argument, bool& used);
+		bool setOutImplib(const char* option, const char* argument, bool& used);
 	}
 }
 

@@ -254,6 +254,7 @@ namespace parity
 				CTX_GETSET   (Path			,ManifestExe		,""				)  /* linker (MS) */ \
 				CTX_GETSET   (std::string	,ManifestDefaults	,"-nologo"		)  /* linker (MS) */ \
 				CTX_GETSET_I (bool			,PreferStatic		,false			)  /* linker (GCC) */ \
+				CTX_GETSET_I (Path			,OutImplib			,""				)  /* linker */ \
 				CTX_GETSET   (Path			,DefaultOutput		,"a.exe"		)  /* all */ \
 				CTX_GETSET_I (Path			,OutputFile			,"a.exe"		)  /* all */ \
                 CTX_GETSET   (bool          ,WaitForOutputFile  ,true           )  /* all */ \
