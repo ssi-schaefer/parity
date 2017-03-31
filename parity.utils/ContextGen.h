@@ -197,6 +197,7 @@ namespace parity
 				CTX_GETSET_C (DefineMap		,Defines			,DefineMap()	)  /* preprocessor */ \
 				CTX_GETSET_C (PathVector	,IncludePaths		,PathVector()	)  /* preprocessor */ \
 				CTX_GETSET_C (PathVector	,SysIncludePaths	,PathVector()	)  /* preprocessor (by config only) */ \
+				CTX_GETSET_C (PathVector	,IncludeFiles		,PathVector()	)  /* preprocessor */ \
 				CTX_GETSET_I (bool			,PreprocToFile		,false			)  /* preprocessor (MS) */ \
 				CTX_GETSET_I (bool			,KeepHashLine		,true			)  /* preprocessor (MS) */ \
 				CTX_GETSET_I (bool			,DependencyTracking	,false			)  /* preprocessor (GCC) */ \

@@ -164,6 +164,15 @@ namespace parity
 			return true;
 		}
 
+		bool addIncludeFile(const char* option, const char* argument, bool& used)
+		{
+			if (strcmp(option, "-include") != 0)
+				return false;
+			utils::Context::getContext().setIncludeFilesString(argument);
+			used = true;
+			return true;
+		}
+
 		bool setDependencyTracking(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();

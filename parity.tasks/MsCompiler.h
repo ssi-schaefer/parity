@@ -43,11 +43,11 @@ namespace parity
 			//
 			static void vectorize(const std::string& str, utils::Task::ArgumentVector& vec);
 		private:
-			void processCOrCppFile(utils::Task::ArgumentVector& vec);
-			void compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec);
+			void processCOrCppFile(const utils::Path& origFile, const utils::Path& sourceFile, utils::Task::ArgumentVector& vec);
+			void compileGeneric(const utils::Path& origFile, const utils::Path& sourceFile, utils::Path executable, utils::Task::ArgumentVector& vec);
 
 			void prepareGeneric(utils::Task::ArgumentVector& vec);
-			void prepareGenericFile(utils::Path file, utils::Task::ArgumentVector& vec, utils::LanguageType lang);
+			void prepareGenericFile(utils::Path & origFile, utils::Path & sourceFile, utils::Task::ArgumentVector& vec, utils::LanguageType lang);
 
 			std::ofstream prepOut_;
 		};

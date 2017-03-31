@@ -78,6 +78,7 @@ namespace parity
 			{ "-fPIC"		,setPositionIndep			},
 			{ "-E"			,setPreprocess				},
 			{ "-I"			,addIncludePath				},
+			{ "-include"	,addIncludeFile				},
 			{ "-L"			,addLibraryPath				},
 			{ "-static"		,setPreferStatic			},
 			{ "-g"			,setDebugable				},
