@@ -263,51 +263,127 @@ AC_DEFUN([PARITY_CONFIGURE],
     # Check for availability of path conversion scripts/executables
     #
     AC_MSG_CHECKING([for winpath2unix])
-    type winpath2unix > /dev/null 2>&1
-    w2u=$?
-    if test "$w2u" -eq 0; then
-        AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
+	if test -z "$WINPATH2UNIX"
+	then
+		if type winpath2unix >/dev/null 2>&1
+		then
+			AC_SUBST([WINPATH2UNIX], [winpath2unix])
+		elif type cygpath >/dev/null 2>&1
+		then
+			AC_SUBST([WINPATH2UNIX], ["cygpath -u"])
+		else
+			AC_SUBST([WINPATH2UNIX], [echo])
+		fi
+	fi
+	AC_DEFINE_UNQUOTED([WINPATH2UNIX], ["$WINPATH2UNIX"], [The winpath2unix utility])
+	if test echo != "$WINPATH2UNIX"
+	then
+		AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
+	fi
+	AC_MSG_RESULT([$WINPATH2UNIX])
 
     AC_MSG_CHECKING([for unixpath2win])
-    type unixpath2win > /dev/null 2>&1
-    u2w=$?
-    if test "$u2w" -eq 0; then
-        AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
-
-	case $host in
-	*-*-cygwin*) PathConversion='cygpath -u' ;;
-	*) PathConversion='echo' ;;
-	esac
-
-    if test "$w2u" -eq 0; then
-        PathConversion='winpath2unix'
-    fi
+	if test -z "$UNIXPATH2WIN"
+	then
+		if type unixpath2win >/dev/null 2>&1
+		then
+			AC_SUBST([UNIXPATH2WIN], [unixpath2win])
+		elif type cygpath >/dev/null 2>&1
+		then
+			AC_SUBST([UNIXPATH2WIN], ["cygpath -w"])
+		else
+			AC_SUBST([UNIXPATH2WIN], [echo])
+		fi
+	fi
+	AC_DEFINE_UNQUOTED([UNIXPATH2WIN], ["$UNIXPATH2WIN"], [The unixpath2win utility])
+	if test echo != "$UNIXPATH2WIN"
+	then
+		AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
+	fi
+	AC_MSG_RESULT([$UNIXPATH2WIN])
 
 	#
 	# Lookup paths to visual studio installations
 	# need to use echo to preserve pahs with spaces correctly
 	#
 
-	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo "$($PathConversion "$VS71COMNTOOLS")")")")
-	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo "$($PathConversion "$VS80COMNTOOLS")")")")
-	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo "$($PathConversion "$VS90COMNTOOLS")")")")
-	test -n "$VS100COMNTOOLS" && MsvcRoot100=$(dirname "$(dirname "$(echo "$($PathConversion "$VS100COMNTOOLS")")")")
+	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS71COMNTOOLS")")")")
+	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS80COMNTOOLS")")")")
+	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS90COMNTOOLS")")")")
+	test -n "$VS100COMNTOOLS" && MsvcRoot100=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS100COMNTOOLS")")")")
 
-	if test -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/.; then
-		# Cygwin provides easy registry access
-		if test -z "$MsvcRoot90" -a -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0; then
-			MsvcRoot90=$($PathConversion "$(tr -d $"\\0" </proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0)")
+	AC_MSG_CHECKING([for how to query the Windows Registry])
+
+	if test -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/."
+	then
+		regquery() {
+			regquery_return=
+			if test -r "/proc/registry/${1}/${2:-.}/."; then
+				return 0
+			fi
+			if test -r "/proc/registry/${1}/${2}"; then
+				regquery_return=`tr -d \\\\\\\\0 < "/proc/registry/${1}/${2}"`
+				return $?
+			fi
+			return 1
+		}
+		AC_MSG_RESULT([/proc/registry])
+	elif test -n "${WINDIR}"
+	then
+		eval "regquery() {
+			regquery_return=\\`\\"`$WINPATH2UNIX \\"${WINDIR}\\\\system32\\\\reg.exe\\"
+				`\\" query \\"\\${1//\\\\//\\\\\\\\\\\\\\\\}\\" /v \\"\\${2}\\" 2>/dev/null\\`
+			if test \\$? -eq 0
+			then
+				regquery_return=\\${regquery_return#*\\"    \\${2:-(Default)}    REG_SZ    \\"}
+				regquery_return=\\`\\$as_echo_n \\"\\${regquery_return}\\" | tr -d \\\\\\\\\\\\\\\\015\\\\\\\\\\\\\\\\012\\`
+				regquery_return=\\${regquery_return#(value not set)}
+				return 0
+			fi
+			regquery_return=
+			return 1
+		}"
+		AC_MSG_RESULT([${WINDIR}\\\\system32\\\\reg.exe])
+	else
+		regquery() {
+			regquery_return=
+			return 1
+		}
+		AC_MSG_RESULT([no])
+	fi
+
+	AC_MSG_CHECKING([for Windows Registry root key])
+
+	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft; then
+		regroot=HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node
+	elif regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft; then
+		regroot=HKEY_LOCAL_MACHINE/SOFTWARE
+	else
+		regroot=
+	fi
+
+	AC_MSG_RESULT([${regroot:-no}])
+
+	if test -z "$MsvcRoot100$MsvcRoot90$MsvcRoot80$MsvcRoot71" -a -n "${regroot}" \
+	&& regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7
+	then
+		if regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 10.0
+		then
+			MsvcRoot100=`$WINPATH2UNIX "${regquery_return}"`
+			MsvcRoot100=${MsvcRoot100%%/}
+		elif regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 9.0
+		then
+			MsvcRoot90=`$WINPATH2UNIX "${regquery_return}"`
 			MsvcRoot90=${MsvcRoot90%%/}
+		elif regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 8.0
+		then
+			MsvcRoot80=`$WINPATH2UNIX "${regquery_return}"`
+			MsvcRoot80=${MsvcRoot80%%/}
+		elif regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 7.1
+		then
+			MsvcRoot71=`$WINPATH2UNIX "${regquery_return}"`
+			MsvcRoot71=${MsvcRoot71%%/}
 		fi
-		# FIXME: more versions
 	fi
 
 	MsvcRoot=
@@ -367,8 +443,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 	MsSdkDir=
 
 	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
-		if test -d "`$PathConversion \"$MSSDK\"`"; then
-			MsSdkDir="`$PathConversion \"$MSSDK\"`"
+		if test -d "`$WINPATH2UNIX \"$MSSDK\"`"; then
+			MsSdkDir="`$WINPATH2UNIX \"$MSSDK\"`"
 		else
 			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
 		fi
@@ -376,9 +452,10 @@ AC_DEFUN([PARITY_CONFIGURE],
 		MsSdkDir=$MSSDK
 	fi
 
-	if test -z "$MSSDK" -a -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/Microsoft SDKs/Windows/CurrentInstallFolder"; then
-		# Cygwin provides easy registry access
-		MsSdkDir=$($PathConversion "$(tr -d $"\\0" <"/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/Microsoft SDKs/Windows/CurrentInstallFolder")")
+	if test -z "$MsSdkDir" \
+	&& regquery "${regroot}/Microsoft/Microsoft SDKs/Windows" CurrentInstallFolder
+	then
+		MsSdkDir=$($WINPATH2UNIX "${regquery_return}")
 	fi
 
 	#
