@@ -330,9 +330,12 @@ AC_DEFUN([PARITY_CONFIGURE],
 		AC_MSG_RESULT([/proc/registry])
 	elif test -n "${WINDIR}"
 	then
+		regquery="${WINDIR}\\\\system32\\\\reg.exe"
+		regquery=`$WINPATH2UNIX "$regquery"`
+		AC_MSG_RESULT([$regquery])
 		eval "regquery() {
-			regquery_return=\\`\\"`$WINPATH2UNIX \\"${WINDIR}\\\\system32\\\\reg.exe\\"
-				`\\" query \\"\\${1//\\\\//\\\\\\\\\\\\\\\\}\\" /v \\"\\${2}\\" 2>/dev/null\\`
+			regquery_return=\\`\\$as_echo_n \\"\\${1}\\" | tr / \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \\`
+			regquery_return=\\`\\"${regquery}\\" query \\"\\${regquery_return}\\" /v \\"\\${2}\\" 2>/dev/null\\`
 			if test \\$? -eq 0
 			then
 				regquery_return=\\${regquery_return#*\\"    \\${2:-(Default)}    REG_SZ    \\"}
@@ -343,7 +346,6 @@ AC_DEFUN([PARITY_CONFIGURE],
 			regquery_return=
 			return 1
 		}"
-		AC_MSG_RESULT([${WINDIR}\\\\system32\\\\reg.exe])
 	else
 		regquery() {
 			regquery_return=
