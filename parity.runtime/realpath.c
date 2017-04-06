@@ -20,41 +20,15 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_STDLIB_H__
-#define __PCRT_STDLIB_H__
+#include "stdlib.h"
 
-#include "internal/pcrt.h"
+#include <windows.h>
 
-#pragma push_macro("_POSIX_")
-#pragma push_macro("__STDC__")
-#  ifdef _POSIX_
-#    undef _POSIX_
-#  endif
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
-#  include RUNTIME_INC(Stdlib.h)
-#pragma pop_macro("_POSIX_")
-#pragma pop_macro("__STDC__")
-
-#include "search.h"
-
-PCRT_BEGIN_C
-
-#pragma push_macro("realpath")
-#undef realpath
-
-extern int setenv(const char* name, const char* value, int overwrite);
-extern int unsetenv(const char* name);
-
-//
-// PATH_MAX is 512 on windows and interix...
-//
-extern char* realpath(const char* p, char* r);
-
-#pragma pop_macro("realpath")
-
-PCRT_END_C
-
-#endif
+char* realpath(const char* p, char* r)
+{
+	//
+	// PATH_MAX is 512 on windows and interix...
+	//
+	return _fullpath(r, p, 512);
+}
 
