@@ -335,7 +335,7 @@ namespace parity
 				// Need original file's directory as include path now,
 				// to have #include "..." really search there first.
 				utils::Log::verbose("adding original source location as include path\n");
-				vec.insert(vec.begin(), "/I" + foreignSource.base());
+				vec.insert(vec.begin(), "/I" + foreignSource.base() + "/");
 				char buf[1024];
 				while(!origStream.eof()) {
 					origStream.read(buf, sizeof(buf));
@@ -431,11 +431,11 @@ namespace parity
 
 #if 0
 				if(!ctx.isBadCompilerPath(*it))
-					vec.push_back("/I" + it->get());
+					vec.push_back("/I" + it->get() + "/");
 				else
 					utils::Log::verbose("skipping bad include path %s\n", it->get().c_str());
 #else
-				vec.push_back("/I" + it->get());
+				vec.push_back("/I" + it->get() + "/");
 #endif
 			}
 
@@ -448,11 +448,11 @@ namespace parity
 
 #if 0
 				if(!ctx.isBadCompilerPath(*it))
-					vec.push_back("/I" + it->get());
+					vec.push_back("/I" + it->get() + "/");
 				else
 					utils::Log::verbose("skipping bad include path (from environment) %s\n", it->get().c_str());
 #else
-				vec.push_back("/I" + it->get());
+				vec.push_back("/I" + it->get() + "/");
 #endif
 			}
 
@@ -470,7 +470,7 @@ namespace parity
 					utils::Path foreign(*it);
 					foreign.toForeign();
 
-					vec.push_back("/I" + foreign.get());
+					vec.push_back("/I" + foreign.get() + "/");
 				}
 			}
 
