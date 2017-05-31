@@ -1,0 +1,596 @@
+#! /usr/bin/env bash
+
+SELF=$0
+
+bindir="@bindir@"
+sysconfdir="@sysconfdir@"
+
+[[ ${bindir}     == @*@ ]] && bindir=$(dirname "$0")
+[[ ${sysconfdir} == @*@ ]] && sysconfdir=${bindir}
+
+usage() {
+	cat <<EOF
+${SELF##*/} [--help|--list-supported|--list-available|--is-available|--enable|--disable|--set-default]
+EOF
+}
+
+parityconf-help() {
+	cat <<EOF
+${SELF##*/} [options] action [hostconfig...]
+
+Where options is a combination of:
+  --quiet   No progress output at all.
+  --verbose More progress output.
+  --debug   Enable shell trace.
+  --trace   Enable shell trace when running external commands.
+
+Where action is one of:
+
+  --help
+     This help.
+
+  --list-supported
+      List any hostconfig identifiers supported.
+
+  --list-available
+      List hostconfig identifiers for installed MSVC compilers found.
+
+  --is-available hostconfig
+      Test if MSVC compiler for hostconfig identifier is installed.
+
+  --enable [hostconfig...]
+      Enables configuration for hostconfig identifiers, if available.
+      Enables available ones without hostconfig identifiers specified.
+
+  --disable [hostconfig...]
+      Disables configuration for hostconfig identifiers.
+      Disables supported ones without hostconfig identifiers specified.
+
+  --set-default hostconfig
+      Enables configuration for hostconfig identifier,
+      and sets it as the default hostconfig.
+
+EOF
+}
+
+get-supported-chosts() {
+	local vsvers=(
+		 7.0	# Visual Studio 2002, cl.exe Version 13.00
+		 7.1	# Visual Studio 2003, cl.exe Version 13.10
+		 8.0	# Visual Studio 2005, cl.exe Version 14.00
+		 9.0	# Visual Studio 2008, cl.exe Version 15.00
+		10.0	# Visual Studio 2010, cl.exe Version 16.00
+		11.0	# Visual Studio 2012, cl.exe Version 17.00
+		12.0	# Visual Studio 2013, cl.exe Version 18.00
+		14.0	# Visual Studio 2015, cl.exe Version 19.00
+		15.0	# Visual Studio 2017, cl.exe Version 19.10
+	)
+	local chosts=(
+		i686-pc-winnt
+		x86_64-pc-winnt
+	)
+	local chost vsver
+	for chost in "${chosts[@]}"
+	do
+		for vsver in "${vsvers[@]}"
+		do
+			echo "${chost}-msvc${vsver}"
+		done
+	done
+	return 0
+}
+#
+# Cached value, allows to match with *" <chost> "*
+#
+SUPPORTED_CHOSTS=" $(echo $(get-supported-chosts) ) "
+is-supported-chost() {
+	[[ ${SUPPORTED_CHOSTS} == *" ${1} "* ]]
+}
+
+get-supported-executables() {
+	local chost=$(get-chost "$1")
+
+	local vsarch=$(get-vsarch "${chost}")
+	local vsver=$(get-vsver "${chost}")
+
+	local vsexes=(
+		'name=Compiler          executable=cl.exe    '
+		'name=Linker            executable=link.exe  '
+		'name=Manifest          executable=mt.exe    '
+		'name=ResourceCompiler  executable=rc.exe    '
+		'name=ResourceConverter executable=cvtres.exe'
+	)
+	case ${vsarch} in
+	x86) vsexes+=( 'name=Assembler executable=ml.exe  ' ) ;;
+	x64) vsexes+=( 'name=Assembler executable=ml64.exe' ) ;;
+	esac
+	local vsexe
+	for vsexe in "${vsexes[@]}"
+	do
+		echo "${vsexe}"
+	done
+	return 0
+}
+
+get-supported-sdklibs() {
+	local sdklibs=(
+		kernel32
+		user32
+		advapi32
+		gdi32
+		ws2_32
+		shell32
+		ole32
+		winspool
+		comctl32
+		comdlg32
+		userenv
+		uuid
+	)
+	local sdklib
+	for sdklib in "${sdklibs[@]}"
+	do
+		echo "${sdklib}"
+	done
+}
+
+get-vsarch() {
+	case $1 in
+	*x64*|*amd64*|*x86_64*) echo "x64" ;;
+	*x86*|*i?86*) echo "x86" ;;
+	esac
+	return 0
+}
+
+get-vsver() {
+	case $1 in
+	*msvc*)
+		local vcver=${1##*msvc}
+		echo "msvc${vcver%%-*}"
+		;;
+	esac
+	return 0
+}
+
+get-chost() {
+	local vsarch=$(get-vsarch "$*")
+	local vsver=$(get-vsver "$*")
+	case ${vsarch} in
+	x86) echo "i686-pc-winnt-${vsver}" ;;
+	x64) echo "x86_64-pc-winnt-${vsver}" ;;
+	esac
+	return 0
+}
+
+args-to-chosts() {
+	local arg chost chosts=()
+	for arg in "$@"
+	do
+		chost=$(get-chost "${arg}")
+		is-supported-chost "${chost}" || die "Invalid configuration value '${arg}' (try --list-supported.)"
+		chosts+=("${chost}")
+	done
+	echo "${chosts[@]}"
+	return 0
+}
+
+NL="
+"
+
+die() {
+	${1+:} false && echo "${SELF##*/}: $@" >&2
+	exit 1
+}
+
+[[ -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/." ]] || die "Missing Cygwin based POSIX environment."
+[[ -n ${SYSTEMROOT} ]] || die "Missing SYSTEMROOT environment variable."
+[[ -n ${COMSPEC} ]] || die "Missing COMSPEC environment variable."
+
+systemroot=$(cygpath -u "${SYSTEMROOT}")
+comspec=$(cygpath -u "${COMSPEC}")
+
+eval "cmd() { PATH=\"${systemroot}:${comspec%/*}:${comspec%/*}/WBEM\" \"${comspec}\" \"\$@\"; }"
+
+regquery() {
+	regquery_result=
+	if test -r "/proc/registry/${1}/${2:-.}/."; then
+		return 0
+	fi
+	if test -r "/proc/registry/${1}/${2}"; then
+		regquery_result=`tr -d \\\\0 < "/proc/registry/${1}/${2}"`
+		return $?
+	fi
+	return 1
+}
+
+regquery_vsroot() {
+	local vsver=$(get-vsver "${1}")
+	vsver=${vsver#msvc}
+	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
+	|| regquery HKEY_CURRENT_USER/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
+	|| regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
+	|| regquery HKEY_CURRENT_USER/SOFTWARE/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
+	; then
+		regquery_vsroot_result=${regquery_result}
+		return 0
+	fi
+	return 1
+}
+
+query-novcvars() {
+	[[ -z ${novcPATH-}${novcINCLUDE-}${novcLIB-}${novcLIBPATH-} ]] || return 0
+
+	novcPATH= novcINCLUDE= novcLIB= novcLIBPATH=
+
+	noquiet "Querying environment without MSVC ..."
+	traceon
+	eval $(cmd /c set PATH '&&' set INCLUDE '&&' set LIB 2>/dev/null |
+		sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/novc\1=$'\2'/p"
+	)
+	traceoff $?
+
+	if [[ -n ${novcPATH}${novcINCLUDE}${novcLIB}${novcLIBPATH} ]]
+	then
+		verbose "Querying environment without MSVC done."
+		return 0
+	fi
+	noquiet "Querying environment without MSVC failed."
+	return 1
+}
+
+query-vcvars() {
+	local chost=$(get-chost "$1")
+	is-supported-chost "${chost}" || return 1
+
+	query-novcvars || die "Cannot get even initial environment."
+
+	local vsver=$(get-vsver "${chost}")
+	local vsarch=$(get-vsarch "${chost}")
+
+	regquery_vsroot "${vsver}" || return 1
+
+	noquiet "Querying environment for ${chost} ..."
+
+	vcPATH= vcINCLUDE= vcLIB= vcLIBPATH=
+
+	local vsroot=$(cygpath -u "$regquery_vsroot_result")
+	local vcvarsall
+	vcvarsall=${vsroot}/VC/Auxiliary/Build/vcvarsall.bat
+	[[ -r ${vcvarsall} ]] ||
+	vcvarsall=${vsroot}/VC/vcvarsall.bat
+	[[ -r ${vcvarsall} ]] || return 1
+
+    INCLUDE= LIB= LIBPATH= \
+	traceon
+    eval $(cmd /c "$(cygpath -w "${vcvarsall}")" ${vsarch} '&&' set PATH '&&' set INCLUDE '&&' set LIB 2>/dev/null |
+      sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/vc\1=$'\2'/p"
+    )
+	traceoff $?
+    vcPATH=${vcPATH%${novcPATH}};          vcPATH=${vcPATH%%;}
+    vcINCLUDE=${vcINCLUDE%${novcINCLUDE}}; vcINCLUDE=${vcINCLUDE%%;}
+    vcLIB=${vcLIB%${novcLIB}};             vcLIB=${vcLIB%%;}
+    vcLIBPATH=${vcLIBPATH%${novcLIBPATH}}; vcLIBPATH=${vcLIBPATH%%;}
+
+    if [[ "::${vcPATH}::${vcINCLUDE}::${vcLIB}::${vcLIBPATH}::" == *::::* ]]
+	then
+		verbose "Querying environment for ${chost} failed."
+		return 1
+	fi
+	verbose "Querying environment for ${chost} done."
+	return 0
+}
+
+prune-parityconf() {
+	local chost=$(get-chost "$1")
+	is-supported-chost "${chost}" || return 1
+
+	local vsver=$(get-vsver "${chost}")
+	local vsarch=$(get-vsarch "${chost}")
+	local conffile="${sysconfdir}/parity.${vsarch}-${vsver}.conf"
+	local defconffile="${sysconfdir}/parity.conf"
+
+	if [[ -s ${defconffile} ]]
+	then
+		local confline defchost
+		while read confline
+		do
+			if [[ ${confline} == *"PARITY CONFIGURATION for "* ]]
+			then
+				defchost=${confline#*PARITY CONFIGURATION for }
+				defchost=$(get-chost "${defchost}")
+				break
+			fi
+		done < "${defconffile}"
+		if [[ ${defchost} == "${chost}" ]]
+		then
+			noquiet "Removing ${defconffile} ..."
+			traceon
+			rm -f "${defconffile}"
+			if traceoff $?
+			then
+				verbose "Removing ${defconffile} done."
+			else
+				noquiet "Removing ${defconffile} failed."
+			fi
+		fi
+	fi
+
+	if [[ -r ${conffile} ]]
+	then
+		noquiet "Removing ${conffile} ..."
+		traceon
+		rm -f "${conffile}"
+		if traceoff $?
+		then
+			verbose "Removing ${conffile} done."
+			return 0
+		fi
+		noquiet "Removing ${conffile} failed."
+		return 1
+	fi
+	return 0
+}
+
+update-parityconf() {
+	local isdefault=false
+	if [[ $1 == --set-default ]]
+	then
+		isdefault=true
+		shift
+	fi
+	local chost=$(get-chost "$1")
+	is-supported-chost "${chost}" || return 1
+
+	if ! query-vcvars "${chost}"
+	then
+		prune-parityconf "${chost}"
+		return 1
+	fi
+	vcPATH=$(cygpath -up "${vcPATH}")
+	vcINCLUDE=$(cygpath -up "${vcINCLUDE}")
+	vcLIB=$(cygpath -up "${vcLIB}")
+	vcLIBPATH=$(cygpath -up "${vcLIBPATH}")
+
+	local vsexes
+	IFS=${NL} eval 'vsexes=( $(get-supported-executables '${chost}') )'
+
+	local vsexe
+	local name executable
+	for vsexe in "${vsexes[@]}"
+	do
+		name= executable=
+		eval ${vsexe}
+		eval ${name}Exe=
+		IFS=: eval ${name}Exe='$(find ${vcPATH} -maxdepth 1 -iname "${executable}" -print -quit)'
+	done
+
+	local AdditionalExecPaths=
+	local SysIncludePaths=
+	local SysLibraryPaths=
+	local ObjectsLibraries=
+
+	local p
+	IFS=: eval '
+		for p in ${vcPATH}
+		do
+			AdditionalExecPaths+="AdditionalExecPaths = ${p}${NL}"
+		done
+		for p in ${vcINCLUDE}
+		do
+			SysIncludePaths+="SysIncludePaths = ${p}${NL}"
+		done
+		for p in ${vcLIB}
+		do
+			SysLibraryPaths+="SysLibraryPaths = ${p}${NL}"
+		done
+	'
+	local sdklib
+	for sdklib in $(get-supported-sdklibs "${chost}")
+	do
+		IFS=: eval local ${sdklib}Lib='$(find ${vcLIB} -maxdepth 1 -iname "${sdklib}.lib" -print -quit)'
+		eval '[[ -n ${'${sdklib}'Lib} ]]' || continue
+		eval 'ObjectsLibraries+="ObjectsLibraries = ${'${sdklib}'Lib}${NL}"'
+	done
+
+	local vsver=$(get-vsver "${chost}")
+	local vsarch=$(get-vsarch "${chost}")
+
+	noquiet "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf ..."
+	(
+		set -e
+		export AdditionalExecPaths SysIncludePaths SysLibraryPaths ObjectsLibraries
+		< "${sysconfdir}/parity.conf.in" \
+		> "${sysconfdir}/parity.${vsarch}-${vsver}.conf" \
+		awk "
+			/PARITY CONFIGURATION/{
+				sub(\"PARITY CONFIGURATION.*\", \"PARITY CONFIGURATION for ${chost}\")
+				print
+				next
+			}
+			$(for vsexe in "${vsexes[@]}"
+			do
+				name= executable=
+				eval ${vsexe}
+				eval "echo \"/^${name}Exe\\s+=/{
+						print \\\"${name}Exe = \${${name}Exe}\\\"
+						next
+					}\""
+			done)
+			/AdditionalExecPaths/{
+				print ENVIRON[\"AdditionalExecPaths\"]
+				del ENVIRON[\"AdditionalExecPaths\"]
+				next
+			}
+			/SysIncludePaths/{
+				print ENVIRON[\"SysIncludePaths\"]
+				ENVIRON[\"SysIncludePaths\"] = \"\"
+				next
+			}
+			/SysLibraryPaths/{
+				print ENVIRON[\"SysLibraryPaths\"]
+				ENVIRON[\"SysLibraryPaths\"] = \"\"
+				next
+			}
+			/ObjectsLibraries/{
+				if (ENVIRON[\"ObjectsLibraries\"]) print ENVIRON[\"ObjectsLibraries\"]
+				ENVIRON[\"ObjectsLibraries\"] = \"\"
+				next
+			}
+			{print}
+		"
+	)
+	if [[ $? -ne 0 ]]
+	then
+		noquiet "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf failed."
+		return 1
+	fi
+	verbose "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf done."
+	if ${isdefault}
+	then
+		noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default ..."
+		traceon
+		cp -f "${sysconfdir}/parity.${vsarch}-${vsver}.conf" "${sysconfdir}/parity.conf"
+		if ! traceoff $?
+		then
+			noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default failed."
+			return 1
+		fi
+		verbose "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default done."
+	fi
+	return 0
+}
+
+parityconf-list-supported() {
+	LOGFD=2
+	query-novcvars || die "Cannot get even initial environment."
+
+	local chost
+	for chost in $(get-supported-chosts)
+	do
+		echo "${chost}"
+	done
+	return 0
+}
+
+parityconf-list-available() {
+	LOGFD=2
+	query-novcvars || die "Cannot get even initial environment."
+
+	local chost
+	for chost in $(get-supported-chosts)
+	do
+		if query-vcvars "${chost}"
+		then
+			echo "${chost}"
+		fi
+	done
+	return 0
+}
+
+parityconf-enable() {
+	local chosts
+	chosts=( $(args-to-chosts "$@") ) || die
+	[[ ${#chosts[@]} -lt 1 ]] && chosts=( $(get-supported-chosts) )
+
+	query-novcvars || die "Cannot get even initial environment."
+
+	local chost
+	for chost in "${chosts[@]}"
+	do
+		update-parityconf "${chost}" &
+	done
+	wait
+	noquiet "Enabling configurations done."
+	return 0
+}
+
+parityconf-disable() {
+	local chosts
+	chosts=( $(args-to-chosts "$@") ) || die
+	[[ ${#chosts[@]} -lt 1 ]] && chosts=( $(get-supported-chosts) )
+
+	local chost
+	for chost in "${chosts[@]}"
+	do
+		prune-parityconf "${chost}" &
+	done
+	wait
+	noquiet "Disabling configurations done."
+	return 0
+}
+
+parityconf-is-available() {
+	local chosts
+	chosts=( $(args-to-chosts "$@") ) || die
+	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
+
+	query-novcvars || die "Cannot get even initial environment."
+
+	local chost
+	for chost in "${chosts[@]}"
+	do
+		query-vcvars "${chost}" || return 1
+	done
+	return 0
+}
+
+parityconf-set-default() {
+	local chosts
+	chosts=( $(args-to-chosts "$@") ) || die
+	[[ ${#chosts[@]} -gt 1 ]] && die "Need a single configuration value."
+	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
+
+	for chost in "${chosts[@]}"
+	do
+		update-parityconf --set-default "${chost}" || die
+	done
+	noquiet "Setting default configuration done."
+}
+
+LOGFD=1
+
+verbose() { :; }
+noquiet() { echo "$@" >&${LOGFD}; }
+traceon() { :; }
+traceoff() { set +x; return $1; }
+
+action=
+actionargs=()
+
+while ${1+:} false
+do
+	arg=$1
+	shift
+	case ${arg} in
+	--debug)
+		traceoff() { :; return $1; }
+		set -x
+		;;
+	--trace)
+		traceon() { set -x; }
+		;;
+	--verbose)
+		verbose() { echo "$@" >&${LOGFD}; }
+		noquiet() { echo "$@" >&${LOGFD}; }
+		;;
+	--quiet)
+		verbose() { :; }
+		noquiet() { :; }
+		;;
+	--help|--list-supported|--list-available|--is-available|--enable|--disable|--set-default)
+		${action:+:} false && { usage; die; }
+		action=${arg#--}
+		;;
+	*) actionargs+=("${arg}") ;;
+	esac
+done
+
+if [[ -z ${action} ]]
+then
+	usage >&2
+	die "Missing action argument."
+fi
+
+parityconf-${action} "${actionargs[@]}"
+
+exit $?
