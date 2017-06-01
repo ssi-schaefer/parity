@@ -10,7 +10,7 @@ sysconfdir="@sysconfdir@"
 
 usage() {
 	cat <<EOF
-${SELF##*/} [--help|--list-supported|--list-available|--is-available|--enable|--disable|--set-default]
+${SELF##*/} [options] action [hostconfig...]
 EOF
 }
 
@@ -31,29 +31,42 @@ Where action is one of:
 
   --list-supported
       List any hostconfig identifiers supported.
+      Unless --quiet, progress output goes to standard error.
 
   --list-available
       List hostconfig identifiers for installed MSVC compilers found.
+      Unless --quiet, progress output goes to standard error.
 
   --is-available hostconfig
       Test if MSVC compiler for hostconfig identifier is installed.
+      Unless --quiet, progress output goes to standard error.
 
-  --enable [hostconfig...]
-      Enables configuration for hostconfig identifiers, if available.
-      Enables available ones without hostconfig identifiers specified.
+  --enable hostconfig...
+      Enables configuration for hostconfig identifiers.
 
-  --disable [hostconfig...]
+  --enable-all
+      Enables configuration for all available hostconfig identifiers.
+
+  --disable hostconfig...
       Disables configuration for hostconfig identifiers.
-      Disables supported ones without hostconfig identifiers specified.
 
-  --set-default hostconfig
-      Enables configuration for hostconfig identifier,
-      and sets it as the default hostconfig.
+  --disable-all
+      Disables configuration for all supported hostconfig identifiers.
+
+  --set-default hostconfig...
+      Enables configuration for hostconfig identifiers, and does set
+      each one as default for the hostconfig's architecture, in order,
+      so the last one specified per architecture remains the default.
+
+Where hostconfig is:
+
+  Known as "host triplet" (arch-vendor-os, or even arch-vendor-os-libc).
+  Use --list-supported to get an idea of possible values.
 
 EOF
 }
 
-get-supported-chosts() {
+get-supported-vsvers() {
 	local vsvers=(
 		 7.0	# Visual Studio 2002, cl.exe Version 13.00
 		 7.1	# Visual Studio 2003, cl.exe Version 13.10
@@ -65,20 +78,39 @@ get-supported-chosts() {
 		14.0	# Visual Studio 2015, cl.exe Version 19.00
 		15.0	# Visual Studio 2017, cl.exe Version 19.10
 	)
-	local chosts=(
-		i686-pc-winnt
-		x86_64-pc-winnt
+    local vsver
+    for vsver in "${vsvers[@]}"
+    do
+        echo "${vsver}"
+    done
+    return 0
+}
+
+get-supported-vsarchs() {
+	local vsarchs=(
+		i686
+		x86_64
 	)
-	local chost vsver
-	for chost in "${chosts[@]}"
+    local vsarch
+    for vsarch in "${vsarchs[@]}"
+    do
+        echo "${vsarch}"
+    done
+    return 0
+}
+
+get-supported-chosts() {
+	local vsarch vsver
+	for vsarch in $(get-supported-vsarchs)
 	do
-		for vsver in "${vsvers[@]}"
+		for vsver in $(get-supported-vsvers)
 		do
-			echo "${chost}-msvc${vsver}"
+			echo "${vsarch}-pc-winnt-msvc${vsver}"
 		done
 	done
 	return 0
 }
+
 #
 # Cached value, allows to match with *" <chost> "*
 #
@@ -217,7 +249,7 @@ regquery_vsroot() {
 	return 1
 }
 
-query-novcvars() {
+query-novcvars-once() {
 	[[ -z ${novcPATH-}${novcINCLUDE-}${novcLIB-}${novcLIBPATH-} ]] || return 0
 
 	novcPATH= novcINCLUDE= novcLIB= novcLIBPATH=
@@ -242,7 +274,7 @@ query-vcvars() {
 	local chost=$(get-chost "$1")
 	is-supported-chost "${chost}" || return 1
 
-	query-novcvars || die "Cannot get even initial environment."
+	query-novcvars-once || die "Cannot get even initial environment."
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
@@ -287,7 +319,7 @@ prune-parityconf() {
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
 	local conffile="${sysconfdir}/parity.${vsarch}-${vsver}.conf"
-	local defconffile="${sysconfdir}/parity.conf"
+	local defconffile="${sysconfdir}/parity.${vsarch}.conf"
 
 	if [[ -s ${defconffile} ]]
 	then
@@ -447,23 +479,20 @@ update-parityconf() {
 	verbose "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf done."
 	if ${isdefault}
 	then
-		noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default ..."
+		noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default for ${vsarch} ..."
 		traceon
-		cp -f "${sysconfdir}/parity.${vsarch}-${vsver}.conf" "${sysconfdir}/parity.conf"
+		cp -f "${sysconfdir}/parity.${vsarch}-${vsver}.conf" "${sysconfdir}/parity.${vsarch}.conf"
 		if ! traceoff $?
 		then
-			noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default failed."
+			noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default for ${vsarch} failed."
 			return 1
 		fi
-		verbose "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default done."
+		verbose "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default for ${vsarch} done."
 	fi
 	return 0
 }
 
 parityconf-list-supported() {
-	LOGFD=2
-	query-novcvars || die "Cannot get even initial environment."
-
 	local chost
 	for chost in $(get-supported-chosts)
 	do
@@ -473,8 +502,7 @@ parityconf-list-supported() {
 }
 
 parityconf-list-available() {
-	LOGFD=2
-	query-novcvars || die "Cannot get even initial environment."
+	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
 	for chost in $(get-supported-chosts)
@@ -490,9 +518,9 @@ parityconf-list-available() {
 parityconf-enable() {
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
-	[[ ${#chosts[@]} -lt 1 ]] && chosts=( $(get-supported-chosts) )
+	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
 
-	query-novcvars || die "Cannot get even initial environment."
+	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
 	for chost in "${chosts[@]}"
@@ -504,10 +532,23 @@ parityconf-enable() {
 	return 0
 }
 
+parityconf-enable-all() {
+	query-novcvars-once || die "Cannot get initial environment."
+
+	local chost
+	for chost in $(get-supported-chosts)
+	do
+		update-parityconf "${chost}" &
+	done
+	wait
+	noquiet "Enabling all available configurations done."
+	return 0
+}
+
 parityconf-disable() {
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
-	[[ ${#chosts[@]} -lt 1 ]] && chosts=( $(get-supported-chosts) )
+	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-supported)."
 
 	local chost
 	for chost in "${chosts[@]}"
@@ -519,12 +560,23 @@ parityconf-disable() {
 	return 0
 }
 
+parityconf-disable-all() {
+	local chost
+	for chost in $(get-supported-chosts)
+	do
+		prune-parityconf "${chost}" &
+	done
+	wait
+	noquiet "Disabling all configurations done."
+	return 0
+}
+
 parityconf-is-available() {
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
 	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
 
-	query-novcvars || die "Cannot get even initial environment."
+	query-novcvars-once || die "Cannot get even initial environment."
 
 	local chost
 	for chost in "${chosts[@]}"
@@ -537,7 +589,6 @@ parityconf-is-available() {
 parityconf-set-default() {
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
-	[[ ${#chosts[@]} -gt 1 ]] && die "Need a single configuration value."
 	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
 
 	for chost in "${chosts[@]}"
@@ -547,16 +598,16 @@ parityconf-set-default() {
 	noquiet "Setting default configuration done."
 }
 
-LOGFD=1
-
-verbose() { :; }
-noquiet() { echo "$@" >&${LOGFD}; }
 traceon() { :; }
 traceoff() { set +x; return $1; }
+_verbose() { :; }
+_noquiet() { :
+    ${1+echo "$@"}
+}
 
-action=
-actionargs=()
 
+# parse options
+arg=
 while ${1+:} false
 do
 	arg=$1
@@ -570,27 +621,41 @@ do
 		traceon() { set -x; }
 		;;
 	--verbose)
-		verbose() { echo "$@" >&${LOGFD}; }
-		noquiet() { echo "$@" >&${LOGFD}; }
+		_verbose() { :
+            ${1+echo "$@"}
+        }
+		_noquiet() { :
+            ${1+echo "$@"}
+        }
 		;;
 	--quiet)
-		verbose() { :; }
-		noquiet() { :; }
+		_verbose() { :; }
+		_noquiet() { :; }
 		;;
-	--help|--list-supported|--list-available|--is-available|--enable|--disable|--set-default)
-		${action:+:} false && { usage; die; }
-		action=${arg#--}
-		;;
-	*) actionargs+=("${arg}") ;;
+    *)
+        break
+        ;;
 	esac
 done
 
-if [[ -z ${action} ]]
-then
-	usage >&2
-	die "Missing action argument."
-fi
+verbose() { _verbose "$@"; }
+noquiet() { _noquiet "$@"; }
 
-parityconf-${action} "${actionargs[@]}"
+case ${arg} in
+--list-supported|--list-available|--is-available)
+    verbose() { _verbose "$@" >&2; }
+    noquiet() { _noquiet "$@" >&2; }
+    action=${arg#--}
+    ;;
+--help|--enable|--enable-all|--disable|--disable-all|--set-default)
+    action=${arg#--}
+    ;;
+*)
+	usage >&2
+	die "Missing or invalid action argument (try --help)."
+    ;;
+esac
+
+parityconf-${action} ${1+"$@"}
 
 exit $?
