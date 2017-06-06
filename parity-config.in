@@ -2,11 +2,35 @@
 
 SELF=$0
 
+PACKAGE="@PACKAGE@"
+VERSION="@VERSION@"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
 bindir="@bindir@"
+libdir="@libdir@"
+includedir="@includedir@"
 sysconfdir="@sysconfdir@"
 
-[[ ${bindir}     == @*@ ]] && bindir=$(dirname "$0")
-[[ ${sysconfdir} == @*@ ]] && sysconfdir=${bindir}
+if [[ ${bindir} == @*@ ]]
+then
+	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
+	bindir=${SELFDIR}
+	libdir=${SELFDIR}
+	includedir=${SELFDIR}
+	sysconfdir=${SELFDIR}
+
+	CC=${SELFDIR}/parity.gnu.gcc/parity.gnu.gcc
+	AR=${SELFDIR}/parity.gnu.ar/parity.gnu.ar
+else
+	SELFDIR=${libdir}/${PACKAGE}-${VERSION}
+
+	CC=${bindir}/parity.gnu.gcc
+	AR=${bindur}/parity.gnu.ar
+fi
+
+deflibdir=${libdir}
+defincludedir=${includedir}
+defsysconfdir=${sysconfdir}
 
 usage() {
 	cat <<EOF
@@ -23,6 +47,18 @@ Where options is a combination of:
   --verbose More progress output.
   --debug   Enable shell trace.
   --trace   Enable shell trace when running external commands.
+
+  --sysconfdir dir
+     Operate on the parity configuration files in dir.
+	 Default dir is: ${defsysconfdir}
+
+  --libdir dir
+     Operate on the parity libraries in dir.
+	 Default dir is: ${deflibdir}
+
+  --includedir dir
+     Operate on the parity libraries in dir.
+	 Default dir is: ${defincludedir}
 
 Where action is one of:
 
@@ -194,6 +230,16 @@ get-chost() {
 	return 0
 }
 
+get-cflags() {
+	local vsarch=$(get-vsarch "$*")
+	local vsver=$(get-vsver "$*")
+	case ${vsarch} in
+	x86) echo "-m32 -m${vsver}" ;;
+	x64) echo "-m64 -m${vsver}" ;;
+	esac
+	return 0
+}
+
 args-to-chosts() {
 	local arg chost chosts=()
 	for arg in "$@"
@@ -215,20 +261,20 @@ die() {
 }
 
 [[ -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/." ]] || die "Missing Cygwin based POSIX environment."
-[[ -n ${SYSTEMROOT} ]] || die "Missing SYSTEMROOT environment variable."
-[[ -n ${COMSPEC} ]] || die "Missing COMSPEC environment variable."
 
-systemroot=$(cygpath -u "${SYSTEMROOT}")
-comspec=$(cygpath -u "${COMSPEC}")
+windir=$(cygpath -W)
+sysdir=$(cygpath -S)
 
-eval "cmd() { PATH=\"${systemroot}:${comspec%/*}:${comspec%/*}/WBEM\" \"${comspec}\" \"\$@\"; }"
+eval "cmd() { PATH=\"${windir}:${sysdir}:${sysdir}/WBEM\" cmd.exe \"\$@\"; }"
 
 regquery() {
 	regquery_result=
-	if test -r "/proc/registry/${1}/${2:-.}/."; then
+	if [[ -r /proc/registry/${1}/${2:-.}/. ]]
+	then
 		return 0
 	fi
-	if test -r "/proc/registry/${1}/${2}"; then
+	if [[ -r /proc/registry/${1}/${2} ]]
+	then
 		regquery_result=`tr -d \\\\0 < "/proc/registry/${1}/${2}"`
 		return $?
 	fi
@@ -292,8 +338,26 @@ query-vcvars() {
 	vcvarsall=${vsroot}/VC/vcvarsall.bat
 	[[ -r ${vcvarsall} ]] || return 1
 
-    INCLUDE= LIB= LIBPATH= \
+	# MSVC 10.0 and above query their VSxxCOMNTOOLS on their own
+	local comntoolsvar=
+	case ${vsver} in
+	msvc7.0) comntoolsvar=VS70COMNTOOLS ;;
+	msvc7.1) comntoolsvar=VS71COMNTOOLS ;;
+	msvc8.0) comntoolsvar=VS80COMNTOOLS ;;
+	msvc9.0) comntoolsvar=VS90COMNTOOLS ;;
+	esac
+	if [[ -n ${comntoolsvar} ]]
+	then
+		if regquery 'HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control/Session Manager/Environment' "${comntoolsvar}"
+		then
+			eval "export ${comntoolsvar}=\${regquery_result}"
+		else
+			unset ${comntoolsvar}
+		fi
+	fi
+
 	traceon
+    INCLUDE= LIB= LIBPATH= \
     eval $(cmd /c "$(cygpath -w "${vcvarsall}")" ${vsarch} '&&' set PATH '&&' set INCLUDE '&&' set LIB 2>/dev/null |
       sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/vc\1=$'\2'/p"
     )
@@ -350,16 +414,17 @@ prune-parityconf() {
 	if [[ -r ${conffile} ]]
 	then
 		noquiet "Removing ${conffile} ..."
-		traceon
-		rm -f "${conffile}"
-		if traceoff $?
-		then
-			verbose "Removing ${conffile} done."
-			return 0
-		fi
-		noquiet "Removing ${conffile} failed."
+	else
+		verbose "Removing ${conffile} ..."
+	fi
+	traceon
+	rm -f "${conffile}" "${SELFDIR}"/libparity-runtime.${vsarch}-${vsver}.a "${SELFDIR}"/libparity-loader.${vsarch}-${vsver}.a
+	if ! traceoff $?
+	then
+		verbose "Removing ${conffile} failed."
 		return 1
 	fi
+	verbose "Removing ${conffile} done."
 	return 0
 }
 
@@ -426,50 +491,89 @@ update-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
+	local cflags=$(get-cflags "${chost}")
 
-	noquiet "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf ..."
 	(
+		noquiet "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf ..."
+		tmpdir=${TMPDIR:-/tmp}/parity-config.${vsarch}-${vsver}.$$
+		rm -rf "${tmpdir}"
+
 		set -e
-		export AdditionalExecPaths SysIncludePaths SysLibraryPaths ObjectsLibraries
-		< "${sysconfdir}/parity.conf.in" \
-		> "${sysconfdir}/parity.${vsarch}-${vsver}.conf" \
-		awk "
-			/PARITY CONFIGURATION/{
-				sub(\"PARITY CONFIGURATION.*\", \"PARITY CONFIGURATION for ${chost}\")
-				print
-				next
-			}
-			$(for vsexe in "${vsexes[@]}"
+		trap "rm -rf '${tmpdir}'" 0
+		mkdir -p "${tmpdir}"
+		cd "${tmpdir}"
+
+		case ${vsver} in # (
+		7.*) RuntimeType="Runtime = static"  ;; # (
+		*)   RuntimeType="Runtime = dynamic" ;; # (
+		esac # )
+
+		{
+			echo "
+#
+# PARITY CONFIGURATION for ${vsarch}-${vsver}
+#
+#  Automatically generated by parity-config,
+#  use the parity-config to regenerate.
+#
+
+Colored = true
+"
+			for vsexe in "${vsexes[@]}"
 			do
 				name= executable=
 				eval ${vsexe}
-				eval "echo \"/^${name}Exe\\s+=/{
-						print \\\"${name}Exe = \${${name}Exe}\\\"
-						next
-					}\""
-			done)
-			/AdditionalExecPaths/{
-				print ENVIRON[\"AdditionalExecPaths\"]
-				del ENVIRON[\"AdditionalExecPaths\"]
-				next
-			}
-			/SysIncludePaths/{
-				print ENVIRON[\"SysIncludePaths\"]
-				ENVIRON[\"SysIncludePaths\"] = \"\"
-				next
-			}
-			/SysLibraryPaths/{
-				print ENVIRON[\"SysLibraryPaths\"]
-				ENVIRON[\"SysLibraryPaths\"] = \"\"
-				next
-			}
-			/ObjectsLibraries/{
-				if (ENVIRON[\"ObjectsLibraries\"]) print ENVIRON[\"ObjectsLibraries\"]
-				ENVIRON[\"ObjectsLibraries\"] = \"\"
-				next
-			}
-			{print}
-		"
+				eval "[[ -n \${${name}Exe} ]]" || continue
+				eval "echo \"${name}Exe = \${${name}Exe}\""
+			done
+
+			echo "
+${AdditionalExecPaths}
+${SysIncludePaths}
+${SysLibraryPaths}
+
+PCRTInclude = ${SELFDIR}/parity.runtime
+PCRTLibrary = ${SELFDIR}/libparity.runtime.${vsarch}-${vsver}.a
+ParityLoader = ${SELFDIR}/libparity.loader.${vsarch}-${vsver}.a
+
+${RuntimeType}
+
+Defines = WIN32_LEAN_AND_MEAN
+Defines = _WIN32_WINNT=0x0501
+
+${ObjectsLibraries}
+
+section windows {
+	Subsystem = Windows
+}
+"
+		} > parity.${vsarch}-${vsver}.conf
+
+		verbose "Compiling ${SELFDIR}/libparity-runtime.${vsarch}-${vsver}.a ..."
+		if ! "${CC}" ${cflags} -c "${SELFDIR}"/parity.runtime/*.c "${SELFDIR}"/parity.runtime/*.cpp \
+		|| !  "${AR}" cr libparity-runtime.${vsarch}-${vsver}.a *.o \
+		; then
+			verbose "Compiling ${SELFDIR}/libparity-runtime.${vsarch}-${vsver}.a failed."
+			exit 1
+		fi
+		verbose "Compiling ${SELFDIR}/libparity-runtime.${vsarch}-${vsver}.a done."
+
+		verbose "Compiling ${SELFDIR}/libparity-loader.${vsarch}-${vsver}.a ..."
+		if ! "${CC}" ${cflags} -c "${SELFDIR}"/parity.loader/Loader*.c \
+		|| !  "${AR}" cr libparity-loader.${vsarch}-${vsver}.a Loader*.o \
+		; then
+			verbose "Compiling ${SELFDIR}/libparity-loader.${vsarch}-${vsver}.a failed."
+			exit 1
+		fi
+		verbose "Compiling ${SELFDIR}/libparity-loader.${vsarch}-${vsver}.a done."
+
+		mv -f libparity-runtime.${vsarch}-${vsver}.a libparity-loader.${vsarch}-${vsver}.a "${SELFDIR}"/
+		mv -f parity.${vsarch}-${vsver}.conf "${sysconfdir}"/parity.${vsarch}-${vsver}.conf
+
+		if ${isdefault}
+		then
+			cp -f "${sysconfdir}/parity.${vsarch}-${vsver}.conf" "${sysconfdir}/parity.${vsarch}.conf"
+		fi
 	)
 	if [[ $? -ne 0 ]]
 	then
@@ -477,18 +581,6 @@ update-parityconf() {
 		return 1
 	fi
 	verbose "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf done."
-	if ${isdefault}
-	then
-		noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default for ${vsarch} ..."
-		traceon
-		cp -f "${sysconfdir}/parity.${vsarch}-${vsver}.conf" "${sysconfdir}/parity.${vsarch}.conf"
-		if ! traceoff $?
-		then
-			noquiet "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default for ${vsarch} failed."
-			return 1
-		fi
-		verbose "Setting ${sysconfdir}/parity.${vsarch}-${vsver}.conf as default for ${vsarch} done."
-	fi
 	return 0
 }
 
@@ -607,7 +699,7 @@ _noquiet() { :
 
 
 # parse options
-arg=
+arg= argvalue=
 while ${1+:} false
 do
 	arg=$1
@@ -631,6 +723,17 @@ do
 	--quiet)
 		_verbose() { :; }
 		_noquiet() { :; }
+		;;
+	--sysconfdir|--libdir|--includedir)
+		${1:+:} die "Missing argument to ${arg} (try --help)."
+		eval "${arg#--}=\$1"
+		shift
+		;;
+	--sysconfdir=*|--libdir=*|--includedir=*)
+		argvalue=${arg#--*=}
+		arg=${arg%%=*}
+		${argvalue:+:} die "Missing argument to ${arg} (try --help)."
+		eval "${arg#--}=\${argvalue}"
 		;;
     *)
         break
