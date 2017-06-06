@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <cstdio>
 
 #include <psapi.h>
 
@@ -176,25 +177,16 @@ int main(int argc, char** argv) {
 	// TODO: PATH lookup of application.
 	//
 
-	char * command_line = _strdup(quoted_args.c_str());
-
-	if(!command_line) {
-		std::cerr << "cannot copy arguments!" << std::cerr;
-		exit(1);
-	}
-
 	STARTUPINFO si = { sizeof(si) };
 	PROCESS_INFORMATION pi;
 
-	if(!CreateProcess(application.c_str(), command_line, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi)) {
+	if(!CreateProcess(application.c_str(), &quoted_args[0], NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi)) {
 		std::cerr << "cannot start process!" << std::cerr;
 		exit(1);
 	}
 
 	// allow process to continue if we dies.
 	DebugSetProcessKillOnExit(FALSE);
-
-	free(command_line);
 
 	Diagnose(stderr, pi.dwProcessId);
 }
