@@ -1,14 +1,5 @@
 ADD_EXTRA_DIST('parity.diagnostic.vcproj')
 
-REQUIRE_SYMBOL('parity.gnu.gcc.exe', REQUIRED)
-REQUIRE_SYMBOL('parity.runtime.lib', REQUIRED)
-REQUIRE_SYMBOL('parity.loader.lib', REQUIRED)
-
-MAKEFILE_AM('CXX=../parity.gnu.gcc/parity.gnu.gcc$(EXEEXT)')
-MAKEFILE_AM('parity_diagnostic_exe_LDADD=')
-MAKEFILE_AM('parity_diagnostic_exe_DEPENDENCIES=')
-MAKEFILE_AM('EXEEXT=')
-
 import os;
 import re;
 
@@ -19,3 +10,4 @@ for file in os.listdir('.'):
 		if _re_h.match(file):
 			SET_FILE_PROPERTIES(file, { 'PRIVATE_CINCLUDE': 1 })
 
+MAKEFILE_AM('parity_diagnostic_exe_LDADD=-lpsapi')

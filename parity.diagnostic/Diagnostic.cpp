@@ -88,7 +88,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 				process_map[ev.dwProcessId] = ev.u.CreateProcessInfo.hProcess;
 				break;
 			case CREATE_THREAD_DEBUG_EVENT:
-				fprintf(out, "[%d:%d] Creating Thread: Start Address: %d\n", ev.dwProcessId, ev.dwThreadId, ev.u.CreateThread.lpStartAddress);
+				fprintf(out, "[%d:%d] Creating Thread: Start Address: %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.CreateThread.lpStartAddress);
 				break;
 			case EXCEPTION_DEBUG_EVENT:
 				fprintf(out, "[%d:%d] %sException: %x at %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.Exception.dwFirstChance ? "First Chance " : "", ev.u.Exception.ExceptionRecord.ExceptionCode, ev.u.Exception.ExceptionRecord.ExceptionAddress);
@@ -128,7 +128,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 						wchar_t* lb = (wchar_t*)localbuffer;
 						if(wcslen(lb) > 0) {
 							// can we do something about newlines at the end of the string?
-							fprintf(out, "[%d:%d] Debug String: %*S\n", ev.dwProcessId, ev.dwThreadId, ev.u.DebugString.nDebugStringLength, localbuffer);
+							fprintf(out, "[%d:%d] Debug String: %*S\n", ev.dwProcessId, ev.dwThreadId, ev.u.DebugString.nDebugStringLength, lb);
 						}
 					} else {
 						if(localbuffer[0] != '\0') {
