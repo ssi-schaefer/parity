@@ -42,6 +42,8 @@
 #include <CoffFileHeader.h>
 #include <CoffDirectiveSection.h>
 
+#include <sstream>
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -56,6 +58,63 @@ namespace parity
 
 		void runConfigurationLoading(int argc, char * const * argv)
 		{
+			char * argv0 = strrchr(argv[0], '/'); // find last path sep
+			if (argv0 == NULL) {
+				argv0 = strrchr(argv[0], '\\'); // find last path sep
+			}
+			if (argv0 == NULL) {
+				argv0 = argv[0]; // no path component
+			} else {
+				++argv0; // skip last path sep
+			}
+
+			//
+			// First, identify which bitwidth to load the configuration for.
+			//
+			// We may have an arch part in the executable filename,
+			// that is basename of argv[0], or as an argument "-m64".
+			//
+			// Find "x86_64" in argv[0].
+			std::string vcvariant = strstr(argv0, "x86_64") ? "x64" : "x86";
+			// Find "-m64" or "-m32" in arguments, overriding argv[0].
+			for (int i = 1; i < argc; ++i) {
+				if (strcmp(argv[i], "-m64") == 0) {
+					vcvariant = "x64";
+					continue;
+				}
+				if (strcmp(argv[i], "-m32") == 0) {
+					vcvariant = "x86";
+					continue;
+				}
+			}
+
+			//
+			// Second, identify which MSVC version to load the configuration for.
+			//
+			int msvcmajor = 0, msvcminor = 0;
+			//
+			// We may have an msvc version in the executable filename,
+			// that is basename of argv[0], or as an argument "-mmsvcX.Y".
+			//
+			// Find "msvc" in argv[0].
+			char * pmsvcver = strstr(argv0, "msvc");
+			// Find "-mmsvc" in arguments, overriding argv[0].
+			for (int i = 1; i < argc; ++i) {
+				if (strncmp(argv[i], "-mmsvc", 6) == 0) {
+					pmsvcver = argv[i] + 2;
+				}
+			}
+			if (pmsvcver != NULL) {
+				sscanf(pmsvcver, "msvc%d.%d", &msvcmajor, &msvcminor);
+				// Ignore sscanf failure, use default version then.
+				// If there's only one number, use "0" as minor version.
+			}
+			if (msvcmajor != 0) {
+				std::stringstream v;
+				v << vcvariant << "-msvc" << msvcmajor << "." << msvcminor;
+				vcvariant = v.str();
+			}
+
 			utils::Context& context = utils::Context::getContext();
 			utils::Timing::instance().start("Configuration loading");
 			ConfigFileVector files;
@@ -104,8 +163,9 @@ namespace parity
 
 				utils::Path pth = it->first;
 
-				if(pth.isDirectory())
-					pth.append("parity.conf");
+				if(pth.isDirectory()) {
+					pth.append("parity." + vcvariant + ".conf");
+				}
 
 				pth.toNative();
 
@@ -135,7 +195,7 @@ namespace parity
 
 			if(!bLoaded)
 			{
-				utils::Log::error("cannot find configuration in any of the following places. cannot continue!\n");
+				utils::Log::error("cannot find %s configuration in any of the following places. cannot continue!\n", vcvariant.c_str());
 				for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
 				{
 					if(!it->first.get().empty())

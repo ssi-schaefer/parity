@@ -4,33 +4,27 @@ SELF=$0
 
 PACKAGE="@PACKAGE@"
 VERSION="@VERSION@"
-prefix="@prefix@"
-exec_prefix="@exec_prefix@"
-bindir="@bindir@"
-libdir="@libdir@"
-includedir="@includedir@"
-sysconfdir="@sysconfdir@"
 
-if [[ ${bindir} == @*@ ]]
+PARITYsysconfdir="@PARITY_SYSCONFDIR@"
+PARITYlibdir="@PARITY_LIBDIR@"
+PARITYbindir="@PARITY_BINDIR@"
+
+if [[ ${PARITYsysconfdir} == @*@ ]]
 then
 	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
-	bindir=${SELFDIR}
-	libdir=${SELFDIR}
-	includedir=${SELFDIR}
-	sysconfdir=${SELFDIR}
 
+	PARITYsysconfdir=${SELFDIR}
+	PARITYlibdir=${SELFDIR}
+	PARITYbindir=${SELFDIR}
 	CC=${SELFDIR}/parity.gnu.gcc/parity.gnu.gcc
 	AR=${SELFDIR}/parity.gnu.ar/parity.gnu.ar
 else
-	SELFDIR=${libdir}/${PACKAGE}-${VERSION}
-
-	CC=${bindir}/parity.gnu.gcc
-	AR=${bindur}/parity.gnu.ar
+	CC=${PARITYbindir}/parity.gnu.gcc
+	AR=${PARITYbindir}/parity.gnu.ar
 fi
 
-deflibdir=${libdir}
-defincludedir=${includedir}
-defsysconfdir=${sysconfdir}
+deflibdir=${PARITYlibdir}
+defsysconfdir=${PARITYsysconfdir}
 
 usage() {
 	cat <<EOF
@@ -55,10 +49,6 @@ Where options is a combination of:
   --libdir dir
      Operate on the parity libraries in dir.
 	 Default dir is: ${deflibdir}
-
-  --includedir dir
-     Operate on the parity libraries in dir.
-	 Default dir is: ${defincludedir}
 
 Where action is one of:
 
@@ -382,8 +372,8 @@ prune-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-	local conffile="${sysconfdir}/parity.${vsarch}-${vsver}.conf"
-	local defconffile="${sysconfdir}/parity.${vsarch}.conf"
+	local conffile="${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf"
+	local defconffile="${PARITYsysconfdir}/parity.${vsarch}.conf"
 
 	if [[ -s ${defconffile} ]]
 	then
@@ -418,7 +408,7 @@ prune-parityconf() {
 		verbose "Removing ${conffile} ..."
 	fi
 	traceon
-	rm -f "${conffile}" "${SELFDIR}"/libparity-runtime.${vsarch}-${vsver}.a "${SELFDIR}"/libparity-loader.${vsarch}-${vsver}.a
+	rm -f "${conffile}" "${PARITYlibdir}"/libparity-runtime.${vsarch}-${vsver}.a "${PARITYlibdir}"/libparity-loader.${vsarch}-${vsver}.a
 	if ! traceoff $?
 	then
 		verbose "Removing ${conffile} failed."
@@ -494,7 +484,7 @@ update-parityconf() {
 	local cflags=$(get-cflags "${chost}")
 
 	(
-		noquiet "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf ..."
+		noquiet "Creating ${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf ..."
 		tmpdir=${TMPDIR:-/tmp}/parity-config.${vsarch}-${vsver}.$$
 		rm -rf "${tmpdir}"
 
@@ -532,9 +522,9 @@ ${AdditionalExecPaths}
 ${SysIncludePaths}
 ${SysLibraryPaths}
 
-PCRTInclude = ${SELFDIR}/parity.runtime
-PCRTLibrary = ${SELFDIR}/libparity.runtime.${vsarch}-${vsver}.a
-ParityLoader = ${SELFDIR}/libparity.loader.${vsarch}-${vsver}.a
+PCRTInclude = ${PARITYlibdir}/include/parity.runtime
+PCRTLibrary = ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a
+ParityLoader = ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a
 
 ${RuntimeType}
 
@@ -549,38 +539,38 @@ section windows {
 "
 		} > parity.${vsarch}-${vsver}.conf
 
-		verbose "Compiling ${SELFDIR}/libparity-runtime.${vsarch}-${vsver}.a ..."
-		if ! "${CC}" ${cflags} -c "${SELFDIR}"/parity.runtime/*.c "${SELFDIR}"/parity.runtime/*.cpp \
-		|| !  "${AR}" cr libparity-runtime.${vsarch}-${vsver}.a *.o \
-		; then
-			verbose "Compiling ${SELFDIR}/libparity-runtime.${vsarch}-${vsver}.a failed."
-			exit 1
-		fi
-		verbose "Compiling ${SELFDIR}/libparity-runtime.${vsarch}-${vsver}.a done."
+		verbose "Compiling ${PARITYlibdir}/libparity-runtime.${vsarch}-${vsver}.a ..."
+		"${CC}" ${cflags} -c "${PARITYlibdir}"/parity.runtime/*.c "${PARITYlibdir}"/parity.runtime/*.cpp &&
+		"${AR}" cr libparity-runtime.${vsarch}-${vsver}.a *.o
+		traceoff $?
+		verbose "Compiling ${PARITYlibdir}/libparity-runtime.${vsarch}-${vsver}.a done."
 
-		verbose "Compiling ${SELFDIR}/libparity-loader.${vsarch}-${vsver}.a ..."
-		if ! "${CC}" ${cflags} -c "${SELFDIR}"/parity.loader/Loader*.c \
-		|| !  "${AR}" cr libparity-loader.${vsarch}-${vsver}.a Loader*.o \
-		; then
-			verbose "Compiling ${SELFDIR}/libparity-loader.${vsarch}-${vsver}.a failed."
-			exit 1
-		fi
-		verbose "Compiling ${SELFDIR}/libparity-loader.${vsarch}-${vsver}.a done."
+		verbose "Compiling ${PARITYlibdir}/libparity-loader.${vsarch}-${vsver}.a ..."
+		traceon
+		"${CC}" ${cflags} -I"${PARITYlibdir}"/include/parity.loader -c "${PARITYlibdir}"/parity.loader/Loader*.c &&
+		"${AR}" cr libparity-loader.${vsarch}-${vsver}.a Loader*.o
+		traceoff $?
+		verbose "Compiling ${PARITYlibdir}/libparity-loader.${vsarch}-${vsver}.a done."
 
-		mv -f libparity-runtime.${vsarch}-${vsver}.a libparity-loader.${vsarch}-${vsver}.a "${SELFDIR}"/
-		mv -f parity.${vsarch}-${vsver}.conf "${sysconfdir}"/parity.${vsarch}-${vsver}.conf
+		traceon
+		mkdir -p "${PARITYsysconfdir}" &&
+		mv -f libparity-runtime.${vsarch}-${vsver}.a libparity-loader.${vsarch}-${vsver}.a "${PARITYlibdir}"/ &&
+		mv -f parity.${vsarch}-${vsver}.conf "${PARITYsysconfdir}"/parity.${vsarch}-${vsver}.conf
+		traceoff $?
 
 		if ${isdefault}
 		then
-			cp -f "${sysconfdir}/parity.${vsarch}-${vsver}.conf" "${sysconfdir}/parity.${vsarch}.conf"
+			traceon
+			cp -f "${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf" "${PARITYsysconfdir}/parity.${vsarch}.conf"
+			traceoff $?
 		fi
 	)
 	if [[ $? -ne 0 ]]
 	then
-		noquiet "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf failed."
+		noquiet "Creating ${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf failed."
 		return 1
 	fi
-	verbose "Creating ${sysconfdir}/parity.${vsarch}-${vsver}.conf done."
+	verbose "Creating ${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf done."
 	return 0
 }
 
@@ -724,16 +714,16 @@ do
 		_verbose() { :; }
 		_noquiet() { :; }
 		;;
-	--sysconfdir|--libdir|--includedir)
+	--sysconfdir|--libdir)
 		${1:+:} die "Missing argument to ${arg} (try --help)."
-		eval "${arg#--}=\$1"
+		eval "PARITY${arg#--}=\$1"
 		shift
 		;;
-	--sysconfdir=*|--libdir=*|--includedir=*)
+	--sysconfdir=*|--libdir=*)
 		argvalue=${arg#--*=}
 		arg=${arg%%=*}
 		${argvalue:+:} die "Missing argument to ${arg} (try --help)."
-		eval "${arg#--}=\${argvalue}"
+		eval "PARITY${arg#--}=\${argvalue}"
 		;;
     *)
         break

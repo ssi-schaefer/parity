@@ -1,10 +1,11 @@
 ADD_EXTRA_DIST('parity.sln')
 ADD_EXTRA_DIST('ReleaseNotes.txt')
-ADD_EXTRA_DIST('parity.conf.psx.in')
 
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity.conf parity.loader/parity.conf parity.runtime/parity.conf parity.diagnostic/parity.conf)'],
+	lines=['AC_CONFIG_FILES(parity-config)'],
 	order=AC_BOILERPLATE)
+
+MAKEFILE_AM(line='sbin_SCRIPTS = parity-config')
 
 acm4 = """
 
@@ -21,533 +22,16 @@ AC_DEFUN([PARITY_DIR], [
 	test "$exec_prefix_NONE" && exec_prefix=NONE
 ])
 
-AC_DEFUN([PARITY_LOOKUP_EXE], [
-	eLookupRoot=$1
-	eLookupVar=$2
-	eLookupFile=$3
-
-	eLookedUp=
-
-	AC_MSG_CHECKING([for $eLookupFile])
-
-	eLookupIFS=$IFS
-	IFS=$PATH_SEPARATOR
-
-	for x in $eLookupRoot; do
-		IFS=$eLookupIFS
-
-        [[ -d "$x" ]] || continue
-		
-        PARITY_LOOKUP_PATH_IC([$x], [eLookedUp], [bin/$eLookupFile])
-        PARITY_LOOKUP_PATH_IC([$x], [eLookedUp], [$eLookupFile])
-
-		if test -n "$eLookedUp"; then
-			break
-		fi
-	done
-
-	IFS=$eLookupIFS
-
-	if test -z "$eLookedUp" -o ! -f "$eLookedUp"; then
-		AC_MSG_WARN([cannot find $eLookupFile])
-	else
-		AC_MSG_RESULT([$eLookedUp])
-		eval "$eLookupVar=\\\"$eLookedUp\\\""
-	fi
-])
-
-AC_DEFUN([PARITY_LOOKUP_PATH_IC], [
-    pLookupRoot=$1
-    pLookupVar=$2
-    pLookupPath=$3
-
-    pLookupIFS=$IFS
-    IFS=$'\n'
-
-    pSlCnt=$(( $(echo "${pLookupPath}" | grep -o '/' | wc -l) + 1 ))
-
-    for y in $(find "${pLookupRoot}" -maxdepth ${pSlCnt} -mindepth ${pSlCnt} -iwholename "*/$pLookupPath"); do
-        IFS=$pLookupIFS
-
-        if [[ -n "${pLookedUp}" ]]; then
-            echo "WARN: multiple matches for \"$pLookupPath\". Found \"${y}\", using \"${pLookedUp}\""
-        else
-            eval "$pLookupVar=\\\"${y}\\\""
-        fi
-    done
-
-    IFS=$pLookupIFS
-])
-
-AC_DEFUN([PARITY_LOOKUP_PATH_BY_FILE_IC], [
-    fLookupRoot=$1
-    fLookupVar=$2
-    fLookupPath=$3
-
-    fLookedUp=
-
-    PARITY_LOOKUP_PATH_IC([$fLookupRoot], [fLookedUp], [$fLookupPath])
-
-    if [[ -n "$fLookedUp" ]]; then
-        eval "$fLookupVar=\\\"${fLookedUp%/*}\\\""
-    fi
-])
-
-AC_DEFUN([PARITY_LOOKUP_FILE_SUBST], [
-    sLookupRoot=$1
-    sLookupSubst=$2
-    sLookupPath=$3
-
-    AC_MSG_CHECKING([for ${sLookupPath}])
-
-    sLookedUp=
-
-    PARITY_LOOKUP_PATH_IC([${sLookupRoot}], [sLookedUp], [${sLookupPath}])
-
-    eval "${sLookupSubst}=\\\"${sLookedUp}\\\""
-    AC_MSG_RESULT([${sLookedUp}])
-
-    if test -z "${sLookedUp}" -o ! -e "${sLookedUp}"; then
-        AC_MSG_ERROR([cannot find "${sLookupPath}" in "${sLookupRoot}"])
-    fi
-
-    AC_SUBST([$2])
-])
-
-AC_DEFUN([PARITY_LOOKUP_CRT],
-[
-	CrtPaths=$1
-	CrtIncVar=$2
-	CrtLibVar=$3
-	CrtLookedUpInc=
-	CrtLookedUpLib=
-
-	AC_MSG_CHECKING([for runtime dirs])
-
-	LookupIFS=$IFS
-	IFS=$PATH_SEPARATOR
-
-	for x in $CrtPaths; do
-		IFS=$LookupIFS
-	
-		if test -z "$CrtLookedUpInc"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [CrtLookedUpInc], [include/stdio.h])
-		fi
-
-		if test -z "$CrtLookedUpLib" -a -f "$x/lib/msvcrt.lib"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [CrtLookedUpLib], [lib/msvcrt.lib])
-		fi
-
-		if test -n "$CrtLookedUpInc" -a -n "$CrtLookedUpLib"; then
-			break
-		fi
-	done
-
-	IFS=$LookupIFS
-
-	if test -z "$CrtLookedUpInc" -o ! -d "$CrtLookedUpInc"; then
-		AC_MSG_ERROR([cannot find runtime include directory])
-	fi
-	if test -z "$CrtLookedUpLib" -o ! -d "$CrtLookedUpLib"; then
-		AC_MSG_ERROR([cannot find runtime library directory])
-	fi
-
-	AC_MSG_RESULT([$CrtLookedUpInc, $CrtLookedUpLib])
-
-	eval "$CrtIncVar=\\\"$CrtLookedUpInc\\\""
-	eval "$CrtLibVar=\\\"$CrtLookedUpLib\\\""
-])
-
-AC_DEFUN([PARITY_LOOKUP_SDK],
-[
-	SdkPaths=$1
-	SdkIncVar=$2
-	SdkLibVar=$3
-
-	SdkLookedUpInc=
-	SdkLookedUpLib=
-
-	AC_MSG_CHECKING([for platform sdk dirs])
-
-	LookupIFS=$IFS
-	IFS=$PATH_SEPARATOR
-
-	for x in $SdkPaths; do
-		IFS=$LookupIFS
-		
-		if test -z "$SdkLookedUpInc"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpInc], [platformsdk/include/windows.h])
-		fi
-		if test -z "$SdkLookedUpInc"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpInc], [include/windows.h])
-		fi
-
-		if test -z "$SdkLookedUpLib"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpLib], [platformsdk/lib/kernel32.lib])
-		fi
-		if test -z "$SdkLookedUpLib"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpLib], [lib/kernel32.lib])
-		fi
-
-		if test -n "$SdkLookedUpInc" -a -n "$SdkLookedUpLib"; then
-			break
-		fi
-	done
-
-	IFS=$LookupIFS
-
-	if test -z "$SdkLookedUpInc" -o ! -d "$SdkLookedUpInc"; then
-		AC_MSG_ERROR([cannot find platform sdk include directory (maybe set MSSDK)!])
-	fi
-
-	if test -z "$SdkLookedUpInc" -o ! -d "$SdkLookedUpInc"; then
-		AC_MSG_ERROR([cannot find platform sdk library directory (maybe set MSSDK)!])
-	fi
-
-	AC_MSG_RESULT([$SdkLookedUpInc, $SdkLookedUpLib])
-
-	eval "$SdkIncVar=\\\"$SdkLookedUpInc\\\""
-	eval "$SdkLibVar=\\\"$SdkLookedUpLib\\\""
-])
-
-AC_DEFUN([PARITY_FIND_ADDITIONAL_EXEC_PATHS],
-[
-	# WARNING: $1 must be an absolute path!
-	ExecutableRoot="$(dirname "$1")"
-	
-	AC_MSG_CHECKING([for paths required to execute $1])
-
-	RelPathsVs7=". ../../Common7/Tools ../../Common7/Tools/Bin ../../Common7/IDE"
-	# those are for now the same...
-	# RelPathsVs8=${RelPathsVs7}
-	# RelPathsVs9=${RelPathsVs8}
-
-	PathCount=0
-	AllPaths=
-	for path in ${RelPathsVs7} ${RelPathsVs8} ${RelPathsVs9}; do
-		if test -d "$ExecutableRoot/$path"; then
-			FullPath=$(cd "$ExecutableRoot/$path"; pwd)
-			case ":${AllPaths}:" in
-			*":${FullPath}:"*) ;;
-			*) 
-				AllPaths="${AllPaths}${AllPaths:+:}:${FullPath}" 
-				PathCount=$(($PathCount + 1))
-
-				echo "AdditionalExecPaths = $FullPath" >> ${$2}
-				;;
-			esac
-		fi
-	done
-
-	AC_MSG_RESULT([added $PathCount paths])
-])
-
 AC_DEFUN([PARITY_CONFIGURE],
 [
-	PARITY_DIR([PARITY_SYSCONFDIR], [sysconfdir], [Path where configuration is installed])
-	PARITY_DIR([PARITY_INCLUDEDIR], [includedir], [Path where header files are installed])
-	PARITY_DIR([PARITY_LIBDIR], [libdir], [Path where libraries are installed])
-
-	ParityCompiler=
-	ParityAssembler=
-	ParityLinker=
-	ParityManifest=
-	ParityResourceCompiler=
-	ParityResourceConverter=
-
-	ParitySysIncludePaths="__parity.include"
-	ParitySysLibraryPaths="__parity.library"
-	ParityAdditionalExecPaths="__parity.paths"
-
-    #
-    # Check for availability of path conversion scripts/executables
-    #
-    AC_MSG_CHECKING([for winpath2unix])
-	if test -z "$WINPATH2UNIX"
-	then
-		if type winpath2unix >/dev/null 2>&1
-		then
-			AC_SUBST([WINPATH2UNIX], [winpath2unix])
-		elif type cygpath >/dev/null 2>&1
-		then
-			AC_SUBST([WINPATH2UNIX], ["cygpath -u"])
-		else
-			AC_SUBST([WINPATH2UNIX], [echo])
-		fi
-	fi
-	AC_DEFINE_UNQUOTED([WINPATH2UNIX], ["$WINPATH2UNIX"], [The winpath2unix utility])
-	if test echo != "$WINPATH2UNIX"
-	then
-		AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
-	fi
-	AC_MSG_RESULT([$WINPATH2UNIX])
-
-    AC_MSG_CHECKING([for unixpath2win])
-	if test -z "$UNIXPATH2WIN"
-	then
-		if type unixpath2win >/dev/null 2>&1
-		then
-			AC_SUBST([UNIXPATH2WIN], [unixpath2win])
-		elif type cygpath >/dev/null 2>&1
-		then
-			AC_SUBST([UNIXPATH2WIN], ["cygpath -w"])
-		else
-			AC_SUBST([UNIXPATH2WIN], [echo])
-		fi
-	fi
-	AC_DEFINE_UNQUOTED([UNIXPATH2WIN], ["$UNIXPATH2WIN"], [The unixpath2win utility])
-	if test echo != "$UNIXPATH2WIN"
-	then
-		AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
-	fi
-	AC_MSG_RESULT([$UNIXPATH2WIN])
-
-	#
-	# Lookup paths to visual studio installations
-	# need to use echo to preserve pahs with spaces correctly
-	#
-
-	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS71COMNTOOLS")")")")
-	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS80COMNTOOLS")")")")
-	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS90COMNTOOLS")")")")
-	test -n "$VS100COMNTOOLS" && MsvcRoot100=$(dirname "$(dirname "$(echo "$($WINPATH2UNIX "$VS100COMNTOOLS")")")")
-
-	AC_MSG_CHECKING([for how to query the Windows Registry])
-
-	if test -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/."
-	then
-		regquery() {
-			regquery_return=
-			if test -r "/proc/registry/${1}/${2:-.}/."; then
-				return 0
-			fi
-			if test -r "/proc/registry/${1}/${2}"; then
-				regquery_return=`tr -d \\\\\\\\0 < "/proc/registry/${1}/${2}"`
-				return $?
-			fi
-			return 1
-		}
-		AC_MSG_RESULT([/proc/registry])
-	elif test -n "${WINDIR}"
-	then
-		regquery="${WINDIR}\\\\system32\\\\reg.exe"
-		regquery=`$WINPATH2UNIX "$regquery"`
-		AC_MSG_RESULT([$regquery])
-		eval "regquery() {
-			regquery_return=\\`\\$as_echo_n \\"\\${1}\\" | tr / \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \\`
-			regquery_return=\\`\\"${regquery}\\" query \\"\\${regquery_return}\\" /v \\"\\${2}\\" 2>/dev/null\\`
-			if test \\$? -eq 0
-			then
-				regquery_return=\\${regquery_return#*\\"    \\${2:-(Default)}    REG_SZ    \\"}
-				regquery_return=\\`\\$as_echo_n \\"\\${regquery_return}\\" | tr -d \\\\\\\\\\\\\\\\015\\\\\\\\\\\\\\\\012\\`
-				regquery_return=\\${regquery_return#(value not set)}
-				return 0
-			fi
-			regquery_return=
-			return 1
-		}"
-	else
-		regquery() {
-			regquery_return=
-			return 1
-		}
-		AC_MSG_RESULT([no])
-	fi
-
-	AC_MSG_CHECKING([for Windows Registry root key])
-
-	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft; then
-		regroot=HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node
-	elif regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft; then
-		regroot=HKEY_LOCAL_MACHINE/SOFTWARE
-	else
-		regroot=
-	fi
-
-	AC_MSG_RESULT([${regroot:-no}])
-
-	if test -z "$MsvcRoot100$MsvcRoot90$MsvcRoot80$MsvcRoot71" -a -n "${regroot}" \
-	&& regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7
-	then
-		if regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 10.0
-		then
-			MsvcRoot100=`$WINPATH2UNIX "${regquery_return}"`
-			MsvcRoot100=${MsvcRoot100%%/}
-		elif regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 9.0
-		then
-			MsvcRoot90=`$WINPATH2UNIX "${regquery_return}"`
-			MsvcRoot90=${MsvcRoot90%%/}
-		elif regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 8.0
-		then
-			MsvcRoot80=`$WINPATH2UNIX "${regquery_return}"`
-			MsvcRoot80=${MsvcRoot80%%/}
-		elif regquery ${regroot}/Microsoft/VisualStudio/SxS/VS7 7.1
-		then
-			MsvcRoot71=`$WINPATH2UNIX "${regquery_return}"`
-			MsvcRoot71=${MsvcRoot71%%/}
-		fi
-	fi
-
-	MsvcRoot=
-
-	if test -n "$MsvcRoot71" -a -n "$MsvcRoot80"; then
-		AC_MSG_WARN([both visual studio .NET 2003 and 2005 where found! continuing with visual studio 2005])
-		MsvcRoot71=
-	fi
-
-	if test -n "$MsvcRoot100"; then
-		if test -n "$MsvcRoot90" -o -n "$MsvcRoot80" -o -n "$MsvcRoot71"; then
-			AC_MSG_WARN([Multiple Visual Studio installations found. Using 2010.])
-			MsvcRoot90=
-			MsvcRoot80=
-			MsvcRoot71=
-		fi
-	fi
-
-	if test -n "$MsvcRoot90"; then
-		if test -n "$MsvcRoot80" -o -n "$MsvcRoot71"; then
-			AC_MSG_WARN([Multiple Visual Studio installations found. Using 2008.])
-			MsvcRoot80=
-			MsvcRoot71=
-		fi
-	fi
-
-	if test -n "$MsvcRoot80"; then
-		if test -n "$MsvcRoot71"; then
-			AC_MSG_WARN([Multiple Visual Studio installations found. Using 2005.])
-			MsvcRoot71=
-		fi
-	fi
-
-	AC_MSG_CHECKING([for version of Visual Studio used])
-
-	MsvcVersion=
-	if test -n "$MsvcRoot71"; then
-		MsvcRoot="$MsvcRoot71/Vc7"
-		MsvcVersion=0x0701
-        AC_DEFINE([MSVC_VERSION], [0x0701], [Version of Visual Studio building for])
-	elif test -n "$MsvcRoot80"; then
-		MsvcRoot="$MsvcRoot80/VC"
-		MsvcVersion=0x0800
-        AC_DEFINE([MSVC_VERSION], [0x0800], [Version of Visual Studio building for])
-	elif test -n "$MsvcRoot90"; then
-		MsvcRoot="$MsvcRoot90/VC"
-		MsvcVersion=0x0900
-        AC_DEFINE([MSVC_VERSION], [0x0900], [Version of Visual Studio building for])
-	elif test -n "$MsvcRoot100"; then
-		MsvcRoot="$MsvcRoot100/VC"
-		MsvcVersion=0x1000
-        AC_DEFINE([MSVC_VERSION], [0x1000], [Version of Visual Studio building for])
-	fi
-
-	AC_MSG_RESULT([$MsvcVersion])
-
-	MsSdkDir=
-
-	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
-		if test -d "`$WINPATH2UNIX \"$MSSDK\"`"; then
-			MsSdkDir="`$WINPATH2UNIX \"$MSSDK\"`"
-		else
-			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
-		fi
-	else
-		MsSdkDir=$MSSDK
-	fi
-
-	if test -z "$MsSdkDir" \
-	&& regquery "${regroot}/Microsoft/Microsoft SDKs/Windows" CurrentInstallFolder
-	then
-		MsSdkDir=$($WINPATH2UNIX "${regquery_return}")
-	fi
-
-	#
-	# Lookup executables
-	#
-
-	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityCompiler], [cl.exe])
-	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityAssembler], [ml.exe])
-	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityLinker], [link.exe])
-	PARITY_LOOKUP_EXE([$MsvcRoot:$MsSdkDir:$PATH], [ParityResourceCompiler], [rc.exe])
-	PARITY_LOOKUP_EXE([$MsvcRoot:$MsSdkDir:$PATH], [ParityResourceConverter], [cvtres.exe])
-
-	if test -n "$MsvcRoot80" -o -n "$MsvcRoot90" -o -n "$MsvcRoot100"; then
-		# only if using visual studio 2005 or 2008 or 2010
-		PARITY_LOOKUP_EXE([$MsvcRoot:$MsSdkDir:$PATH], [ParityManifest], [mt.exe])
-	fi
-
-	#
-	# Lookup include and library paths
-	#
-	CrtIncludeDir=
-	CrtLibraryDir=
-	SdkIncludeDir=
-	SdkLibraryDir=
-
-	PARITY_LOOKUP_CRT([$MsvcRoot], [CrtIncludeDir], [CrtLibraryDir])
-	PARITY_LOOKUP_SDK([$MsvcRoot:$MsSdkDir], [SdkIncludeDir], [SdkLibraryDir])
-
-	rm -f $ParitySysIncludePaths > /dev/null 2>&1
-	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
-	rm -f $ParityAdditionalExecPaths > /dev/null 2>&1
-
-	echo "SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
-	echo "SysIncludePaths = $SdkIncludeDir" >> $ParitySysIncludePaths
-
-	echo "SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
-	echo "SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
-
-	AC_MSG_CHECKING([for default runtime type])
-	RuntimeType=dynamic
-	test -n "$MsvcRoot71" && RuntimeType=static
-	AC_MSG_RESULT([$RuntimeType])
-
-	pfx="${prefix}"
-	test "x$prefix" = xNONE && pfx=$ac_default_prefix
-
-	PcrtInclude="$pfx/include/parity.runtime"
-	PcrtLibrary="$pfx/lib/libparity_parity.runtime.a"
-	LoaderLibrary="$pfx/lib/libparity_parity.loader.a"
-
-	#
-	# Lookup required paths.
-	#
-	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
-
-    #
-    # MS SDK libraries
-    #
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_KERNEL32], [kernel32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_USER32], [user32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_ADVAPI32], [advapi32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_GDI32], [gdi32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_WS2_32], [ws2_32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_SHELL32], [shell32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_OLE32], [ole32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_WINSPOOL], [winspool.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_COMCTL32], [comctl32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_COMDLG32], [comdlg32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_USERENV], [userenv.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_UUID], [uuid.lib])
-
-	#
-	# Finally Substitute Variables
-	#
-
-	AC_SUBST(ParityCompiler)
-	AC_SUBST(ParityAssembler)
-	AC_SUBST(ParityLinker)
-	AC_SUBST(ParityManifest)
-	AC_SUBST(ParityResourceCompiler)
-	AC_SUBST(ParityResourceConverter)
-	
-	AC_SUBST(PcrtInclude)
-	AC_SUBST(PcrtLibrary)
-	AC_SUBST(LoaderLibrary)
-	AC_SUBST(RuntimeType)
-
-	AC_SUBST_FILE(ParityAdditionalExecPaths)
-	AC_SUBST_FILE(ParitySysIncludePaths)
-	AC_SUBST_FILE(ParitySysLibraryPaths)
+	PARITY_DIR([PARITY_SYSCONFDIR], ['${sysconfdir}/${PACKAGE}/${VERSION}'],
+		[Path where configuration is installed])
+	PARITY_DIR([PARITY_INCLUDEDIR], ['${includedir}'],
+		[Path where header files are installed])
+	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}/${VERSION}'],
+		[Path where libraries are installed])
+	PARITY_DIR([PARITY_BINDIR], ['${bindir}'],
+		[Path where executables are installed])
 ])
 
 """
@@ -562,4 +46,31 @@ CONFIGURE_AC(
     lines=['ACX_PTHREAD'],
     order=AC_PROGRAMS)
 
-MAKEFILE_AM(line='sysconf_DATA=parity.conf')
+import os
+import re
+
+_re_cfile = re.compile('^.*\\.(c|cc|cpp)$')
+_re_hfile = re.compile('^.*\\.h$')
+_re_invalid_variable_character = re.compile('[^a-zA-Z0-9]')
+
+for dir in [
+	'parity.runtime',
+	'parity.runtime/internal',
+	'parity.runtime/sys',
+	'parity.loader',
+]:
+	dirvar = re.sub(_re_invalid_variable_character, '_', dir)
+	MAKEFILE_AM(line=dirvar + 'dir = $(PARITY_LIBDIR)/' + dir)
+	MAKEFILE_AM(line=dirvar + 'includedir = $(PARITY_LIBDIR)/include/' + dir)
+	ADD_EXTRA_DIST('$(' + dirvar + '_DATA)')
+	ADD_EXTRA_DIST('$(' + dirvar + 'include_DATA)')
+	libcfiles = []
+	libhfiles = []
+	for file in os.listdir(dir):
+		if os.path.isfile(dir + '/' + file):
+			if _re_cfile.match(file):
+				libcfiles.append(dir + '/' + file)
+			if _re_hfile.match(file):
+				libhfiles.append(dir + '/' + file)
+	MAKEFILE_AM(line=dirvar + '_DATA = ' + ' \\\n\t'.join(libcfiles))
+	MAKEFILE_AM(line=dirvar + 'include_DATA = ' + ' \\\n\t'.join(libhfiles))
