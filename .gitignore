@@ -23,7 +23,7 @@ config.status
 *.swp
 *.swo
 __parity.*
-parity.conf
+parity-config
 stamp-h1
 *.o
 *.a
