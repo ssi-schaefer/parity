@@ -29,7 +29,7 @@
 #  if !defined(_POSIX_) && defined(__PARITY_GNU__)
 #    define _POSIX_ 1
 #  endif
-#  include RUNTIME_INC(Time.h)
+#  include UCRT_INC(Time.h)
 #pragma pop_macro("_POSIX_")
 
 PCRT_BEGIN_C

@@ -35,7 +35,7 @@
 #  endif
 #  pragma push_macro("unlink")
 #    define unlink __crt_invalid_unlink
-#    include RUNTIME_INC(Stdio.h)
+#    include UCRT_INC(Stdio.h)
 #  pragma pop_macro("unlink")
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")

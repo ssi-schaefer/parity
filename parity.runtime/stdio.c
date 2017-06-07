@@ -22,6 +22,8 @@
 
 #include "stdio.h"
 
+#if defined(_MSC_VER) && ((_MSC_VER - 0) < 1900)
+// available since Windows 10 SDK (MSVC 14.0)
 int snprintf(char* b, size_t c, const char* fmt, ...) {
 	int ret;
 	va_list args;
@@ -30,4 +32,4 @@ int snprintf(char* b, size_t c, const char* fmt, ...) {
 	va_end(args);
 	return ret;
 }
-
+#endif

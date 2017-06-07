@@ -30,6 +30,12 @@
 // try to include <rpl_malloc.h> which doesnt exist
 //
 #define RUNTIME_INC(x) <../include/x>
+#if ((_MSC_VER - 0) >= 1900)
+// MSVC 14.0 (VS 2013) comes with Windows 10 SDK
+# define UCRT_INC(x) <../ucrt/x>
+#else
+# define UCRT_INC(x) <../include/x>
+#endif
 
 #define PCRT_INLINE __inline
 
