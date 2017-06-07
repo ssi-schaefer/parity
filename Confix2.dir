@@ -90,7 +90,24 @@ install-parity-setup: install-recursive
 		$(LN_S) -f parity.ms.cl$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-cl || exit 1 ; \\
 		$(LN_S) -f parity.ms.link$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-link || exit 1 ; \\
 	done
-	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --disable-all
+	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --install
 
 install: install-parity-setup
+
+uninstall-parity-setup:
+	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported`; \\
+	for chost in $${chosts}; do \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-gcc ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-g++ ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-ld ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-windres ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-ar ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-dumpbin ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-ranlib ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-cl ; \\
+		rm -f "$(DESTDIR)$(bindir)"/$${chost}-link ; \\
+	done ; :
+	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --uninstall ; :
+
+uninstall-recursive: uninstall-parity-setup
 ''')

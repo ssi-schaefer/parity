@@ -91,6 +91,14 @@ Where action is one of:
       each one as default for the hostconfig's architecture, in order,
       so the last one specified per architecture remains the default.
 
+Additional actions for package managers:
+
+  --install
+     Creates all files for all supported configurations, but disabled.
+
+  --uninstall
+     Removes all files for all supported configurations.
+
 Where hostconfig is:
 
   Known as "host triplet" (arch-vendor-os, or even arch-vendor-os-libc).
@@ -377,6 +385,7 @@ prune-parityconf() {
 	local reason=disabled
 	local noquiet=noquiet
 	local setdefault=
+	local uninstall=false
 	local arg
 	while ${1+:} false
 	do
@@ -389,6 +398,9 @@ prune-parityconf() {
 		--reason=*)
 			reason=${arg#--reason=}
 			noquiet=verbose
+			;;
+		--uninstall)
+			uninstall=:
 			;;
 		*)
 			break
@@ -434,17 +446,30 @@ MSVC ${vsver#msvc} (${vsarch}) is ${reason} (try '${SELF##*/} --enable ${chost}'
 	fi
 	if [[ ${defchost} == "${chost}" ]]
 	then
-		${noquiet} "Disabling ${defconffile} ..."
-		traceon
-		mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
-		echo "${defnoconf}" > "${DESTDIR}${defconffile}"
-		if ! traceoff $?
+		if ${uninstall}
 		then
-			ret=1
-			${noquiet} "Disabling ${defconffile} failed."
+			rm -f "${DESTDIR}${defconffile}"
 		else
-			verbose "Disabling ${defconffile} done."
+			${noquiet} "Disabling ${defconffile} ..."
+			traceon
+			mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
+			echo "${defnoconf}" > "${DESTDIR}${defconffile}"
+			if ! traceoff $?
+			then
+				ret=1
+				${noquiet} "Disabling ${defconffile} failed."
+			else
+				verbose "Disabling ${defconffile} done."
+			fi
 		fi
+	fi
+
+	if ${uninstall}
+	then
+		rm -f "${DESTDIR}${conffile}"
+		rm -f "${DESTDIR}${PARITYlibdir}"/libparity.runtime.${vsarch}-${vsver}.a
+		rm -f "${DESTDIR}${PARITYlibdir}"/libparity.loader.${vsarch}-${vsver}.a
+		return 0
 	fi
 
 	${noquiet} "Disabling ${conffile} ..."
@@ -735,6 +760,24 @@ parityconf-set-default() {
 	return 0
 }
 
+parityconf-install() {
+	local chost
+	for chost in $(get-supported-chosts)
+	do
+		prune-parityconf --reason="disabled" --set-default "${chost}"
+	done
+	return 0
+}
+
+parityconf-uninstall() {
+	local chost
+	for chost in $(get-supported-chosts)
+	do
+		prune-parityconf --uninstall --reason="uninstalled" --set-default "${chost}"
+	done
+	return 0
+}
+
 traceon() { :; }
 traceoff() { set +x; return $1; }
 _verbose() { :; }
@@ -804,7 +847,7 @@ case ${arg} in
     noquiet() { _verbose "$@" >&2; }
     action=${arg#--}
     ;;
---help|--enable|--enable-all|--disable|--disable-all|--set-default)
+--help|--enable|--enable-all|--disable|--disable-all|--set-default|--install|--uninstall)
     action=${arg#--}
     ;;
 *)
