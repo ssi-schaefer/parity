@@ -776,8 +776,6 @@ do
 		;;
 	--destdir=*)
 		argvalue=${arg#--*=}
-		arg=${arg%%=*}
-		${argvalue:+:} die "Missing argument to ${arg} (try --help)."
 		DESTDIR=${argvalue}
 		;;
 	--sysconfdir|--libdir)
