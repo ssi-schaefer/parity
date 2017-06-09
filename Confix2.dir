@@ -2,10 +2,10 @@ ADD_EXTRA_DIST('parity.sln')
 ADD_EXTRA_DIST('ReleaseNotes.txt')
 
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity-config)'],
+	lines=['AC_CONFIG_FILES(parity-setup)'],
 	order=AC_BOILERPLATE)
 
-MAKEFILE_AM(line='sbin_SCRIPTS = parity-config')
+MAKEFILE_AM(line='sbin_SCRIPTS = parity-setup')
 
 acm4 = """
 
@@ -77,8 +77,8 @@ for dir in [
 	MAKEFILE_AM(line=dirvar + 'include_DATA = ' + ' \\\n\t'.join(libhfiles))
 
 MAKEFILE_AM(line='''
-install-parity-setup: install-recursive
-	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported; "$(DESTDIR)$(sbindir)/parity-config" --list-supported --default`; \\
+install-setup-files: install-recursive
+	chosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported; "$(DESTDIR)$(sbindir)/parity-setup" --list-supported --default`; \\
 	cd "$(DESTDIR)$(bindir)" || exit 1 ; \\
 	for chost in $${chosts}; do \\
 		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-gcc || exit 1 ; \\
@@ -91,12 +91,12 @@ install-parity-setup: install-recursive
 		$(LN_S) -f parity.ms.cl$(EXEEXT) $${chost}-cl || exit 1 ; \\
 		$(LN_S) -f parity.ms.link$(EXEEXT) $${chost}-link || exit 1 ; \\
 	done
-	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --install
+	"$(DESTDIR)$(sbindir)/parity-setup" --destdir="$(DESTDIR)" --install
 
-install: install-parity-setup
+install: install-setup-files
 
-uninstall-parity-setup:
-	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported; "$(DESTDIR)$(sbindir)/parity-config" --list-supported --default`; \\
+uninstall-setup-files:
+	chosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported; "$(DESTDIR)$(sbindir)/parity-setup" --list-supported --default`; \\
 	cd "$(DESTDIR)$(bindir)" || exit 0 ; \\
 	for chost in $${chosts}; do \\
 		rm -f $${chost}-gcc ; \\
@@ -109,7 +109,7 @@ uninstall-parity-setup:
 		rm -f $${chost}-cl ; \\
 		rm -f $${chost}-link ; \\
 	done ; :
-	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --uninstall ; :
+	"$(DESTDIR)$(sbindir)/parity-setup" --destdir="$(DESTDIR)" --uninstall ; :
 
-uninstall-recursive: uninstall-parity-setup
+uninstall-recursive: uninstall-setup-files
 ''')
