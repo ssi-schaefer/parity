@@ -1,7 +1,9 @@
-ADD_SCRIPT(filename='parity.gnu.ar')
-ADD_SCRIPT(filename='parity.gnu.ranlib')
-ADD_SCRIPT(filename='parity.gnu.strip')
+# ADD_SCRIPT(filename='parity.gnu.ar')
+# ADD_SCRIPT(filename='parity.gnu.ranlib')
+# ADD_SCRIPT(filename='parity.gnu.strip')
 
-ADD_EXTRA_DIST('parity.gnu.ar')
+MAKEFILE_AM(line='bin_SCRIPTS = parity.gnu.ar parity.gnu.ranlib parity.gnu.strip')
+
+ADD_EXTRA_DIST('parity.gnu.ar.in')
 ADD_EXTRA_DIST('parity.gnu.ranlib')
 ADD_EXTRA_DIST('parity.gnu.strip')

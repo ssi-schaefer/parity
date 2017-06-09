@@ -126,15 +126,15 @@ namespace parity
 			// On All others (UNIX like):
 			//  1) try in configured PARITY_SYSCONFDIR/etc/
 			//
-			// Both can be overridden with argument "-mparityconf=/path".
+			// Both can be overridden with argument "-mparityconfdir=path".
 			//
 			// And everywhere:
 			//  2) try in current directory
 			//  3) in path set by environment variable PARITY_CONFIG
 			//
 			for (int i = 1; i < argc; ++i) {
-				if (strncmp(argv[i], "-mparityconf=", 13) == 0) {
-					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 13), true));
+				if (strncmp(argv[i], "-mparityconfdir=", 16) == 0) {
+					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16), true));
 				}
 			}
 			if (files.empty()) {
