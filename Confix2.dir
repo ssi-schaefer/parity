@@ -79,16 +79,17 @@ for dir in [
 MAKEFILE_AM(line='''
 install-parity-setup: install-recursive
 	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported; "$(DESTDIR)$(sbindir)/parity-config" --list-supported --default`; \\
+	cd "$(DESTDIR)$(bindir)" || exit 1 ; \\
 	for chost in $${chosts}; do \\
-		$(LN_S) -f parity.gnu.gcc$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-gcc || exit 1 ; \\
-		$(LN_S) -f parity.gnu.gcc$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-g++ || exit 1 ; \\
-		$(LN_S) -f parity.gnu.ld$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-ld || exit 1 ; \\
-		$(LN_S) -f parity.gnu.windres$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-windres || exit 1 ; \\
-		$(LN_S) -f parity.gnu.ar "$(DESTDIR)$(bindir)"/$${chost}-ar || exit 1 ; \\
-		$(LN_S) -f parity.gnu.dumpbin "$(DESTDIR)$(bindir)"/$${chost}-dumpbin || exit 1 ; \\
-		$(LN_S) -f parity.gnu.ranlib "$(DESTDIR)$(bindir)"/$${chost}-ranlib || exit 1 ; \\
-		$(LN_S) -f parity.ms.cl$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-cl || exit 1 ; \\
-		$(LN_S) -f parity.ms.link$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-link || exit 1 ; \\
+		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-gcc || exit 1 ; \\
+		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-g++ || exit 1 ; \\
+		$(LN_S) -f parity.gnu.ld$(EXEEXT) $${chost}-ld || exit 1 ; \\
+		$(LN_S) -f parity.gnu.windres$(EXEEXT) $${chost}-windres || exit 1 ; \\
+		$(LN_S) -f parity.gnu.ar $${chost}-ar || exit 1 ; \\
+		$(LN_S) -f parity.gnu.dumpbin $${chost}-dumpbin || exit 1 ; \\
+		$(LN_S) -f parity.gnu.ranlib $${chost}-ranlib || exit 1 ; \\
+		$(LN_S) -f parity.ms.cl$(EXEEXT) $${chost}-cl || exit 1 ; \\
+		$(LN_S) -f parity.ms.link$(EXEEXT) $${chost}-link || exit 1 ; \\
 	done
 	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --install
 
@@ -96,16 +97,17 @@ install: install-parity-setup
 
 uninstall-parity-setup:
 	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported; "$(DESTDIR)$(sbindir)/parity-config" --list-supported --default`; \\
+	cd "$(DESTDIR)$(bindir)" || exit 0 ; \\
 	for chost in $${chosts}; do \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-gcc ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-g++ ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-ld ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-windres ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-ar ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-dumpbin ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-ranlib ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-cl ; \\
-		rm -f "$(DESTDIR)$(bindir)"/$${chost}-link ; \\
+		rm -f $${chost}-gcc ; \\
+		rm -f $${chost}-g++ ; \\
+		rm -f $${chost}-ld ; \\
+		rm -f $${chost}-windres ; \\
+		rm -f $${chost}-ar ; \\
+		rm -f $${chost}-dumpbin ; \\
+		rm -f $${chost}-ranlib ; \\
+		rm -f $${chost}-cl ; \\
+		rm -f $${chost}-link ; \\
 	done ; :
 	"$(DESTDIR)$(sbindir)/parity-config" --destdir="$(DESTDIR)" --uninstall ; :
 
