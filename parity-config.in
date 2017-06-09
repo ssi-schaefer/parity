@@ -86,10 +86,14 @@ Where action is one of:
   --disable-all
       Disables configuration for all supported hostconfig identifiers.
 
-  --set-default hostconfig...
+  --set-default hostconfig|[arch-]newest|[arch-]oldest...
       Enables configuration for hostconfig identifiers, and does set
       each one as default for the hostconfig's architecture, in order,
       so the last one specified per architecture remains the default.
+	  Specify either newest or oldest to choose the newest or oldest
+	  MSVC version available for the specified architecture.
+	  If no arch is specified, given default is set for each supported
+	  (and available) architecture.
 
 Additional actions for package managers:
 
@@ -107,8 +111,39 @@ Where hostconfig is:
 EOF
 }
 
+# get-vsver [end-of-chost|[vsarch-]vsver]
+#  The argument needs to contain enough information only.
+# Examples:
+#  get-vsver i686-pc-winnt-msvc11.0   -> msvc11.0
+#  get-vsver x86-msvc11.0             -> msvc11.0
+#  get-vsver msvc11                   -> msvc11.0
+get-vsver() {
+	local vsver=${1##*msvc}
+	case ${vsver} in
+	[7-9]      |[1-9][0-9]      ) echo "msvc${vsver}.0" ;;
+	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "msvc${vsver}" ;;
+	esac
+	return 0
+}
+
+# get-vsarch [begin-of-chost|vsarch[-vsver]]
+#  The argument needs to contain enough information only.
+# Examples:
+#  get-vsarch i686-pc-winnt-msvc11.0   -> x86
+#  get-vsarch x86-msvc11.0             -> x86
+#  get-vsarch i686                     -> x86
+get-vsarch() {
+	local vsarch=${1%%-*}
+	case ${vsarch} in
+	x64|amd64|x86_64) echo "x64" ;;
+	x86|i?86)         echo "x86" ;;
+	esac
+	return 0
+}
+
 get-supported-vsvers() {
 	local vsvers=(
+		# parityconf-set-default() relies on old to new order
 		 7.0	# Visual Studio 2002, cl.exe Version 13.00
 		 7.1	# Visual Studio 2003, cl.exe Version 13.10
 		 8.0	# Visual Studio 2005, cl.exe Version 14.00
@@ -122,22 +157,37 @@ get-supported-vsvers() {
     local vsver
     for vsver in "${vsvers[@]}"
     do
-        echo "${vsver}"
+		get-vsver "${vsver}"
     done
     return 0
 }
 
 get-supported-vsarchs() {
 	local vsarchs=(
-		i686
-		x86_64
+		x86
+		x64
 	)
     local vsarch
     for vsarch in "${vsarchs[@]}"
     do
-        echo "${vsarch}"
+		get-vsarch "${vsarch}"
     done
     return 0
+}
+
+# get-chost [begin[+end]-of-chost|vsarch[-vsver]]
+# Examples:
+#  get-chost i686-msvc11.0     -> i686-pc-winnt-msvc11.0
+#  get-chost x86-msvc11        -> i686-pc-winnt-msvc11.0
+#  get-chost i686              -> i686-pc-winnt
+get-chost() {
+	local vsarch=$(get-vsarch "$*")
+	local vsver=$(get-vsver "$*")
+	case ${vsarch} in
+	x86) echo "i686-pc-winnt${vsver:+-}${vsver}" ;;
+	x64) echo "x86_64-pc-winnt${vsver:+-}${vsver}" ;;
+	esac
+	return 0
 }
 
 get-supported-chosts() {
@@ -146,8 +196,17 @@ get-supported-chosts() {
 	do
 		for vsver in $(get-supported-vsvers)
 		do
-			echo "${vsarch}-pc-winnt-msvc${vsver}"
+			get-chost "${vsarch}-${vsver}"
 		done
+	done
+	return 0
+}
+
+get-default-chosts() {
+	local vsarch
+	for vsarch in $(get-supported-vsarchs)
+	do
+		get-chost "${vsarch}"
 	done
 	return 0
 }
@@ -207,40 +266,12 @@ get-supported-sdklibs() {
 	done
 }
 
-get-vsarch() {
-	case $1 in
-	*x64*|*amd64*|*x86_64*) echo "x64" ;;
-	*x86*|*i?86*) echo "x86" ;;
-	esac
-	return 0
-}
-
-get-vsver() {
-	case $1 in
-	*msvc*)
-		local vcver=${1##*msvc}
-		echo "msvc${vcver%%-*}"
-		;;
-	esac
-	return 0
-}
-
-get-chost() {
-	local vsarch=$(get-vsarch "$*")
-	local vsver=$(get-vsver "$*")
-	case ${vsarch} in
-	x86) echo "i686-pc-winnt-${vsver}" ;;
-	x64) echo "x86_64-pc-winnt-${vsver}" ;;
-	esac
-	return 0
-}
-
 get-cflags() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
 	case ${vsarch} in
-	x86) echo "-m32 -m${vsver}" ;;
-	x64) echo "-m64 -m${vsver}" ;;
+	x86) echo "-m32${vsver:+ -m}${vsver}" ;;
+	x64) echo "-m64${vsver:+ -m}${vsver}" ;;
 	esac
 	return 0
 }
@@ -645,6 +676,8 @@ section windows {
 }
 
 parityconf-list-supported() {
+	verbose() { _verbose "$@" >&2; }
+	noquiet() { _verbose "$@" >&2; }
 	local chost
 	for chost in $(get-supported-chosts)
 	do
@@ -654,6 +687,8 @@ parityconf-list-supported() {
 }
 
 parityconf-list-available() {
+	verbose() { _verbose "$@" >&2; }
+	noquiet() { _verbose "$@" >&2; }
 	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
@@ -729,6 +764,8 @@ parityconf-disable-all() {
 }
 
 parityconf-is-available() {
+	verbose() { _verbose "$@" >&2; }
+	noquiet() { _verbose "$@" >&2; }
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
 	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
@@ -743,16 +780,61 @@ parityconf-is-available() {
 	return 0
 }
 
+# parity-config --set-default [[arch-]newest|[arch-]oldest|[start+]end-of-chost|[arch-]vsver]
+#  Set available vsarch-vsver config as the default for vsarch, last one fires.
 parityconf-set-default() {
-	local chosts
-	chosts=( $(args-to-chosts "$@") ) || die
-	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
+	[[ ${#@} -lt 1 ]] && die "Need a configuration value (try --list-available)."
+	local newavail=()
+	local oldavail=()
+	local chost vsarchver
+	case $* in
+	*newest*|*oldest*)
+		for chost in $( parityconf-list-available ) # old to new order
+		do
+			vsarchver=$(get-vsarch "${chost}")-$(get-vsver "${chost}")
+			oldavail=( "${oldavail[@]}" "${vsarchver}" )
+			newavail=( "${vsarchver}" "${newavail[@]}" )
+		done
+		;;
+	esac
 
 	local ret=0
-	for chost in "${chosts[@]}"
+	local vsarchs vsarch vsver vschoice
+	for arg in "$@"
 	do
-		update-parityconf --set-default "${chost}" || ret=1
+		vsarchs=( $(get-vsarch "${arg}") )
+		if [[ ${#vsarchs[@]} -eq 0 ]]
+		then
+			# no arch specified: apply to all archs
+			vsarchs=( $(get-supported-vsarchs) )
+		fi
+		for vsarch in "${vsarchs[@]}"
+		do
+			vsver=
+			vschoice=()
+			case ${arg} in
+			*oldest) vschoice=( "${oldavail[@]}" ) ;; # prefer old
+			*newest) vschoice=( "${newavail[@]}" ) ;; # prefer new
+			*)       vsver=$(get-vsver "${arg}") ;; # explicit version
+			esac
+			for vsarchver in ${vschoice[@]}
+			do
+				if [[ ${vsarchver} == ${vsarch}-* ]]
+				then
+					# first version supporting requested arch
+					vsver=$(get-vsver "${vsarchver}")
+					break
+				fi
+			done
+			if [[ -z ${vsver} && ${#vschoice[@]} -gt 0 ]]
+			then
+				# arch not available with any version
+				continue
+			fi
+			update-parityconf --set-default "$(get-chost "${vsarch}-${vsver}")" || ret=1
+		done
 	done
+
 	if [[ ${ret} -ne 0 ]]
 	then
 		noquiet "Setting default configuration failed."
@@ -844,12 +926,9 @@ verbose() { _verbose "$@"; }
 noquiet() { _noquiet "$@"; }
 
 case ${arg} in
---list-supported|--list-available|--is-available)
-    verbose() { _verbose "$@" >&2; }
-    noquiet() { _verbose "$@" >&2; }
-    action=${arg#--}
-    ;;
---help|--enable|--enable-all|--disable|--disable-all|--set-default|--install|--uninstall)
+--list-supported|--list-available|--is-available|\
+--help|--enable|--enable-all|--disable|--disable-all|\
+--set-default|--install|--uninstall)
     action=${arg#--}
     ;;
 *)
