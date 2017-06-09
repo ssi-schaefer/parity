@@ -62,9 +62,10 @@ Where action is one of:
   --help
      This help.
 
-  --list-supported
+  --list-supported [--default]
       List any hostconfig identifiers supported.
       Unless --quiet, progress output goes to standard error.
+	  With --default, lists hostconfigs without MSVC version.
 
   --list-available
       List hostconfig identifiers for installed MSVC compilers found.
@@ -678,6 +679,15 @@ section windows {
 parityconf-list-supported() {
 	verbose() { _verbose "$@" >&2; }
 	noquiet() { _verbose "$@" >&2; }
+	if [[ $1 == --default ]]
+	then
+		local vsarch
+		for vsarch in $(get-supported-vsarchs)
+		do
+			get-chost "${vsarch}"
+		done
+		return 0
+	fi
 	local chost
 	for chost in $(get-supported-chosts)
 	do

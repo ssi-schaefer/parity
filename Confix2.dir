@@ -78,7 +78,7 @@ for dir in [
 
 MAKEFILE_AM(line='''
 install-parity-setup: install-recursive
-	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported`; \\
+	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported; "$(DESTDIR)$(sbindir)/parity-config" --list-supported --default`; \\
 	for chost in $${chosts}; do \\
 		$(LN_S) -f parity.gnu.gcc$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-gcc || exit 1 ; \\
 		$(LN_S) -f parity.gnu.gcc$(EXEEXT) "$(DESTDIR)$(bindir)"/$${chost}-g++ || exit 1 ; \\
@@ -95,7 +95,7 @@ install-parity-setup: install-recursive
 install: install-parity-setup
 
 uninstall-parity-setup:
-	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported`; \\
+	chosts=`"$(DESTDIR)$(sbindir)/parity-config" --list-supported; "$(DESTDIR)$(sbindir)/parity-config" --list-supported --default`; \\
 	for chost in $${chosts}; do \\
 		rm -f "$(DESTDIR)$(bindir)"/$${chost}-gcc ; \\
 		rm -f "$(DESTDIR)$(bindir)"/$${chost}-g++ ; \\
