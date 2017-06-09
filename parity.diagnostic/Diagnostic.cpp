@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
 	PROCESS_INFORMATION pi;
 
 	if(!CreateProcess(application.c_str(), &quoted_args[0], NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi)) {
-		std::cerr << "cannot start process!" << std::cerr;
+		std::cerr << "cannot start process!" << std::endl;
 		exit(1);
 	}
 

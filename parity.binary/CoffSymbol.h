@@ -49,6 +49,7 @@ namespace parity
 			//
 			Symbol(const FileHeader* fh, long idx, void* ptr) : idx_(idx), struct_(), name_(), aux_() { if(ptr) { struct_ = *reinterpret_cast<SymStruct*>(ptr); calcName(fh); } }
 			Symbol(FileHeader* fh, long idx, const std::string& name);
+			Symbol() : idx_(-11), struct_(), name_("INVALID"), aux_() { throw utils::Exception("construction of invalid symbol!"); }
 			
 			//
 			// Public Types
@@ -146,7 +147,6 @@ namespace parity
 			// To support the correctly indexed map, we need a default constructor
 			// that is accessable from the map's operator[]
 			//
-			Symbol() : idx_(-11), struct_(), name_("INVALID"), aux_() { throw utils::Exception("construction of invalid symbol!"); }
 			friend IndexedSymbolMap::mapped_type& IndexedSymbolMap::operator [](const IndexedSymbolMap::key_type&);
 
 			#define SYM_MEMBERS \
