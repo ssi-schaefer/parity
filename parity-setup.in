@@ -115,7 +115,7 @@ EOF
 # get-vsver [end-of-chost|[vsarch-]vsver]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vsver i686-pc-winnt-msvc11.0   -> msvc11.0
+#  get-vsver i686-pc-winntmsvc11.0    -> msvc11.0
 #  get-vsver x86-msvc11.0             -> msvc11.0
 #  get-vsver msvc11                   -> msvc11.0
 get-vsver() {
@@ -130,7 +130,7 @@ get-vsver() {
 # get-vsarch [begin-of-chost|vsarch[-vsver]]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vsarch i686-pc-winnt-msvc11.0   -> x86
+#  get-vsarch i686-pc-winntmsvc11.0    -> x86
 #  get-vsarch x86-msvc11.0             -> x86
 #  get-vsarch i686                     -> x86
 get-vsarch() {
@@ -178,15 +178,15 @@ get-supported-vsarchs() {
 
 # get-chost [begin[+end]-of-chost|vsarch[-vsver]]
 # Examples:
-#  get-chost i686-msvc11.0     -> i686-pc-winnt-msvc11.0
-#  get-chost x86-msvc11        -> i686-pc-winnt-msvc11.0
+#  get-chost i686-msvc11.0     -> i686-pc-winntmsvc11.0
+#  get-chost x86-msvc11        -> i686-pc-winntmsvc11.0
 #  get-chost i686              -> i686-pc-winnt
 get-chost() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
 	case ${vsarch} in
-	x86) echo "i686-pc-winnt${vsver:+-}${vsver}" ;;
-	x64) echo "x86_64-pc-winnt${vsver:+-}${vsver}" ;;
+	x86) echo "i686-pc-winnt${vsver}" ;;
+	x64) echo "x86_64-pc-winnt${vsver}" ;;
 	esac
 	return 0
 }
