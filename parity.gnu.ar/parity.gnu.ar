@@ -82,7 +82,7 @@ lib_exe() { (
     lib.exe "$@" >> .lib_exe.out.$$ 2>> .lib_exe.err.$$
 ); }
 
-LIB="lib_exe /nologo"
+LIB="lib_exe -nologo"
 
 export TMP=${TMP:-${TMPDIR:-/tmp}}
 [[ ${TMP} == /* ]] && TMP=$(unixpath2win "${TMP}")
