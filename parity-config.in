@@ -607,15 +607,17 @@ section windows {
 		} > parity.${vsarch}-${vsver}.conf
 		[[ $? -eq 0 ]] || exit 1
 
+		unset PARITY_CONFIG
+
 		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a ..."
-		"${DESTDIR}${CC}" ${cflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.runtime/*.c "${DESTDIR}${PARITYlibdir}"/parity.runtime/*.cpp &&
+		"${DESTDIR}${CC}" -mparityconf= ${cflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.runtime/*.c "${DESTDIR}${PARITYlibdir}"/parity.runtime/*.cpp &&
 		"${DESTDIR}${AR}" cr libparity.runtime.${vsarch}-${vsver}.a *.o
 		traceoff $? || exit 1
 		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a done."
 
 		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a ..."
 		traceon
-		"${DESTDIR}${CC}" ${cflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader*.c &&
+		"${DESTDIR}${CC}" -mparityconf= ${cflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader*.c &&
 		"${DESTDIR}${AR}" cr libparity.loader.${vsarch}-${vsver}.a Loader*.o
 		traceoff $? || exit 1
 		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a done."
