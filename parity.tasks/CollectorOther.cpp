@@ -75,7 +75,18 @@ namespace parity
 			// that is basename of argv[0], or as an argument "-m64".
 			//
 			// Find "x86_64" in argv[0].
-			std::string vcvariant = strstr(argv0, "x86_64") ? "x64" : "x86";
+			std::string vcvariant = PARITY_DEFAULT_ARCH;
+			if (strstr(argv0, "x86_64"))
+				vcvariant = "x64";
+			for(char const * x = strstr(argv0, "i"); x; x = strstr(x+1, "i")) {
+				if (strlen(x) >= 4
+				 && strncmp(x+2, "86", 2) == 0
+				 && x[1] >= '1' && x[1] <= '9'
+				) {
+					vcvariant = "x86";
+					break;
+				}
+			}
 			// Find "-m64" or "-m32" in arguments, overriding argv[0].
 			for (int i = 1; i < argc; ++i) {
 				if (strcmp(argv[i], "-m64") == 0) {

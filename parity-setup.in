@@ -8,6 +8,7 @@ VERSION="@VERSION@"
 PARITYsysconfdir="@PARITY_SYSCONFDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
 PARITYbindir="@PARITY_BINDIR@"
+PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
 
 DESTDIR=
 
@@ -19,6 +20,8 @@ then
 	PARITYlibdir=${SELFDIR}
 	PARITYbindir=${SELFDIR}
 	PARITYincludedir=${SELFDIR}
+	# keep in sync with --enable-supported-archs:
+	PARITYsupported_archs="x86 x64"
 	CC=${SELFDIR}/parity.gnu.gcc/parity.gnu.gcc
 	AR=${SELFDIR}/parity.gnu.ar/parity.gnu.ar.in
 else
@@ -166,12 +169,8 @@ get-supported-vsvers() {
 }
 
 get-supported-vsarchs() {
-	local vsarchs=(
-		x86
-		x64
-	)
     local vsarch
-    for vsarch in "${vsarchs[@]}"
+    for vsarch in ${PARITYsupported_archs}
     do
 		get-vsarch "${vsarch}"
     done
@@ -919,7 +918,7 @@ __parityenv_confdir=\"${PARITYsysconfdir}\"
 __parityenv_args=()
 
 __parityenv_arg=\${0##*/}
-__parityenv_arch=x86
+__parityenv_arch=${PARITYsupported_archs%% *}
 __parityenv_verspec=
 
 while test \"\${__parityenv_arg#*-}\" != \"\${__parityenv_arg}\"
@@ -927,6 +926,9 @@ do
 	case \${parityenv_argv0} in
 	x86_64-*)
 		__parityenv_arch=x64
+		;;
+	i?86-*)
+		__parityenv_arch=x86
 		;;
 	winntmsvc*|msvc*)
 		__parityenv_arg=\${__parityenv_arg#winnt}

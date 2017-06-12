@@ -33,6 +33,36 @@ AC_DEFUN([PARITY_CONFIGURE],
 	PARITY_DIR([PARITY_BINDIR], ['${bindir}'],
 		[Path where executables are installed])
 	AC_SUBST([LN_S], [${as_ln_s}])
+
+	AC_MSG_CHECKING([for MSVC architectures to support])
+	AC_ARG_ENABLE([msvc-archs],
+	  [AS_HELP_STRING([--enable-msvc-archs=[[x86,x64]]],
+		[Enable support for MSVC architectures, with the first one used as fallback.])],
+	  [enable_msvc_archs=
+	   as_save_IFS=$IFS
+	   IFS=,
+	   for parityarch in ${enableval:-yes}
+	   do
+	     IFS=$as_save_IFS
+#
+# Sync list of supported architectures with defaults in parity-setup.in
+#
+		 AS_CASE([$parityarch],
+		   [x64|amd64|x86_64], [parityarch=x64],
+		   [x86|i?86],         [parityarch=x86],
+		   [yes], [AC_MSG_ERROR([Need specific argument to --enable-msvc-archs.])],
+		   [AC_MSG_ERROR([Unknown argument $parityarch to --enable-msvc-archs.])])
+		 AS_CASE([" $enable_msvc_archs "],
+		   [*" $parityarch "*], [],
+		   ["  "], [enable_msvc_archs=$parityarch],
+		   [enable_msvc_archs="$enable_msvc_archs $parityarch"])
+	   done
+	   IFS=$as_save_IFS],
+	  [enable_msvc_archs="x86 x64"])
+	AC_SUBST([PARITY_SUPPORTED_ARCHS], [$enable_msvc_archs])
+	AC_DEFINE_UNQUOTED([PARITY_DEFAULT_ARCH], ["${enable_msvc_archs## *}"],
+	  [Fallback MSVC architecture.])
+	AC_MSG_RESULT([$PARITY_SUPPORTED_ARCHS])
 ])
 
 """
