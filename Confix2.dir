@@ -108,18 +108,47 @@ for dir in [
 
 MAKEFILE_AM(line='''
 install-setup-files: install-recursive
-	chosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported; "$(DESTDIR)$(sbindir)/parity-setup" --list-supported --default`; \\
-	cd "$(DESTDIR)$(bindir)" || exit 1 ; \\
-	for chost in $${chosts}; do \\
-		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-gcc || exit 1 ; \\
-		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-g++ || exit 1 ; \\
-		$(LN_S) -f parity.gnu.ld$(EXEEXT) $${chost}-ld || exit 1 ; \\
-		$(LN_S) -f parity.gnu.windres$(EXEEXT) $${chost}-windres || exit 1 ; \\
-		$(LN_S) -f parity.gnu.ar $${chost}-ar || exit 1 ; \\
-		$(LN_S) -f parity.gnu.dumpbin $${chost}-dumpbin || exit 1 ; \\
-		$(LN_S) -f parity.gnu.ranlib $${chost}-ranlib || exit 1 ; \\
-		$(LN_S) -f parity.ms.cl$(EXEEXT) $${chost}-cl || exit 1 ; \\
-		$(LN_S) -f parity.ms.link$(EXEEXT) $${chost}-link || exit 1 ; \\
+	chosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported`; \\
+	defchosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported --default`; \\
+	cd "$(DESTDIR)$(bindir)" || exit $$? ; \\
+	for chost in $${chosts} $${defchosts} ; do \\
+		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-gcc || exit $$? ; \\
+		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-g++ || exit $$? ; \\
+		$(LN_S) -f parity.gnu.ld$(EXEEXT) $${chost}-ld || exit $$? ; \\
+		$(LN_S) -f parity.gnu.windres$(EXEEXT) $${chost}-windres || exit $$? ; \\
+		$(LN_S) -f parity.gnu.ar $${chost}-ar || exit $$? ; \\
+		$(LN_S) -f parity.gnu.dumpbin $${chost}-dumpbin || exit $$? ; \\
+		$(LN_S) -f parity.gnu.ranlib $${chost}-ranlib || exit $$? ; \\
+		$(LN_S) -f parity.ms.cl$(EXEEXT) $${chost}-cl || exit $$? ; \\
+		$(LN_S) -f parity.ms.link$(EXEEXT) $${chost}-link || exit $$? ; \\
+	done ; \\
+	for chost in $${defchosts} ; do \\
+		$(MKDIR_P) "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
+		cd "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
+		trap "rm -f '$(DESTDIR)$(exec_prefix)/$${chost}/bin/parityscript'" 0 || exit $$? ; \
+		case $${chost%%-*} in \\
+		x64|x86_64|amd64) mopt=-m64 ;; \\
+		x86|i?86*) mopt=-m32 ;; \\
+		esac ; \\
+		for exe in gcc ld windres ar dumpbin ranlib ; do \\
+			{ echo "#! /bin/sh" ; \\
+			  echo "exec '$(bindir)/parity.gnu.$${exe}' $${mopt} "'"$$@"' ; \\
+			} > parityscript || exit $$? ; \\
+			$(INSTALL_SCRIPT) parityscript "$(DESTDIR)$(exec_prefix)/$${chost}/bin/$${exe}" || exit $$? ; \\
+			rm -f parityscript || exit $$? ; \\
+		done ; \\
+		{ echo "#! /bin/sh" ; \\
+		  echo "exec '$(bindir)/parity.gnu.gcc' $${mopt} "'"$$@"' ; \\
+		} > parityscript || exit $$? ; \\
+		$(INSTALL_SCRIPT) parityscript "$(DESTDIR)$(exec_prefix)/$${chost}/bin/g++" || exit $$? ; \\
+		rm -f parityscript || exit $$? ; \\
+		for exe in cl link ; do \\
+			{ echo "#! /bin/sh" ; \\
+			  echo "exec '$(bindir)/parity.ms.$${exe}' $${mopt} "'"$$@"' ; \\
+			} > parityscript || exit $$? ; \\
+			$(INSTALL_SCRIPT) parityscript "$(DESTDIR)$(exec_prefix)/$${chost}/bin/$${exe}" || exit $$? ; \\
+			rm -f parityscript || exit $$? ; \\
+		done ; \\
 	done
 	"$(DESTDIR)$(sbindir)/parity-setup" --destdir="$(DESTDIR)" --install
 
