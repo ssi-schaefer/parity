@@ -28,7 +28,7 @@ namespace parity
 	namespace tasks
 	{
 		
-		void runConfigurationLoading(int argc, char* const* argv);
+		void runConfigurationLoading(int &argc, char** &argv);
 		void runCompilerStage();
 		void runLinkerStage();
 		void runResourceCompilerStage();

@@ -56,7 +56,7 @@ namespace parity
 		typedef std::vector<ConfigFilePair> ConfigFileVector;
 		typedef std::map<utils::Path, bool> LoadedFileMap;
 
-		void runConfigurationLoading(int argc, char * const * argv)
+		void runConfigurationLoading(int &argc, char ** &argv)
 		{
 			char * argv0 = strrchr(argv[0], '/'); // find last path sep
 			if (argv0 == NULL) {
@@ -91,10 +91,14 @@ namespace parity
 			for (int i = 1; i < argc; ++i) {
 				if (strcmp(argv[i], "-m64") == 0) {
 					vcvariant = "x64";
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
 					continue;
 				}
 				if (strcmp(argv[i], "-m32") == 0) {
 					vcvariant = "x86";
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
 					continue;
 				}
 			}
@@ -113,6 +117,9 @@ namespace parity
 			for (int i = 1; i < argc; ++i) {
 				if (strncmp(argv[i], "-mmsvc", 6) == 0) {
 					pmsvcver = argv[i] + 2;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
 				}
 			}
 			if (pmsvcver != NULL) {
@@ -146,6 +153,9 @@ namespace parity
 			for (int i = 1; i < argc; ++i) {
 				if (strncmp(argv[i], "-mparityconfdir=", 16) == 0) {
 					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16), true));
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
 				}
 			}
 			if (files.empty()) {
