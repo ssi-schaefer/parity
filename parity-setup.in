@@ -53,11 +53,11 @@ Where options is a combination of:
 
   --sysconfdir dir
      Operate on the parity configuration files in dir.
-	 Default dir is: ${defsysconfdir}
+     Default dir is: ${defsysconfdir}
 
   --libdir dir
      Operate on the parity libraries in dir.
-	 Default dir is: ${deflibdir}
+     Default dir is: ${deflibdir}
 
   --destdir dir
     Operate in staging directory dir.
@@ -70,7 +70,7 @@ Where action is one of:
   --list-supported [--default]
       List any hostconfig identifiers supported.
       Unless --quiet, progress output goes to standard error.
-	  With --default, lists hostconfigs without MSVC version.
+      With --default, lists hostconfigs without MSVC version.
 
   --list-available
       List hostconfig identifiers for installed MSVC compilers found.
@@ -95,11 +95,11 @@ Where action is one of:
   --set-default hostconfig|[arch-]newest|[arch-]oldest...
       Enables configuration for hostconfig identifiers, and does set
       each one as default for the hostconfig's architecture, in order,
-      so the last one specified per architecture remains the default.
-	  Specify either newest or oldest to choose the newest or oldest
-	  MSVC version available for the specified architecture.
-	  If no arch is specified, given default is set for each supported
-	  (and available) architecture.
+      so the last one specified per architecture becomes the default.
+      Specify either newest or oldest to choose the newest or oldest
+      MSVC version available for the specified architecture.
+      If no arch is specified, given default is set for each supported
+      and available architecture.
 
 Additional actions for package managers:
 
