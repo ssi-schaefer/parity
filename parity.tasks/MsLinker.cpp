@@ -354,22 +354,19 @@ namespace parity
 			vec.push_back(oss.str());
 
 			//
-			// change manifest name
+			// always create the manifest, as known file name
 			//
-			if(ctx.getFrontendType() != utils::ToolchainMicrosoft)
-			{
-				utils::Path mf;
 
-				if(ctx.getSharedLink() && ctx.getOutImplib().get().empty())
-					mf = out.get() + ".dll.mf";
-				else
-					mf = out.get() + ".mf";
+			utils::Path mf;
+			if(ctx.getSharedLink() && ctx.getOutImplib().get().empty())
+				mf = out.get() + ".dll.mf";
+			else
+				mf = out.get() + ".mf";
+			mf.toForeign();
 
-				mf.toForeign();
-
-				vec.push_back("/MANIFESTFILE:" + mf.get());
-				task.addFilter("/MANIFESTFILE", false);
-			}
+			vec.push_back("/MANIFEST");
+			vec.push_back("/MANIFESTFILE:" + mf.get());
+			task.addFilter("/MANIFESTFILE", false);
 
 			//
 			// create command scripts
