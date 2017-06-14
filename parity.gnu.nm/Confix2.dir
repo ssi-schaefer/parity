@@ -1,5 +1,7 @@
-ADD_SCRIPT(filename='parity.gnu.nm')
-ADD_SCRIPT(filename='parity.gnu.dumpbin')
+# ADD_SCRIPT(filename='parity.gnu.nm')
+# ADD_SCRIPT(filename='parity.gnu.dumpbin')
+
+MAKEFILE_AM(line='bin_SCRIPTS = parity.gnu.nm parity.gnu.dumpbin')
 
 ADD_EXTRA_DIST('parity.gnu.nm')
-ADD_EXTRA_DIST('parity.gnu.dumpbin')
+ADD_EXTRA_DIST('parity.gnu.dumpbin.in')

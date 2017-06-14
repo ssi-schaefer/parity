@@ -2,7 +2,7 @@ ADD_EXTRA_DIST('parity.sln')
 ADD_EXTRA_DIST('ReleaseNotes.txt')
 
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity-setup parity.gnu.ar/parity.gnu.ar)'],
+	lines=['AC_CONFIG_FILES(parity-setup parity.gnu.ar/parity.gnu.ar parity.gnu.nm/parity.gnu.dumpbin)'],
 	order=AC_BOILERPLATE)
 
 MAKEFILE_AM(line='sbin_SCRIPTS = parity-setup')
