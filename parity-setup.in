@@ -691,14 +691,15 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		unset PARITY_CONFIG
 
 		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a ..."
-		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.runtime/*.c "${DESTDIR}${PARITYlibdir}"/parity.runtime/*.cpp &&
+		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
+			"${DESTDIR}${PARITYlibdir}"/parity.runtime/{{diagnose,dirent,dlfcn,getopt,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c,cxxeh.cc,ios-fixup.cpp} &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vsver}.a *.o
 		traceoff $? || exit 1
 		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a done."
 
 		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a ..."
 		traceon
-		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader*.c &&
+		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vsver}.a Loader*.o
 		traceoff $? || exit 1
 		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a done."
