@@ -268,6 +268,32 @@ get-supported-sdklibs() {
 	done
 }
 
+get-supported-crtlibs() {
+	case $1 in
+	--static) # /MT
+		local crtlibs=(
+			libcpmt
+			libcmt
+			libvcruntime
+			libucrt
+		)
+		;;
+	--shared) # /MD
+		local crtlibs=(
+			msvcprt
+			msvcrt oldnames
+			vcruntime
+			ucrt
+		)
+		;;
+	esac
+	local crtlib
+	for crtlib in "${crtlibs[@]}"
+	do
+		echo "${crtlib}"
+	done
+}
+
 get-parityflags() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
@@ -639,11 +665,6 @@ PCRTInclude = ${PARITYincludedir}/parity.runtime
 PCRTLibrary = ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a
 ParityLoader = ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a
 "
-			case ${vsver} in # (
-			7.*) echo "Runtime = static"  ;; # (
-			*)   echo "Runtime = dynamic" ;; # (
-			esac # )
-
 			case ${vsarch} in # (
 			x86) echo "TimeT32Bit = true" ;;
 			*)   echo "TimeT32Bit = false" ;;
@@ -653,19 +674,55 @@ ParityLoader = ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a
 Defines = WIN32_LEAN_AND_MEAN
 Defines = _WIN32_WINNT=0x0501
 "
-			local sdklib p
-			for sdklib in $(get-supported-sdklibs "${chost}")
+			local lib p
+			for lib in $(get-supported-sdklibs "${chost}")
 			do
-				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${sdklib}.lib" -print -quit)'
+				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
 				[[ -n ${p} ]] || continue
 				echo "ObjectsLibraries = ${p}"
 			done
 
-echo "
+			echo "
+section static {
+	Runtime = static"
+			for lib in $(get-supported-crtlibs --static "${chost}")
+			do
+				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
+				[[ -n ${p} ]] || continue
+				echo "	ObjectsLibraries = ${p}"
+			done
+
+			case ${vsver} in # (
+			7.*) ;; # (
+			*)
+				echo "}
+
+section shared {
+	SharedLink = true
+	Runtime = dynamic"
+				for lib in $(get-supported-crtlibs --shared "${chost}")
+				do
+					IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
+					[[ -n ${p} ]] || continue
+					echo "	ObjectsLibraries = ${p}"
+				done
+			esac
+
+			echo "}
+
+section default {
+	Runtime = dynamic"
+			for lib in $(get-supported-crtlibs --shared "${chost}")
+			do
+				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
+				[[ -n ${p} ]] || continue
+				echo "	ObjectsLibraries = ${p}"
+			done
+			echo "}
+
 section windows {
 	Subsystem = Windows
-}
-"
+}"
 		} > parity.${vsarch}-${vsver}.conf
 		[[ $? -eq 0 ]] || exit 1
 

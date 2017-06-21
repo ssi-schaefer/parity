@@ -86,26 +86,13 @@ namespace parity
 		{
 			utils::Context& ctx = utils::Context::getContext();
 
-			//
-			// Decide about which Runtime to use
-			//
-			switch(ctx.getRuntime())
-			{
-				case utils::RuntimeDynamic:
-					vec.push_back("/MD");
-					break;
-				case utils::RuntimeStatic:
-					vec.push_back("/MT");
-					break;
-				case utils::RuntimeDynamicDebug:
-					vec.push_back("/MDd");
-					break;
-				case utils::RuntimeStaticDebug:
-					vec.push_back("/MTd");
-					break;
-				default:
-					throw utils::Exception("invalid runtime type specified!");
-			}
+			// As we create missing import trampolines already,
+			// we can decide at linktime whether we link against
+			// the dynamic or static runtime libraries.  So we
+			// always compile for using the static runtime libs,
+			vec.push_back("/MT");
+			// but omit default library names from the object files.
+			vec.push_back("/Zl");
 
 			//
 			// Decide about exception handling mechanism.
@@ -483,11 +470,7 @@ namespace parity
 			//
 			// Set shared library defines (also for assembler)
 			//
-			if(ctx.getSharedLink())
-			{
-				vec.push_back("/DPIC");
-				vec.push_back("/D_DLL");
-			}
+			vec.push_back("/DPIC");
 
 			//
 			// Add define to disable deprecation of CRT functions for VS 2005
