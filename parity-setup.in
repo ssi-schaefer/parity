@@ -920,7 +920,7 @@ __parityenv_verspec=
 
 while test \"\${__parityenv_arg#*-}\" != \"\${__parityenv_arg}\"
 do
-	case \${parityenv_argv0} in
+	case \${__parityenv_arg} in
 	x86_64-*)
 		__parityenv_arch=x64
 		;;
@@ -937,8 +937,8 @@ do
 			__parityenv_arg=\${__parityenv_arg#.}
 			__parityenv_minor=\${__parityenv_arg%%[^0-9]*}
 			case \${__parityenv_minor} in
-			[0-9]) __parityenv_verspec=-\${__parityenv_major}.\${__parityenv_minor} ;;
-			*)     __parityenv_verspec=-\${__parityenv_major}.0 ;;
+			[0-9]) __parityenv_verspec=-msvc\${__parityenv_major}.\${__parityenv_minor} ;;
+			*)     __parityenv_verspec=-msvc\${__parityenv_major}.0 ;;
 			esac
 			;;
 		esac
