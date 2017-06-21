@@ -58,7 +58,7 @@ AC_DEFUN([PARITY_CONFIGURE],
 		   [enable_msvc_archs="$enable_msvc_archs $parityarch"])
 	   done
 	   IFS=$as_save_IFS],
-	  [enable_msvc_archs="x86 x64"])
+	  [enable_msvc_archs="x86"])
 	AC_SUBST([PARITY_SUPPORTED_ARCHS], [$enable_msvc_archs])
 	AC_DEFINE_UNQUOTED([PARITY_DEFAULT_ARCH], ["${enable_msvc_archs%% *}"],
 	  [Fallback MSVC architecture.])
