@@ -462,8 +462,8 @@ prune-parityconf() {
 #
 # PARITY CONFIGURATION for ${vsarch}-${vsver}
 #"
-	local noconf="MSVC ${vsver#msvc} (${vsarch}) is ${reason} (try '${SELF##*/} --enable ${chost}')"
-	local defnoconf="${noconf/--enable/--set-default}"
+	local noconf="MSVC ${vsver#msvc} (${vsarch}) is ${reason} (try ${SELF##*/} --enable ${chost})"
+	local defnoconf="Default MSVC version (${vsarch}) is ${reason} (try ${SELF##*/} --set-default ${vsarch}-newest)"
 	local defchost=
 	local ret=0
 
@@ -588,11 +588,6 @@ update-parityconf() {
 		IFS=: eval ${name}Exe='$(find ${vcPATH} -maxdepth 1 -iname "${executable}" -print -quit)'
 	done
 
-	local AdditionalExecPaths=
-	local SysIncludePaths=
-	local SysLibraryPaths=
-	local ObjectsLibraries=
-
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
 	local parityflags=$(get-parityflags "${chost}")
@@ -691,6 +686,7 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		unset PARITY_CONFIG
 
 		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a ..."
+		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
 			"${DESTDIR}${PARITYlibdir}"/parity.runtime/{{diagnose,dirent,dlfcn,getopt,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c,cxxeh.cc,ios-fixup.cpp} &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vsver}.a *.o
