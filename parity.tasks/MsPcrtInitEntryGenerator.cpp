@@ -134,8 +134,6 @@ namespace parity
 						break;
 					case parity::utils::RuntimeStatic:
 					case parity::utils::RuntimeStaticDebug:
-						utils::Log::warning("with the static CRT, I/O will have windows defaults (buffering, line ending)\n");
-						utils::Log::warning("(with the shared CRT, parity would default to UNIX like buffering and ending)\n");
 						sectText.addData(dataExeEntryPart1StaticCrt, sizeof(dataExeEntryPart1StaticCrt));
 						break;
 				}
