@@ -222,11 +222,16 @@ namespace parity
 			{
 				if(!PreferStatic)
 				{
+					// Unix naming scheme
 					names.push_back(name + ".so");
 					names.push_back("lib" + name + ".so");
+					// import lib created with cl.exe using libtool
+					names.push_back(name + ".dll.lib");
 				}
+				// Unix naming scheme
 				names.push_back(name + ".a");
 				names.push_back("lib" + name + ".a");
+				// static lib created with cl.exe, eventually using libtool
 				names.push_back(name + ".lib");
 				names.push_back("lib" + name + ".lib");
 
