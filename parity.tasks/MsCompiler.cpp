@@ -468,11 +468,6 @@ namespace parity
 				vec.push_back("/Z7");
 
 			//
-			// Set shared library defines (also for assembler)
-			//
-			vec.push_back("/DPIC");
-
-			//
 			// Add define to disable deprecation of CRT functions for VS 2005
 			//
 			vec.push_back("/D_CRT_SECURE_NO_DEPRECATE");
