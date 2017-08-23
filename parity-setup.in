@@ -330,14 +330,14 @@ windir=$(cygpath -W)
 sysdir=$(cygpath -S)
 
 eval 'cmd() {
-	( set -x
-		tmpfile=`mktemp`;
-		trap '"'rm -f \"\${tmpfile}\" \"\${tmpfile}.bat\"'"' 0;
-		mv -f "${tmpfile}" "${tmpfile}.bat";
-		echo "$@" > "${tmpfile}.bat"
-		chmod +x "${tmpfile}.bat";
-		PATH="'"${windir}:${sysdir}:${sysdir}/WBEM"'" "${tmpfile}.bat";
-	);
+  ( set -x
+	tmpfile=`mktemp`;
+	: trap '"'rm -f \"\${tmpfile}\" \"\${tmpfile}.bat\"'"' 0;
+	mv -f "${tmpfile}" "${tmpfile}.bat";
+	for x in "$@"; do echo "$x"; done > "${tmpfile}.bat"
+	chmod +x "${tmpfile}.bat";
+	PATH="'"${windir}:${sysdir}:${sysdir}/WBEM"'" "${tmpfile}.bat";
+  );
 }'
 
 regquery() {
@@ -375,7 +375,7 @@ query-novcvars-once() {
 
 	verbose "Querying environment without MSVC ..."
 	traceon
-	eval $(cmd 'set PATH && set INCLUDE && set LIB' 2>/dev/null |
+	eval $(cmd '@set PATH & set INCLUDE & set LIB' 2>/dev/null |
 		sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/novc\1=$'\2'/p"
 	)
 	traceoff $?
@@ -431,7 +431,7 @@ query-vcvars() {
 
 	traceon
     INCLUDE= LIB= LIBPATH= \
-    eval $(cmd "\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && set PATH && set INCLUDE && set LIB" 2>/dev/null |
+    eval $(cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null |
       sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/vc\1=$'\2'/p"
     )
 	traceoff $?
