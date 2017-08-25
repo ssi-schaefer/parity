@@ -684,7 +684,9 @@ Defines = _WIN32_WINNT=0x0501
 
 			echo "
 section static {
-	Runtime = static"
+	SharedLink = false
+	Runtime = static
+	PreferStatic = true"
 			for lib in $(get-supported-crtlibs --static "${chost}")
 			do
 				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
@@ -699,7 +701,8 @@ section static {
 
 section shared {
 	SharedLink = true
-	Runtime = dynamic"
+	Runtime = dynamic
+	PreferStatic = false"
 				for lib in $(get-supported-crtlibs --shared "${chost}")
 				do
 					IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
@@ -711,7 +714,9 @@ section shared {
 			echo "}
 
 section default {
-	Runtime = dynamic"
+	SharedLink = false
+	Runtime = dynamic
+	PreferStatic = false"
 			for lib in $(get-supported-crtlibs --shared "${chost}")
 			do
 				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${lib}.lib" -print -quit)'
