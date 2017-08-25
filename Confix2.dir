@@ -117,6 +117,7 @@ install-setup-files: install-recursive
 		$(LN_S) -f parity.gnu.ld$(EXEEXT) $${chost}-ld || exit $$? ; \\
 		$(LN_S) -f parity.gnu.windres$(EXEEXT) $${chost}-windres || exit $$? ; \\
 		$(LN_S) -f parity.gnu.ar $${chost}-ar || exit $$? ; \\
+		$(LN_S) -f parity.gnu.strip $${chost}-strip || exit $$? ; \\
 		$(LN_S) -f parity.gnu.dumpbin $${chost}-dumpbin || exit $$? ; \\
 		$(LN_S) -f parity.gnu.ranlib $${chost}-ranlib || exit $$? ; \\
 		$(LN_S) -f parity.ms.cl$(EXEEXT) $${chost}-cl || exit $$? ; \\
