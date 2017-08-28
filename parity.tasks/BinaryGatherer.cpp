@@ -366,7 +366,13 @@ namespace parity
 				if(it->second.getName().compare(0, 4, "??_C") == 0)
 					continue;
 
-				if(it->second.getSectionNumber() == binary::Symbol::SymbolUndefined) {
+				//
+				// Really undefined symbols have a value of zero,
+				// while the value of a BSS symbol is the symbol size.
+				//
+				if(it->second.getSectionNumber() == binary::Symbol::SymbolUndefined
+				 && it->second.getValue() == 0
+				) {
 					static std::map<std::string, bool> unresolved_seen_;
 					bool& ref = unresolved_seen_[it->second.getName()];
 
