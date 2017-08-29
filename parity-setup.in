@@ -9,6 +9,7 @@ PARITYsysconfdir="@PARITY_SYSCONFDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
 PARITYbindir="@PARITY_BINDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
+PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
 DESTDIR=
 
@@ -32,6 +33,7 @@ fi
 
 deflibdir=${PARITYlibdir}
 defsysconfdir=${PARITYsysconfdir}
+defrexsupport=${PARITYrexsupport}
 
 PARITYheader="# This file is part of ${PACKAGE}-${VERSION}"
 
@@ -61,6 +63,11 @@ Where options is a combination of:
 
   --destdir dir
     Operate in staging directory dir.
+$([[ ${defrexsupport} == *abled ]] && echo "
+  --remote-execution-support [yes|no]
+    Support Remote EXecution service (https://github.com/mduft/rex).
+    Default is: $([[ ${defrexsupport} == enabled ]] && echo yes || echo no)
+ ")\
 
 Where action is one of:
 
@@ -636,8 +643,12 @@ update-parityconf() {
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
 #
 
-Colored = true
-"
+Colored = true"
+            case ${PARITYrexsupport} in
+            yes|enabled) echo "WaitForOutputFile = true" ;;
+            *) echo "WaitForOutputFile = false" ;;
+            esac
+
 			for vsexe in "${vsexes[@]}"
 			do
 				name= executable=
@@ -1115,6 +1126,24 @@ do
 		${argvalue:+:} die "Missing argument to ${arg} (try --help)."
 		eval "PARITY${arg#--}=\${argvalue}"
 		;;
+    --remote-execution-support=*)
+        argvalue=${arg#--remote-execution-support=}
+        case ${PARITYrexsupport},${argvalue} in
+        no,*|yes,*) die "Unsupported argument ${arg%%=*} (try --help)." ;;
+        *abled,yes) PARITYrexsupport=enabled ;;
+        *abled,no) PARITYrexsupport=disabled ;;
+        *) die "Invalid argument to ${arg%%=*} (try --help)." ;;
+        esac
+        ;;
+    --remote-execution-support)
+        case ${PARITYrexsupport},${1---} in
+        no,*|yes,*) die "Unsupported argument ${arg%%=*} (try --help)." ;;
+        *abled,--*) PARITYrexsupport=enabled ;;
+        *abled,yes) PARITYrexsupport=enabled; shift ;;
+        *abled,no) PARITYrexsupport=disabled; shift ;;
+        *) die "Invalid argument to ${arg%%=*} (try --help)." ;;
+        esac
+        ;;
     *)
         break
         ;;

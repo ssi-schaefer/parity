@@ -63,6 +63,22 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_DEFINE_UNQUOTED([PARITY_DEFAULT_ARCH], ["${enable_msvc_archs%% *}"],
 	  [Fallback MSVC architecture.])
 	AC_MSG_RESULT([$PARITY_SUPPORTED_ARCHS])
+
+	AC_MSG_CHECKING([whether to support Remote EXecution service])
+	AC_ARG_WITH([default-remote-execution-support],
+	  [AS_HELP_STRING([--with-remote-execution-support=[[yes|no|enabled|disabled]]],
+		[Support for Remote EXecution service (https://github.com/mduft/rex)
+		can be either always enabled (yes), completely disabled (no),
+		disabled later using parity-setup (enabled), or enabled later
+		using parity-setup (disabled, default).])],
+	  [AS_CASE([$withval],[yes|no|enabled|disabled],[],
+		[AC_MSG_ERROR([Invalid argument to --with-default-remote-execution-support.])])],
+	  [with_default_remote_execution_support=disabled])
+	AC_SUBST([PARITY_REX_SUPPORT], [$with_default_remote_execution_support])
+	AS_CASE([$with_default_remote_execution_support],
+	  [yes],[AC_DEFINE([PARITY_REX_SUPPORT], [1 /* forced */], [Support Remote EXecution service])],
+	  [*abled],[AC_DEFINE([PARITY_REX_SUPPORT], [0 /* probably */])])
+	AC_MSG_RESULT([$with_default_remote_execution_support])
 ])
 
 """

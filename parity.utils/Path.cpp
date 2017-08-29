@@ -1072,10 +1072,17 @@ namespace parity
                 throw Exception("%s: path is not native!", path_.c_str());
             }
 
-            if(!ctx.getWaitForOutputFile() && !exists()) {
+			if (exists()) {
+				return true;
+			}
+#if !defined(PARITY_REX_SUPPORT)
+			return false;
+#else /* defined(PARITY_REX_SUPPORT) */
+# if (PARITY_REX_SUPPORT == 0) /* probably */
+            if(!ctx.getWaitForOutputFile()) {
                 return false;
             }
-
+# endif /* (PARITY_REX_SUPPORT == 0) */
             utils::Log::verbose("waiting for %s\n", get().c_str());
 
             int count = 0;
@@ -1087,6 +1094,7 @@ namespace parity
             utils::Log::verbose("waited %d times (%d ms)\n", count, (WAIT_SLEEP_USEC * count) / 1000);
 
             return count <= WAIT_SLEEP_RETRIES;
+#endif /* defined(PARITY_REX_SUPPORT) */
         }
 
         bool Path::isAbsolute() const
