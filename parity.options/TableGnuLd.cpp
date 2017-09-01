@@ -46,6 +46,7 @@ namespace parity
 			{ "-L"			,addLibraryPath				},
 			{ "-Bstatic"	,setPreferStatic			},
 			{ "-Bdynamic"	,setPreferStatic			},
+			{ "-shared"		,setSharedLink				},
 			{ "-g"			,setDebugable				},
 			{ "-o"			,setOutputFile				},
 			{ "-subsys"		,setSubsystem				},

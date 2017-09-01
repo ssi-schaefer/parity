@@ -673,21 +673,6 @@ Defines = _WIN32_WINNT=0x0501
 			done
 
 			echo "
-section static {
-	SharedLink = false
-	PreferStatic = true
-}
-
-section shared {
-	SharedLink = true
-	PreferStatic = false
-}
-
-section default {
-	SharedLink = false
-	PreferStatic = false
-}
-
 section windows {
 	Subsystem = Windows
 }
