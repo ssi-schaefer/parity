@@ -243,7 +243,7 @@ namespace parity
 				CTX_GETSET   (long			,StackCommit		,65536			)  /* linker (default: 64KB) */ \
 				CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \
 				CTX_GETSET   (long			,HeapCommit			,65536			)  /* linker (default: 64KB) */ \
-				CTX_GETSET   (bool			,SharedLink			,false			)  /* linker */ \
+				CTX_GETSET_I (bool			,SharedLink			,false			)  /* linker */ \
 				CTX_GETSET_C (PathVector	,LibraryPaths		,PathVector()	)  /* linker */ \
 				CTX_GETSET   (std::string	,LinkerSharedDefaults	,"/nologo /incremental:no"		)  /* linker */ \
 				CTX_GETSET   (std::string	,LinkerDefaults		,"/nologo /incremental:no /fixed:no"		)  /* linker */ \
