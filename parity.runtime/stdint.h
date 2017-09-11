@@ -29,7 +29,7 @@
 #include "limits.h"
 #include "wchar.h"
 
-#include RUNTIME_INC(Intsafe.h)
+#include SHARED_INC(Intsafe.h)
 
 PCRT_BEGIN_C
 

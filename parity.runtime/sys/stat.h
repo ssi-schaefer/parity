@@ -37,7 +37,7 @@
 #    define fstat __crt_invalid_fstat
      // WARNING: The 'S' in stat.h is uppercase
      // intentionally to avoid inclusion of __crt_invalid_stat.h
-#    include RUNTIME_INC(sys/Stat.h)
+#    include UCRT_INC(sys/Stat.h)
 #  pragma pop_macro("stat")
 #  pragma pop_macro("fstat")
 #pragma pop_macro("__STDC__")

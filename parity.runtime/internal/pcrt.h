@@ -37,6 +37,13 @@
 # define UCRT_INC(x) <../include/x>
 #endif
 
+#if ((_MSC_VER - 0) >= 1700)
+// MSVC 11.0 (VS 2012) comes with Windows 8 SDK
+# define SHARED_INC(x) <../shared/x>
+#else
+# define SHARED_INC(x) <../include/x>
+#endif
+
 #define PCRT_INLINE __inline
 
 #ifdef __cplusplus
