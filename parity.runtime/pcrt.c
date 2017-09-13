@@ -212,7 +212,10 @@ const char* PcrtPathToNative(const char* ptr) {
 				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!\n");
 			}
 		} else {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither REX, Interix Installation, or Cygwin DLL found, cannot convert absolute UNIX paths!\n");
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither REX, Interix Installation, or Cygwin DLL found, cannot convert absolute UNIX paths!\n"
+				"You may want to set the environment variable REX_ROOTS like shown in these Cygwin bash commands:\n"
+				"export REX_ROOTS=\"$(mount | awk -v ORS= -v v= -v s= '{gsub(/ on /,\";\");gsub(/ type .*/,\"\");v=v s $0;s=\",\"}END{print v}')\"\n"
+			);
 		}
 	}
 
