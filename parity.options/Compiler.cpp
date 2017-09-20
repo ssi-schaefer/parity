@@ -111,6 +111,17 @@ namespace parity
 				else
 					throw utils::Exception("wrong language specifier in %s!", option);
 			} else {
+				if (strncmp(option, "-i", 2) == 0) {
+					arg = &option[2];
+					if(!*arg) {
+						arg = argument;
+						used = true;
+					}
+				} else
+				if (strcmp(option, "--include") == 0) {
+					arg = argument;
+					used = true;
+				}
 				pth = utils::Path(arg);
 				ctx.setSourcesString(arg);
 			}
