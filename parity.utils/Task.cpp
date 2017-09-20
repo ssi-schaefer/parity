@@ -267,6 +267,30 @@ namespace parity
 				if(pipe(stdErrPipe) == -1)
 					throw Exception("cannot open pipes for stderr redirection: %s", ::strerror(errno));
 
+				ArgumentVector unquotedargs(arguments);
+				for(ArgumentVector::iterator arg = unquotedargs.begin()
+				  ; arg != unquotedargs.end()
+				  ; ++arg
+				) {
+					size_t quot = arg->find('\\');
+					while (quot != arg->npos && quot < arg->length()) {
+						switch(arg->at(quot+1)) {
+						case '\\':
+						case '"':
+							arg->erase(quot, 1);
+							break;
+						case '\n':
+							arg->erase(quot, 2);
+							break;
+						default:
+							++quot;
+							break;
+						}
+						quot = arg->find('\\', quot);
+					}
+					Log::verbose(" * >%s<\n", arg->c_str());
+				}
+
 				pid_t child = fork();
 
 				switch(child)
@@ -296,12 +320,12 @@ namespace parity
 						//
 						// execute child process
 						//
-						const char ** translated = new const char*[arguments.size() + 2];
+						const char ** translated = new const char*[unquotedargs.size() + 2];
 						std::string cmdname = pth.file();
 						translated[0] = cmdname.c_str();
 						ArgumentVector::size_type i;
-						for(i = 0; i < arguments.size(); ++i)
-							translated[i + 1] = arguments[i].data();
+						for(i = 0; i < unquotedargs.size(); ++i)
+							translated[i + 1] = unquotedargs[i].data();
 
 						translated[i + 1] = 0;
 
