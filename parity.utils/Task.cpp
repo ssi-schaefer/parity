@@ -267,28 +267,33 @@ namespace parity
 				if(pipe(stdErrPipe) == -1)
 					throw Exception("cannot open pipes for stderr redirection: %s", ::strerror(errno));
 
-				ArgumentVector unquotedargs(arguments);
-				for(ArgumentVector::iterator arg = unquotedargs.begin()
-				  ; arg != unquotedargs.end()
+				ArgumentVector unescapedargs(arguments);
+				for(ArgumentVector::iterator arg = unescapedargs.begin()
+				  ; arg != unescapedargs.end()
 				  ; ++arg
 				) {
-					size_t quot = arg->find('\\');
-					while (quot != arg->npos && quot < arg->length()) {
-						switch(arg->at(quot+1)) {
+					bool unescaped = false;
+					size_t escap = arg->find('\\');
+					while (escap != arg->npos && escap < arg->length()) {
+						switch(arg->at(escap+1)) {
 						case '\\':
 						case '"':
-							arg->erase(quot, 1);
+							unescaped = true;
+							arg->erase(escap, 1);
 							break;
 						case '\n':
-							arg->erase(quot, 2);
+							unescaped = true;
+							arg->erase(escap, 2);
 							break;
 						default:
-							++quot;
+							++escap;
 							break;
 						}
-						quot = arg->find('\\', quot);
+						escap = arg->find('\\', escap);
 					}
-					Log::verbose(" * >%s<\n", arg->c_str());
+					if (unescaped) {
+						Log::verbose(" * with unescaped arg >%s<\n", arg->c_str());
+					}
 				}
 
 				pid_t child = fork();
@@ -320,12 +325,12 @@ namespace parity
 						//
 						// execute child process
 						//
-						const char ** translated = new const char*[unquotedargs.size() + 2];
+						const char ** translated = new const char*[unescapedargs.size() + 2];
 						std::string cmdname = pth.file();
 						translated[0] = cmdname.c_str();
 						ArgumentVector::size_type i;
-						for(i = 0; i < unquotedargs.size(); ++i)
-							translated[i + 1] = unquotedargs[i].data();
+						for(i = 0; i < unescapedargs.size(); ++i)
+							translated[i + 1] = unescapedargs[i].data();
 
 						translated[i + 1] = 0;
 
