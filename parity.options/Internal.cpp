@@ -76,14 +76,16 @@ namespace parity
 			return true;
 		}
 
-		bool setUnhandledSourceFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& used)
+		bool setUnhandledSourceFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			return setCompilerPassthrough("-X", option, used);
+			bool optused = false;
+			return setCompilerPassthrough("-X", option, optused);
 		}
 
-		bool setUnhandledObjectFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& used)
+		bool setUnhandledObjectFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			return setLinkerPassthrough("-Y", option, used);
+			bool optused = false;
+			return setLinkerPassthrough("-Y", option, optused);
 		}
 
 		bool showParityVersion(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
