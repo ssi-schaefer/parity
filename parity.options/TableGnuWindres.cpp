@@ -47,14 +47,14 @@ namespace parity
 			//
 			// GCC command line switches
 			//
-			{ "-i"					,addSource					},
+			{ "--input-format"		,setInputFormat				},
 			{ "--input"				,addSource					},
-			{ "-o"					,setOutputFile				},
+			{ "--output-format"		,setOutputFormat			},
 			{ "--output"			,setOutputFile				},
 			{ "-J"					,setInputFormat				},
-			{ "--input-format"		,setInputFormat				},
+			{ "-i"					,addSource					},
 			{ "-O"					,setOutputFormat			},
-			{ "--output-format"		,setOutputFormat			},
+			{ "-o"					,setOutputFile				},
 			{ "-F"					,setBfdTarget				},
 			{ "--target"			,setBfdTarget				},
 			{ "--preprocessor-arg"	,ignoreWithArgument			},
