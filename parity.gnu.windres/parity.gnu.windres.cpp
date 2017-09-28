@@ -30,6 +30,7 @@
 #include <CollectorOther.h>
 
 #include <Version.h>
+#include <Compiler.h>
 
 #ifdef _WIN32
 #  include <io.h>
@@ -86,6 +87,11 @@ int main(int argc, char** argv)
 	//
 	context.setFrontendType(utils::ToolchainInterixGNU);
 
+	//
+	// treat the '-' (source from stdin) argument as .rc
+	//
+	context.setForcedLanguageString("resource");
+
 	try {
 		/* backup configuration-set paths. */
 		parity::utils::PathVector cfgIncludePaths = parity::utils::Context::getContext().getIncludePaths();
@@ -133,8 +139,8 @@ int main(int argc, char** argv)
 	// Check if there is something to do.
 	//
 	if(context.getSources().empty()) {
-		Log::error("no source files to compile!\n");
-		exit(1);
+		bool used = false;
+		options::addSourceFromStdin("-", "", used);
 	}
 
 	//

@@ -171,6 +171,8 @@ namespace parity
 				target = LanguageC;
 			else if(ref == "c++" || ref == "C++")
 				target = LanguageCpp;
+			else if(ref == "resource")
+				target = LanguageResource;
 			else
 				throw Exception("cannot convert %s to a valid LanguageType!", ref.c_str());
 		}
