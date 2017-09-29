@@ -81,13 +81,20 @@ namespace parity
 			utils::Context& ctx = utils::Context::getContext();
 			if(option[1] == 'B')
 			{
-				if(::strstr(option, "dynamic"))
+				if(::strcmp(option+2, "dynamic") == 0) {
 					ctx.setPreferStatic(false);
-				else if(::strstr(option, "static"))
+					return true;
+				}
+				else if(::strcmp(option+2, "static") == 0) {
 					ctx.setPreferStatic(true);
+					return true;
+				}
 			} else
+			if (::strcmp(option, "-static") == 0) {
 				ctx.setPreferStatic(true);
-			return true;
+				return true;
+			}
+			return false;
 		}
 
 		bool addObjectsLibraries(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
