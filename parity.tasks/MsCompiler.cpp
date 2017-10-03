@@ -198,15 +198,12 @@ namespace parity
 					{
 						output = ctx.getOutputFile();
 						output.toForeign();
-
-						vec.push_back("/Fo" + output.get());
 					} else if(!ctx.getCompileOnly()) {
 						//
 						// object is only temporary for linking.
 						//
 						output = utils::Path::getTemporary(".parity.object.XXXXXX.o");
 						output.toForeign();
-						vec.push_back("/Fo" + output.get());
 						ctx.getTemporaryFiles().push_back(output);
 					} else {
 						//
@@ -214,8 +211,10 @@ namespace parity
 						//
 						output = base.substr(0, base.rfind('.')).append(".o");
 						output.toForeign();
-						vec.push_back("/Fo" + output.get());
 					}
+					// ml.exe (at least with VC 9.0) requires the output
+					// object file to be specified before the source file.
+					vec.insert(vec.begin(), "/Fo" + output.get());
 				}
 				
 				//
