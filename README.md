@@ -1,6 +1,6 @@
 parity
 ======
 
-Parity is a utility to compile native Windows executables and shared libraries from a UNIX like Environment like Microsoft SUA, while using a GCC like frontend. It provides various features, not available on windows normally (runpaths, preloading, etc).
+Parity is a utility to compile native Windows executables and shared libraries using the Visual Studio compiler, from within a POSIX build environment like Microsoft SUA or Cygwin, providing a GCC like frontend. It provides various features, not available on Windows normally (runpaths, preloading, etc).
 
 Older versions of this project can be found here: https://sourceforge.net/projects/parity/
