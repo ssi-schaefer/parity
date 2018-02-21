@@ -158,6 +158,21 @@ get-vsver() {
 	esac
 	return 0
 }
+test_get-vsver() {
+	local input
+	for input in \
+		i686-msvc11.0-mingw32    \
+		i686-msvc11-mingw32      \
+		i686-pc-winntmsvc11.0    \
+		i686-pc-winntmsvc11      \
+		x86-msvc11.0             \
+		msvc11                   \
+	; do
+		[[ $(get-vsver "${input}") == msvc11.0 ]] || return 1
+	done
+	return 0
+}
+unittests+=( test_get-vsver )
 
 # get-vsarch [begin-of-chost|vsarch[-vsver]]
 #  The argument needs to contain enough information only.
@@ -174,6 +189,19 @@ get-vsarch() {
 	esac
 	return 0
 }
+test_get-vsarch() {
+	local input
+	for input in \
+		i686-pc-winntmsvc11.0    \
+		i686-msvc11.0-mingw32    \
+		x86-msvc11.0             \
+		i686                     \
+	; do
+		[[ $(get-vsarch "${input}") == x86 ]] || return 1
+	done
+	return 0
+}
+unittests+=( test_get-vsarch )
 
 get-supported-vsvers() {
 	local vsvers=(
@@ -219,6 +247,18 @@ get-chost() {
 	esac
 	return 0
 }
+test_get-chost() {
+	local input
+	for input in \
+	    i686-msvc11.0:i686-msvc11.0-mingw32 \
+	    x86-msvc11:i686-msvc11.0-mingw32 \
+	    i686:i686-msvc-mingw32 \
+	; do
+		[[ $(get-chost "${input%%:*}") == "${input#*:}" ]] || return 1
+	done
+	return 0
+}
+unittests+=( test_get-chost )
 
 get-supported-chosts() {
 	local vsarch vsver
