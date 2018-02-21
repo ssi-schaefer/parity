@@ -143,11 +143,15 @@ parityconf-unittest() {
 # get-vsver [end-of-chost|[vsarch-]vsver]
 #  The argument needs to contain enough information only.
 # Examples:
+#  get-vsver i686-msvc11.0-mingw32    -> msvc11.0
+#  get-vsver i686-msvc11-mingw32      -> msvc11.0
 #  get-vsver i686-pc-winntmsvc11.0    -> msvc11.0
+#  get-vsver i686-pc-winntmsvc11      -> msvc11.0
 #  get-vsver x86-msvc11.0             -> msvc11.0
 #  get-vsver msvc11                   -> msvc11.0
 get-vsver() {
 	local vsver=${1##*msvc}
+	vsver=${vsver%%-mingw*}
 	case ${vsver} in
 	[7-9]      |[1-9][0-9]      ) echo "msvc${vsver}.0" ;;
 	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "msvc${vsver}" ;;
@@ -159,6 +163,7 @@ get-vsver() {
 #  The argument needs to contain enough information only.
 # Examples:
 #  get-vsarch i686-pc-winntmsvc11.0    -> x86
+#  get-vsarch i686-msvc11.0-mingw32    -> x86
 #  get-vsarch x86-msvc11.0             -> x86
 #  get-vsarch i686                     -> x86
 get-vsarch() {
@@ -202,15 +207,15 @@ get-supported-vsarchs() {
 
 # get-chost [begin[+end]-of-chost|vsarch[-vsver]]
 # Examples:
-#  get-chost i686-msvc11.0     -> i686-pc-winntmsvc11.0
-#  get-chost x86-msvc11        -> i686-pc-winntmsvc11.0
-#  get-chost i686              -> i686-pc-winnt
+#  get-chost i686-msvc11.0     -> i686-msvc11.0-mingw32
+#  get-chost x86-msvc11        -> i686-msvc11.0-mingw32
+#  get-chost i686              -> i686-msvc-mingw32
 get-chost() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
 	case ${vsarch} in
-	x86) echo "i686-pc-winnt${vsver}" ;;
-	x64) echo "x86_64-pc-winnt${vsver}" ;;
+	x86) echo "i686-msvc${vsver#msvc}-mingw32" ;;
+	x64) echo "x86_64-msvc${vsver#msvc}-mingw32" ;;
 	esac
 	return 0
 }
