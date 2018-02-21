@@ -124,6 +124,22 @@ Where hostconfig is:
 EOF
 }
 
+unittests=()
+parityconf-unittest() {
+	local unittest success=0
+	for unittest in "${unittests[@]}"
+	do
+		if ( ${unittest} )
+		then
+			echo " OK : ${unittest}"
+		else
+			echo "FAIL: ${unittest}"
+			success=1
+		fi
+	done
+	return ${success}
+}
+
 # get-vsver [end-of-chost|[vsarch-]vsver]
 #  The argument needs to contain enough information only.
 # Examples:
@@ -1094,7 +1110,7 @@ noquiet() { _noquiet "$@"; }
 case ${arg} in
 --list-supported|--list-available|--is-available|\
 --help|--enable|--enable-all|--disable|--disable-all|\
---set-default|--install|--uninstall)
+--set-default|--install|--uninstall|--unittest)
     action=${arg#--}
     ;;
 *)
