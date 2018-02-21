@@ -456,7 +456,7 @@ namespace parity
 									*ch = tolower(*ch, Clocale);
 								}
 
-								utils::Path pth = ctx.lookupLibrary(lib, true);
+								utils::Path pth = ctx.lookupLibrary(lib, utils::LibspecDefaultlib);
 
 								//
 								// pth must be native allready, no need to convert!

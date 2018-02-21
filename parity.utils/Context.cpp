@@ -214,40 +214,47 @@ namespace parity
 			DefaultOutput = val;
 		}
 
-		Path Context::lookupLibrary(const std::string& name, bool isMinusL)
+		Path Context::lookupLibrary(std::string name, Libspec libspec)
 		{
 			std::vector<std::string> names;
 
-			if(isMinusL)
-			{
-				if(!PreferStatic)
-				{
-					// Unix naming scheme
-					names.push_back(name + ".so");
+			switch(libspec) {
+			case LibspecLibname:
+			case LibspecDefaultlib:
+				//
+				// names searched for "-l<libname>"
+				//
+				if(!PreferStatic) {
+					// shared Win32 naming scheme (by libtool)
+					names.push_back("lib" + name + ".dll.lib");
+					names.push_back(        name + ".dll.lib");
+					// shared MinGW/Cygwin naming scheme
+					names.push_back("lib" + name + ".dll.a");
+					names.push_back(        name + ".dll.a");
+					// shared Unix naming scheme
 					names.push_back("lib" + name + ".so");
-					// import lib created with cl.exe using libtool
-					names.push_back(name + ".dll.lib");
+					names.push_back(        name + ".so");
 				}
-				// Unix naming scheme
-				names.push_back(name + ".a");
-				names.push_back("lib" + name + ".a");
-				// static lib created with cl.exe, eventually using libtool
-				names.push_back(name + ".lib");
+				// static Win32 naming scheme with libtool
 				names.push_back("lib" + name + ".lib");
+				names.push_back(        name + ".lib");
+				// static MinGW/Cygwin/Unix naming scheme
+				names.push_back("lib" + name + ".a");
+				names.push_back(        name + ".a");
+				break;
+			}
 
-				//
-				// Implicit libraries are looked up through minusL,
-				// so this must be here, that a complete library name
-				// is found too.
-				//
-				names.push_back(name);
-			} else {
+			switch(libspec) {
+			case LibspecFilename:
+			case LibspecDefaultlib:
+			  {
 				Path direct(name);
 				direct.toNative();
 				if(direct.exists() && direct.isFile())
 					return direct;
 
 				names.push_back(name);
+			  } break;
 			}
 
 			static utils::Environment envLibPath("LIBRARY_PATH");
@@ -272,8 +279,12 @@ namespace parity
 
 						Path pth(*it);
 						pth.append(*lib);
-						if(pth.exists() && pth.isFile())
+						if(pth.exists() && pth.isFile()) {
+							Log::verbose("  found %s/%s\n", it->get().c_str(), lib->c_str());
+							Log::verbose("     as %s\n", pth.get().c_str());
 							return pth;
+						}
+						Log::verbose("     no %s\n", pth.get().c_str());
 					}
 				}
 			}
@@ -292,7 +303,7 @@ namespace parity
 			//
 
 			std::string arg;
-			bool isMinusL = false;
+			Libspec libspec = LibspecFilename;
 
 			if((val[0] == '-' || val[0] == '/') && val[1] == 'l')
 			{
@@ -301,13 +312,18 @@ namespace parity
 				else {
 					throw Exception("missing directly attached library name to -l");
 				}
-				isMinusL = true;
+				libspec = LibspecLibname;
+				if (arg.length() > 2 && arg[0] == ':') {
+					// "-l:libfile"
+					arg = arg.substr(1);
+					libspec = LibspecFilename;
+				}
 			} else {
 				arg = val;
 			}
 
 			try {
-				Path pth = lookupLibrary(arg, isMinusL);
+				Path pth = lookupLibrary(arg, libspec);
 				ObjectsLibraries.push_back(pth);
 
 				Statistics::instance().addInformation("file-binary", pth.get());

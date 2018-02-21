@@ -38,6 +38,12 @@ namespace parity
 {
 	namespace utils
 	{
+		enum Libspec {
+			LibspecFilename, // "/path/to/libfile", "libfile" or "-l:libfile"
+			LibspecLibname,   // "-lname"
+			LibspecDefaultlib // "/DEFAULTLIB" may or may not contain ".lib" extension
+		};
+
 		class Context;
 
 		typedef struct {
@@ -71,7 +77,7 @@ namespace parity
 			//
 			void dump(bool intern);
 
-			Path lookupLibrary(const std::string& name, bool isMinusL);
+			Path lookupLibrary(std::string name, Libspec libspec);
 			std::string calculateDefaultEntrypoint();
 			bool isTerminal() { return isTty_; }
 
