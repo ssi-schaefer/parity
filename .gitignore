@@ -32,10 +32,14 @@ stamp-h1
 *.pdb
 
 parity.configurator/parity.configurator
+parity.gnu.ar/parity.gnu.ar
 parity.gnu.gcc/parity.gnu.gcc
 parity.gnu.ld/parity.gnu.ld
+parity.gnu.nm/parity.gnu.dumpbin
 parity.inspector/parity.inspector
 parity.ms.cl/parity.ms.cl
 parity.ms.link/parity.ms.link
+parity.setup/parity-environment
+parity.setup/parity-setup
 parity.statistics/parity.statistics
 parity.test/parity.test

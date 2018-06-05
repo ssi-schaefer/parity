@@ -9,6 +9,8 @@ PARITYsysconfdir="@PARITY_SYSCONFDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
 PARITYbindir="@PARITY_BINDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
+PARITYsupported_versions="@PARITY_SUPPORTED_VERSIONS@"
+PARITYhas_default_version="@PARITY_SUPPORTS_DEFAULT_MSVC_VERSION@"
 PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
 DESTDIR=
@@ -21,8 +23,26 @@ then
 	PARITYlibdir=${SELFDIR}
 	PARITYbindir=${SELFDIR}
 	PARITYincludedir=${SELFDIR}
-	# keep in sync with --enable-supported-archs:
-	PARITYsupported_archs="x86 x64"
+
+	# <loaded from parity-setup.in by Confix2.dir>
+	PARITYsupported_archs="x86"
+	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
+	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
+	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
+	#  9.0:	Visual Studio 2008, cl.exe Version 15.00
+	# 10.0:	Visual Studio 2010, cl.exe Version 16.00
+	# 11.0:	Visual Studio 2012, cl.exe Version 17.00
+	# 12.0:	Visual Studio 2013, cl.exe Version 18.00
+	# 13.0: there is no msvc version 13.0
+	# 14.0:	Visual Studio 2015, cl.exe Version 19.00
+	# 15.0: Visual Studio 2017, cl.exe Version 19.10
+	#
+	# parityconf-set-default() relies on old to new order
+	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15.0"
+	# </loaded from parity-setup.in by Confix2.dir>
+
+	PARITYhas_default_version=:
+
 	CC=${SELFDIR}/parity.gnu.gcc/parity.gnu.gcc
 	AR=${SELFDIR}/parity.gnu.ar/parity.gnu.ar.in
 else
@@ -35,17 +55,21 @@ deflibdir=${PARITYlibdir}
 defsysconfdir=${PARITYsysconfdir}
 defrexsupport=${PARITYrexsupport}
 
+supports-default() {
+	${PARITYhas_default_version}
+}
+
 PARITYheader="# This file is part of ${PACKAGE}-${VERSION}"
 
 usage() {
 	cat <<EOF
-${SELF##*/} [options] action [hostconfig...]
+${SELF##*/} [options] action [hosttriplet...]
 EOF
 }
 
 parityconf-help() {
 	cat <<EOF
-${SELF##*/} [options] action [hostconfig...]
+${SELF##*/} [options] action [hosttriplet...]
 
 Where options is a combination of:
   --quiet   No progress output at all.
@@ -74,40 +98,41 @@ Where action is one of:
   --help
      This help.
 
-  --list-supported [--default]
-      List any hostconfig identifiers supported.
+  --list-supported $(supports-default && echo -n "[--default]")
+      List any hosttriplet identifiers supported.
       Unless --quiet, progress output goes to standard error.
-      With --default, lists hostconfigs without MSVC version.
-
+$(supports-default && echo "\
+      With --default, lists supported hostconfigs without MSVC version.
+ ")
   --list-available
-      List hostconfig identifiers for installed MSVC compilers found.
+      List hosttriplet identifiers for installed MSVC compilers found.
       Unless --quiet, progress output goes to standard error.
 
-  --is-available hostconfig
-      Test if MSVC compiler for hostconfig identifier is installed.
+  --is-available hosttriplet
+      Test if MSVC compiler for hosttriplet identifier is installed.
       Unless --quiet, progress output goes to standard error.
 
-  --enable hostconfig...
-      Enables configuration for hostconfig identifiers.
+  --enable hosttriplet...
+      Enables configuration for hosttriplet identifiers.
 
   --enable-all
-      Enables configuration for all available hostconfig identifiers.
+      Enables configuration for all available hosttriplet identifiers.
 
-  --disable hostconfig...
-      Disables configuration for hostconfig identifiers.
+  --disable hosttriplet...
+      Disables configuration for hosttriplet identifiers.
 
   --disable-all
-      Disables configuration for all supported hostconfig identifiers.
-
-  --set-default hostconfig|[arch-]newest|[arch-]oldest...
-      Enables configuration for hostconfig identifiers, and does set
-      each one as default for the hostconfig's architecture, in order,
+      Disables configuration for all supported hosttriplet identifiers.
+$(supports-default && echo "
+  --set-default hosttriplet|[arch-]newest|[arch-]oldest...
+      Enables configuration for hosttriplet identifiers, and does set
+      each one as default for the hosttriplet's architecture, in order,
       so the last one specified per architecture becomes the default.
       Specify either newest or oldest to choose the newest or oldest
       MSVC version available for the specified architecture.
       If no arch is specified, given default is set for each supported
       and available architecture.
-
+ ")
 Additional actions for package managers:
 
   --install
@@ -116,9 +141,9 @@ Additional actions for package managers:
   --uninstall
      Removes all files for all supported configurations.
 
-Where hostconfig is:
+Where hosttriplet is:
 
-  Known as "host triplet" (arch-vendor-os, or even arch-vendor-os-libc).
+  Known as "arch-vendor-os" or even "arch-vendor-os-libc".
   Use --list-supported to get an idea of possible values.
 
 EOF
@@ -205,18 +230,7 @@ test_get-vsarch() {
 unittests+=( test_get-vsarch )
 
 get-supported-vsvers() {
-	local vsvers=(
-		# parityconf-set-default() relies on old to new order
-		 7.0	# Visual Studio 2002, cl.exe Version 13.00
-		 7.1	# Visual Studio 2003, cl.exe Version 13.10
-		 8.0	# Visual Studio 2005, cl.exe Version 14.00
-		 9.0	# Visual Studio 2008, cl.exe Version 15.00
-		10.0	# Visual Studio 2010, cl.exe Version 16.00
-		11.0	# Visual Studio 2012, cl.exe Version 17.00
-		12.0	# Visual Studio 2013, cl.exe Version 18.00
-		14.0	# Visual Studio 2015, cl.exe Version 19.00
-		15.0	# Visual Studio 2017, cl.exe Version 19.10
-	)
+	local vsvers=( ${PARITYsupported_versions} )
     local vsver
     for vsver in "${vsvers[@]}"
     do
@@ -537,7 +551,7 @@ prune-parityconf() {
 	local ret=0
 
 	local confline
-	if ${setdefault:+:} false
+	if supports-default && ${setdefault:+:} false
 	then
 		defchost=${chost}
 	fi
@@ -779,7 +793,7 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		mv -f parity.${vsarch}-${vsver}.conf parity.${vsarch}-${vsver}.sh "${DESTDIR}${PARITYsysconfdir}"/
 		traceoff $? || exit 1
 
-		if ${setdefault:+:} false
+		if supports-default && ${setdefault:+:} false
 		then
 			traceon
 			cp -f "${DESTDIR}${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf" "${DESTDIR}${PARITYsysconfdir}/parity.${vsarch}.conf" &&
@@ -801,6 +815,7 @@ parityconf-list-supported() {
 	noquiet() { _verbose "$@" >&2; }
 	if [[ $1 == --default ]]
 	then
+		supports-default || return 0
 		local vsarch
 		for vsarch in $(get-supported-vsarchs)
 		do
@@ -980,85 +995,6 @@ parityconf-install() {
 	do
 		prune-parityconf --reason="disabled" --set-default "${chost}"
 	done
-	echo "${PARITYheader}
-#
-# load parity environment identified by argv0 argvN...
-
-__parityenv_confdir=\"${PARITYsysconfdir}\"
-__parityenv_args=()
-
-__parityenv_arg=\${0##*/}
-__parityenv_arch=${PARITYsupported_archs%% *}
-__parityenv_verspec=
-
-while test \"\${__parityenv_arg#*-}\" != \"\${__parityenv_arg}\"
-do
-	case \${__parityenv_arg} in
-	x86_64-*)
-		__parityenv_arch=x64
-		;;
-	i?86-*)
-		__parityenv_arch=x86
-		;;
-	msvc*)
-		__parityenv_arg=\${__parityenv_arg#winnt}
-		__parityenv_arg=\${__parityenv_arg#msvc}
-		__parityenv_major=\${__parityenv_arg%%[^0-9]*}
-		case \${__parityenv_major} in
-		[0-9]|[0-9][0-9])
-			__parityenv_arg=\${__parityenv_arg#\${__parityenv_major}}
-			__parityenv_arg=\${__parityenv_arg#.}
-			__parityenv_minor=\${__parityenv_arg%%[^0-9]*}
-			case \${__parityenv_minor} in
-			[0-9]) __parityenv_verspec=-msvc\${__parityenv_major}.\${__parityenv_minor} ;;
-			*)     __parityenv_verspec=-msvc\${__parityenv_major}.0 ;;
-			esac
-			;;
-		esac
-		;;
-	esac
-	__parityenv_arg=\${__parityenv_arg#*-}
-done
-
-for __parityenv_arg in \"\$@\"
-do
-	case \${__parityenv_arg} in
-	-mparityconfdir=*)
-		__parityenv_confdir=\${__parityenv_arg#-mparityconfdir=}
-		;;
-	-m32)
-		__parityenv_arch=x86
-		;;
-	-m64)
-		__parityenv_arch=x64
-		;;
-	-mmsvc*)
-		__parityenv_verspec=-\${__parityenv_arg#-m}
-		;;
-	*)
-		__parityenv_args=( \"\${__parityenv_args[@]}\" \"\${__parityenv_arg}\" )
-		;;
-	esac
-done
-
-set -- \"\${__parityenv_args[@]}\"
-
-if [[ -r \"\${__parityenv_confdir}/parity.\${__parityenv_arch}\${__parityenv_verspec}.sh\" ]]
-then
-	if . \"\${__parityenv_confdir}/parity.\${__parityenv_arch}\${__parityenv_verspec}.sh\"
-	then
-		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
-		true
-	else
-		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
-		false
-	fi
-else
-	echo \"Invalid MSVC version specified (\${__parityenv_verspec}).\" >&2
-	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
-	false
-fi
-" > "${DESTDIR}${PARITYsysconfdir}/parity-environment"
 	return 0
 }
 

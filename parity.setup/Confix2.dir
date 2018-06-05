@@ -1,0 +1,4 @@
+MAKEFILE_AM(line='bin_SCRIPTS = parity-setup')
+
+MAKEFILE_AM(line='paritysysconfdir = $(PARITY_SYSCONFDIR)')
+MAKEFILE_AM(line='paritysysconf_DATA = parity-environment')

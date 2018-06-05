@@ -1,13 +1,33 @@
+IGNORE_FILE('config.h')
 ADD_EXTRA_DIST('parity.sln')
 ADD_EXTRA_DIST('ReleaseNotes.txt')
 
+PARITYsupported_archs = ''
+PARITYsupported_versions = ''
+
+parity_setup_in = open('parity.setup/parity-setup.in', 'r')
+for line in parity_setup_in.readlines():
+	line = line.strip()
+	if line.startswith('PARITYsupported_archs="'):
+		if not line.startswith('PARITYsupported_archs="@'):
+			PARITYsupported_archs=line.split('"')[1]
+	if line.startswith('PARITYsupported_versions="'):
+		if not line.startswith('PARITYsupported_versions="@'):
+			PARITYsupported_versions=line.split('"')[1]
+	if PARITYsupported_archs and PARITYsupported_versions:
+		break
+parity_setup_in = None
+
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity-setup parity.gnu.ar/parity.gnu.ar parity.gnu.nm/parity.gnu.dumpbin)'],
+	lines=['AC_CONFIG_FILES(parity.setup/parity-setup parity.setup/parity-environment parity.gnu.ar/parity.gnu.ar parity.gnu.nm/parity.gnu.dumpbin)'],
 	order=AC_BOILERPLATE)
 
-MAKEFILE_AM(line='sbin_SCRIPTS = parity-setup')
-
-acm4 = """
+acm4 = ''
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_ARCHS],       [' + PARITYsupported_archs                      + '])\n'
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_ARCHS_CS],    [' + PARITYsupported_archs   .replace(' ', ',') + '])\n'
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_VERSIONS],    [' + PARITYsupported_versions                   + '])\n'
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_VERSIONS_CS], [' + PARITYsupported_versions.replace(' ', ',') + '])\n'
+acm4 += """
 
 AC_DEFUN([PARITY_DIR], [
 	prefix_NONE=
@@ -24,11 +44,11 @@ AC_DEFUN([PARITY_DIR], [
 
 AC_DEFUN([PARITY_CONFIGURE],
 [
-	PARITY_DIR([PARITY_SYSCONFDIR], ['${sysconfdir}/${PACKAGE}/${VERSION}'],
+	PARITY_DIR([PARITY_SYSCONFDIR], ['${sysconfdir}/${PACKAGE}'],
 		[Path where configuration is installed])
 	PARITY_DIR([PARITY_INCLUDEDIR], ['${includedir}'],
 		[Path where header files are installed])
-	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}/${VERSION}'],
+	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}'],
 		[Path where libraries are installed])
 	PARITY_DIR([PARITY_BINDIR], ['${bindir}'],
 		[Path where executables are installed])
@@ -36,33 +56,86 @@ AC_DEFUN([PARITY_CONFIGURE],
 
 	AC_MSG_CHECKING([for MSVC architectures to support])
 	AC_ARG_ENABLE([msvc-archs],
-	  [AS_HELP_STRING([--enable-msvc-archs=[[x86,x64]]],
-		[Enable support for MSVC architectures, with the first one used as fallback.])],
-	  [enable_msvc_archs=
-	   as_save_IFS=$IFS
-	   IFS=,
-	   for parityarch in ${enableval:-yes}
-	   do
-	     IFS=$as_save_IFS
-#
-# Sync list of supported architectures with defaults in parity-setup.in
-#
-		 AS_CASE([$parityarch],
-		   [x64|amd64|x86_64], [parityarch=x64],
-		   [x86|i?86],         [parityarch=x86],
-		   [yes], [AC_MSG_ERROR([Need specific argument to --enable-msvc-archs.])],
-		   [AC_MSG_ERROR([Unknown argument $parityarch to --enable-msvc-archs.])])
-		 AS_CASE([" $enable_msvc_archs "],
-		   [*" $parityarch "*], [],
-		   ["  "], [enable_msvc_archs=$parityarch],
-		   [enable_msvc_archs="$enable_msvc_archs $parityarch"])
-	   done
-	   IFS=$as_save_IFS],
-	  [enable_msvc_archs="x86"])
+	  [AS_HELP_STRING([--enable-msvc-archs=@<:@PARITY_KNOWN_MSVC_ARCHS_CS@:>@],
+		[MSVC architectures to compile in support for. Default is all of them.])],
+	  [enable_msvc_archs=$enableval],
+	  [enable_msvc_archs="PARITY_KNOWN_MSVC_ARCHS_CS"])
+	parity_enabled_msvc_archs=
+	as_save_IFS=$IFS
+	IFS=", "
+	for parityarch in ${enable_msvc_archs:-PARITY_KNOWN_MSVC_ARCHS}
+	do
+	  IFS=$as_save_IFS
+	  AS_CASE([" ]PARITY_KNOWN_MSVC_ARCHS[ "],
+		[*" $parityarch "*], [],
+		[AS_CASE([$parityarch],
+		  [yes|no], [AC_MSG_ERROR([Need specific argument to --enable-msvc-archs.])],
+		  [AC_MSG_ERROR([Unknown argument $parityarch to --enable-msvc-archs.])])])
+	  parity_enabled_msvc_archs="$parity_enabled_msvc_archs $parityarch "
+	done
+	IFS=$as_save_IFS
+	enable_msvc_archs=
+	# sort unique
+	for parityarch in PARITY_KNOWN_MSVC_ARCHS
+	do
+	  AS_CASE([$parity_enabled_msvc_archs],
+		[*" $parityarch "*],
+		  [AS_CASE([" $enable_msvc_archs "],
+			[*" $parityarch "*], [],
+			["  "], [enable_msvc_archs=$parityarch],
+			[enable_msvc_archs="$enable_msvc_archs $parityarch"])])
+	done
 	AC_SUBST([PARITY_SUPPORTED_ARCHS], [$enable_msvc_archs])
 	AC_DEFINE_UNQUOTED([PARITY_DEFAULT_ARCH], ["${enable_msvc_archs%% *}"],
 	  [Fallback MSVC architecture.])
 	AC_MSG_RESULT([$PARITY_SUPPORTED_ARCHS])
+
+	AC_MSG_CHECKING([for MSVC versions to support])
+	AC_ARG_ENABLE([msvc-versions],
+	  [AS_HELP_STRING([--enable-msvc-versions=@<:@PARITY_KNOWN_MSVC_VERSIONS_CS@:>@],
+	    [MSVC versions to compile in support for. Defaults to all of them.])],
+	  [enable_msvc_versions=$enableval],
+	  [enable_msvc_versions="PARITY_KNOWN_MSVC_VERSIONS_CS"])
+	parity_enabled_msvc_versions=
+	as_save_IFS=$IFS
+	IFS=", "
+	for paritymsvcver in ${enable_msvc_versions:-PARITY_KNOWN_MSVC_VERSIONS}
+	do
+	  IFS=$as_save_IFS
+	  AS_CASE([" PARITY_KNOWN_MSVC_VERSIONS "],
+		[*" $paritymsvcver "*], [],
+		[AS_CASE([$paritymsvcver],
+		  [yes|no], [AC_MSG_ERROR([Need specific argument to --enable-msvc-versions.])],
+		  [AC_MSG_ERROR([Unknown argument $paritymsvcver to --enable-msvc-versions.])])])
+	  parity_enabled_msvc_versions="$parity_enabled_msvc_versions $paritymsvcver "
+	done
+	IFS=$as_save_IFS
+	# sort unique
+	enable_msvc_versions=
+	for paritymsvcver in PARITY_KNOWN_MSVC_VERSIONS
+	do
+	  AS_CASE([$parity_enabled_msvc_versions],
+		[*" $paritymsvcver "*],
+		  [AS_CASE([" $enable_msvc_versions "],
+			[*" $paritymsvcver "*], [],
+			["  "], [enable_msvc_versions=$paritymsvcver],
+			[enable_msvc_versions="$enable_msvc_versions $paritymsvcver"])])
+	done
+	AC_SUBST([PARITY_SUPPORTED_VERSIONS], [$enable_msvc_versions])
+	AC_MSG_RESULT([$enable_msvc_versions])
+
+    AC_MSG_CHECKING([whether to support host triplet without MSVC version])
+    AC_ARG_ENABLE([default-msvc-version],
+      [AS_HELP_STRING([--disable-default-msvc-version],
+        [Disable support for the host triplet without an MSVC version.])],
+      [enable_default_msvc_version=$enableval],
+      [enable_default_msvc_version=yes])
+	AS_CASE([$enable_default_msvc_version],
+	  [yes], [PARITY_SUPPORTS_DEFAULT_MSVC_VERSION=:],
+	  [no], [PARITY_SUPPORTS_DEFAULT_MSVC_VERSION=false],
+	  [AC_MSG_ERROR([Invalid argument $enableval to --enable-default-msvc-version.])])
+    AC_SUBST([PARITY_SUPPORTS_DEFAULT_MSVC_VERSION])
+    AC_MSG_RESULT([$enable_default_msvc_version])
 
 	AC_MSG_CHECKING([whether to support Remote EXecution service])
 	AC_ARG_WITH([default-remote-execution-support],
@@ -124,8 +197,8 @@ for dir in [
 
 MAKEFILE_AM(line='''
 install-setup-files: install-recursive
-	chosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported`; \\
-	defchosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported --default`; \\
+	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported`; \\
+	defchosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
 	cd "$(DESTDIR)$(bindir)" || exit $$? ; \\
 	for chost in $${chosts} $${defchosts} ; do \\
 		$(LN_S) -f parity.gnu.gcc$(EXEEXT) $${chost}-gcc || exit $$? ; \\
@@ -167,12 +240,10 @@ install-setup-files: install-recursive
 			rm -f parityscript || exit $$? ; \\
 		done ; \\
 	done
-	"$(DESTDIR)$(sbindir)/parity-setup" --destdir="$(DESTDIR)" --install
-
-install: install-setup-files
+	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --install
 
 uninstall-setup-files:
-	chosts=`"$(DESTDIR)$(sbindir)/parity-setup" --list-supported; "$(DESTDIR)$(sbindir)/parity-setup" --list-supported --default`; \\
+	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported; "$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
 	cd "$(DESTDIR)$(bindir)" || exit 0 ; \\
 	for chost in $${chosts}; do \\
 		rm -f $${chost}-gcc ; \\
@@ -185,7 +256,7 @@ uninstall-setup-files:
 		rm -f $${chost}-cl ; \\
 		rm -f $${chost}-link ; \\
 	done ; :
-	"$(DESTDIR)$(sbindir)/parity-setup" --destdir="$(DESTDIR)" --uninstall ; :
+	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --uninstall ; :
 
 uninstall-recursive: uninstall-setup-files
 ''')
