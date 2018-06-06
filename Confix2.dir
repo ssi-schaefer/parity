@@ -241,6 +241,9 @@ install-setup-files: install-recursive
 		done ; \\
 	done
 	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --install
+	test -n "$(DESTDIR)" || "$(bindir)/parity-setup" --enable-all
+
+install: install-setup-files
 
 uninstall-setup-files:
 	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported; "$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
