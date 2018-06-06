@@ -90,8 +90,6 @@ AC_DEFUN([PARITY_CONFIGURE],
 			[enable_msvc_archs="$enable_msvc_archs $parityarch"])])
 	done
 	AC_SUBST([PARITY_SUPPORTED_ARCHS], [$enable_msvc_archs])
-	AC_DEFINE_UNQUOTED([PARITY_DEFAULT_ARCH], ["${enable_msvc_archs%% *}"],
-	  [Fallback MSVC architecture.])
 	AC_MSG_RESULT([$PARITY_SUPPORTED_ARCHS])
 
 	AC_MSG_CHECKING([for MSVC versions to support])

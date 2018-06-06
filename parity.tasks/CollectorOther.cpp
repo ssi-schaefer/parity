@@ -75,7 +75,7 @@ namespace parity
 			// that is basename of argv[0], or as an argument "-m64".
 			//
 			// Find "x86_64" in argv[0].
-			std::string vcvariant = PARITY_DEFAULT_ARCH;
+			std::string vcvariant = "x86";
 			if (strstr(argv0, "x86_64"))
 				vcvariant = "x64";
 			for(char const * x = strstr(argv0, "i"); x; x = strstr(x+1, "i")) {
