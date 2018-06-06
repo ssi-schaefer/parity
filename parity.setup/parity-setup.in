@@ -618,11 +618,13 @@ prune-parityconf() {
 	mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
 	{
 		test -s "${DESTDIR}${userconf}.conf" ||
-		echo "${userconfheader}"
-		echo "# For an idea how and what to override, the complete config is"
-		echo "#  ${hostconf}.conf"
-		echo "#"
-	} >> "${DESTDIR}${userconf}.conf" &&
+		{
+			echo "${userconfheader}"
+			echo "# For an idea how and what to override, the complete config is"
+			echo "#  ${hostconf}.conf"
+			echo "#"
+		} > "${DESTDIR}${userconf}.conf"
+	} &&
 	mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
 	{
 		echo "${hostconfheader}"
