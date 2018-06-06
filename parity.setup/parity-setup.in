@@ -6,6 +6,7 @@ PACKAGE="@PACKAGE@"
 VERSION="@VERSION@"
 
 PARITYsysconfdir="@PARITY_SYSCONFDIR@"
+PARITYlocalstatedir="@PARITY_LOCALSTATEDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
 PARITYbindir="@PARITY_BINDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
@@ -19,10 +20,11 @@ if [[ ${PARITYsysconfdir} == @*@ ]]
 then
 	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
 
-	PARITYsysconfdir=${SELFDIR}
-	PARITYlibdir=${SELFDIR}
-	PARITYbindir=${SELFDIR}
-	PARITYincludedir=${SELFDIR}
+	PARITYsysconfdir=${SELFDIR}/..
+	PARITYlocalstatedir=${SELFDIR}/..
+	PARITYlibdir=${SELFDIR}/..
+	PARITYbindir=${SELFDIR}/..
+	PARITYincludedir=${SELFDIR}/..
 
 	# <loaded from parity-setup.in by Confix2.dir>
 	PARITYsupported_archs="x86"
@@ -43,8 +45,8 @@ then
 
 	PARITYhas_default_version=:
 
-	CC=${SELFDIR}/parity.gnu.gcc/parity.gnu.gcc
-	AR=${SELFDIR}/parity.gnu.ar/parity.gnu.ar.in
+	CC=${SELFDIR}/../parity.gnu.gcc/parity.gnu.gcc
+	AR=${SELFDIR}/../parity.gnu.ar/parity.gnu.ar.in
 else
 	PARITYincludedir=${PARITYlibdir}/include
 	CC=${PARITYbindir}/parity.gnu.gcc
@@ -538,8 +540,8 @@ prune-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-	local conf="${PARITYsysconfdir}/parity.${vsarch}-${vsver}"
-	local defconf="${PARITYsysconfdir}/parity.${vsarch}"
+	local conf="${PARITYlocalstatedir}/parity.${vsarch}-${vsver}"
+	local defconf="${PARITYlocalstatedir}/parity.${vsarch}"
 
 	local confheader="${PARITYheader}
 #
@@ -587,7 +589,7 @@ prune-parityconf() {
 		else
 			${noquiet} "Disabling ${defconf} ..."
 			traceon
-			mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
+			mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
 			{
 				echo "${confheader}"
 				echo "${defnoconf} = true"
@@ -617,7 +619,7 @@ prune-parityconf() {
 
 	${noquiet} "Disabling ${conf} ..."
 	traceon
-	mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
+	mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
 	{
 		echo "${confheader}"
 		echo "${noconf} = true"
@@ -677,7 +679,7 @@ update-parityconf() {
 
 	(
 		local p
-		noquiet "Creating ${PARITYsysconfdir}/parity.${vsarch}-${vsver} ..."
+		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} ..."
 		tmpdir=${TMPDIR:-/tmp}/parity-setup.${vsarch}-${vsver}.$$
 		rm -rf "${tmpdir}"
 
@@ -788,25 +790,25 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a done."
 
 		traceon
-		mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
+		mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
 		mv -f libparity.runtime.${vsarch}-${vsver}.a libparity.loader.${vsarch}-${vsver}.a "${DESTDIR}${PARITYlibdir}"/ &&
-		mv -f parity.${vsarch}-${vsver}.conf parity.${vsarch}-${vsver}.sh "${DESTDIR}${PARITYsysconfdir}"/
+		mv -f parity.${vsarch}-${vsver}.conf parity.${vsarch}-${vsver}.sh "${DESTDIR}${PARITYlocalstatedir}"/
 		traceoff $? || exit 1
 
 		if supports-default && ${setdefault:+:} false
 		then
 			traceon
-			cp -f "${DESTDIR}${PARITYsysconfdir}/parity.${vsarch}-${vsver}.conf" "${DESTDIR}${PARITYsysconfdir}/parity.${vsarch}.conf" &&
-			cp -f "${DESTDIR}${PARITYsysconfdir}/parity.${vsarch}-${vsver}.sh" "${DESTDIR}${PARITYsysconfdir}/parity.${vsarch}.sh"
+			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.conf" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.conf" &&
+			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.sh"
 			traceoff $? || exit 1
 		fi
 	)
 	if [[ $? -ne 0 ]]
 	then
-		noquiet "Creating ${PARITYsysconfdir}/parity.${vsarch}-${vsver} failed."
+		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} failed."
 		return 1
 	fi
-	verbose "Creating ${PARITYsysconfdir}/parity.${vsarch}-${vsver} done."
+	verbose "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} done."
 	return 0
 }
 

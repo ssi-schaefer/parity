@@ -139,16 +139,22 @@ namespace parity
 
 			//
 			// On Win32:
-			//  1) try next to exe file
+			//  1) try next to exe file (complete config)
+			//  2) (not applicable)
 			//
 			// On All others (UNIX like):
-			//  1) try in configured PARITY_SYSCONFDIR/etc/
+			//  1) try in configured PARITY_LOCALSTATEDIR (/var/parity/, as complete config)
+			//  2) try in configured PARITY_SYSCONFDIR (/etc/parity/, as partial config)
 			//
-			// Both can be overridden with argument "-mparityconfdir=path".
+			// Both are overridden upon argument "-mparityconfdir=path" (as complete config).
 			//
 			// And everywhere:
-			//  2) try in current directory
-			//  3) in path set by environment variable PARITY_CONFIG
+			//  3) try in current directory (as complete config)
+			//  4) try in current directory (as partial config)
+			//  5) in path set by environment variable PARITY_CONFIG (as partial config)
+			//
+			// For complete config files, only the first one found is loaded,
+			// for partial config files, all found ones are loaded.
 			//
 			for (int i = 1; i < argc; ++i) {
 				if (strncmp(argv[i], "-mparityconfdir=", 16) == 0) {
@@ -159,16 +165,22 @@ namespace parity
 				}
 			}
 			if (files.empty()) {
-		#if defined(_WIN32) && !defined(PARITY_SYSCONFDIR)
+#if defined(_WIN32) && !defined(PARITY_LOCALSTATEDIR) && !defined(PARITY_SYSCONFDIR)
 				char fnBuffer[1024];
 				GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 
 				files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
-		#else
-				utils::Path pth(PARITY_SYSCONFDIR);
-				pth.toNative();
-				files.push_back(ConfigFileVector::value_type(pth, true));
-		#endif
+#endif
+#if defined(PARITY_LOCALSTATEDIR)
+				utils::Path localstatepath(PARITY_LOCALSTATEDIR);
+				localstatepath.toNative();
+				files.push_back(ConfigFileVector::value_type(localstatepath, true));
+#endif
+#if defined(PARITY_SYSCONFDIR)
+				utils::Path sysconfpath(PARITY_SYSCONFDIR);
+				sysconfpath.toNative();
+				files.push_back(ConfigFileVector::value_type(sysconfpath, false));
+#endif
 			}
 
 			//
@@ -179,11 +191,7 @@ namespace parity
 			files.push_back(ConfigFileVector::value_type(utils::Path("."), false));
 			files.push_back(ConfigFileVector::value_type(utils::Environment("PARITY_CONFIG").getPath(), false));
 
-			//
-			// This is set to true if at least one of the required
-			// files has been loaded..
-			//
-			bool bLoaded = false;
+			bool completeconfLoaded = false;
 			LoadedFileMap loaded;
 
 			for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
@@ -199,7 +207,7 @@ namespace parity
 
 				pth.toNative();
 
-				if(bLoaded && it->second)
+				if(completeconfLoaded && it->second)
 					continue;
 
 				if(loaded[it->first])
@@ -219,11 +227,11 @@ namespace parity
 					}
 
 					if(it->second)
-						bLoaded = true;
+						completeconfLoaded = true;
 				}
 			}
 
-			if(!bLoaded)
+			if(!completeconfLoaded)
 			{
 				utils::Log::error("cannot find %s configuration in any of the following places. cannot continue!\n", vcvariant.c_str());
 				for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)

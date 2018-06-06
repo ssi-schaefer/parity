@@ -111,6 +111,7 @@ namespace parity
 				std::cout << "Library Directory: " << PARITY_LIBDIR << std::endl;
 				std::cout << "Libexec Directory: " << PARITY_LIBEXECDIR << std::endl;
 				std::cout << "Binaries Directory: " << PARITY_BINDIR << std::endl;
+				std::cout << "Local State Directory: " << PARITY_LOCALSTATEDIR << std::endl;
 			#endif
 
 			exit(0);

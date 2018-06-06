@@ -45,7 +45,9 @@ AC_DEFUN([PARITY_DIR], [
 AC_DEFUN([PARITY_CONFIGURE],
 [
 	PARITY_DIR([PARITY_SYSCONFDIR], ['${sysconfdir}/${PACKAGE}'],
-		[Path where configuration is installed])
+		[Path where user specific configuration is installed])
+	PARITY_DIR([PARITY_LOCALSTATEDIR], ['${localstatedir}/${PACKAGE}'],
+		[Path where site specific configuration is maintained])
 	PARITY_DIR([PARITY_INCLUDEDIR], ['${includedir}'],
 		[Path where header files are installed])
 	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}'],

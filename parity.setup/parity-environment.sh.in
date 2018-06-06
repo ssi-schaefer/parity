@@ -2,7 +2,7 @@
 #
 # load parity environment identified by argv0 argvN...
 
-__parityenv_confdir="@PARITY_SYSCONFDIR@"
+__parityenv_confdir="@PARITY_LOCALSTATEDIR@"
 __parityenv_args=()
 
 __parityenv_arg=${0##*/}
