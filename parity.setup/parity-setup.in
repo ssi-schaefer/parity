@@ -1004,7 +1004,6 @@ parityconf-uninstall() {
 	do
 		prune-parityconf --uninstall --reason="uninstalled" --set-default "${chost}"
 	done
-	rm -f "${DESTDIR}${PARITYsysconfdir}/parity-environment"
 	return $?
 }
 

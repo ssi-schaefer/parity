@@ -109,6 +109,8 @@ namespace parity
 				std::cout << "Sysconf Directory: " << PARITY_SYSCONFDIR << std::endl;
 				std::cout << "Include Directory: " << PARITY_INCLUDEDIR << std::endl;
 				std::cout << "Library Directory: " << PARITY_LIBDIR << std::endl;
+				std::cout << "Libexec Directory: " << PARITY_LIBEXECDIR << std::endl;
+				std::cout << "Binaries Directory: " << PARITY_BINDIR << std::endl;
 			#endif
 
 			exit(0);

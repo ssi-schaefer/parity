@@ -39,7 +39,7 @@ parity.gnu.nm/parity.gnu.dumpbin
 parity.inspector/parity.inspector
 parity.ms.cl/parity.ms.cl
 parity.ms.link/parity.ms.link
-parity.setup/parity-environment
+parity.setup/parity-environment.sh
 parity.setup/parity-setup
 parity.statistics/parity.statistics
 parity.test/parity.test

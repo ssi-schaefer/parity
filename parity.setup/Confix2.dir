@@ -1,4 +1,4 @@
 MAKEFILE_AM(line='bin_SCRIPTS = parity-setup')
 
-MAKEFILE_AM(line='paritysysconfdir = $(PARITY_SYSCONFDIR)')
-MAKEFILE_AM(line='paritysysconf_DATA = parity-environment')
+MAKEFILE_AM(line='paritylibexecdir = $(PARITY_LIBEXECDIR)')
+MAKEFILE_AM(line='paritylibexec_DATA = parity-environment.sh')

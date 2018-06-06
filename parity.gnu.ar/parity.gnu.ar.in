@@ -4,14 +4,14 @@
 # TODO: no path conversion in here - only works with relative paths (should be mostly ok).
 
 SELF=$0
-PARITYsysconfdir="@PARITY_SYSCONFDIR@"
-if [[ ${PARITYsysconfdir} == @*@ ]]
+PARITYlibexecdir="@PARITY_LIBEXECDIR@"
+if [[ ${PARITYlibexecdir} == @*@ ]]
 then
 	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
-	PARITYsysconfdir=${SELFDIR}/..
+	PARITYlibexecdir=${SELFDIR}/../parity.setup
 fi
 
-source "${PARITYsysconfdir}/parity-environment" || exit 1
+source "${PARITYlibexecdir}/parity-environment.sh" || exit 1
 
 opts="$1"
 archive="$2"

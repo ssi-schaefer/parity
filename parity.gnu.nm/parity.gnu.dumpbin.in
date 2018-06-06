@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 SELF=$0
-PARITYsysconfdir="@PARITY_SYSCONFDIR@"
-if [[ ${PARITYsysconfdir} == @*@ ]]
+PARITYlibexecdir="@PARITY_LIBEXECDIR@"
+if [[ ${PARITYlibexecdir} == @*@ ]]
 then
 	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
-	PARITYsysconfdir=${SELFDIR}/..
+	PARITYlibexecdir=${SELFDIR}/../parity.setup
 fi
 
-source "${PARITYsysconfdir}/parity-environment" || exit 1
+source "${PARITYlibexecdir}/parity-environment.sh" || exit 1
 
 type unixpath2win >/dev/null 2>&1 || unixpath2win() { cygpath -w "$1"; }
 type winpath2unix >/dev/null 2>&1 || winpath2unix() { cygpath -u "$1"; }

@@ -19,7 +19,7 @@ for line in parity_setup_in.readlines():
 parity_setup_in = None
 
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity.setup/parity-setup parity.setup/parity-environment parity.gnu.ar/parity.gnu.ar parity.gnu.nm/parity.gnu.dumpbin)'],
+	lines=['AC_CONFIG_FILES(parity.setup/parity-setup parity.setup/parity-environment.sh parity.gnu.ar/parity.gnu.ar parity.gnu.nm/parity.gnu.dumpbin)'],
 	order=AC_BOILERPLATE)
 
 acm4 = ''
@@ -49,7 +49,9 @@ AC_DEFUN([PARITY_CONFIGURE],
 	PARITY_DIR([PARITY_INCLUDEDIR], ['${includedir}'],
 		[Path where header files are installed])
 	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}'],
-		[Path where libraries are installed])
+		[Path where internal libraries are installed])
+	PARITY_DIR([PARITY_LIBEXECDIR], ['${libexecdir}/${PACKAGE}'],
+		[Path where internal executables are installed])
 	PARITY_DIR([PARITY_BINDIR], ['${bindir}'],
 		[Path where executables are installed])
 	AC_SUBST([LN_S], [${as_ln_s}])
