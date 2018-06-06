@@ -608,8 +608,8 @@ prune-parityconf() {
 	then
 		rm -f "${DESTDIR}${userconf}.conf"
 		rm -f "${DESTDIR}${hostconf}.conf" "${DESTDIR}${hostconf}.sh"
-		rm -f "${DESTDIR}${PARITYlibdir}"/libparity.runtime.${vsarch}-${vsver}.a
-		rm -f "${DESTDIR}${PARITYlibdir}"/libparity.loader.${vsarch}-${vsver}.a
+		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vsver}.a
+		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vsver}.a
 		return 0
 	fi
 
@@ -633,8 +633,8 @@ prune-parityconf() {
 		echo "echo '${noconf}' >&2"
 		echo "false"
 	} > "${DESTDIR}${hostconf}.sh" &&
-	echo "${empty}" > "${DESTDIR}${PARITYlibdir}"/libparity.runtime.${vsarch}-${vsver}.a &&
-	echo "${empty}" > "${DESTDIR}${PARITYlibdir}"/libparity.loader.${vsarch}-${vsver}.a
+	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vsver}.a &&
+	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vsver}.a
 	if ! traceoff $?
 	then
 		verbose "Disabling ${hostconf} failed."
@@ -729,8 +729,8 @@ Colored = true"
 			'
 			echo "
 PCRTInclude = ${PARITYincludedir}/parity.runtime
-PCRTLibrary = ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a
-ParityLoader = ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a
+PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a
+ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a
 "
 			case ${vsver} in # (
 			7.*) echo "Runtime = static"  ;; # (
@@ -778,24 +778,24 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 
 		unset PARITY_CONFIG
 
-		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a ..."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a ..."
 		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
 			"${DESTDIR}${PARITYlibdir}"/parity.runtime/{{diagnose,dirent,dlfcn,getopt,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c,cxxeh.cc,ios-fixup.cpp} &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vsver}.a *.o
 		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlibdir}/libparity.runtime.${vsarch}-${vsver}.a done."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a done."
 
-		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a ..."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a ..."
 		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vsver}.a Loader*.o
 		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlibdir}/libparity.loader.${vsarch}-${vsver}.a done."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a done."
 
 		traceon
 		mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-		mv -f libparity.runtime.${vsarch}-${vsver}.a libparity.loader.${vsarch}-${vsver}.a "${DESTDIR}${PARITYlibdir}"/ &&
+		mv -f libparity.runtime.${vsarch}-${vsver}.a libparity.loader.${vsarch}-${vsver}.a "${DESTDIR}${PARITYlocalstatedir}"/ &&
 		mv -f parity.${vsarch}-${vsver}.conf parity.${vsarch}-${vsver}.sh "${DESTDIR}${PARITYlocalstatedir}"/
 		traceoff $? || exit 1
 
