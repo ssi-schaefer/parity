@@ -48,8 +48,8 @@ AC_DEFUN([PARITY_CONFIGURE],
 		[Path where user specific configuration is installed])
 	PARITY_DIR([PARITY_LOCALSTATEDIR], ['${localstatedir}/${PACKAGE}'],
 		[Path where site specific configuration is maintained])
-	PARITY_DIR([PARITY_INCLUDEDIR], ['${includedir}'],
-		[Path where header files are installed])
+	PARITY_DIR([PARITY_INCLUDEDIR], ['${libdir}/${PACKAGE}/include'],
+		[Path where internal header files are installed])
 	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}'],
 		[Path where internal libraries are installed])
 	PARITY_DIR([PARITY_LIBEXECDIR], ['${libexecdir}/${PACKAGE}'],
@@ -183,7 +183,7 @@ for dir in [
 ]:
 	dirvar = re.sub(_re_invalid_variable_character, '_', dir)
 	MAKEFILE_AM(line=dirvar + 'dir = $(PARITY_LIBDIR)/' + dir)
-	MAKEFILE_AM(line=dirvar + 'includedir = $(PARITY_LIBDIR)/include/' + dir)
+	MAKEFILE_AM(line=dirvar + 'includedir = $(PARITY_INCLUDEDIR)/' + dir)
 	ADD_EXTRA_DIST('$(' + dirvar + '_DATA)')
 	ADD_EXTRA_DIST('$(' + dirvar + 'include_DATA)')
 	libcfiles = []

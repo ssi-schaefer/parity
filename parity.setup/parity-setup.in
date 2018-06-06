@@ -9,6 +9,7 @@ PARITYsysconfdir="@PARITY_SYSCONFDIR@"
 PARITYlocalstatedir="@PARITY_LOCALSTATEDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
 PARITYbindir="@PARITY_BINDIR@"
+PARITYincludedir="@PARITY_INCLUDEDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
 PARITYsupported_versions="@PARITY_SUPPORTED_VERSIONS@"
 PARITYhas_default_version="@PARITY_SUPPORTS_DEFAULT_MSVC_VERSION@"
@@ -48,7 +49,6 @@ then
 	CC=${SELFDIR}/../parity.gnu.gcc/parity.gnu.gcc
 	AR=${SELFDIR}/../parity.gnu.ar/parity.gnu.ar.in
 else
-	PARITYincludedir=${PARITYlibdir}/include
 	CC=${PARITYbindir}/parity.gnu.gcc
 	AR=${PARITYbindir}/parity.gnu.ar
 fi
