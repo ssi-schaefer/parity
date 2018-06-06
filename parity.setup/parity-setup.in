@@ -530,12 +530,17 @@ prune-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-	local conf="${PARITYlocalstatedir}/parity.${vsarch}-${vsver}"
-	local defconf="${PARITYlocalstatedir}/parity.${vsarch}"
+	local hostconf="${PARITYlocalstatedir}/parity.${vsarch}-${vsver}"
+	local hostdefconf="${PARITYlocalstatedir}/parity.${vsarch}"
+	local userconf="${PARITYsysconfdir}/parity.${vsarch}-${vsver}"
 
-	local confheader="${PARITYheader}
+	local hostconfheader="${PARITYheader}
 #
 # PARITY CONFIGURATION for ${vsarch}-${vsver}
+#"
+	local userconfheader="${PARITYheader}
+#
+# override parts of parity configuration for ${vsarch}-${vsver}
 #"
 	local noconf="MSVC ${vsver#msvc} (${vsarch}) is ${reason} (try ${SELF##*/} --enable ${chost})"
 	local defnoconf="Default MSVC version (${vsarch}) is ${reason} (try ${SELF##*/} --set-default ${vsarch}-newest)"
@@ -547,7 +552,7 @@ prune-parityconf() {
 	then
 		defchost=${chost}
 	fi
-	if ${defchost:+false} : && [[ -s ${DESTDIR}${defconf}.conf ]]
+	if ${defchost:+false} : && [[ -s ${DESTDIR}${hostdefconf}.conf ]]
 	then
 		while read confline
 		do
@@ -557,9 +562,9 @@ prune-parityconf() {
 				defchost=$(get-chost "${defchost}")
 				break
 			fi
-		done < "${DESTDIR}${defconf}.conf"
+		done < "${DESTDIR}${hostdefconf}.conf"
 	fi
-	if ${defchost:+false} : && [[ -s ${DESTDIR}${defconf}.sh ]]
+	if ${defchost:+false} : && [[ -s ${DESTDIR}${hostdefconf}.sh ]]
 	then
 		while read confline
 		do
@@ -569,64 +574,73 @@ prune-parityconf() {
 				defchost=$(get-chost "${defchost}")
 				break
 			fi
-		done < "${DESTDIR}${defconf}.sh"
+		done < "${DESTDIR}${hostdefconf}.sh"
 	fi
 	if [[ ${defchost} == "${chost}" ]]
 	then
 		if ${uninstall}
 		then
-			rm -f "${DESTDIR}${defconf}.conf" "${DESTDIR}${defconf}.sh"
+			rm -f "${DESTDIR}${hostdefconf}.conf" "${DESTDIR}${hostdefconf}.sh"
 		else
-			${noquiet} "Disabling ${defconf} ..."
+			${noquiet} "Disabling ${hostdefconf} ..."
 			traceon
 			mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
 			{
-				echo "${confheader}"
+				echo "${hostconfheader}"
 				echo "${defnoconf} = true"
-			} > "${DESTDIR}${defconf}.conf" &&
+			} > "${DESTDIR}${hostdefconf}.conf" &&
 			{
-				echo "${confheader}"
+				echo "${hostconfheader}"
 				echo "echo '${defnoconf}' >&2"
 				echo "false"
-			} > "${DESTDIR}${defconf}.sh" &&
+			} > "${DESTDIR}${hostdefconf}.sh" &&
 			if ! traceoff $?
 			then
 				ret=1
-				${noquiet} "Disabling ${defconf} failed."
+				${noquiet} "Disabling ${hostdefconf} failed."
 			else
-				verbose "Disabling ${defconf} done."
+				verbose "Disabling ${hostdefconf} done."
 			fi
 		fi
 	fi
 
 	if ${uninstall}
 	then
-		rm -f "${DESTDIR}${conf}.conf" "${DESTDIR}${conf}.sh"
+		rm -f "${DESTDIR}${userconf}.conf"
+		rm -f "${DESTDIR}${hostconf}.conf" "${DESTDIR}${hostconf}.sh"
 		rm -f "${DESTDIR}${PARITYlibdir}"/libparity.runtime.${vsarch}-${vsver}.a
 		rm -f "${DESTDIR}${PARITYlibdir}"/libparity.loader.${vsarch}-${vsver}.a
 		return 0
 	fi
 
-	${noquiet} "Disabling ${conf} ..."
+	${noquiet} "Disabling ${hostconf} ..."
 	traceon
+	mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
+	{
+		test -s "${DESTDIR}${userconf}.conf" ||
+		echo "${userconfheader}"
+		echo "# For an idea how and what to override, the complete config is"
+		echo "#  ${hostconf}.conf"
+		echo "#"
+	} >> "${DESTDIR}${userconf}.conf" &&
 	mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
 	{
-		echo "${confheader}"
+		echo "${hostconfheader}"
 		echo "${noconf} = true"
-	} > "${DESTDIR}${conf}.conf" &&
+	} > "${DESTDIR}${hostconf}.conf" &&
 	{
-		echo "${confheader}"
+		echo "${hostconfheader}"
 		echo "echo '${noconf}' >&2"
 		echo "false"
-	} > "${DESTDIR}${conf}.sh" &&
+	} > "${DESTDIR}${hostconf}.sh" &&
 	echo "${empty}" > "${DESTDIR}${PARITYlibdir}"/libparity.runtime.${vsarch}-${vsver}.a &&
 	echo "${empty}" > "${DESTDIR}${PARITYlibdir}"/libparity.loader.${vsarch}-${vsver}.a
 	if ! traceoff $?
 	then
-		verbose "Disabling ${conf} failed."
+		verbose "Disabling ${hostconf} failed."
 		return 1
 	fi
-	verbose "Disabling ${conf} done."
+	verbose "Disabling ${hostconf} done."
 	return ${ret}
 }
 
