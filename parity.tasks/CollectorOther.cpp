@@ -74,10 +74,13 @@ namespace parity
 			// We may have an arch part in the executable filename,
 			// that is basename of argv[0], or as an argument "-m64".
 			//
-			// Find "x86_64" in argv[0].
-			std::string vcvariant = "x86";
+			// Find "x86_64" or "x86" in argv[0]:
+			std::string vcvariant;
 			if (strstr(argv0, "x86_64"))
 				vcvariant = "x64";
+			else if (strstr(argv0, "x86"))
+				vcvariant = "x86";
+			// Find "i[0-9]86" in argv[0]:
 			for(char const * x = strstr(argv0, "i"); x; x = strstr(x+1, "i")) {
 				if (strlen(x) >= 4
 				 && strncmp(x+2, "86", 2) == 0
