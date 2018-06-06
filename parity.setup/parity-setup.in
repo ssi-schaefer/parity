@@ -53,8 +53,6 @@ else
 	AR=${PARITYbindir}/parity.gnu.ar
 fi
 
-deflibdir=${PARITYlibdir}
-defsysconfdir=${PARITYsysconfdir}
 defrexsupport=${PARITYrexsupport}
 
 supports-default() {
@@ -78,14 +76,6 @@ Where options is a combination of:
   --verbose More progress output.
   --debug   Enable shell trace.
   --trace   Enable shell trace when running external commands.
-
-  --sysconfdir dir
-     Operate on the parity configuration files in dir.
-     Default dir is: ${defsysconfdir}
-
-  --libdir dir
-     Operate on the parity libraries in dir.
-     Default dir is: ${deflibdir}
 
   --destdir dir
     Operate in staging directory dir.
