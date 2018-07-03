@@ -335,6 +335,7 @@ get-supported-sdklibs() {
 		comdlg32
 		userenv
 		uuid
+		legacy_stdio_definitions
 	)
 	local sdklib
 	for sdklib in "${sdklibs[@]}"
