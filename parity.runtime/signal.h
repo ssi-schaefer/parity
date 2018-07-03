@@ -24,7 +24,7 @@
 #define __PCRT_SIGNAL_H__
 
 #include "internal/pcrt.h"
-#include RUNTIME_INC(Signal.h)
+#include UCRT_INC(Signal.h)
 
 #endif
 
