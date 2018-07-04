@@ -492,7 +492,7 @@ namespace parity
 
 			for(utils::DefineMap::const_iterator it = defines.begin(); it != defines.end(); ++it)
 			{
-				std::string def = "/D" + it->first;
+				std::string def = "/D" + it->first + "=";
 
 				if(!it->second.empty())
 				{
@@ -511,8 +511,6 @@ namespace parity
 							val.replace(pos, 1, "%%");
 					}
 
-					def += "=";
-
 					if(!ctx.getUseCommandScripts()) {
 						if(val.find(' ') != std::string::npos)
 							def += "\"" + val + "\"";
@@ -521,9 +519,9 @@ namespace parity
 					} else {
 						def += val;
 					}
-
-					utils::Log::verbose("define: %s\n", def.c_str());
 				}
+
+				utils::Log::verbose("define: %s\n", def.c_str());
 
 				vec.push_back(def);
 			}

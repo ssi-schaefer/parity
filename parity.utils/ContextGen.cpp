@@ -134,6 +134,7 @@ namespace parity
 
 			if(pos_equals == std::string::npos) {
 				key = ref;
+				value = "1";
 			} else {
 				key = ref.substr(0, pos_equals);
 				value = ref.substr(pos_equals + 1);
