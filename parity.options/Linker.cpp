@@ -190,7 +190,9 @@ namespace parity
 		bool setOutImplib(const char* option, const char* argument, bool& used)
 		{
 			char const * arg = NULL;
-			if (strncmp(option, "-Wl,--out-implib,", 17) == 0) {
+			if (strncmp(option, "-Wl,--out-implib,", 17) == 0
+			 || strncmp(option, "-Wl,--out-implib=", 17) == 0
+			) {
 				arg = option + 17;
 			} else
 			if (_strnicmp(option, "/IMPLIB:", 8) == 0) {
