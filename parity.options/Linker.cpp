@@ -195,7 +195,9 @@ namespace parity
 			) {
 				arg = option + 17;
 			} else
-			if (_strnicmp(option, "/IMPLIB:", 8) == 0) {
+			if (_strnicmp(option, "/IMPLIB:", 8) == 0
+			 || _strnicmp(option, "-IMPLIB:", 8) == 0
+			) {
 				arg = option + 8;
 			}
 			if (!arg) {
