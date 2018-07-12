@@ -29,17 +29,9 @@
 #  ifdef __STDC__
 #    undef __STDC__
 #  endif
-#  pragma push_macro("stat")
-#  pragma push_macro("fstat")
-#    undef stat
-#    undef fstat
-#    define stat __crt_invalid_stat
-#    define fstat __crt_invalid_fstat
-     // WARNING: The 'S' in stat.h is uppercase
-     // intentionally to avoid inclusion of __crt_invalid_stat.h
-#    include UCRT_INC(sys/Stat.h)
-#  pragma pop_macro("stat")
-#  pragma pop_macro("fstat")
+   // WARNING: The 'S' in stat.h is uppercase
+   // intentionally to avoid inclusion of __crt_invalid_stat.h
+#  include UCRT_INC(sys/Stat.h)
 #pragma pop_macro("__STDC__")
 
 #define _S_PROT     00000777
@@ -64,33 +56,32 @@
 
 PCRT_BEGIN_C
 
-#pragma push_macro("stat")
-#pragma push_macro("fstat")
-#undef stat
-#undef fstat
-
 //
-// Taken from Microsoft's header!
+// Cannot typedef 'struct stat' to 'struct pcrt_stat', so
+// we have to declare a fresh 'struct pcrt_stat' instead:
+// Keep synchronized with MSVC header!
 //
-struct stat {
-	_dev_t     st_dev;
-	_ino_t     st_ino;
-	unsigned short st_mode;
-	short      st_nlink;
-	short      st_uid;
-	short      st_gid;
-	_dev_t     st_rdev;
-	_off_t     st_size;
-	time_t st_atime;
-	time_t st_mtime;
-	time_t st_ctime;
+struct pcrt_stat {
+        _dev_t     st_dev;
+        _ino_t     st_ino;
+        unsigned short st_mode;
+        short      st_nlink;
+        short      st_uid;
+        short      st_gid;
+        _dev_t     st_rdev;
+        _off_t     st_size;
+        time_t st_atime;
+        time_t st_mtime;
+        time_t st_ctime;
 };
 
-static PCRT_INLINE int stat(const char * p, struct stat* b) { return _stat(PCRT_CONV(p), (struct _stat*)b); }
-static PCRT_INLINE int fstat(int f, struct stat* b) { return _fstat(f, (struct _stat*)b); }
+static PCRT_INLINE int pcrt_stat(const char * p, struct pcrt_stat* b) { return _stat(PCRT_CONV(p), (struct _stat*)b); }
+static PCRT_INLINE int pcrt_fstat(int f, struct pcrt_stat* b) { return _fstat(f, (struct _stat*)b); }
 
-#pragma pop_macro("stat")
-#pragma pop_macro("fstat")
+#undef stat
+#undef fstat
+#define stat pcrt_stat
+#define fstat pcrt_fstat
 
 PCRT_END_C
 
