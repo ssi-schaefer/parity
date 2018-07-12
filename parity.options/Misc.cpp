@@ -26,6 +26,10 @@
 
 #include <ctype.h>
 
+#ifndef _WIN32
+#  define _strnicmp strncasecmp
+#endif
+
 namespace parity
 {
 	namespace options
@@ -118,8 +122,8 @@ namespace parity
 			utils::Context& ctx = utils::Context::getContext();
 			const char* arg = 0;
 
-			if((arg = ::strchr(option, 'F')) || (arg = ::strstr(option, "OUT:")) || (arg = ::strstr(option, "out:")))
-			{
+			if (option[0] && (option[1] == 'F' || _strnicmp(&option[1], "OUT:", 4) == 0)) {
+				arg = option + 1;
 				//
 				// Handle Microsoft output options
 				//
@@ -132,9 +136,13 @@ namespace parity
 					// not handled here
 					return false;
 				}
-			} else {
-				arg = ::strchr(option, 'o');
-				++arg;
+			} else if (strncmp(option, "-o", 2)) {
+				arg = option + 2;
+			} else if (strncmp(option, "--output", 8)) {
+				arg = option + 8;
+				if (*arg == '=' || *arg == ':') {
+					++arg;
+				}
 			}
 			
 			if(!arg || !*arg){
