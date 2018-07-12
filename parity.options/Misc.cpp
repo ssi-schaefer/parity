@@ -136,9 +136,9 @@ namespace parity
 					// not handled here
 					return false;
 				}
-			} else if (strncmp(option, "-o", 2)) {
+			} else if (strncmp(option, "-o", 2) == 0) {
 				arg = option + 2;
-			} else if (strncmp(option, "--output", 8)) {
+			} else if (strncmp(option, "--output", 8) == 0) {
 				arg = option + 8;
 				if (*arg == '=' || *arg == ':') {
 					++arg;
