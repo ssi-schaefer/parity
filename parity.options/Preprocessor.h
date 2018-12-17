@@ -38,6 +38,7 @@ namespace parity
 		bool removeDefine(const char* option, const char* argument, bool& used);
 		bool setPreprocess(const char* option, const char* argument, bool& used);
 		bool addIncludePath(const char* option, const char* argument, bool& used);
+		bool addIncludeFile(const char* option, const char* argument, bool& used);
 		bool setDependencyTracking(const char* option, const char* argument, bool& used);
 		bool setDependencyPhony(const char* option, const char* argument, bool& used);
 		bool setDependencyGenerated(const char* option, const char* argument, bool& used);

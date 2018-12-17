@@ -267,6 +267,35 @@ namespace parity
 				if(pipe(stdErrPipe) == -1)
 					throw Exception("cannot open pipes for stderr redirection: %s", ::strerror(errno));
 
+				ArgumentVector unescapedargs(arguments);
+				for(ArgumentVector::iterator arg = unescapedargs.begin()
+				  ; arg != unescapedargs.end()
+				  ; ++arg
+				) {
+					bool unescaped = false;
+					size_t escap = arg->find('\\');
+					while (escap != arg->npos && escap < arg->length()) {
+						switch(arg->at(escap+1)) {
+						case '\\':
+						case '"':
+							unescaped = true;
+							arg->erase(escap, 1);
+							break;
+						case '\n':
+							unescaped = true;
+							arg->erase(escap, 2);
+							break;
+						default:
+							++escap;
+							break;
+						}
+						escap = arg->find('\\', escap);
+					}
+					if (unescaped) {
+						Log::verbose(" * with unescaped arg >%s<\n", arg->c_str());
+					}
+				}
+
 				pid_t child = fork();
 
 				switch(child)
@@ -296,12 +325,12 @@ namespace parity
 						//
 						// execute child process
 						//
-						const char ** translated = new const char*[arguments.size() + 2];
+						const char ** translated = new const char*[unescapedargs.size() + 2];
 						std::string cmdname = pth.file();
 						translated[0] = cmdname.c_str();
 						ArgumentVector::size_type i;
-						for(i = 0; i < arguments.size(); ++i)
-							translated[i + 1] = arguments[i].data();
+						for(i = 0; i < unescapedargs.size(); ++i)
+							translated[i + 1] = unescapedargs[i].data();
 
 						translated[i + 1] = 0;
 
@@ -418,7 +447,7 @@ namespace parity
 
 		void Task::terminateRunningProcesses() {
 			if(running_.size() > 0) {
-				utils::Log::warning("%d child processes are still alive, terminating them.\n", running_.size());
+				utils::Log::warning("%ld child processes are still alive, terminating them.\n", running_.size());
 			} else {
 				return;
 			}

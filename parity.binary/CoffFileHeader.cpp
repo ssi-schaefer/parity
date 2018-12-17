@@ -190,7 +190,7 @@ namespace parity
 				Section sec = getSectionForRVA(rva);
 
 				int delta = sec.getVirtualAddress() - sec.getPointerToRawData();
-				return reinterpret_cast<void*>(reinterpret_cast<unsigned int>(getBasePointer()) + rva - delta);
+				return reinterpret_cast<void*>(reinterpret_cast<char*>(getBasePointer()) + rva - delta);
 			} catch(const utils::Exception& e) {
 				utils::Log::warning("cannot find pointer for given RVA (%p): %s\n", reinterpret_cast<void*>(rva), e.what());
 				return 0;

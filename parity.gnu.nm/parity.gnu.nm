@@ -2,19 +2,339 @@
 
 # TODO: this is merely a hack to get things rolling - implement as real part of parity.
 
+type unixpath2win >/dev/null 2>&1 || unixpath2win() { cygpath -w "$1"; }
+type winpath2unix >/dev/null 2>&1 || winpath2unix() { cygpath -u "$1"; }
+
 vsvar=
 [[ -n "${VS71COMNTOOLS}" ]] && vsvar=VS71COMNTOOLS
 [[ -n "${VS80COMNTOOLS}" ]] && vsvar=VS80COMNTOOLS
 [[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
 [[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
 
-vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
-vsroot="$(cd ${vscom}/../../; pwd)"
+if [[ -n ${vsvar} ]]; then
+    vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
+    vsroot="$(cd "${vscom}/../../"; pwd)"
+elif [[ -r /proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0 ]]; then
+    vsroot=$(winpath2unix "$(tr -d $"\0" </proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7/9.0)")
+    vsroot=${vsroot%%/}
+    vscom=${vsroot}/Common7/Tools
+else
+    echo "cannot find visual studio (no VSxxCOMNTOOLS set!)"
+    exit 1
+fi
 
 [[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
 PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}
 
-NM="dumpbin.exe /symbols"
+# Arguments to nm as specified in:
+#   The Open Group Base Specifications Issue 7
+#   IEEE Std 1003.1-2008, 2016 Edition
+#   Copyright © 2001-2016 The IEEE and The Open Group
+ECHO() { echo -n "$@" ; }
+optA() { false; }
+optP() { false; }
+optv() { false; }
+opte() { false; }
+optf() { false; }
+opto() { false; }
+optx() { false; }
+optg() { false; }
+optu() { false; }
+optt=
 
-${NM} "$@"
+while getopts ABPvefoxgut: option
+do
+	case ${option} in
+	A) optA() { ECHO "$@"; } ;;
+	B) optP() { false; } ;;
+	P) optP() { ECHO "$@"; } ;;
+	v) optv() { ECHO "$@"; } ;;
+	e) opte() { ECHO "$@"; } ;;
+	f) optf() { ECHO "$@"; } ;;
+	o) opto() { ECHO "$@"; } ;;
+	x) optx() { ECHO "$@"; } ;;
+	g) optg() { ECHO "$@"; } ;;
+	u) optu() { ECHO "$@"; } ;;
+	t) optt=$OPTARG ;;
+	h)
+		cat <<-EOH
+Usage: $0 [-APv] [-g|-u] [-efox] [-t format] file...
+		EOH
+		exit 0
+		;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+: ${optt:=x}
+
+IFS='
+' eval 'set -- $(cygpath -w "$@")'
+
+# awk script from libtool.m4, extended for dlls
+dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | tee xx | POSIXLY_CORRECT=1 LC_ALL=C awk '
+    # dll
+    /^OPTIONAL HEADER VALUES/,/^$/{
+	# got dll
+	if ($0~/ image base$/)                 { imageBase  = "0x"$1; next };
+	if ($0~/ base of code$/)               { baseOfCode = "0x"$1; next };
+	if ($0~/ size of code$/)               { sizeOfCode = "0x"$1; next };
+	if ($0~/ base of data$/)               { baseOfData = "0x"$1; next };
+	if ($0~/ size of initialized data$/)   { sizeOfData = "0x"$1; next };
+	if ($0~/ size of uninitialized data$/) { sizeOfBss  = "0x"$1; next };
+	next;
+    };
+    # obj, lib
+    /^COFF SYMBOL TABLE/,/^$/{
+	if ($0 == "" || $0 == "COFF SYMBOL TABLE" || fileType == "DLL" || substr($0, 1, 1) == " ") {
+	    next;
+	}
+	section = $3;
+	if (section_ignore[section]) {
+	    next;
+	}
+	symval = "0x" $2;
+	symval += 0;
+	if ($5 == "()") {
+	    linkage = $6;
+	    symbol = $8;
+	} else {
+	    linkage = $5;
+	    symbol = $7;
+	}
+	type = section_type[section linkage];
+	if (type == "U" && symval > 0) {
+	    # UNDEF symbol with symval > 0 (size) actually is COMMON
+	    symval = 0;
+	    type = "C";
+	}
+	symval += section_vaddr[section] + imageBase;
+	if (!type) {
+	    type = "X" NR;
+	};
+	printSymbol(symbol, type, symval);
+	next;
+    };
+    # dll
+    exportsNR == NR,/^$/{
+	if ($0 !~ /^ /) {
+	    next;
+	}
+	symbol = $4;
+	addr = "0x"$3;
+	addr = 0 + addr;
+	type = "X";
+	if (addr >= baseOfCode && addr < endOfCode) {
+	    type = "T";
+	} else
+	if (addr >= baseOfData && addr < endOfData) {
+	    type = "D";
+	} else
+	if (addr >= baseOfBss) {
+	    type = "B";
+	};
+	printSymbol(symbol, type, addr);
+	next;
+    };
+
+    # dll
+    $1 $2 $3 $4 == "ordinalhintRVAname"{
+	# got dll
+    	exportsNR = NR + 2;
+	baseOfCode = 0 + baseOfCode; sizeOfCode = 0 + sizeOfCode;
+	baseOfData = 0 + baseOfData; sizeOfData = 0 + sizeOfData;
+	baseOfBss  = 0 + baseOfBss;  sizeOfBss  = 0 + sizeOfBss;
+	endOfCode = baseOfCode + sizeOfCode;
+	if (baseOfData == 0) { baseOfData = endOfCode }; # FIXME
+	endOfData = baseOfData + sizeOfData;
+	if (baseOfBss  == 0) { baseOfBss  = endOfData }; # FIXME
+	endOfBss  = baseOfBss  + sizeOfBss;
+	next;
+    };
+    fileType == "LIBRARY" && / +Symbol name +:/,/^$/{
+	# print public symbols
+	if ($1 $2 $3 == "Symbolname:") {
+	    symbol = $4;
+	    next;
+	}
+	if ($1 $2 == "Type:") {
+	    if (public_symbol[symbol]) {
+		if ($3 == "code") {
+		    printSymbol(symbol, "T", 0);
+		} else
+		if ($3 == "data") {
+		    printSymbol(symbol, "D", 0);
+		} else {
+		    printSymbol(symbol, "X", 0);
+		}
+		delete public_symbol[symbol];
+	    }
+	    symbol = "__imp_" symbol;
+	    if (public_symbol[symbol]) {
+		printSymbol(symbol, "I", 0);
+		delete public_symbol[symbol];
+	    }
+	}
+	next;
+    };
+    fileType == "LIBRARY" && publicSymbolsNR == NR,/^$/{
+	# gather public symbols
+	if ($0) {
+	    public_symbol[$2] = "0x" $1;
+	}
+	next;
+    };
+    fileType == "LIBRARY" && /^ *[1-9][0-9]* public symbols$/{
+	# locate the list of public symbols
+    	publicSymbolsNR = NR + 2;
+	next;
+    };
+    /^SECTION HEADER /{
+	section = "SECT" substr($3, 2);
+	section_type[section "Static"] = "i";
+	section_type[section "Section"] = "i";
+	section_type[section "External"] = "I";
+    };
+    /^SECTION HEADER /,/^$/{
+	if ($2 $3 == "virtualsize") {
+	    section_vsize[section] = "0x" $1;
+	    section_vsize[section] += 0;
+	    next;
+	}
+	if ($2 $3 == "virtualaddress") {
+	    section_vaddr[section] = "0x" $1;
+	    section_vaddr[section] += 0;
+	    next;
+	}
+	if ($1 == "Info") {
+	    section_ignore[section] = 1;
+	    next;
+	}
+	if ($1 == "Code") {
+	    section_type[section "Label"] = "t";
+	    section_type[section "Static"] = "t";
+	    section_type[section "External"] = "T";
+	    next;
+	}
+	if ($1$2 == "InitializedData") {
+	    section_type[section "Static"] = "d";
+	    section_type[section "External"] = "D";
+	    next;
+	}
+	if ($1$2 == "UninitializedData") {
+	    section_type[section "Static"] = "b";
+	    section_type[section "External"] = "B";
+	    next;
+	}
+	if ($1 == "Discardable") {
+	    section_type[section "Static"] = "N";
+	    section_type[section "External"] = "N";
+	    next;
+	}
+	if ($1$2 == "ReadOnly") {
+	    section_type[section "Static"] = "r";
+	    section_type[section "External"] = "R";
+	    next;
+	}
+	next;
+    };
+    /^FILE HEADER VALUES/{
+    	# got obj, lib or dll
+	# reset info: split("", array) for portable "delete array"
+	split("", section_type);
+	split("", section_vaddr);
+	split("", section_ignore);
+	section_type["UNDEF" "External"    ] = "U";
+	section_type["UNDEF" "WeakExternal"] = "w";
+	section_type["UNDEF" "Section"] = "I";
+	section_vaddr["UNDEF"] = 0;
+	section_vsize["UNDEF"] = 0;
+	section_type["ABS" "Static"  ] = "a";
+	section_type["ABS" "External"] = "A";
+	section_vaddr["ABS"] = 0;
+	section_vsize["ABS"] = 0;
+	section_ignore["DEBUG"] = 1;
+	# reset info for DLL
+	imageBase = 0;
+	baseOfCode = 0; sizeOfCode = 0; endOfCode = 0;
+	baseOfData = 0; sizeOfData = 0; endOfData = 0;
+	baseOfBss  = 0; sizeOfBss  = 0; endOfBss  = 0;
+    	exportsNR = 0;
+    };
+    /^FILE HEADER VALUES/,/^$/{
+	if ($2 == "machine" && $1 != "0") {
+	    if ($3 == "(x86)") {
+	    	addrwidth = 8;
+	    } else { # $3 == "(x64)"
+	    	addrwidth = 16;
+	    }
+	}
+    	next;
+    };
+    fileType == "LIBRARY" && /^Archive member name at [0-9A-Za-z]+: /{
+	memberName = $0;
+	sub(/Archive member name at [0-9A-Za-z]+: /, "", memberName);
+	sub(/^\/[0-9A-Za-z]+ +/, "", memberName);
+	sub(/\/ *$/, "", memberName);
+    };
+    fileType == "LIBRARY" && /^Archive member name at /,/^$/{
+	if ($2 == "mode" && length(memberName) > 0) {
+	    currentFile = currentArchive memberName ":";
+	    '"$(optA ||
+		ECHO 'print ""; print currentFile; currentFile="";'
+	    )"'
+	}
+	next;
+    };
+    # any
+    /^File Type: /{
+	# "DLL", "LIBRARY" or "COFF OBJECT"
+    	fileType = $3 $4;
+	# reset info for LIBRARY
+	split("", public_symbol);
+	next;
+    };
+    # any
+    /^Dump of file /{
+    	currentFile = substr($0, 14) ":";
+	'"$(optA ||
+	    ECHO 'print ""; print currentFile; currentFile="";'
+	)"'
+	currentArchive = currentFile;
+	split("", public_symbols);
+	next;
+    };
+    # {print NR};
+    {next};
+
+    function printSymbol(symbol, type, addr)
+    {
+	if (type == "U") {
+	    addr = substr("                ", 1, addrwidth);
+	} else {
+	    addr = sprintf("%0" addrwidth "'$optt'", addr);
+	}
+	printf("%s%s %s %s\n", currentFile, '"$(
+	    optP 'symbol, type, addr' ||
+	    ECHO 'addr, type, symbol'
+	)"');
+    };
+
+    {last_section=section; section=$3};
+    /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};
+    /Section length .*#relocs.*(pick any)/{hide[last_section]=1};
+    /^ *Type *: code/{print NR, "138:", "T",si,substr(si,2)};
+    /^ *Type *: data/{print NR, "139:", "I",si,substr(si,2)};
+    $0!~/External *|/{next};
+    / 0+ UNDEF /{next};
+    / UNDEF ([^|])*()/{next};
+    {if(hide[section]) next};
+    {f="D"};
+    $0~/().*|/{f="T"};
+    {split($0,a,/||r/);
+    split(a[2],s)};
+    s[1]~/^[@?]/{print NR, "148:", f,s[1],s[1]; next};
+    s[1]~/^_/ {split(s[1],t,"@"); print NR, "149:", f,t[1],substr(t[1],2)}
+    '
 

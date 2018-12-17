@@ -57,6 +57,7 @@ namespace parity
 			~Section();
 			Section(Section const& rhs);
 			Section& operator=(Section const& rhs);
+			Section() : struct_(), idx_(-11), data_(0), allocated_(0), allocated_size_(0), relocs_(), name_("INVALID") { throw utils::Exception("invalid construction of Section object!"); }
 		private:
 			friend class FileHeader;
 			Section(FileHeader* fh, int idx, const std::string& name);
@@ -113,7 +114,6 @@ namespace parity
 			typedef std::map<unsigned int, Section> IndexedSectionMap;
 
 		private:
-			Section() : struct_(), idx_(-11), data_(0), allocated_(0), allocated_size_(0), relocs_(), name_("INVALID") { throw utils::Exception("invalid construction of Section object!"); }
 			friend IndexedSectionMap::mapped_type& IndexedSectionMap::operator [](const IndexedSectionMap::key_type&);
 		public:
 			

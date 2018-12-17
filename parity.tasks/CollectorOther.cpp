@@ -35,9 +35,14 @@
 #include <Threading.h>
 #include <Statistics.h>
 
+#include <MsResourceCompiler.h>
+#include <MsResourceConverter.h>
+
 #include <CoffObject.h>
 #include <CoffFileHeader.h>
 #include <CoffDirectiveSection.h>
+
+#include <sstream>
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -51,33 +56,135 @@ namespace parity
 		typedef std::vector<ConfigFilePair> ConfigFileVector;
 		typedef std::map<utils::Path, bool> LoadedFileMap;
 
-		void runConfigurationLoading(int argc, char * const * argv)
+		void runConfigurationLoading(int &argc, char ** &argv)
 		{
+			char * argv0 = strrchr(argv[0], '/'); // find last path sep
+			if (argv0 == NULL) {
+				argv0 = strrchr(argv[0], '\\'); // find last path sep
+			}
+			if (argv0 == NULL) {
+				argv0 = argv[0]; // no path component
+			} else {
+				++argv0; // skip last path sep
+			}
+
+			//
+			// First, identify which bitwidth to load the configuration for.
+			//
+			// We may have an arch part in the executable filename,
+			// that is basename of argv[0], or as an argument "-m64".
+			//
+			// Find "x86_64" or "x86" in argv[0]:
+			std::string vcvariant;
+			if (strstr(argv0, "x86_64"))
+				vcvariant = "x64";
+			else if (strstr(argv0, "x86"))
+				vcvariant = "x86";
+			// Find "i[0-9]86" in argv[0]:
+			for(char const * x = strstr(argv0, "i"); x; x = strstr(x+1, "i")) {
+				if (strlen(x) >= 4
+				 && strncmp(x+2, "86", 2) == 0
+				 && x[1] >= '1' && x[1] <= '9'
+				) {
+					vcvariant = "x86";
+					break;
+				}
+			}
+			// Find "-m64" or "-m32" in arguments, overriding argv[0].
+			for (int i = 1; i < argc; ++i) {
+				if (strcmp(argv[i], "-m64") == 0) {
+					vcvariant = "x64";
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+				if (strcmp(argv[i], "-m32") == 0) {
+					vcvariant = "x86";
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+			}
+
+			//
+			// Second, identify which MSVC version to load the configuration for.
+			//
+			int msvcmajor = 0, msvcminor = 0;
+			//
+			// We may have an msvc version in the executable filename,
+			// that is basename of argv[0], or as an argument "-mmsvcX.Y".
+			//
+			// Find "msvc" in argv[0].
+			char * pmsvcver = strstr(argv0, "msvc");
+			// Find "-mmsvc" in arguments, overriding argv[0].
+			for (int i = 1; i < argc; ++i) {
+				if (strncmp(argv[i], "-mmsvc", 6) == 0) {
+					pmsvcver = argv[i] + 2;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+			}
+			if (pmsvcver != NULL) {
+				sscanf(pmsvcver, "msvc%d.%d", &msvcmajor, &msvcminor);
+				// Ignore sscanf failure, use default version then.
+				// If there's only one number, use "0" as minor version.
+			}
+			if (msvcmajor != 0) {
+				std::stringstream v;
+				v << vcvariant << "-msvc" << msvcmajor << "." << msvcminor;
+				vcvariant = v.str();
+			}
+
 			utils::Context& context = utils::Context::getContext();
 			utils::Timing::instance().start("Configuration loading");
 			ConfigFileVector files;
 
 			//
 			// On Win32:
-			//  1) try next to exe file
+			//  1) try next to exe file (complete config)
+			//  2) (not applicable)
 			//
 			// On All others (UNIX like):
-			//  1) try in configured PARITY_SYSCONFDIR/etc/
+			//  1) try in configured PARITY_LOCALSTATEDIR (/var/parity/, as complete config)
+			//  2) try in configured PARITY_SYSCONFDIR (/etc/parity/, as partial config)
+			//
+			// Both are overridden upon argument "-mparityconfdir=path" (as complete config).
 			//
 			// And everywhere:
-			//  2) try in current directory
-			//  3) in path set by envoironment variable PARITY_CONFIG
+			//  3) try in current directory (as complete config)
+			//  4) try in current directory (as partial config)
+			//  5) in path set by environment variable PARITY_CONFIG (as partial config)
 			//
-		#if defined(_WIN32) && !defined(PARITY_SYSCONFDIR)
-			char fnBuffer[1024];
-			GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
+			// For complete config files, only the first one found is loaded,
+			// for partial config files, all found ones are loaded.
+			//
+			for (int i = 1; i < argc; ++i) {
+				if (strncmp(argv[i], "-mparityconfdir=", 16) == 0) {
+					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16), true));
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+			}
+			if (files.empty()) {
+#if defined(_WIN32) && !defined(PARITY_LOCALSTATEDIR) && !defined(PARITY_SYSCONFDIR)
+				char fnBuffer[1024];
+				GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 
-			files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
-		#else
-			utils::Path pth(PARITY_SYSCONFDIR);
-			pth.toNative();
-			files.push_back(ConfigFileVector::value_type(pth, true));
-		#endif
+				files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
+#endif
+#if defined(PARITY_LOCALSTATEDIR)
+				utils::Path localstatepath(PARITY_LOCALSTATEDIR);
+				localstatepath.toNative();
+				files.push_back(ConfigFileVector::value_type(localstatepath, true));
+#endif
+#if defined(PARITY_SYSCONFDIR)
+				utils::Path sysconfpath(PARITY_SYSCONFDIR);
+				sysconfpath.toNative();
+				files.push_back(ConfigFileVector::value_type(sysconfpath, false));
+#endif
+			}
 
 			//
 			// all optional and partial configuration files need to go after
@@ -87,11 +194,7 @@ namespace parity
 			files.push_back(ConfigFileVector::value_type(utils::Path("."), false));
 			files.push_back(ConfigFileVector::value_type(utils::Environment("PARITY_CONFIG").getPath(), false));
 
-			//
-			// This is set to true if at least one of the required
-			// files has been loaded..
-			//
-			bool bLoaded = false;
+			bool completeconfLoaded = false;
 			LoadedFileMap loaded;
 
 			for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
@@ -101,12 +204,13 @@ namespace parity
 
 				utils::Path pth = it->first;
 
-				if(pth.isDirectory())
-					pth.append("parity.conf");
+				if(pth.isDirectory()) {
+					pth.append("parity." + vcvariant + ".conf");
+				}
 
 				pth.toNative();
 
-				if(bLoaded && it->second)
+				if(completeconfLoaded && it->second)
 					continue;
 
 				if(loaded[it->first])
@@ -126,13 +230,13 @@ namespace parity
 					}
 
 					if(it->second)
-						bLoaded = true;
+						completeconfLoaded = true;
 				}
 			}
 
-			if(!bLoaded)
+			if(!completeconfLoaded)
 			{
-				utils::Log::error("cannot find configuration in any of the following places. cannot continue!\n");
+				utils::Log::error("cannot find %s configuration in any of the following places. cannot continue!\n", vcvariant.c_str());
 				for(ConfigFileVector::iterator it = files.begin(); it != files.end(); ++it)
 				{
 					if(!it->first.get().empty())
@@ -473,6 +577,113 @@ namespace parity
 				utils::Log::error("cannot run linker!\n");
 				exit(1);
 			}
+		}
+
+		void runResourceCompilerStage()
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			utils::Threading threading;
+
+			utils::Timing::instance().start("Resource compiling");
+
+			/* find the output file for the resource compiler */
+			std::string outputFormat = ctx.getOutputFormat();
+			if (outputFormat.empty()) {
+				if (ctx.getOutputFile() == ctx.getDefaultOutput()) {
+					utils::Log::error("unknown output format for resource compiler!\n");
+					exit(1);
+				}
+				std::string out = ctx.getOutputFile().get();
+				if (out.substr(out.rfind('.')) == ".res") {
+					outputFormat = "res";
+				} else {
+					outputFormat = "coff";
+				}
+			}
+
+			utils::SourceMap sources = ctx.getSources();
+			int cvtsources = 0;
+
+			for(utils::SourceMap::iterator it = sources.begin(); it != sources.end(); ++it) {
+				if (it->second == utils::LanguageCompiledResource)
+					++cvtsources;
+				if (it->second != utils::LanguageResource)
+					continue;
+
+				tasks::MsResourceCompiler::Constructible c;
+				c.sourceFile = it->first.get();
+
+				utils::Path output;
+
+				if (outputFormat == "coff") {
+					output = utils::Path::getTemporary(".parity.resource.XXXXXX.res");
+					ctx.getTemporaryFiles().push_back(output);
+					++cvtsources;
+				} else
+				if (outputFormat != "res") {
+					utils::Log::error("unknown output format for resource compiler!\n");
+					exit(1);
+				} else /* --output-format=res */
+				if (ctx.getOutputFile() == ctx.getDefaultOutput()) {
+					output = utils::Path(c.sourceFile.substr(0, c.sourceFile.rfind('.')) + ".res");
+				} else
+				if (sources.size() > 1) {
+					utils::Log::error("single output file for multiple input files for resource compiler!\n");
+					exit(1);
+				} else {
+					output = ctx.getOutputFile();
+				}
+
+				output.toForeign();
+				c.outputFile = output.get();
+
+				if (TaskStubs::runMsResourceCompiler(&c) != 0) {
+					utils::Log::error("cannot run resource compiler!\n");
+					exit(1);
+				}
+
+				ctx.setSourcesString(output.get()); // add when file exists
+			}
+			utils::Timing::instance().stop("Resource compiling");
+
+			utils::Log::verbose("done resource compiling\n");
+
+			if (outputFormat != "coff")
+				return;
+
+			utils::Timing::instance().start("Resource converting");
+
+			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it) {
+				if (it->second != utils::LanguageCompiledResource)
+					continue;
+
+				tasks::MsResourceConverter::Constructible c;
+				c.sourceFile = it->first.get();
+
+				utils::Path output;
+
+				/* find the output file for the resource converter */
+				if (ctx.getOutputFile() == ctx.getDefaultOutput()) {
+					output = utils::Path(c.sourceFile.substr(0, c.sourceFile.rfind('.')) + ".o");
+				} else
+				if (cvtsources > 1) {
+					utils::Log::error("single output file for multiple input files for resource converter!\n");
+					exit(1);
+				} else {
+					output = ctx.getOutputFile();
+				}
+
+				output.toForeign();
+				c.outputFile = output.get();
+
+				utils::Log::verbose("now for resource converting for %s to %s\n", c.sourceFile.c_str(), c.outputFile.c_str());
+
+				if (TaskStubs::runMsResourceConverter(&c) != 0) {
+					utils::Log::error("cannot run resource converter!\n");
+					exit(1);
+				}
+			}
+			utils::Timing::instance().stop("Resource converting");
 		}
 	}
 }

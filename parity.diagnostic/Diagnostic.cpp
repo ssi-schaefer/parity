@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <cstdio>
 
 #include <psapi.h>
 
@@ -87,7 +88,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 				process_map[ev.dwProcessId] = ev.u.CreateProcessInfo.hProcess;
 				break;
 			case CREATE_THREAD_DEBUG_EVENT:
-				fprintf(out, "[%d:%d] Creating Thread: Start Address: %d\n", ev.dwProcessId, ev.dwThreadId, ev.u.CreateThread.lpStartAddress);
+				fprintf(out, "[%d:%d] Creating Thread: Start Address: %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.CreateThread.lpStartAddress);
 				break;
 			case EXCEPTION_DEBUG_EVENT:
 				fprintf(out, "[%d:%d] %sException: %x at %p\n", ev.dwProcessId, ev.dwThreadId, ev.u.Exception.dwFirstChance ? "First Chance " : "", ev.u.Exception.ExceptionRecord.ExceptionCode, ev.u.Exception.ExceptionRecord.ExceptionAddress);
@@ -127,7 +128,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 						wchar_t* lb = (wchar_t*)localbuffer;
 						if(wcslen(lb) > 0) {
 							// can we do something about newlines at the end of the string?
-							fprintf(out, "[%d:%d] Debug String: %*S\n", ev.dwProcessId, ev.dwThreadId, ev.u.DebugString.nDebugStringLength, localbuffer);
+							fprintf(out, "[%d:%d] Debug String: %*S\n", ev.dwProcessId, ev.dwThreadId, ev.u.DebugString.nDebugStringLength, lb);
 						}
 					} else {
 						if(localbuffer[0] != '\0') {
@@ -176,25 +177,16 @@ int main(int argc, char** argv) {
 	// TODO: PATH lookup of application.
 	//
 
-	char * command_line = _strdup(quoted_args.c_str());
-
-	if(!command_line) {
-		std::cerr << "cannot copy arguments!" << std::cerr;
-		exit(1);
-	}
-
 	STARTUPINFO si = { sizeof(si) };
 	PROCESS_INFORMATION pi;
 
-	if(!CreateProcess(application.c_str(), command_line, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi)) {
-		std::cerr << "cannot start process!" << std::cerr;
+	if(!CreateProcess(application.c_str(), &quoted_args[0], NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi)) {
+		std::cerr << "cannot start process!" << std::endl;
 		exit(1);
 	}
 
 	// allow process to continue if we dies.
 	DebugSetProcessKillOnExit(FALSE);
-
-	free(command_line);
 
 	Diagnose(stderr, pi.dwProcessId);
 }

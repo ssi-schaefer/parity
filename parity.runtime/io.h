@@ -44,7 +44,7 @@
 #    define chmod __crt_invalid_chmod
 #    define creat __crt_invalid_creat
 #    define unlink __crt_invalid_unlink
-#    include RUNTIME_INC(Io.h)
+#    include UCRT_INC(Io.h)
 #  pragma pop_macro("open")
 #  pragma pop_macro("access")
 #  pragma pop_macro("chmod")

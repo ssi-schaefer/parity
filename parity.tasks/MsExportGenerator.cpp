@@ -35,7 +35,7 @@ namespace parity
 		MsExportGenerator::MsExportGenerator(binary::Symbol::SymbolVector& exp)
 			: exports_(exp)
 		{
-			utils::Log::verbose("generating export directives for %d symbols...\n", exp.size());
+			utils::Log::verbose("generating export directives for %ld symbols...\n", exp.size());
 		}
 
 		void MsExportGenerator::doWork()

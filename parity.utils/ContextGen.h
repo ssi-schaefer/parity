@@ -26,6 +26,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cstdlib>
 
 #include "Path.h"
 #include "Color.h"
@@ -76,7 +77,10 @@ namespace parity
 			LanguageUnknown,
 			LanguageC,
 			LanguageCpp,
-			LanguageAsssembler
+			LanguageAsssembler,
+			LanguageModuleDefinition, // .def
+			LanguageResource, // .rc
+			LanguageCompiledResource // .res
 		} LanguageType;
 
 		typedef enum {
@@ -193,6 +197,7 @@ namespace parity
 				CTX_GETSET_C (DefineMap		,Defines			,DefineMap()	)  /* preprocessor */ \
 				CTX_GETSET_C (PathVector	,IncludePaths		,PathVector()	)  /* preprocessor */ \
 				CTX_GETSET_C (PathVector	,SysIncludePaths	,PathVector()	)  /* preprocessor (by config only) */ \
+				CTX_GETSET_C (PathVector	,IncludeFiles		,PathVector()	)  /* preprocessor */ \
 				CTX_GETSET_I (bool			,PreprocToFile		,false			)  /* preprocessor (MS) */ \
 				CTX_GETSET_I (bool			,KeepHashLine		,true			)  /* preprocessor (MS) */ \
 				CTX_GETSET_I (bool			,DependencyTracking	,false			)  /* preprocessor (GCC) */ \
@@ -227,6 +232,13 @@ namespace parity
 				CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
 				CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
 				CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \
+				CTX_GETSET   (Path			,ResourceCompilerExe,""				)  /* resource compiler */ \
+				CTX_GETSET   (Path			,ResourceConverterExe,""			)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,InputFormat		,""				)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,OutputFormat		,""				)  /* resource compiler */ \
+				CTX_GETSET   (std::string	,BfdTarget			,""				)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,Codepage			,""				)  /* resource compiler */ \
+				CTX_GETSET_I (std::string	,Language			,""				)  /* resource compiler */ \
 				CTX_GETSET   (long			,StackReserve		,10485760		)  /* linker (default: 10MB) */ \
 				CTX_GETSET   (long			,StackCommit		,65536			)  /* linker (default: 64KB) */ \
 				CTX_GETSET   (long			,HeapReserve		,10485760		)  /* linker (default: 10MB) */ \
@@ -243,6 +255,7 @@ namespace parity
 				CTX_GETSET   (Path			,ManifestExe		,""				)  /* linker (MS) */ \
 				CTX_GETSET   (std::string	,ManifestDefaults	,"-nologo"		)  /* linker (MS) */ \
 				CTX_GETSET_I (bool			,PreferStatic		,false			)  /* linker (GCC) */ \
+				CTX_GETSET_I (Path			,OutImplib			,""				)  /* linker */ \
 				CTX_GETSET   (Path			,DefaultOutput		,"a.exe"		)  /* all */ \
 				CTX_GETSET_I (Path			,OutputFile			,"a.exe"		)  /* all */ \
                 CTX_GETSET   (bool          ,WaitForOutputFile  ,true           )  /* all */ \

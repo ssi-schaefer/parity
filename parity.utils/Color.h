@@ -24,6 +24,7 @@
 #define __COLOR_H__
 
 #include <string>
+#include <cstring>
 
 namespace parity
 {

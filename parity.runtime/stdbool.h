@@ -23,6 +23,13 @@
 #ifndef __PCRT_STDBOOL_H__
 #define __PCRT_STDBOOL_H__
 
+#if ((_MSC_VER - 0) >= 1800)
+
+#include "internal/pcrt.h"
+#include RUNTIME_INC(Stdbool.h)
+
+#else // ((_MSC_VER - 0) < 1800)
+
 #ifndef __cplusplus
 
 typedef enum {
@@ -33,7 +40,9 @@ typedef enum {
 #define bool _Bool
 #define __bool_true_false_are_defined 1
 
-#endif
+#endif // ndef __cplusplus
+
+#endif // _MSC_VER < 1800)
 
 #endif
 

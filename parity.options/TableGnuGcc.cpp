@@ -60,6 +60,7 @@ namespace parity
 			{ "-ansi"		,setAnsiMode				},
 			{ "-Wl,-rpath"	,addRunPath					},  // must be before -W to match correctly
 			{ "-Wl,-e"		,setEntryPoint				},  // -- " --
+			{ "-Wl,--out-implib",setOutImplib			},  // must be before -W to match correctly
 			{ "-Werror"		,setWarningAsError			},	// -- " --
 			{ "-w"			,setWarningLevel			},
 			{ "-W"			,setWarningLevel			},
@@ -77,6 +78,7 @@ namespace parity
 			{ "-fPIC"		,setPositionIndep			},
 			{ "-E"			,setPreprocess				},
 			{ "-I"			,addIncludePath				},
+			{ "-include"	,addIncludeFile				},
 			{ "-L"			,addLibraryPath				},
 			{ "-static"		,setPreferStatic			},
 			{ "-g"			,setDebugable				},
@@ -114,6 +116,9 @@ namespace parity
 			{ ".asm"		,addSource					},
 			{ ".s"			,addSource					},
 			{ ".S"			,addSource					},
+			{ ".def"		,addSource					},
+			{ ".Def"		,addSource					},
+			{ ".DEF"		,addSource					},
 			{ ".res"		,setUnhandledObjectFilePassthrough	},
 			{ "-"			,addSourceFromStdin			},
 			// --- must be last ---

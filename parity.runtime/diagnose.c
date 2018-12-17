@@ -39,6 +39,10 @@
 extern void* _ReturnAddress();
 #pragma intrinsic(_ReturnAddress)
 
+#if (_MSC_VER - 0) < 1500
+int __stdcall IsDebuggerPresent();
+#endif
+
 int PcrtWaitForDebugger(int timeout) {
 	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Process %d waiting for Debugger to be attached (%d seconds): ", GetCurrentProcessId(), timeout);
 

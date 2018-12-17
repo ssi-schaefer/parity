@@ -35,7 +35,7 @@ namespace parity
 		MsSymbolTableGenerator::MsSymbolTableGenerator(parity::binary::Symbol::SymbolVector &sym)
 			: symbols_(sym)
 		{
-			utils::Log::verbose("generating symbol table for %d symbols..\n", sym.size());
+			utils::Log::verbose("generating symbol table for %ld symbols..\n", sym.size());
 		}
 
 		static const unsigned char dataEmptyPtr[] = { 0x00, 0x00, 0x00, 0x00 };

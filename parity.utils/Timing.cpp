@@ -102,8 +102,8 @@ namespace parity
 			Log::profile("\n%s %s\n", col.magenta("   Timing information:").c_str(), forked_ ? col.red("(forked)").c_str() : "");
 			Log::profile("   ");
 			for(unsigned int i = 0; i < (print_w + 2); ++i)
-				Log::profile(col.magenta("-").c_str());	
-			Log::profile(col.magenta("-----------\n").c_str());
+				Log::profile("%s", col.magenta("-").c_str());	
+			Log::profile("%s", col.magenta("-----------\n").c_str());
 
 			time_t all = 0;
 			time_t all_calc = 0;
@@ -131,7 +131,7 @@ namespace parity
 					continue;
 
 				char buf[20];
-				::snprintf(buf, 19, "%d", tmp);
+				::snprintf(buf, 19, "%ld", tmp);
 
 				std::string col_buf;
 
@@ -149,31 +149,31 @@ namespace parity
 
 				if(it->first[0] == '[') {
 					if(Context::getContext().getTimingShowTasks())
-						Log::profile("    %-*s: %*s ms\n", print_w + 1 + col.green("").length(), col.green(it->first).c_str(), 6 + col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
+						Log::profile("    %-*s: %*s ms\n", (int)print_w + 1 + (int)col.green("").length(), col.green(it->first).c_str(), 6 + (int)col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
 				} else if(it->first == "Timing") {
 					all = tmp;
 				} else {
-					Log::profile("%s%-*s: %*s ms\n", col.cyan(" * ").c_str(), print_w + 2, it->first.c_str(), 6 + col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
+					Log::profile("%s%-*s: %*s ms\n", col.cyan(" * ").c_str(), (int)print_w + 2, it->first.c_str(), 6 + (int)col.red("").length(), (tmp < 0 ? col.red("unfin.").c_str() : col_buf.c_str()));
 					all_calc += tmp;
 				}
 			}
 
 			Log::profile("   ");
 			for(unsigned int i = 0; i < (print_w + 2); ++i)
-				Log::profile(col.magenta("-").c_str());	
-			Log::profile(col.magenta("-----------\n").c_str());
+				Log::profile("%s", col.magenta("-").c_str());	
+			Log::profile("%s", col.magenta("-----------\n").c_str());
 
 			if(all > 0)
-				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (real)", all);
+				Log::profile("   %-*s: %6ld ms\n", (int)print_w + 2, "All together (real)", all);
 
 			if(all_calc > 0)
-				Log::profile("   %-*s: %6d ms\n", print_w + 2, "All together (summed)", all_calc);
+				Log::profile("   %-*s: %6ld ms\n", (int)print_w + 2, "All together (summed)", all_calc);
 
 			if(all > 0 || all_calc > 0) {
 				Log::profile("   ");
 				for(unsigned int i = 0; i < (print_w + 2); ++i)
-					Log::profile(col.magenta("-").c_str());	
-				Log::profile(col.magenta("-----------\n").c_str());
+					Log::profile("%s", col.magenta("-").c_str());	
+				Log::profile("%s", col.magenta("-----------\n").c_str());
 				Log::profile("\n");
 			}
 		}

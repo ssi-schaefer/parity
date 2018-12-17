@@ -86,10 +86,12 @@ namespace parity
 			// determine wether to link a dll and output filenames.
 			//
 			utils::Path out;
+			utils::Path exp;
 			if(ctx.getSharedLink()) {
 				vec.push_back("/DLL");
 
-				if(ctx.getFrontendType() == utils::ToolchainMicrosoft)
+				if (ctx.getFrontendType() == utils::ToolchainMicrosoft
+				 || !ctx.getOutImplib().get().empty())
 				{
 					utils::Path dll = ctx.getOutputFile();
 
@@ -97,10 +99,26 @@ namespace parity
 					if(dll.exists())
 						dll.remove();
 
+					exp.set(dll.base());
+					exp.append(dll.file().substr(0, dll.file().rfind('.')) + ".exp");
+
 					dll.toForeign();
 					vec.push_back("/OUT:" + dll.get());
 
 					out = dll;
+
+					if (!ctx.getOutImplib().get().empty()) {
+						utils::Path lib = ctx.getOutImplib();
+						lib.toNative();
+						if (lib.exists())
+							lib.remove();
+
+						exp.set(lib.base());
+						exp.append(lib.file().substr(0, lib.file().rfind('.')) + ".exp");
+
+						lib.toForeign();
+						vec.push_back("/IMPLIB:" + lib.get());
+					}
 				} else {
 					utils::Path dll = ctx.getOutputFile().get() + ".dll";
 					utils::Path lib = ctx.getOutputFile();
@@ -113,6 +131,9 @@ namespace parity
 					
 					if(lib.exists())
 						lib.remove();
+
+					exp.set(lib.base());
+					exp.append(lib.file().substr(0, lib.file().rfind('.')) + ".exp");
 
 					dll.toForeign();
 					lib.toForeign();
@@ -138,15 +159,25 @@ namespace parity
 				out = ctx.getOutputFile();
 
 				out.toNative();
-
 				if(out.exists())
 					out.remove();
+
+				exp.set(out.base());
+				exp.append(out.file().substr(0, out.file().rfind(".")) + ".exp");
 
 				out.toForeign();
 				vec.push_back("/OUT:" + out.get());
 
 				std::string outFile = out.file();
 				task.addFilter(outFile.substr(0, outFile.rfind(".")) + ".lib", false);
+			}
+
+			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it) {
+				if (it->second == utils::LanguageModuleDefinition) {
+					utils::Path pth(it->first);
+					pth.toForeign();
+					vec.push_back("/DEF:" + pth.get());
+				}
 			}
 
 			//
@@ -323,22 +354,19 @@ namespace parity
 			vec.push_back(oss.str());
 
 			//
-			// change manifest name
+			// always create the manifest, as known file name
 			//
-			if(ctx.getFrontendType() != utils::ToolchainMicrosoft)
-			{
-				utils::Path mf;
 
-				if(ctx.getSharedLink())
-					mf = out.get() + ".dll.mf";
-				else
-					mf = out.get() + ".mf";
+			utils::Path mf;
+			if(ctx.getSharedLink() && ctx.getOutImplib().get().empty())
+				mf = out.get() + ".dll.mf";
+			else
+				mf = out.get() + ".mf";
+			mf.toForeign();
 
-				mf.toForeign();
-
-				vec.push_back("/MANIFESTFILE:" + mf.get());
-				task.addFilter("/MANIFESTFILE", false);
-			}
+			vec.push_back("/MANIFEST");
+			vec.push_back("/MANIFESTFILE:" + mf.get());
+			task.addFilter("/MANIFESTFILE", false);
 
 			//
 			// create command scripts
@@ -356,7 +384,6 @@ namespace parity
 				utils::Log::verbose("cleaning up after failed link!");
 				out.remove();
 
-				utils::Path exp = out.get().substr(0, out.get().rfind('.')) + ".exp";
 				exp.remove();
 				
 				utils::Path mf;
@@ -381,10 +408,7 @@ namespace parity
 			if(ctx.getFrontendType() != utils::ToolchainMicrosoft)
 			{
 				std::string outFile = out.get();
-				utils::Path exp;
 				
-				exp = outFile.substr(0, outFile.rfind('.')) + ".exp";
-
 				if(exp.waitForAppearance())
 					ctx.getTemporaryFiles().push_back(exp);
 
@@ -393,10 +417,13 @@ namespace parity
 					//
 					// executable may produce .lib file in some cases
 					//
-					utils::Path lib = outFile.substr(0, outFile.rfind('.')) + ".lib";
+					utils::Path lib;
+					lib.set(out.base());
+					lib.append(out.file().substr(0, out.file().rfind('.')) + ".lib");
 					if(lib.waitForAppearance())
 						ctx.getTemporaryFiles().push_back(lib);
-				} else {
+				} else
+				if (ctx.getOutImplib().get().empty()) {
 					//
 					// above out is set to the import lib, from here on this
 					// needs the .dll attached. (only if not microsoft frontend
@@ -432,7 +459,7 @@ namespace parity
 
 					vec.push_back("-manifest");
 					vec.push_back(manifest.get());
-					vec.push_back("-outputresource:" + out.get());
+					vec.push_back("-updateresource:" + out.get());
 
 					if(!task.execute(ctx.getManifestExe(), vec))
 					{

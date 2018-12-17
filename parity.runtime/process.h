@@ -65,7 +65,7 @@
 #    define spawnve __crt_invalid_spawnve
 #    define spawnvp __crt_invalid_spawnvp
 #    define spawnvpe __crt_invalid_spawnvpe
-#    include RUNTIME_INC(Process.h)
+#    include UCRT_INC(Process.h)
 #  pragma pop_macro("execl")
 #  pragma pop_macro("execle")
 #  pragma pop_macro("execlp")

@@ -116,7 +116,7 @@ namespace parity
 					return;
 				}
 
-				Log::verbose("cleaning %d files.\n", TemporaryFiles.size());
+				Log::verbose("cleaning %ld files.\n", TemporaryFiles.size());
 
 				for(PathVector::iterator it = TemporaryFiles.begin(); it != TemporaryFiles.end(); ++it)
 				{
@@ -192,7 +192,7 @@ namespace parity
 			#undef  CTX_GETSET
 			#define CTX_GETSET(type, name, init) utils::Log::verbose("%s%-20s%s%s%s%*s: %s\n", \
 				col.green(" * ").c_str(), #name, col.cyan("(").c_str(), #type, col.cyan(")").c_str(), \
-				20 - strlen(#type), "", printable(name).c_str());
+				20 - (int)strlen(#type), "", printable(name).c_str());
 
 			utils::Log::verbose("\n%s\n", col.red("   Automatic Dump of Context Members:").c_str());
 			utils::Log::verbose("%s\n", col.red("   ----------------------------------").c_str());
@@ -214,35 +214,47 @@ namespace parity
 			DefaultOutput = val;
 		}
 
-		Path Context::lookupLibrary(const std::string& name, bool isMinusL)
+		Path Context::lookupLibrary(std::string name, Libspec libspec)
 		{
 			std::vector<std::string> names;
 
-			if(isMinusL)
-			{
-				if(!PreferStatic)
-				{
-					names.push_back(name + ".so");
+			switch(libspec) {
+			case LibspecLibname:
+			case LibspecDefaultlib:
+				//
+				// names searched for "-l<libname>"
+				//
+				if(!PreferStatic) {
+					// shared Win32 naming scheme (by libtool)
+					names.push_back("lib" + name + ".dll.lib");
+					names.push_back(        name + ".dll.lib");
+					// shared MinGW/Cygwin naming scheme
+					names.push_back("lib" + name + ".dll.a");
+					names.push_back(        name + ".dll.a");
+					// shared Unix naming scheme
 					names.push_back("lib" + name + ".so");
+					names.push_back(        name + ".so");
 				}
-				names.push_back(name + ".a");
-				names.push_back("lib" + name + ".a");
-				names.push_back(name + ".lib");
+				// static Win32 naming scheme with libtool
 				names.push_back("lib" + name + ".lib");
+				names.push_back(        name + ".lib");
+				// static MinGW/Cygwin/Unix naming scheme
+				names.push_back("lib" + name + ".a");
+				names.push_back(        name + ".a");
+				break;
+			}
 
-				//
-				// Implicit libraries are looked up through minusL,
-				// so this must be here, that a complete library name
-				// is found too.
-				//
-				names.push_back(name);
-			} else {
+			switch(libspec) {
+			case LibspecFilename:
+			case LibspecDefaultlib:
+			  {
 				Path direct(name);
 				direct.toNative();
 				if(direct.exists() && direct.isFile())
 					return direct;
 
 				names.push_back(name);
+			  } break;
 			}
 
 			static utils::Environment envLibPath("LIBRARY_PATH");
@@ -267,13 +279,17 @@ namespace parity
 
 						Path pth(*it);
 						pth.append(*lib);
-						if(pth.exists() && pth.isFile())
+						if(pth.exists() && pth.isFile()) {
+							Log::verbose("  found %s/%s\n", it->get().c_str(), lib->c_str());
+							Log::verbose("     as %s\n", pth.get().c_str());
 							return pth;
+						}
+						Log::verbose("     no %s\n", pth.get().c_str());
 					}
 				}
 			}
 
-			throw utils::Exception("cannot find %s in any of the %d library paths", name.c_str(), LibraryPaths.size() + SysLibraryPaths.size());
+			throw utils::Exception("cannot find %s in any of the %ld library paths", name.c_str(), LibraryPaths.size() + SysLibraryPaths.size());
 		}
 
 		void Context::setObjectsLibrariesString(const std::string& val)
@@ -287,7 +303,7 @@ namespace parity
 			//
 
 			std::string arg;
-			bool isMinusL = false;
+			Libspec libspec = LibspecFilename;
 
 			if((val[0] == '-' || val[0] == '/') && val[1] == 'l')
 			{
@@ -296,13 +312,18 @@ namespace parity
 				else {
 					throw Exception("missing directly attached library name to -l");
 				}
-				isMinusL = true;
+				libspec = LibspecLibname;
+				if (arg.length() > 2 && arg[0] == ':') {
+					// "-l:libfile"
+					arg = arg.substr(1);
+					libspec = LibspecFilename;
+				}
 			} else {
 				arg = val;
 			}
 
 			try {
-				Path pth = lookupLibrary(arg, isMinusL);
+				Path pth = lookupLibrary(arg, libspec);
 				ObjectsLibraries.push_back(pth);
 
 				Statistics::instance().addInformation("file-binary", pth.get());

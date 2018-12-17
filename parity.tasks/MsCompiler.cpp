@@ -44,11 +44,16 @@ namespace parity
 
 			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it)
 			{
-				utils::Path native(it->first);
-				native.toNative();
+				if (it->second == utils::LanguageModuleDefinition)
+					continue;
+
+				utils::Path origSource(it->first);
+				origSource.toNative();
+
+				utils::Path realSource(origSource);
 
 				utils::Task::ArgumentVector specialized(arguments);
-				prepareGenericFile(native, specialized, it->second);
+				prepareGenericFile(origSource, realSource, specialized, it->second);
 
 				switch(it->second)
 				{
@@ -58,7 +63,7 @@ namespace parity
 						exit(1);
 					}
 
-					compileGeneric(native, ctx.getAssemblerExe(), specialized);
+					compileGeneric(origSource, realSource, ctx.getAssemblerExe(), specialized);
 					break;
 				case utils::LanguageC:
 				case utils::LanguageCpp:
@@ -68,16 +73,16 @@ namespace parity
 						exit(1);
 					}
 
-					processCOrCppFile(specialized);
-					compileGeneric(native, ctx.getCompilerExe(), specialized);
+					processCOrCppFile(origSource, realSource, specialized);
+					compileGeneric(origSource, realSource, ctx.getCompilerExe(), specialized);
 					break;
 				default:
-					throw utils::Exception("unsupported language type for %s", native.get().c_str());
+					throw utils::Exception("unsupported language type for %s", origSource.get().c_str());
 				}
 			}
 		}
 
-		void MsCompiler::processCOrCppFile(utils::Task::ArgumentVector& vec)
+		void MsCompiler::processCOrCppFile(const utils::Path& origFile, const utils::Path& sourceFile, utils::Task::ArgumentVector& vec)
 		{
 			utils::Context& ctx = utils::Context::getContext();
 
@@ -173,7 +178,7 @@ namespace parity
 			}
 		}
 
-		void MsCompiler::compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec)
+		void MsCompiler::compileGeneric(const utils::Path& origFile, const utils::Path& sourceFile, utils::Path executable, utils::Task::ArgumentVector& vec)
 		{
 			utils::Context& ctx = utils::Context::getContext();
 			utils::Task tsk;
@@ -185,7 +190,7 @@ namespace parity
 				//
 				// Generate an output filename option for this source file
 				//
-				std::string base = file.file();
+				std::string base = origFile.file();
 
 				if(!ctx.getPreprocess())
 				{
@@ -193,15 +198,12 @@ namespace parity
 					{
 						output = ctx.getOutputFile();
 						output.toForeign();
-
-						vec.push_back("/Fo" + output.get());
 					} else if(!ctx.getCompileOnly()) {
 						//
 						// object is only temporary for linking.
 						//
 						output = utils::Path::getTemporary(".parity.object.XXXXXX.o");
 						output.toForeign();
-						vec.push_back("/Fo" + output.get());
 						ctx.getTemporaryFiles().push_back(output);
 					} else {
 						//
@@ -209,8 +211,10 @@ namespace parity
 						//
 						output = base.substr(0, base.rfind('.')).append(".o");
 						output.toForeign();
-						vec.push_back("/Fo" + output.get());
 					}
+					// ml.exe (at least with VC 9.0) requires the output
+					// object file to be specified before the source file.
+					vec.insert(vec.begin(), "/Fo" + output.get());
 				}
 				
 				//
@@ -225,7 +229,7 @@ namespace parity
 			if(prepOut_.is_open())
 				tsk.setOutStream(prepOut_);
 
-			tsk.addFilter(file.file(), true);
+			tsk.addFilter(origFile.file(), true);
 
 			tsk.addFilter("C4290", false);		// warning about exception specifiers
 			tsk.addFilter("D4029", false);		// warning about optimization not supported in standard compiler.
@@ -242,10 +246,10 @@ namespace parity
             }
 		}
 
-		void MsCompiler::prepareGenericFile(utils::Path file, utils::Task::ArgumentVector& vec, utils::LanguageType lang)
+		void MsCompiler::prepareGenericFile(utils::Path & origFile, utils::Path & sourceFile, utils::Task::ArgumentVector& vec, utils::LanguageType lang)
 		{
 			utils::Context& ctx = utils::Context::getContext();
-			std::string base = file.file();
+			std::string base = origFile.file();
 			//
 			// Preprocessing works allways the same too.
 			//
@@ -301,25 +305,63 @@ namespace parity
 				vec.push_back("/c");
 			}
 
+			// Insert real #include "file" if requested via "-include file" arg.
+			if (!ctx.getIncludeFiles().empty()) {
+				size_t ext = base.rfind('.');
+				if (ext != std::string::npos) {
+					sourceFile = utils::Path::getTemporary(".parity.source.XXXXXX" + base.substr(ext));
+				} else {
+					sourceFile = utils::Path::getTemporary(".parity.source.XXXXXX." + base);
+				}
+				ctx.getTemporaryFiles().push_back(sourceFile);
+				std::ofstream sourceStream(sourceFile.get().c_str());
+				std::ifstream origStream(origFile.get().c_str());
+				for(utils::PathVector::iterator it = ctx.getIncludeFiles().begin(); it != ctx.getIncludeFiles().end(); ++it) {
+					it->toForeign();
+					utils::Log::verbose("prepending include \"%s\"\n", it->get().c_str());
+					// #include accepts the single backslash
+					sourceStream << "#include \"" << it->get() << "\"\n";
+				}
+				utils::Path foreignSource(origFile);
+				foreignSource.toForeign();
+				std::string foreign = foreignSource.get();
+				// #line does not accept the single backslash
+				for(size_t i = 0; i < foreign.size(); ++i) {
+					if (foreign[i] == '\\')
+						foreign.replace(i++, 1, "\\\\");
+				}
+				sourceStream << "#line 1 \"" << foreign << "\"\n";
+				// Need original file's directory as include path now,
+				// to have #include "..." really search there first.
+				utils::Log::verbose("adding original source location as include path\n");
+				vec.insert(vec.begin(), "/I" + foreignSource.base() + "/");
+				char buf[1024];
+				while(!origStream.eof()) {
+					origStream.read(buf, sizeof(buf));
+					sourceStream.write(buf, origStream.gcount());
+				}
+			}
+
+
 			//
 			// Based on Language decide input file switch
 			//
-			file.toForeign();
+			sourceFile.toForeign();
 
 			switch(lang)
 			{
 			case utils::LanguageAsssembler:
-				vec.push_back("/Ta" + file.get());
+				vec.push_back("/Ta" + sourceFile.get());
 				break;
 			case utils::LanguageC:
-				vec.push_back("/Tc" + file.get());
+				vec.push_back("/Tc" + sourceFile.get());
 				break;
 			case utils::LanguageCpp:
-				vec.push_back("/Tp" + file.get());
+				vec.push_back("/Tp" + sourceFile.get());
 				break;
 			case utils::LanguageUnknown:
 				// let the compiler decide here...
-				vec.push_back(file.get());
+				vec.push_back(sourceFile.get());
 				break;
 			default:
 				throw utils::Exception("unknown language type, or language not supported by backend!");
@@ -388,11 +430,11 @@ namespace parity
 
 #if 0
 				if(!ctx.isBadCompilerPath(*it))
-					vec.push_back("/I" + it->get());
+					vec.push_back("/I" + it->get() + "/");
 				else
 					utils::Log::verbose("skipping bad include path %s\n", it->get().c_str());
 #else
-				vec.push_back("/I" + it->get());
+				vec.push_back("/I" + it->get() + "/");
 #endif
 			}
 
@@ -405,11 +447,11 @@ namespace parity
 
 #if 0
 				if(!ctx.isBadCompilerPath(*it))
-					vec.push_back("/I" + it->get());
+					vec.push_back("/I" + it->get() + "/");
 				else
 					utils::Log::verbose("skipping bad include path (from environment) %s\n", it->get().c_str());
 #else
-				vec.push_back("/I" + it->get());
+				vec.push_back("/I" + it->get() + "/");
 #endif
 			}
 
@@ -427,7 +469,7 @@ namespace parity
 					utils::Path foreign(*it);
 					foreign.toForeign();
 
-					vec.push_back("/I" + foreign.get());
+					vec.push_back("/I" + foreign.get() + "/");
 				}
 			}
 
@@ -436,15 +478,6 @@ namespace parity
 			//
 			if(ctx.getDebugable())
 				vec.push_back("/Z7");
-
-			//
-			// Set shared library defines (also for assembler)
-			//
-			if(ctx.getSharedLink())
-			{
-				vec.push_back("/DPIC");
-				vec.push_back("/D_DLL");
-			}
 
 			//
 			// Add define to disable deprecation of CRT functions for VS 2005
@@ -459,7 +492,7 @@ namespace parity
 
 			for(utils::DefineMap::const_iterator it = defines.begin(); it != defines.end(); ++it)
 			{
-				std::string def = "/D" + it->first;
+				std::string def = "/D" + it->first + "=";
 
 				if(!it->second.empty())
 				{
@@ -478,8 +511,6 @@ namespace parity
 							val.replace(pos, 1, "%%");
 					}
 
-					def += "=";
-
 					if(!ctx.getUseCommandScripts()) {
 						if(val.find(' ') != std::string::npos)
 							def += "\"" + val + "\"";
@@ -488,9 +519,9 @@ namespace parity
 					} else {
 						def += val;
 					}
-
-					utils::Log::verbose("define: %s\n", def.c_str());
 				}
+
+				utils::Log::verbose("define: %s\n", def.c_str());
 
 				vec.push_back(def);
 			}

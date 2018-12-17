@@ -76,14 +76,16 @@ namespace parity
 			return true;
 		}
 
-		bool setUnhandledSourceFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& used)
+		bool setUnhandledSourceFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			return setCompilerPassthrough("-X", option, used);
+			bool optused = false;
+			return setCompilerPassthrough("-X", option, optused);
 		}
 
-		bool setUnhandledObjectFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& used)
+		bool setUnhandledObjectFilePassthrough(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
-			return setLinkerPassthrough("-Y", option, used);
+			bool optused = false;
+			return setLinkerPassthrough("-Y", option, optused);
 		}
 
 		bool showParityVersion(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
@@ -107,6 +109,9 @@ namespace parity
 				std::cout << "Sysconf Directory: " << PARITY_SYSCONFDIR << std::endl;
 				std::cout << "Include Directory: " << PARITY_INCLUDEDIR << std::endl;
 				std::cout << "Library Directory: " << PARITY_LIBDIR << std::endl;
+				std::cout << "Libexec Directory: " << PARITY_LIBEXECDIR << std::endl;
+				std::cout << "Binaries Directory: " << PARITY_BINDIR << std::endl;
+				std::cout << "Local State Directory: " << PARITY_LOCALSTATEDIR << std::endl;
 			#endif
 
 			exit(0);
@@ -156,6 +161,16 @@ namespace parity
 			return true;
 		}
 
+		bool ignoreOption(const char* option, const char* argument, bool& used)
+		{
+			return true;
+		}
+
+		bool ignoreWithArgument(const char* option, const char* argument, bool& used)
+		{
+			used = true;
+			return true;
+		}
 	}
 }
 

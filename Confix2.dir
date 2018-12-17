@@ -1,12 +1,33 @@
+IGNORE_FILE('config.h')
 ADD_EXTRA_DIST('parity.sln')
 ADD_EXTRA_DIST('ReleaseNotes.txt')
-ADD_EXTRA_DIST('parity.conf.psx.in')
+
+PARITYsupported_archs = ''
+PARITYsupported_versions = ''
+
+parity_setup_in = open('parity.setup/parity-setup.in', 'r')
+for line in parity_setup_in.readlines():
+	line = line.strip()
+	if line.startswith('PARITYsupported_archs="'):
+		if not line.startswith('PARITYsupported_archs="@'):
+			PARITYsupported_archs=line.split('"')[1]
+	if line.startswith('PARITYsupported_versions="'):
+		if not line.startswith('PARITYsupported_versions="@'):
+			PARITYsupported_versions=line.split('"')[1]
+	if PARITYsupported_archs and PARITYsupported_versions:
+		break
+parity_setup_in = None
 
 CONFIGURE_AC(
-	lines=['AC_CONFIG_FILES(parity.conf parity.loader/parity.conf parity.runtime/parity.conf parity.diagnostic/parity.conf)'],
+	lines=['AC_CONFIG_FILES(parity.setup/parity-setup parity.setup/parity-environment.sh parity.gnu.ar/parity.gnu.ar parity.gnu.nm/parity.gnu.dumpbin)'],
 	order=AC_BOILERPLATE)
 
-acm4 = """
+acm4 = ''
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_ARCHS],       [' + PARITYsupported_archs                      + '])\n'
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_ARCHS_CS],    [' + PARITYsupported_archs   .replace(' ', ',') + '])\n'
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_VERSIONS],    [' + PARITYsupported_versions                   + '])\n'
+acm4 += 'AC_DEFUN([PARITY_KNOWN_MSVC_VERSIONS_CS], [' + PARITYsupported_versions.replace(' ', ',') + '])\n'
+acm4 += """
 
 AC_DEFUN([PARITY_DIR], [
 	prefix_NONE=
@@ -21,434 +42,118 @@ AC_DEFUN([PARITY_DIR], [
 	test "$exec_prefix_NONE" && exec_prefix=NONE
 ])
 
-AC_DEFUN([PARITY_LOOKUP_EXE], [
-	eLookupRoot=$1
-	eLookupVar=$2
-	eLookupFile=$3
-
-	eLookedUp=
-
-	AC_MSG_CHECKING([for $eLookupFile])
-
-	eLookupIFS=$IFS
-	IFS=$PATH_SEPARATOR
-
-	for x in $eLookupRoot; do
-		IFS=$eLookupIFS
-
-        [[ -d "$x" ]] || continue
-		
-        PARITY_LOOKUP_PATH_IC([$x], [eLookedUp], [bin/$eLookupFile])
-        PARITY_LOOKUP_PATH_IC([$x], [eLookedUp], [$eLookupFile])
-
-		if test -n "$eLookedUp"; then
-			break
-		fi
-	done
-
-	IFS=$eLookupIFS
-
-	if test -z "$eLookedUp" -o ! -f "$eLookedUp"; then
-		AC_MSG_WARN([cannot find $eLookupFile])
-	else
-		AC_MSG_RESULT([$eLookedUp])
-		eval "$eLookupVar=\\\"$eLookedUp\\\""
-	fi
-])
-
-AC_DEFUN([PARITY_LOOKUP_PATH_IC], [
-    pLookupRoot=$1
-    pLookupVar=$2
-    pLookupPath=$3
-
-    pLookupIFS=$IFS
-    IFS=$'\n'
-
-    pSlCnt=$(( $(echo "${pLookupPath}" | grep -o '/' | wc -l) + 1 ))
-
-    for y in $(find "${pLookupRoot}" -maxdepth ${pSlCnt} -mindepth ${pSlCnt} -iwholename "*/$pLookupPath"); do
-        IFS=$pLookupIFS
-
-        if [[ -n "${pLookedUp}" ]]; then
-            echo "WARN: multiple matches for \"$pLookupPath\". Found \"${y}\", using \"${pLookedUp}\""
-        else
-            eval "$pLookupVar=\\\"${y}\\\""
-        fi
-    done
-
-    IFS=$pLookupIFS
-])
-
-AC_DEFUN([PARITY_LOOKUP_PATH_BY_FILE_IC], [
-    fLookupRoot=$1
-    fLookupVar=$2
-    fLookupPath=$3
-
-    fLookedUp=
-
-    PARITY_LOOKUP_PATH_IC([$fLookupRoot], [fLookedUp], [$fLookupPath])
-
-    if [[ -n "$fLookedUp" ]]; then
-        eval "$fLookupVar=\\\"${fLookedUp%/*}\\\""
-    fi
-])
-
-AC_DEFUN([PARITY_LOOKUP_FILE_SUBST], [
-    sLookupRoot=$1
-    sLookupSubst=$2
-    sLookupPath=$3
-
-    AC_MSG_CHECKING([for ${sLookupPath}])
-
-    sLookedUp=
-
-    PARITY_LOOKUP_PATH_IC([${sLookupRoot}], [sLookedUp], [${sLookupPath}])
-
-    eval "${sLookupSubst}=\\\"${sLookedUp}\\\""
-    AC_MSG_RESULT([${sLookedUp}])
-
-    if test -z "${sLookedUp}" -o ! -e "${sLookedUp}"; then
-        AC_MSG_ERROR([cannot find "${sLookupPath}" in "${sLookupRoot}"])
-    fi
-
-    AC_SUBST([$2])
-])
-
-AC_DEFUN([PARITY_LOOKUP_CRT],
-[
-	CrtPaths=$1
-	CrtIncVar=$2
-	CrtLibVar=$3
-	CrtLookedUpInc=
-	CrtLookedUpLib=
-
-	AC_MSG_CHECKING([for runtime dirs])
-
-	LookupIFS=$IFS
-	IFS=$PATH_SEPARATOR
-
-	for x in $CrtPaths; do
-		IFS=$LookupIFS
-	
-		if test -z "$CrtLookedUpInc"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [CrtLookedUpInc], [include/stdio.h])
-		fi
-
-		if test -z "$CrtLookedUpLib" -a -f "$x/lib/msvcrt.lib"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [CrtLookedUpLib], [lib/msvcrt.lib])
-		fi
-
-		if test -n "$CrtLookedUpInc" -a -n "$CrtLookedUpLib"; then
-			break
-		fi
-	done
-
-	IFS=$LookupIFS
-
-	if test -z "$CrtLookedUpInc" -o ! -d "$CrtLookedUpInc"; then
-		AC_MSG_ERROR([cannot find runtime include directory])
-	fi
-	if test -z "$CrtLookedUpLib" -o ! -d "$CrtLookedUpLib"; then
-		AC_MSG_ERROR([cannot find runtime library directory])
-	fi
-
-	AC_MSG_RESULT([$CrtLookedUpInc, $CrtLookedUpLib])
-
-	eval "$CrtIncVar=\\\"$CrtLookedUpInc\\\""
-	eval "$CrtLibVar=\\\"$CrtLookedUpLib\\\""
-])
-
-AC_DEFUN([PARITY_LOOKUP_SDK],
-[
-	SdkPaths=$1
-	SdkIncVar=$2
-	SdkLibVar=$3
-
-	SdkLookedUpInc=
-	SdkLookedUpLib=
-
-	AC_MSG_CHECKING([for platform sdk dirs])
-
-	LookupIFS=$IFS
-	IFS=$PATH_SEPARATOR
-
-	for x in $SdkPaths; do
-		IFS=$LookupIFS
-		
-		if test -z "$SdkLookedUpInc"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpInc], [platformsdk/include/windows.h])
-		fi
-		if test -z "$SdkLookedUpInc"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpInc], [include/windows.h])
-		fi
-
-		if test -z "$SdkLookedUpLib"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpLib], [platformsdk/lib/kernel32.lib])
-		fi
-		if test -z "$SdkLookedUpLib"; then
-            PARITY_LOOKUP_PATH_BY_FILE_IC([$x], [SdkLookedUpLib], [lib/kernel32.lib])
-		fi
-
-		if test -n "$SdkLookedUpInc" -a -n "$SdkLookedUpLib"; then
-			break
-		fi
-	done
-
-	IFS=$LookupIFS
-
-	if test -z "$SdkLookedUpInc" -o ! -d "$SdkLookedUpInc"; then
-		AC_MSG_ERROR([cannot find platform sdk include directory (maybe set MSSDK)!])
-	fi
-
-	if test -z "$SdkLookedUpInc" -o ! -d "$SdkLookedUpInc"; then
-		AC_MSG_ERROR([cannot find platform sdk library directory (maybe set MSSDK)!])
-	fi
-
-	AC_MSG_RESULT([$SdkLookedUpInc, $SdkLookedUpLib])
-
-	eval "$SdkIncVar=\\\"$SdkLookedUpInc\\\""
-	eval "$SdkLibVar=\\\"$SdkLookedUpLib\\\""
-])
-
-AC_DEFUN([PARITY_FIND_ADDITIONAL_EXEC_PATHS],
-[
-	# WARNING: $1 must be an absolute path!
-	ExecutableRoot="$(dirname "$1")"
-	
-	AC_MSG_CHECKING([for paths required to execute $1])
-
-	RelPathsVs7=". ../../Common7/Tools ../../Common7/Tools/Bin ../../Common7/IDE"
-	# those are for now the same...
-	# RelPathsVs8=${RelPathsVs7}
-	# RelPathsVs9=${RelPathsVs8}
-
-	PathCount=0
-	AllPaths=
-	for path in ${RelPathsVs7} ${RelPathsVs8} ${RelPathsVs9}; do
-		if test -d "$ExecutableRoot/$path"; then
-			FullPath=$(cd "$ExecutableRoot/$path"; pwd)
-			case ":${AllPaths}:" in
-			*":${FullPath}:"*) ;;
-			*) 
-				AllPaths="${AllPaths}${AllPaths:+:}:${FullPath}" 
-				PathCount=$(($PathCount + 1))
-
-				echo "AdditionalExecPaths = $FullPath" >> ${$2}
-				;;
-			esac
-		fi
-	done
-
-	AC_MSG_RESULT([added $PathCount paths])
-])
-
 AC_DEFUN([PARITY_CONFIGURE],
 [
-	PARITY_DIR([PARITY_SYSCONFDIR], [sysconfdir], [Path where configuration is installed])
-	PARITY_DIR([PARITY_INCLUDEDIR], [includedir], [Path where header files are installed])
-	PARITY_DIR([PARITY_LIBDIR], [libdir], [Path where libraries are installed])
+	PARITY_DIR([PARITY_SYSCONFDIR], ['${sysconfdir}/${PACKAGE}'],
+		[Path where user specific configuration is installed])
+	PARITY_DIR([PARITY_LOCALSTATEDIR], ['${localstatedir}/${PACKAGE}'],
+		[Path where site specific configuration is maintained])
+	PARITY_DIR([PARITY_INCLUDEDIR], ['${libdir}/${PACKAGE}/include'],
+		[Path where internal header files are installed])
+	PARITY_DIR([PARITY_LIBDIR], ['${libdir}/${PACKAGE}'],
+		[Path where internal libraries are installed])
+	PARITY_DIR([PARITY_LIBEXECDIR], ['${libexecdir}/${PACKAGE}'],
+		[Path where internal executables are installed])
+	PARITY_DIR([PARITY_BINDIR], ['${bindir}'],
+		[Path where executables are installed])
+	AC_SUBST([LN_S], [${as_ln_s}])
 
-	ParityCompiler=
-	ParityAssembler=
-	ParityLinker=
-	ParityManifest=
+	AC_MSG_CHECKING([for MSVC architectures to support])
+	AC_ARG_ENABLE([msvc-archs],
+	  [AS_HELP_STRING([--enable-msvc-archs=@<:@PARITY_KNOWN_MSVC_ARCHS_CS@:>@],
+		[MSVC architectures to compile in support for. Default is all of them.])],
+	  [enable_msvc_archs=$enableval],
+	  [enable_msvc_archs="PARITY_KNOWN_MSVC_ARCHS_CS"])
+	parity_enabled_msvc_archs=
+	as_save_IFS=$IFS
+	IFS=", "
+	for parityarch in ${enable_msvc_archs:-PARITY_KNOWN_MSVC_ARCHS}
+	do
+	  IFS=$as_save_IFS
+	  AS_CASE([" ]PARITY_KNOWN_MSVC_ARCHS[ "],
+		[*" $parityarch "*], [],
+		[AS_CASE([$parityarch],
+		  [yes|no], [AC_MSG_ERROR([Need specific argument to --enable-msvc-archs.])],
+		  [AC_MSG_ERROR([Unknown argument $parityarch to --enable-msvc-archs.])])])
+	  parity_enabled_msvc_archs="$parity_enabled_msvc_archs $parityarch "
+	done
+	IFS=$as_save_IFS
+	enable_msvc_archs=
+	# sort unique
+	for parityarch in PARITY_KNOWN_MSVC_ARCHS
+	do
+	  AS_CASE([$parity_enabled_msvc_archs],
+		[*" $parityarch "*],
+		  [AS_CASE([" $enable_msvc_archs "],
+			[*" $parityarch "*], [],
+			["  "], [enable_msvc_archs=$parityarch],
+			[enable_msvc_archs="$enable_msvc_archs $parityarch"])])
+	done
+	AC_SUBST([PARITY_SUPPORTED_ARCHS], [$enable_msvc_archs])
+	AC_MSG_RESULT([$PARITY_SUPPORTED_ARCHS])
 
-	ParitySysIncludePaths="__parity.include"
-	ParitySysLibraryPaths="__parity.library"
-	ParityAdditionalExecPaths="__parity.paths"
+	AC_MSG_CHECKING([for MSVC versions to support])
+	AC_ARG_ENABLE([msvc-versions],
+	  [AS_HELP_STRING([--enable-msvc-versions=@<:@PARITY_KNOWN_MSVC_VERSIONS_CS@:>@],
+	    [MSVC versions to compile in support for. Defaults to all of them.])],
+	  [enable_msvc_versions=$enableval],
+	  [enable_msvc_versions="PARITY_KNOWN_MSVC_VERSIONS_CS"])
+	parity_enabled_msvc_versions=
+	as_save_IFS=$IFS
+	IFS=", "
+	for paritymsvcver in ${enable_msvc_versions:-PARITY_KNOWN_MSVC_VERSIONS}
+	do
+	  IFS=$as_save_IFS
+	  AS_CASE([" PARITY_KNOWN_MSVC_VERSIONS "],
+		[*" $paritymsvcver "*], [],
+		[AS_CASE([$paritymsvcver],
+		  [yes|no], [AC_MSG_ERROR([Need specific argument to --enable-msvc-versions.])],
+		  [AC_MSG_ERROR([Unknown argument $paritymsvcver to --enable-msvc-versions.])])])
+	  parity_enabled_msvc_versions="$parity_enabled_msvc_versions $paritymsvcver "
+	done
+	IFS=$as_save_IFS
+	# sort unique
+	enable_msvc_versions=
+	for paritymsvcver in PARITY_KNOWN_MSVC_VERSIONS
+	do
+	  AS_CASE([$parity_enabled_msvc_versions],
+		[*" $paritymsvcver "*],
+		  [AS_CASE([" $enable_msvc_versions "],
+			[*" $paritymsvcver "*], [],
+			["  "], [enable_msvc_versions=$paritymsvcver],
+			[enable_msvc_versions="$enable_msvc_versions $paritymsvcver"])])
+	done
+	AC_SUBST([PARITY_SUPPORTED_VERSIONS], [$enable_msvc_versions])
+	AC_MSG_RESULT([$enable_msvc_versions])
 
-    #
-    # Check for availability of path conversion scripts/executables
-    #
-    AC_MSG_CHECKING([for winpath2unix])
-    type winpath2unix > /dev/null 2>&1
-    w2u=$?
-    if test "$w2u" -eq 0; then
-        AC_DEFINE([HAVE_WINPATH2UNIX], [1], [Whether winpath2unix is available])
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
+    AC_MSG_CHECKING([whether to support host triplet without MSVC version])
+    AC_ARG_ENABLE([default-msvc-version],
+      [AS_HELP_STRING([--disable-default-msvc-version],
+        [Disable support for the host triplet without an MSVC version.])],
+      [enable_default_msvc_version=$enableval],
+      [enable_default_msvc_version=yes])
+	AS_CASE([$enable_default_msvc_version],
+	  [yes], [PARITY_SUPPORTS_DEFAULT_MSVC_VERSION=:],
+	  [no], [PARITY_SUPPORTS_DEFAULT_MSVC_VERSION=false],
+	  [AC_MSG_ERROR([Invalid argument $enableval to --enable-default-msvc-version.])])
+    AC_SUBST([PARITY_SUPPORTS_DEFAULT_MSVC_VERSION])
+    AC_MSG_RESULT([$enable_default_msvc_version])
 
-    AC_MSG_CHECKING([for unixpath2win])
-    type unixpath2win > /dev/null 2>&1
-    u2w=$?
-    if test "$u2w" -eq 0; then
-        AC_DEFINE([HAVE_UNIXPATH2WIN], [1], [Whether unixpath2win is available])
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
-
-	case $host in
-	*-*-cygwin*) PathConversion='cygpath -u' ;;
-	*) PathConversion='echo' ;;
-	esac
-
-    if test "$w2u" -eq 0; then
-        PathConversion='winpath2unix'
-    fi
-
-	#
-	# Lookup paths to visual studio installations
-	# need to use echo to preserve pahs with spaces correctly
-	#
-
-	test -n "$VS71COMNTOOLS" && MsvcRoot71=$(dirname "$(dirname "$(echo "$($PathConversion "$VS71COMNTOOLS")")")")
-	test -n "$VS80COMNTOOLS" && MsvcRoot80=$(dirname "$(dirname "$(echo "$($PathConversion "$VS80COMNTOOLS")")")")
-	test -n "$VS90COMNTOOLS" && MsvcRoot90=$(dirname "$(dirname "$(echo "$($PathConversion "$VS90COMNTOOLS")")")")
-	test -n "$VS100COMNTOOLS" && MsvcRoot100=$(dirname "$(dirname "$(echo "$($PathConversion "$VS100COMNTOOLS")")")")
-
-	MsvcRoot=
-
-	if test -n "$MsvcRoot71" -a -n "$MsvcRoot80"; then
-		AC_MSG_WARN([both visual studio .NET 2003 and 2005 where found! continuing with visual studio 2005])
-		MsvcRoot71=
-	fi
-
-	if test -n "$MsvcRoot100"; then
-		if test -n "$MsvcRoot90" -o -n "$MsvcRoot80" -o -n "$MsvcRoot71"; then
-			AC_MSG_WARN([Multiple Visual Studio installations found. Using 2010.])
-			MsvcRoot90=
-			MsvcRoot80=
-			MsvcRoot71=
-		fi
-	fi
-
-	if test -n "$MsvcRoot90"; then
-		if test -n "$MsvcRoot80" -o -n "$MsvcRoot71"; then
-			AC_MSG_WARN([Multiple Visual Studio installations found. Using 2008.])
-			MsvcRoot80=
-			MsvcRoot71=
-		fi
-	fi
-
-	if test -n "$MsvcRoot80"; then
-		if test -n "$MsvcRoot71"; then
-			AC_MSG_WARN([Multiple Visual Studio installations found. Using 2005.])
-			MsvcRoot71=
-		fi
-	fi
-
-	AC_MSG_CHECKING([for version of Visual Studio used])
-
-	MsvcVersion=
-	if test -n "$MsvcRoot71"; then
-		MsvcRoot="$MsvcRoot71/Vc7"
-		MsvcVersion=0x0701
-        AC_DEFINE([MSVC_VERSION], [0x0701], [Version of Visual Studio building for])
-	elif test -n "$MsvcRoot80"; then
-		MsvcRoot="$MsvcRoot80/VC"
-		MsvcVersion=0x0800
-        AC_DEFINE([MSVC_VERSION], [0x0800], [Version of Visual Studio building for])
-	elif test -n "$MsvcRoot90"; then
-		MsvcRoot="$MsvcRoot90/VC"
-		MsvcVersion=0x0900
-        AC_DEFINE([MSVC_VERSION], [0x0900], [Version of Visual Studio building for])
-	elif test -n "$MsvcRoot100"; then
-		MsvcRoot="$MsvcRoot100/VC"
-		MsvcVersion=0x1000
-        AC_DEFINE([MSVC_VERSION], [0x1000], [Version of Visual Studio building for])
-	fi
-
-	AC_MSG_RESULT([$MsvcVersion])
-
-	MsSdkDir=
-
-	if test -n "$MSSDK" -a ! -d "$MSSDK"; then
-		if test -d "`$PathConversion \"$MSSDK\"`"; then
-			MsSdkDir="`$PathConversion \"$MSSDK\"`"
-		else
-			AC_MSG_ERROR([MSSDK variable points to non-existant directory, please correct this!])
-		fi
-	else
-		MsSdkDir=$MSSDK
-	fi
-
-	#
-	# Lookup executables
-	#
-
-	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityCompiler], [cl.exe])
-	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityAssembler], [ml.exe])
-	PARITY_LOOKUP_EXE([$MsvcRoot:$PATH], [ParityLinker], [link.exe])
-
-	if test -n "$MsvcRoot80" -o -n "$MsvcRoot90" -o -n "$MsvcRoot100"; then
-		# only if using visual studio 2005 or 2008 or 2010
-		PARITY_LOOKUP_EXE([$MsvcRoot:$PATH:$MsSdkDir], [ParityManifest], [mt.exe])
-	fi
-
-	#
-	# Lookup include and library paths
-	#
-	CrtIncludeDir=
-	CrtLibraryDir=
-	SdkIncludeDir=
-	SdkLibraryDir=
-
-	PARITY_LOOKUP_CRT([$MsvcRoot], [CrtIncludeDir], [CrtLibraryDir])
-	PARITY_LOOKUP_SDK([$MsvcRoot:$MsSdkDir], [SdkIncludeDir], [SdkLibraryDir])
-
-	rm -f $ParitySysIncludePaths > /dev/null 2>&1
-	rm -f $ParitySysLibraryPaths > /dev/null 2>&1
-	rm -f $ParityAdditionalExecPaths > /dev/null 2>&1
-
-	echo "SysIncludePaths = $CrtIncludeDir" >> $ParitySysIncludePaths
-	echo "SysIncludePaths = $SdkIncludeDir" >> $ParitySysIncludePaths
-
-	echo "SysLibraryPaths = $CrtLibraryDir" >> $ParitySysLibraryPaths
-	echo "SysLibraryPaths = $SdkLibraryDir" >> $ParitySysLibraryPaths
-
-	AC_MSG_CHECKING([for default runtime type])
-	RuntimeType=dynamic
-	test -n "$MsvcRoot71" && RuntimeType=static
-	AC_MSG_RESULT([$RuntimeType])
-
-	pfx="${prefix}"
-	test "x$prefix" = xNONE && pfx=$ac_default_prefix
-
-	PcrtInclude="$pfx/include/parity.runtime"
-	PcrtLibrary="$pfx/lib/libparity_parity.runtime.a"
-	LoaderLibrary="$pfx/lib/libparity_parity.loader.a"
-
-	#
-	# Lookup required paths.
-	#
-	PARITY_FIND_ADDITIONAL_EXEC_PATHS([$ParityCompiler], [ParityAdditionalExecPaths])
-
-    #
-    # MS SDK libraries
-    #
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_KERNEL32], [kernel32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_USER32], [user32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_ADVAPI32], [advapi32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_GDI32], [gdi32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_WS2_32], [ws2_32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_SHELL32], [shell32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_OLE32], [ole32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_WINSPOOL], [winspool.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_COMCTL32], [comctl32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_COMDLG32], [comdlg32.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_USERENV], [userenv.lib])
-    PARITY_LOOKUP_FILE_SUBST([$SdkLibraryDir], [LIB_UUID], [uuid.lib])
-
-	#
-	# Finally Substitute Variables
-	#
-
-	AC_SUBST(ParityCompiler)
-	AC_SUBST(ParityAssembler)
-	AC_SUBST(ParityLinker)
-	AC_SUBST(ParityManifest)
-	
-	AC_SUBST(PcrtInclude)
-	AC_SUBST(PcrtLibrary)
-	AC_SUBST(LoaderLibrary)
-	AC_SUBST(RuntimeType)
-
-	AC_SUBST_FILE(ParityAdditionalExecPaths)
-	AC_SUBST_FILE(ParitySysIncludePaths)
-	AC_SUBST_FILE(ParitySysLibraryPaths)
+	AC_MSG_CHECKING([whether to support Remote EXecution service])
+	AC_ARG_WITH([default-remote-execution-support],
+	  [AS_HELP_STRING([--with-remote-execution-support=[[yes|no|enabled|disabled]]],
+		[Support for Remote EXecution service (https://github.com/mduft/rex)
+		can be either always enabled (yes), completely disabled (no),
+		disabled later using parity-setup (enabled), or enabled later
+		using parity-setup (disabled, default).])],
+	  [AS_CASE([$withval],[yes|no|enabled|disabled],[],
+		[AC_MSG_ERROR([Invalid argument to --with-default-remote-execution-support.])])],
+	  [with_default_remote_execution_support=disabled])
+	AC_SUBST([PARITY_REX_SUPPORT], [$with_default_remote_execution_support])
+	AS_CASE([$with_default_remote_execution_support],
+	  [yes],[AC_DEFINE([PARITY_REX_SUPPORT], [1 /* forced */], [Support Remote EXecution service])],
+	  [*abled],[AC_DEFINE([PARITY_REX_SUPPORT], [0 /* probably */])])
+	AC_MSG_RESULT([$with_default_remote_execution_support])
 ])
 
 """
@@ -463,4 +168,104 @@ CONFIGURE_AC(
     lines=['ACX_PTHREAD'],
     order=AC_PROGRAMS)
 
-MAKEFILE_AM(line='sysconf_DATA=parity.conf')
+import os
+import re
+
+_re_cfile = re.compile('^.*\\.(c|cc|cpp)$')
+_re_hfile = re.compile('^.*\\.h$')
+_re_invalid_variable_character = re.compile('[^a-zA-Z0-9]')
+
+for dir in [
+	'parity.runtime',
+	'parity.runtime/internal',
+	'parity.runtime/sys',
+	'parity.loader',
+]:
+	dirvar = re.sub(_re_invalid_variable_character, '_', dir)
+	MAKEFILE_AM(line=dirvar + 'dir = $(PARITY_LIBDIR)/' + dir)
+	MAKEFILE_AM(line=dirvar + 'includedir = $(PARITY_INCLUDEDIR)/' + dir)
+	ADD_EXTRA_DIST('$(' + dirvar + '_DATA)')
+	ADD_EXTRA_DIST('$(' + dirvar + 'include_DATA)')
+	libcfiles = []
+	libhfiles = []
+	for file in os.listdir(dir):
+		if os.path.isfile(dir + '/' + file):
+			if _re_cfile.match(file):
+				libcfiles.append(dir + '/' + file)
+			if _re_hfile.match(file):
+				libhfiles.append(dir + '/' + file)
+	MAKEFILE_AM(line=dirvar + '_DATA = ' + ' \\\n\t'.join(libcfiles))
+	MAKEFILE_AM(line=dirvar + 'include_DATA = ' + ' \\\n\t'.join(libhfiles))
+
+MAKEFILE_AM(line='''
+
+GNUCOMMANDS = gcc:gcc$(EXEEXT) g++:gcc$(EXEEXT) ld:ld$(EXEEXT) windres:windres$(EXEEXT) ar strip dumpbin ranlib
+MSCOMMANDS = cl:cl$(EXEEXT) link:link$(EXEEXT)
+
+install-setup-files: install-recursive
+	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported`; \\
+	defchosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
+	cd "$(DESTDIR)$(bindir)" || exit $$? ; \\
+	for chost in $${chosts} $${defchosts} ; do \\
+		for exe in $(GNUCOMMANDS) ; do \\
+			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
+			$(LN_S) -f parity.gnu.$$2 $${chost}-$$1 || exit $$? ; \\
+		done ; \\
+		for exe in $(MSCOMMANDS) ; do \\
+			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
+			$(LN_S) -f parity.ms.$$2 $${chost}-$$1 || exit $$? ; \\
+		done ; \\
+	done ; \\
+	for chost in $${chosts} $${defchosts} ; do \\
+		$(MKDIR_P) "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
+		cd "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
+		trap "rm -f '$(DESTDIR)$(exec_prefix)/$${chost}/bin/parityscript'" 0 || exit $$? ; \
+		case $${chost%%-*} in \\
+		x64|x86_64|amd64) mopt=-m64 ;; \\
+		x86|i?86*) mopt=-m32 ;; \\
+		esac ; \\
+		mver=$${chost#*-msvc} ; \\
+		mver=$${mver%%-*} ; \\
+		mopt="$${mopt}$${mver:+ -mmsvc$${mver}}" ; \\
+		for exe in $(GNUCOMMANDS) ; do \\
+			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
+			{ echo "#! /bin/sh" ; \\
+			  echo "exec '$(bindir)/parity.gnu.$$2' $${mopt} "'"$$@"' ; \\
+			} > parityscript || exit $$? ; \\
+			$(INSTALL_SCRIPT) parityscript "$(DESTDIR)$(exec_prefix)/$${chost}/bin/$$1" || exit $$? ; \\
+			rm -f parityscript || exit $$? ; \\
+		done ; \\
+		for exe in $(MSCOMMANDS) ; do \\
+			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
+			{ echo "#! /bin/sh" ; \\
+			  echo "exec '$(bindir)/parity.ms.$$2' $${mopt} "'"$$@"' ; \\
+			} > parityscript || exit $$? ; \\
+			$(INSTALL_SCRIPT) parityscript "$(DESTDIR)$(exec_prefix)/$${chost}/bin/$$1" || exit $$? ; \\
+			rm -f parityscript || exit $$? ; \\
+		done ; \\
+	done
+	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --install
+	test -n "$(DESTDIR)" || "$(bindir)/parity-setup" --enable-all
+
+install: install-setup-files
+
+uninstall-setup-files:
+	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported; "$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
+	for chost in $${chosts}; do \\
+		if cd "$(DESTDIR)$(bindir)" ; then \\
+			for exe in $(GNUCOMMANDS) $(MSCOMMANDS) ; do \\
+				set -- `IFS=: eval 'echo $${exe}'` ; \\
+				rm -f $${chost}-$$1 ; \\
+			done ; \\
+		fi ; \\
+		if cd "$(DESTDIR)$(exec_prefix)/$${chost}/bin" ; then \\
+			for exe in $(GNUCOMMANDS) $(MSCOMMANDS) ; do \\
+				set -- `IFS=: eval 'echo $${exe}'` ; \\
+				rm -f $$1 ; \\
+			done ; \\
+		fi ; \\
+	done ; :
+	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --uninstall ; :
+
+uninstall-recursive: uninstall-setup-files
+''')

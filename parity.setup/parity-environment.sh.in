@@ -1,0 +1,78 @@
+# This file is part of @PACKAGE@-@VERSION@
+#
+# load parity environment identified by argv0 argvN...
+
+__parityenv_confdir="@PARITY_LOCALSTATEDIR@"
+__parityenv_args=()
+
+__parityenv_arg=${0##*/}
+for __parityenv_arch in @PARITY_SUPPORTED_ARCHS@ ""; do break; done
+__parityenv_verspec=
+
+while test "${__parityenv_arg#*-}" != "${__parityenv_arg}"
+do
+	case ${__parityenv_arg} in
+	x86_64-*)
+		__parityenv_arch=x64
+		;;
+	i?86-*)
+		__parityenv_arch=x86
+		;;
+	msvc*)
+		__parityenv_arg=${__parityenv_arg#winnt}
+		__parityenv_arg=${__parityenv_arg#msvc}
+		__parityenv_major=${__parityenv_arg%%[^0-9]*}
+		case ${__parityenv_major} in
+		[0-9]|[0-9][0-9])
+			__parityenv_arg=${__parityenv_arg#${__parityenv_major}}
+			__parityenv_arg=${__parityenv_arg#.}
+			__parityenv_minor=${__parityenv_arg%%[^0-9]*}
+			case ${__parityenv_minor} in
+			[0-9]) __parityenv_verspec=-msvc${__parityenv_major}.${__parityenv_minor} ;;
+			*)     __parityenv_verspec=-msvc${__parityenv_major}.0 ;;
+			esac
+			;;
+		esac
+		;;
+	esac
+	__parityenv_arg=${__parityenv_arg#*-}
+done
+
+for __parityenv_arg in "$@"
+do
+	case ${__parityenv_arg} in
+	-mparityconfdir=*)
+		__parityenv_confdir=${__parityenv_arg#-mparityconfdir=}
+		;;
+	-m32)
+		__parityenv_arch=x86
+		;;
+	-m64)
+		__parityenv_arch=x64
+		;;
+	-mmsvc*)
+		__parityenv_verspec=-${__parityenv_arg#-m}
+		;;
+	*)
+		__parityenv_args=( "${__parityenv_args[@]}" "${__parityenv_arg}" )
+		;;
+	esac
+done
+
+set -- "${__parityenv_args[@]}"
+
+if [[ -r "${__parityenv_confdir}/parity.${__parityenv_arch}${__parityenv_verspec}.sh" ]]
+then
+	if . "${__parityenv_confdir}/parity.${__parityenv_arch}${__parityenv_verspec}.sh"
+	then
+		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
+		true
+	else
+		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
+		false
+	fi
+else
+	echo "Invalid MSVC version specified (${__parityenv_verspec})." >&2
+	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
+	false
+fi

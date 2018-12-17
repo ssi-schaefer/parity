@@ -122,12 +122,12 @@ namespace parity
 				while((pos = out.find("\n", pos ? pos + 5 : 0)) != std::string::npos)
 					out.replace(pos, 1, "\n   | ");
 
-				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 				utils::Log::verbose(" %s %s:\n", col.cyan("*").c_str(), col.yellow("task stdout").c_str());
-				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 				utils::Log::verbose("   |\n");
 				utils::Log::verbose("   | ");
-				utils::Log::verbose(out.c_str());
+				utils::Log::verbose("%s", out.c_str());
 				utils::Log::verbose("\n");
 			}
 
@@ -136,12 +136,12 @@ namespace parity
 				while((pos = err.find("\n", pos ? pos + 5 : 0)) != std::string::npos)
 					err.replace(pos, 1, "\n   | ");
 
-				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 				utils::Log::verbose(" %s %s:\n", col.cyan("*").c_str(), col.yellow("task stderr").c_str());
-				utils::Log::verbose(col.magenta("   ----------------------------------------------------------------------------\n").c_str());
+				utils::Log::verbose("%s", col.magenta("   ----------------------------------------------------------------------------\n").c_str());
 				utils::Log::verbose("   |\n");
 				utils::Log::verbose("   | ");
-				utils::Log::verbose(err.c_str());
+				utils::Log::verbose("%s", err.c_str());
 				utils::Log::verbose("\n");
 			}
 		}

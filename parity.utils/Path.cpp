@@ -476,6 +476,9 @@ namespace parity
 			if(path_.empty())
 				return path_;
 
+			size_t sep = path_.rfind(getSeperator());
+			if (sep == std::string::npos)
+				return "";
 			return path_.substr(0, path_.rfind(getSeperator()));
 		}
 
@@ -493,7 +496,7 @@ namespace parity
 			char ch = getSeperator();
 			char str[2] = { ch, '\0' };
 
-			if(path_[path_.length()] != ch)
+			if(!path_.empty() && path_[path_.length()] != ch)
 				path_.append(str);
 
 			appendDirect(component);
@@ -867,12 +870,15 @@ namespace parity
 
                 return false;
             #elif defined(__CYGWIN__)
-                char buf[PATH_MAX];
+				cygwin_conv_path_t how = CCP_RELATIVE |
+					(bWindows ? CCP_POSIX_TO_WIN_A : CCP_WIN_A_TO_POSIX);
 
-				if(bWindows) {
-					cygwin_conv_to_full_win32_path(path_.c_str(), buf);
-				} else {
-					cygwin_conv_to_full_posix_path(path_.c_str(), buf);
+				std::string buf;
+				ssize_t size = cygwin_conv_path(how, path_.c_str(), NULL, 0);
+				if (size >= 0) {
+					buf.resize(size);
+					cygwin_conv_path(how, path_.c_str(), &buf[0], size);
+					buf.resize(size - 1);
 				}
 				path_ = buf;
                 return true;
@@ -1023,7 +1029,11 @@ namespace parity
 			// Should never be called on an empty path!
 			//
 			if(path_.empty())
-				throw Exception("Cannot determine seperator of empty path!");
+				#ifdef _WIN32
+					return '\\';
+				#else
+					return '/';
+				#endif
 
 			if(isWindows())
 				return '\\';
@@ -1059,13 +1069,20 @@ namespace parity
 			Context& ctx = Context::getContext();
 
             if(!isNative()) {
-                throw Exception("path is not native!");
+                throw Exception("%s: path is not native!", path_.c_str());
             }
 
-            if(!ctx.getWaitForOutputFile() && !exists()) {
+			if (exists()) {
+				return true;
+			}
+#if !defined(PARITY_REX_SUPPORT)
+			return false;
+#else /* defined(PARITY_REX_SUPPORT) */
+# if (PARITY_REX_SUPPORT == 0) /* probably */
+            if(!ctx.getWaitForOutputFile()) {
                 return false;
             }
-
+# endif /* (PARITY_REX_SUPPORT == 0) */
             utils::Log::verbose("waiting for %s\n", get().c_str());
 
             int count = 0;
@@ -1077,6 +1094,7 @@ namespace parity
             utils::Log::verbose("waited %d times (%d ms)\n", count, (WAIT_SLEEP_USEC * count) / 1000);
 
             return count <= WAIT_SLEEP_RETRIES;
+#endif /* defined(PARITY_REX_SUPPORT) */
         }
 
         bool Path::isAbsolute() const

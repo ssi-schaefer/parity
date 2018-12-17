@@ -28,6 +28,10 @@
 
 #include <cstdio>
 
+#ifndef _WIN32
+#  define _stricmp strcasecmp
+#endif
+
 namespace parity
 {
 	namespace utils
@@ -76,10 +80,6 @@ namespace parity
 				throw Exception("cannot convert %s to a boolean value!", val.c_str());
 		}
 
-		#ifndef _WIN32
-		#  define _stricmp strcasecmp
-		#endif
-
 		void ContextGen::convert(Color::ColorMode &target, const std::string &val)
 		{
 			if(_stricmp(val.c_str(), "bright") == 0)
@@ -125,10 +125,6 @@ namespace parity
 				throw Exception("cannot convert %s to a valid SubsystemType!", val.c_str());
 		}
 
-		#ifndef _WIN32
-		#  undef _stricmp
-		#endif
-
 		void ContextGen::convert(DefineMap& target, const std::string& ref)
 		{
 			std::string key;
@@ -138,6 +134,7 @@ namespace parity
 
 			if(pos_equals == std::string::npos) {
 				key = ref;
+				value = "1";
 			} else {
 				key = ref.substr(0, pos_equals);
 				value = ref.substr(pos_equals + 1);
@@ -175,6 +172,8 @@ namespace parity
 				target = LanguageC;
 			else if(ref == "c++" || ref == "C++")
 				target = LanguageCpp;
+			else if(ref == "resource")
+				target = LanguageResource;
 			else
 				throw Exception("cannot convert %s to a valid LanguageType!", ref.c_str());
 		}
@@ -211,6 +210,15 @@ namespace parity
 					Log::warning("ignoring forced language for assembler, continuing normally!\n");
 				Log::verbose("adding assembler source file: %s\n", ref.c_str());
 				target[ref] = LanguageAsssembler;
+			} else if (_stricmp(ref.substr(ref.length() - 3).c_str(), ".rc") == 0) {
+				Log::verbose("adding resource file: %s\n", ref.c_str());
+				target[ref] = LanguageResource;
+			} else if (_stricmp(ref.substr(ref.length() - 4).c_str(), ".res") == 0) {
+				Log::verbose("adding compiled resource file: %s\n", ref.c_str());
+				target[ref] = LanguageCompiledResource;
+			} else if (_stricmp(ref.substr(ref.length() - 4).c_str(), ".def") == 0) {
+				Log::verbose("adding module definition file: %s\n", ref.c_str());
+				target[ref] = LanguageModuleDefinition;
 			} else {
 				target[ref] = LanguageUnknown;
 			}
@@ -346,6 +354,12 @@ namespace parity
 				return "C";
 			case LanguageCpp:
 				return "C++";
+			case LanguageModuleDefinition:
+				return "DEF";
+			case LanguageResource:
+				return "RC";
+			case LanguageCompiledResource:
+				return "RES";
 			case LanguageUnknown:
 			case LanguageInvalid:
 				return "None";
@@ -403,6 +417,15 @@ namespace parity
 					break;
 				case LanguageCpp:
 					ret.append(col.blue("[C++] "));
+					break;
+				case LanguageModuleDefinition:
+					ret.append(col.blue("[DEF] "));
+					break;
+				case LanguageResource:
+					ret.append(col.blue("[RC ] "));
+					break;
+				case LanguageCompiledResource:
+					ret.append(col.blue("[RES] "));
 					break;
 				default:
 					throw Exception("disallowed source file type found in %s: %d", it->first.get().c_str(), it->second);

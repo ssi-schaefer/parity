@@ -26,7 +26,8 @@
 #include "Timing.h"
 #include "Statistics.h"
 
-#include <errno.h>
+#include <cerrno>
+#include <cstdlib>
 
 #ifdef _WIN32
 #  include <process.h>

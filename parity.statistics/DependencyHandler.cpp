@@ -28,6 +28,7 @@
 
 #include <map>
 #include <iomanip>
+#include <cstdlib>
 
 namespace parity
 {

@@ -68,6 +68,14 @@ namespace parity
 			//
 
 			utils::Context& ctx = utils::Context::getContext();
+
+			for(utils::SourceMap::iterator it = ctx.getSources().begin(); it != ctx.getSources().end(); ++it) {
+				if (it->second == utils::LanguageModuleDefinition) {
+					utils::Log::verbose("found def file, not collecting symbols for export\n");
+					return;
+				}
+			}
+
 			utils::PathVector& all = ctx.getObjectsLibraries();
 			bool bSeenObject = false;
 
@@ -191,8 +199,8 @@ namespace parity
 			utils::Statistics::instance().addInformation("symbols-local", local_.size());
 			utils::Statistics::instance().addInformation("symbols-import", imports_.size());
 
-			utils::Log::verbose("gathered %d unresolved symbols, %d local symbols and %d imports\n", unresolved_.size(), local_.size(), imports_.size());
-			utils::Log::verbose("prepared %d symbols for export and %d symbols for static import\n", exports_.size(), staticImports_.size());
+			utils::Log::verbose("gathered %ld unresolved symbols, %ld local symbols and %ld imports\n", unresolved_.size(), local_.size(), imports_.size());
+			utils::Log::verbose("prepared %ld symbols for export and %ld symbols for static import\n", exports_.size(), staticImports_.size());
 		}
 
 		bool BinaryGatherer::isSystemToSkip(std::string const& str) const {
@@ -358,7 +366,13 @@ namespace parity
 				if(it->second.getName().compare(0, 4, "??_C") == 0)
 					continue;
 
-				if(it->second.getSectionNumber() == binary::Symbol::SymbolUndefined) {
+				//
+				// Really undefined symbols have a value of zero,
+				// while the value of a BSS symbol is the symbol size.
+				//
+				if(it->second.getSectionNumber() == binary::Symbol::SymbolUndefined
+				 && it->second.getValue() == 0
+				) {
 					static std::map<std::string, bool> unresolved_seen_;
 					bool& ref = unresolved_seen_[it->second.getName()];
 
@@ -442,7 +456,7 @@ namespace parity
 									*ch = tolower(*ch, Clocale);
 								}
 
-								utils::Path pth = ctx.lookupLibrary(lib, true);
+								utils::Path pth = ctx.lookupLibrary(lib, utils::LibspecDefaultlib);
 
 								//
 								// pth must be native allready, no need to convert!

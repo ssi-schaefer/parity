@@ -35,7 +35,7 @@
 #    define chdir __crt_invalid_chdir
 #    define mkdir __crt_invalid_mkdir
 #    define rmdir __crt_invalid_rmdir
-#    include RUNTIME_INC(Direct.h)
+#    include UCRT_INC(Direct.h)
 #  pragma pop_macro("chdir")
 #  pragma pop_macro("mkdir")
 #  pragma pop_macro("rmdir")

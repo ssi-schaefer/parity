@@ -33,7 +33,7 @@
 #  ifdef __STDC__
 #    undef __STDC__
 #  endif
-#  include RUNTIME_INC(Stdlib.h)
+#  include UCRT_INC(Stdlib.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")
 
@@ -50,7 +50,7 @@ extern int unsetenv(const char* name);
 //
 // PATH_MAX is 512 on windows and interix...
 //
-static PCRT_INLINE char* realpath(const char* p, char* r) { return _fullpath(r, p, 512); }
+extern char* realpath(const char* p, char* r);
 
 #pragma pop_macro("realpath")
 

@@ -1,0 +1,37 @@
+From 4f3f3a96fc4b71a40a1cc20024e894dc4780bc69 Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Wed, 13 Sep 2017 18:26:23 +0200
+Subject: [PATCH 5/6] ltdl.m4(ltfn_module_cmds): preset more variables used in
+ commands
+
+---
+ m4/ltdl.m4 | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/m4/ltdl.m4 b/m4/ltdl.m4
+index 5a18333a..52890905 100644
+--- a/m4/ltdl.m4
++++ b/m4/ltdl.m4
+@@ -825,13 +825,15 @@ _LT_EOF
+       # $module_cmds or $archive_cmds type content.
+       ltfn_module_cmds ()
+       {( # subshell avoids polluting parent global environment
++          release=; major=; versuffix=; verstring=; deplibs=; os2dllname=
++          ECHO=echo; wl=$lt_prog_compiler_wl; allow_undefined_flag=
++          libobjs=$libname.$ac_objext; rpath=/not-exists; output_objdir=.
++          eval shared_ext=\"$shrext_cmds\"
++          lib=`eval "set dummy $library_names_spec $libname$libltdl_cv_shlibext"; echo @S|@2`
++          soname=`eval "set dummy $soname_spec $libname$libltdl_cv_shlibext"; echo @S|@2`
+           module_cmds_save_ifs=$IFS; IFS='~'
+           for cmd in @S|@1; do
+             IFS=$module_cmds_save_ifs
+-            libobjs=$libname.$ac_objext; lib=$libname$libltdl_cv_shlibext
+-            rpath=/not-exists; soname=$libname$libltdl_cv_shlibext; output_objdir=.
+-            major=; versuffix=; verstring=; deplibs=
+-            ECHO=echo; wl=$lt_prog_compiler_wl; allow_undefined_flag=
+             eval $cmd
+           done
+           IFS=$module_cmds_save_ifs
+-- 
+2.16.0
+

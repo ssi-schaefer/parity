@@ -24,7 +24,9 @@
 #include "Exception.h"
 
 #include <fcntl.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 
 #ifdef _WIN32
 #  include <io.h>

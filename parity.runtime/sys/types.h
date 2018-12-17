@@ -29,7 +29,7 @@
 #  ifdef __STDC__
 #    undef __STDC__
 #  endif
-#  include RUNTIME_INC(sys/Types.h)
+#  include UCRT_INC(sys/Types.h)
 #pragma pop_macro("__STDC__")
 
 typedef long pid_t;

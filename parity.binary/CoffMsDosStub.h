@@ -26,6 +26,9 @@
 #include <MemoryFile.h>
 #include <Exception.h>
 
+#include <cstdlib>
+#include <cstring>
+
 namespace parity
 {
 	namespace binary

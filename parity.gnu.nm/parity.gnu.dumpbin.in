@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+SELF=$0
+PARITYlibexecdir="@PARITY_LIBEXECDIR@"
+if [[ ${PARITYlibexecdir} == @*@ ]]
+then
+	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
+	PARITYlibexecdir=${SELFDIR}/../parity.setup
+fi
+
+source "${PARITYlibexecdir}/parity-environment.sh" || exit 1
+
+type unixpath2win >/dev/null 2>&1 || unixpath2win() { cygpath -w "$1"; }
+type winpath2unix >/dev/null 2>&1 || winpath2unix() { cygpath -u "$1"; }
+
+args=()
+for arg in "$@"
+do
+	if [[ -r $arg ]]
+	then
+		arg=$(unixpath2win "$arg")
+	fi
+	args+=("$arg")
+done
+
+dumpbin.exe "${args[@]}"
+

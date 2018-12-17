@@ -23,18 +23,23 @@ config.status
 *.swp
 *.swo
 __parity.*
-parity.conf
+parity-config
 stamp-h1
 *.o
 *.a
 *.exe
+*.exe.mf
 *.pdb
 
 parity.configurator/parity.configurator
+parity.gnu.ar/parity.gnu.ar
 parity.gnu.gcc/parity.gnu.gcc
 parity.gnu.ld/parity.gnu.ld
+parity.gnu.nm/parity.gnu.dumpbin
 parity.inspector/parity.inspector
 parity.ms.cl/parity.ms.cl
 parity.ms.link/parity.ms.link
+parity.setup/parity-environment.sh
+parity.setup/parity-setup
 parity.statistics/parity.statistics
 parity.test/parity.test

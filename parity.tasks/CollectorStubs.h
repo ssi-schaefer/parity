@@ -40,6 +40,8 @@ namespace parity
 			static unsigned int THREADINGAPI runMsLoaderGenerator(void*);
 			static unsigned int THREADINGAPI runMsSymbolTableGenerator(void*);
 			static unsigned int THREADINGAPI runMsPcrtInitEntryGenerator(void*);
+			static unsigned int THREADINGAPI runMsResourceCompiler(void*);
+			static unsigned int THREADINGAPI runMsResourceConverter(void*);
 		};
 
 	}

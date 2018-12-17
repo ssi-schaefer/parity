@@ -111,6 +111,17 @@ namespace parity
 				else
 					throw utils::Exception("wrong language specifier in %s!", option);
 			} else {
+				if (strncmp(option, "-i", 2) == 0) {
+					arg = &option[2];
+					if(!*arg) {
+						arg = argument;
+						used = true;
+					}
+				} else
+				if (strcmp(option, "--include") == 0) {
+					arg = argument;
+					used = true;
+				}
 				pth = utils::Path(arg);
 				ctx.setSourcesString(arg);
 			}
@@ -126,8 +137,8 @@ namespace parity
 				return false;
 
 			utils::Context& ctx = utils::Context::getContext();
-			utils::Path pth = utils::Path::getTemporary(".parity.stdin.XXXXXX.c");
-			std::ofstream tmp_src(pth.get().c_str());
+			utils::Path tmp = utils::Path::getTemporary(".parity.stdin.XXXXXX.c");
+			std::ofstream tmp_src(tmp.get().c_str());
 
 			while(!std::cin.eof()) {
 				char buffer[4096]; // uh oh... will this suffice *always*?
@@ -141,6 +152,10 @@ namespace parity
 			}
 
 			tmp_src.close();
+
+			// as the file does exist now:
+			// recreate an utils::Path instance to expand the path
+			utils::Path pth(tmp.get());
 
 			if(ctx.getForcedLanguage() != utils::LanguageInvalid)
 				ctx.getSources()[pth] = ctx.getForcedLanguage();

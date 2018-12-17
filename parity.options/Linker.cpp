@@ -24,6 +24,10 @@
 #include <Log.h>
 #include <Statistics.h>
 
+#ifndef _WIN32
+#  define _strnicmp strncasecmp
+#endif
+
 namespace parity
 {
 	namespace options
@@ -77,13 +81,20 @@ namespace parity
 			utils::Context& ctx = utils::Context::getContext();
 			if(option[1] == 'B')
 			{
-				if(::strstr(option, "dynamic"))
+				if(::strcmp(option+2, "dynamic") == 0) {
 					ctx.setPreferStatic(false);
-				else if(::strstr(option, "static"))
+					return true;
+				}
+				else if(::strcmp(option+2, "static") == 0) {
 					ctx.setPreferStatic(true);
+					return true;
+				}
 			} else
+			if (::strcmp(option, "-static") == 0) {
 				ctx.setPreferStatic(true);
-			return true;
+				return true;
+			}
+			return false;
 		}
 
 		bool addObjectsLibraries(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
@@ -176,6 +187,30 @@ namespace parity
 			return true;
 		}
 
+		bool setOutImplib(const char* option, const char* argument, bool& used)
+		{
+			char const * arg = NULL;
+			if (strncmp(option, "-Wl,--out-implib,", 17) == 0
+			 || strncmp(option, "-Wl,--out-implib=", 17) == 0
+			) {
+				arg = option + 17;
+			} else
+			if (_strnicmp(option, "/IMPLIB:", 8) == 0
+			 || _strnicmp(option, "-IMPLIB:", 8) == 0
+			) {
+				arg = option + 8;
+			}
+			if (!arg) {
+				used = true;
+				arg = argument;
+			}
+			if (strncmp(arg, "-Wl,", 4) == 0) {
+				arg += 4;
+			}
+			utils::Context& ctx = utils::Context::getContext();
+			ctx.setOutImplibString(arg);
+			return true;
+		}
 	}
 }
 

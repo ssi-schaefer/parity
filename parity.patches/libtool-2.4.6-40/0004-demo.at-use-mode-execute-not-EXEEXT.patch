@@ -1,0 +1,52 @@
+From 34b3979241f20949499ee2cb2b2f6ad69409866e Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Tue, 2 May 2017 15:56:50 +0200
+Subject: [PATCH 4/6] demo.at: use mode=execute, not EXEEXT
+
+---
+ tests/demo.at | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/tests/demo.at b/tests/demo.at
+index b09b1f7d..310b592c 100644
+--- a/tests/demo.at
++++ b/tests/demo.at
+@@ -357,7 +357,7 @@ prefix=`pwd`/_inst
+ m4_define([_LT_CHECK_EXECUTE],
+ [LT_AT_CHECK_EXECUTE([$1],
+         [./hell_static], [./hell])
+-AT_CHECK([./helldl$EXEEXT |
++AT_CHECK([$LIBTOOL --mode=execute ./helldl |
+     $EGREP '(Welcome to .*GNU Hell|unsupported)'], 0, [ignore])
+ ])
+ 
+@@ -371,7 +371,7 @@ PATH=$prefix/lib:$PATH
+ 
+ LT_AT_CHECK_EXECUTE([install],
+         [$prefix/bin/hell_static], [$prefix/bin/hell])
+-AT_CHECK([$prefix/bin/helldl$EXEEXT |
++AT_CHECK([$LIBTOOL --mode=execute $prefix/bin/helldl |
+     $EGREP '(Welcome to .*GNU Hell|unsupported)'], 0, [ignore])
+ ])
+ 
+@@ -737,7 +737,7 @@ eval "`$LIBTOOL --config | $EGREP '^shlibpath_overrides_runpath='`"
+ eval "`$LIBTOOL --config | $EGREP '^hardcode_(action|direct|into_libs)='`"
+ 
+ # Allow the binary to link on-demand if need be.
+-./hell$EXEEXT >/dev/null || :
++$LIBTOOL --mode=execute ./hell >/dev/null || :
+ 
+ # Remove libhello.la from build tree.
+ rm -f libhello.la "$objdir"/libhello.*
+@@ -746,7 +746,7 @@ rm -f libhello.la "$objdir"/libhello.*
+ # when the uninstalled libs are missing, or relinking at install time
+ # is necessary, and the uninstalled ./hell has only the uninstalled
+ # library paths hardcoded.
+-AT_CHECK([./hell$EXEEXT >/dev/null || test relink,yes = "$hardcode_action,$hardcode_direct"])
++AT_CHECK([$LIBTOOL --mode=execute ./hell >/dev/null || test relink,yes = "$hardcode_action,$hardcode_direct"])
+ 
+ # Link an incomplete libhello.la.
+ LT_AT_MAKE([libhello.la], [libhello_la_OBJECTS=hello.lo])
+-- 
+2.16.0
+

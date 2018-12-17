@@ -3,8 +3,21 @@
 # TODO: this is merely a hack to get things rolling - implement as real part of parity.
 # TODO: no path conversion in here - only works with relative paths (should be mostly ok).
 
+SELF=$0
+PARITYlibexecdir="@PARITY_LIBEXECDIR@"
+if [[ ${PARITYlibexecdir} == @*@ ]]
+then
+	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
+	PARITYlibexecdir=${SELFDIR}/../parity.setup
+fi
+
+source "${PARITYlibexecdir}/parity-environment.sh" || exit 1
+
 opts="$1"
 archive="$2"
+type unixpath2win >/dev/null 2>&1 || unixpath2win() { cygpath -w "$1"; }
+type winpath2unix >/dev/null 2>&1 || winpath2unix() { cygpath -u "$1"; }
+
 archive_win="$(unixpath2win "${archive}")"
 
 shift
@@ -25,7 +38,7 @@ for letter in $(echo "${opts}" | grep -o .); do
     c) _warn_create=no  ;;
     r|q) _replace=yes     ;;
     x) _extract=yes     ;;
-    u|o|f) echo "warn: ignoring unsupported option '$letter'" ;;
+    s|u|o|f) echo "warn: ignoring unsupported option '$letter'" ;;
     *) { echo "unrecognized option '$letter'"; exit 1; } ;;
     esac
 done
@@ -51,27 +64,13 @@ function wait_for() {
     done
 }
 
-vsvar=
-[[ -n "${VS71COMNTOOLS}" ]] && vsvar=VS71COMNTOOLS
-[[ -n "${VS80COMNTOOLS}" ]] && vsvar=VS80COMNTOOLS
-[[ -n "${VS90COMNTOOLS}" ]] && vsvar=VS90COMNTOOLS
-[[ -n "${VS100COMNTOOLS}" ]] && vsvar=VS100COMNTOOLS
-
-[[ -z ${vsvar} ]] && { echo "cannot find visual studio (no VSxxCOMNTOOLS set!)"; exit 1; }
-
-vscom="$(winpath2unix "$(eval echo "\${${vsvar}}")")"
-vsroot="$(cd ${vscom}/../../; pwd)"
-
-[[ -z "${vsroot}" ]] && { echo "error: cannot find visual studio installation directory"; exit 1; }
-PATH=${vsroot}/VC/bin:${vscom}:${vscom}/../IDE:${PATH}
-
 # need to redirect stdout/stderr of windows binary via file
 lib_exe() { (
     trap "cat .lib_exe.out.$$; cat .lib_exe.err.$$ >&2; rm -f .lib_exe.out.$$ .lib_exe.err.$$" 0
     lib.exe "$@" >> .lib_exe.out.$$ 2>> .lib_exe.err.$$
 ); }
 
-LIB="lib_exe /nologo"
+LIB="lib_exe -nologo"
 
 export TMP=${TMP:-${TMPDIR:-/tmp}}
 [[ ${TMP} == /* ]] && TMP=$(unixpath2win "${TMP}")

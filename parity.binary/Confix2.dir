@@ -1,12 +1,2 @@
 ADD_EXTRA_DIST('parity.binary.vcproj')
-
-import os;
-import re;
-
-_re_h = re.compile('^.*\\.h$')
-
-for file in os.listdir('.'):
-	if os.path.isfile(file):
-		if _re_h.match(file):
-			SET_FILE_PROPERTIES(file, { 'PRIVATE_CINCLUDE': 1 })
-
+SET_HEADER_PUBLIC(shellmatch = '*.h', public = False)

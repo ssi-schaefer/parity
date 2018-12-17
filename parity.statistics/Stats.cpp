@@ -29,6 +29,7 @@
 
 #include <fstream>
 #include <time.h>
+#include <cstdlib>
 
 //
 // CONFIX:EXENAME('parity.statistics')
