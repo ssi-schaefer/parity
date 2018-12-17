@@ -459,7 +459,7 @@ namespace parity
 
 					vec.push_back("-manifest");
 					vec.push_back(manifest.get());
-					vec.push_back("-outputresource:" + out.get());
+					vec.push_back("-updateresource:" + out.get());
 
 					if(!task.execute(ctx.getManifestExe(), vec))
 					{
