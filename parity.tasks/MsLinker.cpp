@@ -459,9 +459,20 @@ namespace parity
 
 					vec.push_back("-manifest");
 					vec.push_back(manifest.get());
-					vec.push_back("-updateresource:" + out.get());
 
-					if(!task.execute(ctx.getManifestExe(), vec))
+					// We need '-updateresource' when the exe already
+					// does contain some manifest, but we need
+					// '-outputresource' if not.
+					utils::Task::ArgumentVector outvec(vec);
+
+					vec.push_back("-updateresource:" + out.get());
+					outvec.push_back("-outputresource:" + out.get());
+
+					// mt.exe : general error c101008c: Failed to read the manifest from the resource of file "<out.exe>". The specified image file did not contain a resource section.
+					task.addFilter(" c101008c:", false);
+
+					if(!task.execute(ctx.getManifestExe(), vec)
+					&& !task.execute(ctx.getManifestExe(), outvec))
 					{
 						utils::Log::warning("cannot embed manifest, please embed manually!\n");
 					} else {
