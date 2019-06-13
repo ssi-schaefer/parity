@@ -40,7 +40,8 @@ namespace parity
 			{ "-dbg"		,setDebugLevel				},
 			{ "-X"			,setCompilerPassthrough		},
 			{ "-Y"			,setLinkerPassthrough		},	// GCC knows -Xlinker here.
-			{ "-v"			,showParityVersion			},
+			{ "--version"	,showParityVersion			},
+			{ "-v"			,showParityConfig			},
 			{ "-ctxdump"	,setCtxDump					},
 			{ "-cfg"		,addConfigString			},
 			//

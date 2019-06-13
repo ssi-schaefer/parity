@@ -99,9 +99,27 @@ namespace parity
 			std::cout << "cygwin g++ build" << std::endl;
 #endif
 			std::cout << "Copyright (c) 2007 - 2009 Markus Duft <markus.duft@salomon.at>" << std::endl;
-
 			std::cout << PACKAGE_NAME << " comes with ABSOLUTELY NO WARRANTY; This is free software, and you are" << std::endl;
 			std::cout << "welcome to redistribute it under certain conditions; see COPYING.LESSER for details." << std::endl;
+			std::cout << "Use " << PACKAGE_NAME << " like GNU compilers from the Free Software Foundation." << std::endl;
+			exit(0);
+
+			#ifndef _WIN32
+			/* never reached (this is there for some gcc versions)! */
+			return false;
+			#endif
+		}
+
+		bool showParityConfig(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ") ";
+#ifdef _WIN32
+			std::cout << "native windows build" << std::endl;
+#elif defined(__INTERIX)
+			std::cout << "interix g++ build" << std::endl;
+#elif defined(__CYGWIN__)
+			std::cout << "cygwin g++ build" << std::endl;
+#endif
 
 			/* output some configuration values... */
 			#ifdef HAVE_CONFIG_H
