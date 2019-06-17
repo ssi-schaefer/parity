@@ -919,7 +919,7 @@ parityconf-disable-all() {
 
 parityconf-is-available() {
 	verbose() { _verbose "$@" >&2; }
-	noquiet() { _verbose "$@" >&2; }
+	noquiet() { _noquiet "$@" >&2; }
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
 	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
