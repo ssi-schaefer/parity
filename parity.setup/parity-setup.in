@@ -104,6 +104,12 @@ $(supports-default && echo "\
       Test if MSVC compiler for hosttriplet identifier is installed.
       Unless --quiet, progress output goes to standard error.
 
+  --get-environ [--bare] hosttriplet
+      Display the environment variables and their values required to
+      enable the vanilla MSVC toolchain in some shell environment,
+      formatted as "VAR VALUE" without any quoting.  Without --bare,
+      VALUE is prepended to eventually existing environment VAR.
+
   --enable hosttriplet...
       Enables configuration for hosttriplet identifiers.
 
@@ -766,6 +772,7 @@ section windows {
 		[[ $? -eq 0 ]] || exit 1
 
 		{
+			# Remember: This is parsed in getenv-parityconf().
 			echo "#
 # PARITY CONFIGURATION for ${vsarch}-${vsver}
 #
@@ -816,6 +823,38 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		return 1
 	fi
 	verbose "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} done."
+	return 0
+}
+
+getenv-parityconf() {
+	local bare=false
+	if [[ $1 == '--bare' ]]
+	then
+		bare=:
+		shift
+	fi
+	local chost=$(get-chost "$1")
+	is-supported-chost "${chost}" || return 1
+	local vsver=$(get-vsver "${chost}")
+	local vsarch=$(get-vsarch "${chost}")
+
+	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh ..."
+	(
+		${bare} || . "${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh"
+		while read line
+		do
+			line=${line%%#*}
+			var=${line%%=*}
+			[[ ${var} =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || continue
+			if ${bare}; then
+				line=${line%%\$*}
+				echo "${var} ${line#*=\"}"
+			else
+				echo "${var} ${!var}"
+			fi
+		done < "${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh"
+	)
+	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh done."
 	return 0
 }
 
@@ -931,6 +970,31 @@ parityconf-is-available() {
 	do
 		query-vcvars "${chost}" || return 1
 	done
+	return 0
+}
+
+parityconf-get-environ() {
+	verbose() { _verbose "$@" >&2; }
+	noquiet() { _noquiet "$@" >&2; }
+	local opts=
+	while (( $# > 0 ))
+	do
+		case $1 in
+		--bare)
+			opts+=" --bare"
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
+	done
+	local chosts
+	chosts=( $(args-to-chosts "$@") ) || die
+	[[ ${#chosts[@]} -ne 1 ]] && die "Need a single configuration value (try --list-available)."
+
+	getenv-parityconf ${opts} "${chosts[0]}"
+
 	return 0
 }
 
@@ -1098,7 +1162,7 @@ verbose() { _verbose "$@"; }
 noquiet() { _noquiet "$@"; }
 
 case ${arg} in
---list-supported|--list-available|--is-available|\
+--list-supported|--list-available|--is-available|--get-environ|\
 --help|--enable|--enable-all|--disable|--disable-all|\
 --set-default|--install|--uninstall|--unittest)
     action=${arg#--}
