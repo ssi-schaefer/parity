@@ -747,7 +747,7 @@ ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a
 
 			echo "
 Defines = WIN32_LEAN_AND_MEAN
-Defines = _WIN32_WINNT=0x0501
+Defines = _WIN32_WINNT=0x7fff
 "
 			local sdklib p
 			for sdklib in $(get-supported-sdklibs "${chost}")
