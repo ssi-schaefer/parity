@@ -154,7 +154,7 @@ void Diagnose(FILE* out, DWORD dwTopProcess) {
 	}
 }
 
-// CONFIX:EXENAME('parity.diagnostic.exe')
+// CONFIX:EXENAME('parity.diagnostic')
 int main(int argc, char** argv) {
 	// for adding additional parameters in the future.
 	int app_offset = 1;

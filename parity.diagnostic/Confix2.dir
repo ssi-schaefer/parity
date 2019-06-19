@@ -1,4 +1,4 @@
 ADD_EXTRA_DIST('parity.diagnostic.vcproj')
 SET_HEADER_PUBLIC(shellmatch = '*.h', public = False)
 
-MAKEFILE_AM('parity_diagnostic_exe_LDADD=-lpsapi')
+MAKEFILE_AM('parity_diagnostic_LDADD=-lpsapi')
