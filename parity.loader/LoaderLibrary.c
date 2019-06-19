@@ -54,7 +54,7 @@ static void* LibLoad(const char* name, unsigned int strict)
 {
 	void* handle = 0;
 	unsigned int i;
-	LoaderErrorList lst[LOADER_MAX_ERRORS];
+	LoaderErrorList lst[LOADER_MAX_ERRORS+1];
 	unsigned int longest = 0;
 
 	if(!name)
@@ -70,7 +70,13 @@ static void* LibLoad(const char* name, unsigned int strict)
 
 		handle = LoadLibrary(ptrTry);
 
-		if(!handle && i <= LOADER_MAX_ERRORS) {
+		if(!handle && LogGetLevel() > LevelWarning) {
+			unsigned long lastError = GetLastError();
+			char* tmp = LoaderFormatErrorMessage(lastError);
+			LogDebug("error %d loading '%s' (%s)\n", lastError, ptrTry, tmp);
+			LocalFree(tmp);
+		} else
+		if(!handle && i < LOADER_MAX_ERRORS) {
 			register int len;
 
 			lst[i].error = GetLastError();
@@ -94,9 +100,15 @@ static void* LibLoad(const char* name, unsigned int strict)
 	//
 	handle = LoadLibrary(name);
 
+	if(!handle && LogGetLevel() > LevelWarning) {
+		unsigned long lastError = GetLastError();
+		char* tmp = LoaderFormatErrorMessage(lastError);
+		LogDebug("error %d loading '%s' (%s)\n", lastError, name, tmp);
+		LocalFree(tmp);
+	} else
 	if(!handle && i < LOADER_MAX_ERRORS) {
 		lst[i].error = GetLastError();
-		lst[i].path = "...";
+		lst[i].path = name;
 	}
 
 	if(handle)
@@ -105,13 +117,16 @@ static void* LibLoad(const char* name, unsigned int strict)
 		return handle;
 	}
 
-	if(strict) {
+	if(strict && LogGetLevel() <= LevelWarning) {
 		unsigned int y = 0;
 		char spaces[MAX_PATH];
 
 		FillMemory(spaces, sizeof(spaces), ' ');
 
 		LogWarning("failed to load %s from following paths (%d in cache):\n", name, gPathCacheCount);
+
+		lst[LOADER_MAX_ERRORS].error = ERROR_MORE_DATA;
+		lst[LOADER_MAX_ERRORS].path = "...";
 
 		for(y = 0; y <= i && y <= LOADER_MAX_ERRORS; ++y) {
 			char* tmp = LoaderFormatErrorMessage(lst[y].error);

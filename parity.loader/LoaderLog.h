@@ -36,6 +36,7 @@ typedef enum {
 } LoaderLogLevel;
 
 extern void LogSetLevel(LoaderLogLevel lvl);
+extern LoaderLogLevel LogGetLevel(void);
 extern void LogSetDebugStream(HANDLE ptr);
 
 #endif

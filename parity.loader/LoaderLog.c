@@ -252,6 +252,11 @@ void LogSetLevel(LoaderLogLevel lvl)
 	gLevel = lvl;
 }
 
+LoaderLogLevel LogGetLevel(void)
+{
+	return gLevel;
+}
+
 void LogSetDebugStream(HANDLE stream)
 {
 	gDebugStream = stream;
