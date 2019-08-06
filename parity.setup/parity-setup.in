@@ -424,6 +424,57 @@ regquery_vsroot() {
 	return 1
 }
 
+locate_vswhere_exe() {
+	#
+	# https://devblogs.microsoft.com/setup/vswhere-is-now-installed-with-visual-studio-2017/
+	#
+	local folderIDs=(
+		38 # ProgramFiles(x86)
+		42 # ProgramFiles
+	)
+	local folderID
+	for folderID in ${folderIDs[*]}
+	do
+		vswhere_exe="$(cygpath -F ${folderID})/Microsoft Visual Studio/Installer/vswhere.exe"
+		[[ -x ${vswhere_exe} ]] || continue
+		locate_vswhere_exe_result=${vswhere_exe}
+		return 0
+	done
+	locate_vswhere_exe_result=
+	return 1
+}
+
+vswhere() {
+	# initial vswhere() does set up location of vswhere.exe
+	if locate_vswhere_exe; then
+		# redefine vswhere() to execute vswhere.exe
+		eval "vswhere() {
+			vswhere_result=
+			vswhere_result=\$(\"${locate_vswhere_exe_result}\" \"\$@\" | dos2unix)
+			return \$?
+		}"
+	else
+		# missing vswhere.exe, redefine vswhere() as noop
+		vswhere() {
+			vswhere_result=
+			return 1
+		}
+	fi
+	# re-execute vswhere() to return results
+	vswhere "$@"
+	return $?
+}
+
+vswhere_installationPath() {
+	local vsver=$(get-vsver "${1}")
+	vsver=${vsver#msvc}
+	vswhere_installationPath_result=
+	vswhere -nologo -legacy -version "[${vsver},${vsver}.65535]" -latest -format text -property installationPath || return 1
+	[[ ${vswhere_result} == 'installationPath: '* ]] || return 1
+	vswhere_installationPath_result=${vswhere_result#installationPath: }
+	return 0
+}
+
 query-novcvars-once() {
 	[[ -z ${novcPATH-}${novcINCLUDE-}${novcLIB-}${novcLIBPATH-} ]] || return 0
 
@@ -453,14 +504,20 @@ query-vcvars() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-
-	regquery_vsroot "${vsver}" || return 1
+	local vsroot=
+	if vswhere_installationPath "${vsver}"; then
+		vsroot=${vswhere_installationPath_result}
+	elif regquery_vsroot "${vsver}"; then
+		vsroot=${regquery_vsroot_result}
+	else
+		return 1
+	fi
 
 	noquiet "Querying environment for ${chost} ..."
 
 	vcPATH= vcINCLUDE= vcLIB= vcLIBPATH=
 
-	local vsroot=$(cygpath -u "$regquery_vsroot_result")
+	vsroot=$(cygpath -u "$vsroot")
 	local vcvarsall
 	vcvarsall=${vsroot}/VC/Auxiliary/Build/vcvarsall.bat
 	[[ -r ${vcvarsall} ]] ||
