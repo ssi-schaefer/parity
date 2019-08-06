@@ -385,16 +385,16 @@ die() {
 windir=$(cygpath -W)
 sysdir=$(cygpath -S)
 
-eval 'cmd() {
+eval "cmd() {
   ( set -x
-	tmpfile=`mktemp`;
-	: trap '"'rm -f \"\${tmpfile}\" \"\${tmpfile}.bat\"'"' 0;
-	mv -f "${tmpfile}" "${tmpfile}.bat";
-	for x in "$@"; do echo "$x"; done > "${tmpfile}.bat"
-	chmod +x "${tmpfile}.bat";
-	PATH="'"${windir}:${sysdir}:${sysdir}/WBEM"'" "${tmpfile}.bat";
-  );
-}'
+	tmpfile=\`mktemp\`
+	: trap \"rm -f '\${tmpfile}' '\${tmpfile}.bat'\" 0
+	mv -f \"\${tmpfile}\" \"\${tmpfile}.bat\"
+	for x in \"\$@\"; do echo \"\$x\"; done > \"\${tmpfile}.bat\"
+	chmod +x \"\${tmpfile}.bat\"
+	PATH=\"${windir}:${sysdir}:${sysdir}/WBEM\" \"\${tmpfile}.bat\"
+  )
+}"
 
 regquery() {
 	regquery_result=
