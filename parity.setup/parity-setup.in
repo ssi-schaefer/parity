@@ -39,9 +39,10 @@ then
 	# 13.0: there is no msvc version 13.0
 	# 14.0:	Visual Studio 2015, cl.exe Version 19.00
 	# 15.0: Visual Studio 2017, cl.exe Version 19.10
+	# 16.2: Visual Studio 2019, cl.exe Version 19.22
 	#
 	# parityconf-set-default() relies on old to new order
-	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15.0"
+	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15.0 16.2"
 	# </loaded from parity-setup.in by Confix2.dir>
 
 	PARITYhas_default_version=:
@@ -425,6 +426,16 @@ regquery_vsroot() {
 }
 
 locate_vswhere_exe() {
+	# Since Visual Studio 2019 there is the standalone "Visual Studio Installer"
+	# package providing vswhere.exe, which does register itself to the registry.
+	local vswhere_exe
+	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/VisualStudio/Setup SharedInstallationPath \
+	&& vswhere_exe=$(dirname "$(cygpath -u "${regquery_result}")")/Installer/vswhere.exe \
+	&& [[ -x ${vswhere_exe} ]] \
+	; then
+		locate_vswhere_exe_result=${vswhere_exe}
+		return 0
+	fi
 	#
 	# https://devblogs.microsoft.com/setup/vswhere-is-now-installed-with-visual-studio-2017/
 	#
