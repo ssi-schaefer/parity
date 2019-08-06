@@ -683,7 +683,7 @@ update-parityconf() {
 		name= executable=
 		eval ${vsexe}
 		eval ${name}Exe=
-		IFS=: eval ${name}Exe='$(find ${vcPATH} -maxdepth 1 -iname "${executable}" -print -quit)'
+		IFS=: eval ${name}Exe='$(find ${vcPATH} -maxdepth 1 -iname "${executable}" -print -quit 2>/dev/null)'
 	done
 
 	local vsver=$(get-vsver "${chost}")
@@ -758,7 +758,7 @@ Defines = _WIN32_WINNT=0x7fff
 			local sdklib p
 			for sdklib in $(get-supported-sdklibs "${chost}")
 			do
-				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${sdklib}.lib" -print -quit)'
+				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${sdklib}.lib" -print -quit 2>/dev/null)'
 				[[ -n ${p} ]] || continue
 				echo "ObjectsLibraries = ${p}"
 			done
