@@ -383,6 +383,10 @@ die() {
 
 [[ -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/." ]] || die "Missing Cygwin based POSIX environment."
 
+# https://cygwin.com/ml/cygwin/2019-08/msg00072.html
+: ${SYSTEMDRIVE:=${SYSTEMROOT%%\\*}}
+export SYSTEMDRIVE
+
 windir=$(cygpath -W)
 sysdir=$(cygpath -S)
 
