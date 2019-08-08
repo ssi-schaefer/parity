@@ -43,11 +43,20 @@ extern void* _ReturnAddress();
 int __stdcall IsDebuggerPresent();
 #endif
 
+struct _stackframe_t {
+	STACKFRAME64 hwFrame;
+	size_t size;
+	syminfo_t sym;
+
+	struct _stackframe_t* next;
+};
+
 #define PCRT_DBGHELP_SYMS \
 	PCRT_DBGHELP_SYM(BOOL, SymInitialize, (HANDLE, PCTSTR, BOOL)) \
 	PCRT_DBGHELP_SYM(BOOL, SymFromAddr, (HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*)) \
 	PCRT_DBGHELP_SYM(BOOL, SymRefreshModuleList, (HANDLE)) \
 	PCRT_DBGHELP_SYM(BOOL, EnumerateLoadedModules64, (HANDLE, PENUMLOADED_MODULES_CALLBACK64, PVOID)) \
+	PCRT_DBGHELP_SYM(BOOL, StackWalk64, (DWORD, HANDLE, HANDLE, LPSTACKFRAME64, PVOID, PREAD_PROCESS_MEMORY_ROUTINE64, PFUNCTION_TABLE_ACCESS_ROUTINE64, PGET_MODULE_BASE_ROUTINE64, PTRANSLATE_ADDRESS_ROUTINE64)) \
 /* eom */
 
 #define PCRT_DBGHELP_SYM(ret, name, args) \
@@ -131,13 +140,25 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 
 	num = 0;
 	while(1) {
-		modinfo_t mod = PcrtGetContainingModule(walk->eip);
+		modinfo_t mod = PcrtGetContainingModule((void*)walk->hwFrame.AddrPC.Offset);
 
 		if(walk->sym.addr) {
-			
-			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)+0x%x\n", num++, ST_FW_ADDRESS, walk->eip, ST_FW_MODULE, basename(mod.name), walk->sym.name, walk->size, ((unsigned long)walk->eip - (unsigned long)walk->sym.addr));
+			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)+0x%p\n"
+				, num++
+				, ST_FW_ADDRESS, (void*)walk->hwFrame.AddrPC.Offset
+				, ST_FW_MODULE, basename(mod.name)
+				, walk->sym.name
+				, walk->size
+				, (void*)((uintptr_t)walk->hwFrame.AddrPC.Offset - (uintptr_t)walk->sym.addr)
+			);
 		} else {
-			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)\n", num++, ST_FW_ADDRESS, walk->eip, ST_FW_MODULE, basename(mod.name), "???", walk->size);
+			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)\n"
+				, num++
+				, ST_FW_ADDRESS, (void*)walk->hwFrame.AddrPC.Offset
+				, ST_FW_MODULE, basename(mod.name)
+				, "???"
+				, walk->size
+			);
 		}
 
 		if(!walk->next)
@@ -171,64 +192,75 @@ SymbolLookupType PcrtUseDebugSymbols() {
 	return LookupDebugInfo;
 }
 
-stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
+stackframe_t* PcrtGetStackTraceFrom(CONTEXT const *inContext)
 {
+	CONTEXT context;
+	HANDLE curThread = GetCurrentThread();
+	HANDLE curProc = GetCurrentProcess();
+
 	stackframe_t* trace = NULL;
+	stackframe_t* frame = NULL;
 	stackframe_t* last = NULL;
 	int numCallers = 0;
 
-	while(numCallers++ < 100 && _bp && _ip
-	 /* stack growing still valid */
-	 && (intptr_t)_bp >= (last ? ( ((intptr_t)last->ebp) + (sizeof(void*)*2) ) : (intptr_t)0)
-	) {
-		stackframe_t* frame = (stackframe_t*)malloc(sizeof(stackframe_t));
+#if defined(_M_IX86)
+	DWORD machineType = IMAGE_FILE_MACHINE_I386;
+#endif
+	// want compiler error if an unknown machine architecture is defined
 
+	if (!inContext) {
+		return NULL;
+	}
+
+	PcrtInitializeDebugInformation();
+
+	if (!fStackWalk64) {
+		return NULL;
+	}
+
+	context = *inContext;
+
+	while(numCallers++ < 100) {
+		frame = (stackframe_t*)calloc(1, sizeof(stackframe_t));
 		if(!frame) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot allocate memory for stack trace!");
-			return NULL;
-		}		
-
-		frame->eip = _ip;
-		frame->ebp = _bp;
-		frame->next= NULL;
-		frame->size = 0;
-
-		if(last) {
-			frame->size = (unsigned long)frame->ebp - (unsigned long)last->ebp;
-
-			//
-			// subtract from the size the room that the own ebp
-			// and the call return address take up in the frame.
-			//
-			// left in the size if the accumulated size of:
-			//  * local variables
-			//  * parameters for the next frame (!)
-			//    (the parameters for the call it is right now executing!)
-			//
-			frame->size -= (sizeof(void*)*2);
+			break;
 		}
 
-		_ip = _bp[1];
-
-		frame->ret = _ip;
+		if (last) {
+			frame->hwFrame = last->hwFrame;
+		} else {
+#if defined(_M_IX86)
+			frame->hwFrame.AddrPC.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrPC.Segment = 0;
+			frame->hwFrame.AddrPC.Offset  = context.Eip;
+			frame->hwFrame.AddrFrame.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrFrame.Segment = 0;
+			frame->hwFrame.AddrFrame.Offset  = context.Ebp;
+			frame->hwFrame.AddrStack.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrStack.Segment = 0;
+			frame->hwFrame.AddrStack.Offset  = context.Esp;
+#endif
+		}
+		if (!fStackWalk64(machineType, curProc, curThread, &frame->hwFrame, &context, NULL, NULL, NULL, NULL)) {
+			free(frame);
+			break;
+		}
 
 		//
 		// ATTENTION: contains an allocated (strdup) pointer
 		// to the name, so free it again!
 		//
-		frame->sym = PcrtGetNearestSymbol(frame->eip, PcrtUseDebugSymbols());
+		frame->sym = PcrtGetNearestSymbol((void*)frame->hwFrame.AddrPC.Offset, PcrtUseDebugSymbols());
+		frame->size = (size_t)(frame->hwFrame.AddrFrame.Offset - frame->hwFrame.AddrStack.Offset);
 
-		if(!trace) {
-			trace = frame;
-		} else if(last) {
+		if(last) {
 			last->next = frame;
 		} else {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "internal error creating stack trace (missing nodes).");
-			return NULL;
+			trace = frame;
 		}
 
 		last = frame;
-		_bp = (void**)_bp[0];
 	}
 
 	return trace;
@@ -236,20 +268,13 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 
 stackframe_t* PcrtGetStackTrace()
 {
-	//
-	// Our starting point is the frame above ourselves.
-	//
-	void* _ip = _ReturnAddress();
-	void** _bp;
-	
+	CONTEXT context = {0};
 
-	__asm {
-		mov _bp, ebp
+	if (!GetThreadContext(GetCurrentThread(), &context)) {
+		return NULL;
 	}
 
-	_bp = (void**)_bp[0];
-
-	return PcrtGetStackTraceFrom(_bp, _ip);
+	return PcrtGetStackTraceFrom(&context);
 }
 
 stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace)
@@ -590,21 +615,25 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 		}
 
 		if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
+#if defined(_M_IX86)
 			PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
 			PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
 			PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
 			PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
 			PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
 			PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
+#endif
 		}
 
 		if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
+#if defined(_M_IX86)
 			PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
 			PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
 			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
 			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
 			PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
 			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+#endif
 		}
 	}
 
@@ -615,7 +644,7 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 	// on the CRT working after an exception. the kernel functions
 	// should still work i guess ;)
 	//
-	trace = PcrtGetStackTraceFrom((void*)ex->ContextRecord->Ebp, (void*)ex->ContextRecord->Eip);
+	trace = PcrtGetStackTraceFrom(ex->ContextRecord);
 
 	PcrtOutPrint(hCore, "Stack Layout at the time the exception occured:\n\n");
 
@@ -624,7 +653,7 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 		// PcrtOutPrint does not know too extensive formatting stuff, so
 		// we have to do some of the work per pedes here.
 		//
-		modinfo_t mod = PcrtGetContainingModule(trace->eip);
+		modinfo_t mod = PcrtGetContainingModule((void*)trace->hwFrame.AddrPC.Offset);
 		char modname_aligned[ST_FW_MODULE + 2];
 		char * modname_unaligned = basename(mod.name);
 		long len = lstrlen(modname_unaligned);
@@ -638,7 +667,16 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 		++num;
 
 		PcrtOutPrint(hCore, " [%s%d]", ( num < 100000 ? ( num < 10000 ? ( num < 1000 ? ( num < 100 ? ( num < 10 ? "     " : "    " ) : "   ") : "  ") : " ") : ""), num);
-		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n", modname_aligned, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
+		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n"
+			, modname_aligned
+			, (void*)trace->hwFrame.AddrPC.Offset
+			, (trace->sym.name ? trace->sym.name : "???")
+			, trace->size
+			, (trace->sym.addr
+			   ? ((size_t)trace->hwFrame.AddrPC.Offset - (size_t)trace->sym.addr)
+			   : 0
+			  )
+		);
 
 		if(!trace->next)
 			break;
