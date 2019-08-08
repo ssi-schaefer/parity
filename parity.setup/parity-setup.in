@@ -484,7 +484,13 @@ vswhere_installationPath() {
 	local vsver=$(get-vsver "${1}")
 	vsver=${vsver#msvc}
 	vswhere_installationPath_result=
-	vswhere -nologo -legacy -version "[${vsver},${vsver}.65535]" -latest -format text -property installationPath || return 1
+	vswhere -nologo \
+		-version "[${vsver},${vsver}.65535]" \
+		-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
+		-latest \
+		-format text \
+		-property installationPath \
+		|| return 1
 	[[ ${vswhere_result} == 'installationPath: '* ]] || return 1
 	vswhere_installationPath_result=${vswhere_result#installationPath: }
 	return 0
