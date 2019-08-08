@@ -55,24 +55,24 @@ void PcrtOutFormatStringVa(char* buffer, const char* fmt, va_list args)
 				// fall through
 			case 'd':
 				{
-					char buf[64];
-					unsigned char* wh = buf + 63;
+					char buf[2*sizeof(uintptr_t)+1];
+					unsigned char* wh = buf + 2*sizeof(uintptr_t);
 
-					int num = va_arg(args, int);
+					uintptr_t num = va_arg(args, uintptr_t);
 
 					*wh = '\0';
 
 					do
 					{
-						unsigned long temp;
+						uintptr_t temp;
 
-						temp = (unsigned long)num % radix;
+						temp = num % radix;
 						wh--;
 						if(temp < 10)
-							*wh = (unsigned char)temp + '0';
+							*wh = temp + '0';
 						else
-							*wh = (unsigned char)temp - 10 + 'a';
-						num = (unsigned long)num / radix;
+							*wh = temp - 10 + 'a';
+						num = num / radix;
 					}
 					while(num != 0);
 
@@ -80,7 +80,7 @@ void PcrtOutFormatStringVa(char* buffer, const char* fmt, va_list args)
 						//
 						// prepend 0's
 						//
-						unsigned int req = (sizeof(void*) * 2) - lstrlen(wh);
+						size_t req = (sizeof(void*) * 2) - lstrlen(wh);
 
 						while(req--) {
 							lstrcat(buffer, "0");

@@ -69,13 +69,19 @@ LoaderStatus ParityLoaderInit()
 			//
 			// load specific import.
 			//
-			if((import->import == 0 || import->import == (void*)0xbaadf00d) || isBindNow)
+#if defined(_M_IX86)
+			static const void* baadFood = (void*)0xbaadf00d;
+#endif
+#if defined(_M_AMD64)
+			static const void* baadFood = (void*)0xdeadbaadbeeff00d;
+#endif
+			if((import->import == 0 || import->import == baadFood) || isBindNow)
 			{
 				//
 				// load from library, otherwise its lazy loaded.
 				//
 
-				if(import->import == (void*)0xbaadf00d)
+				if(import->import == baadFood)
 					++cntData;
 				else
 					++cntCode;
