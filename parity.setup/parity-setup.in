@@ -28,7 +28,7 @@ then
 	PARITYincludedir=${SELFDIR}/..
 
 	# <loaded from parity-setup.in by Confix2.dir>
-	PARITYsupported_archs="x86"
+	PARITYsupported_archs="x86 x64"
 	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
 	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
 	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
