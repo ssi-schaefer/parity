@@ -43,6 +43,19 @@ extern void* _ReturnAddress();
 int __stdcall IsDebuggerPresent();
 #endif
 
+#define PCRT_DBGHELP_SYMS \
+	PCRT_DBGHELP_SYM(BOOL, SymInitialize, (HANDLE, PCTSTR, BOOL)) \
+	PCRT_DBGHELP_SYM(BOOL, SymFromAddr, (HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*)) \
+	PCRT_DBGHELP_SYM(BOOL, SymRefreshModuleList, (HANDLE)) \
+	PCRT_DBGHELP_SYM(BOOL, EnumerateLoadedModules64, (HANDLE, PENUMLOADED_MODULES_CALLBACK64, PVOID)) \
+/* eom */
+
+#define PCRT_DBGHELP_SYM(ret, name, args) \
+	typedef ret (WINAPI * f ## name ## _t)args; \
+	static f ## name ## _t f ## name;
+PCRT_DBGHELP_SYMS
+#undef PCRT_DBGHELP_SYM
+
 int PcrtWaitForDebugger(int timeout) {
 	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Process %d waiting for Debugger to be attached (%d seconds): ", GetCurrentProcessId(), timeout);
 
@@ -306,18 +319,8 @@ static void PcrtGuardDebugInitialization() {
 	}
 }
 
-typedef BOOL (WINAPI * SymInitFunc)(HANDLE, PCTSTR, BOOL);
-typedef BOOL (WINAPI * SymAddrFunc)(HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*);
-typedef BOOL (WINAPI * SymRefreshFunc)(HANDLE);
-typedef BOOL (WINAPI * EnumModulesFunc)(HANDLE, PENUMLOADED_MODULES_CALLBACK64, PVOID);
-
-static HANDLE			hDbgLib;
-static SymInitFunc		hInit;
-static SymAddrFunc		hSym;
-static SymRefreshFunc	hRefresh;
-static EnumModulesFunc	hEnumModules;
-
 void PcrtInitializeDebugInformation() {
+	static HANDLE hDbgLib = NULL;
 	if(!PcrtIsDebugInitialized())
 	{
 		PcrtGuardDebugInitialization();
@@ -329,22 +332,21 @@ void PcrtInitializeDebugInformation() {
 			return;
 		}
 
-		hInit	= (SymInitFunc)		GetProcAddress(hDbgLib, "SymInitialize");
-		hSym	= (SymAddrFunc)		GetProcAddress(hDbgLib, "SymFromAddr");
-		hRefresh= (SymRefreshFunc)	GetProcAddress(hDbgLib, "SymRefreshModuleList");
-		hEnumModules= (EnumModulesFunc)	GetProcAddress(hDbgLib, "EnumerateLoadedModules64");
+#define PCRT_DBGHELP_SYM(ret, name, args) f ## name = (f ## name ## _t)GetProcAddress(hDbgLib, #name);
+		PCRT_DBGHELP_SYMS
+#undef PCRT_DBGHELP_SYM
 
 		//
-		// don't check for hRefresh, since this requires dbghelp.dll v6.5
+		// don't check for SymRefreshModuleList, since this requires dbghelp.dll v6.5
 		// which won't be there always.
 		//
-		if(!hInit || !hSym) {
+		if(!fSymInitialize || !fSymFromAddr) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot load dbghelp.dll symbols.\n");
 		}
 
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "initializing debug information, please wait ... ");
 
-		if(!hInit(GetCurrentProcess(), NULL, TRUE)) {
+		if(!fSymInitialize(GetCurrentProcess(), NULL, TRUE)) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed!\n");
 		} else {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "done.\n");
@@ -353,7 +355,7 @@ void PcrtInitializeDebugInformation() {
 		//
 		// refresh symbol list.
 		//
-		if(hRefresh && !hRefresh(GetCurrentProcess())) {
+		if(fSymRefreshModuleList && !fSymRefreshModuleList(GetCurrentProcess())) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot refresh debug information for loaded modules.\n");
 		}
 	}
@@ -370,7 +372,7 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "warning: requested debug symbols, but those are not enabled!\n");
 	}
 	
-	if(t == LookupDebugInfo && hSym) {
+	if(t == LookupDebugInfo && fSymFromAddr) {
 		//
 		// Symbol initialization should be done only once, except
 		// when it is de-initialized. for now we take the penalty
@@ -408,7 +410,7 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		hSymInfo->MaxNameLen = MAX_SYM_NAME;
 		hSymInfo->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-		if(!hSym(GetCurrentProcess(), (DWORD64)addr, &iDisplacement, hSymInfo)) {
+		if(!fSymFromAddr(GetCurrentProcess(), (DWORD64)addr, &iDisplacement, hSymInfo)) {
 			return info;
 		}
 
@@ -673,12 +675,12 @@ static void PcrtWriteModulesInformation(HANDLE hCore)
 {
 	PcrtOutPrint(hCore, "Loaded Modules:\n");
 
-	if (!hEnumModules) {
+	if (!fEnumerateLoadedModules64) {
 		PcrtOutPrint(hCore, "  Enumerating loaded modules not available.\n");
 		return;
 	}
 
-	hEnumModules(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
+	fEnumerateLoadedModules64(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
 }
 
 //
