@@ -39,6 +39,10 @@ namespace parity
 
 		void MsStaticImportGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
+
 			if(imports_.empty())
 				return;
 

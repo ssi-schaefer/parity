@@ -40,6 +40,10 @@ namespace parity
 
 		void MsExportGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
+
 			if(exports_.empty())
 				return;
 

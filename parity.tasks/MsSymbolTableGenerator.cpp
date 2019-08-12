@@ -42,6 +42,10 @@ namespace parity
 
 		void MsSymbolTableGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
+
 			utils::Context& ctx = utils::Context::getContext();
 
 			if(symbols_.empty())

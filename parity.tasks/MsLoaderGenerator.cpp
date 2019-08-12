@@ -113,6 +113,10 @@ namespace parity
 
 		void MsLoaderGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
+
 			//
 			// 1) Generate the object for the loader
 			// 2) Remove all libraries that are handled by the loader.
