@@ -64,7 +64,7 @@ namespace parity
 			//
 			// at the moment this is 32bit!
 			//
-			hdr.setMachine(binary::FileHeader::MachineI386);
+			hdr.setMachine(binary::FileHeader::TargetMachineType());
 
 			for(binary::Symbol::SymbolVector::const_iterator it = exports_.begin(); it != exports_.end(); ++it)
 			{

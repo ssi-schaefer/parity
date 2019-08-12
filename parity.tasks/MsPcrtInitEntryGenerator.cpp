@@ -62,7 +62,7 @@ namespace parity
 
 			binary::Object obj;
 			binary::FileHeader& hdr = obj.getHeader();
-			hdr.setMachine(binary::FileHeader::MachineI386);
+			hdr.setMachine(binary::FileHeader::TargetMachineType());
 			
 			binary::Section& sectText = hdr.addSection(".text");
 			sectText.setCharacteristics( binary::Section::CharAlign16Bytes | binary::Section::CharMemoryExecute | binary::Section::CharMemoryRead | binary::Section::CharContentCode);

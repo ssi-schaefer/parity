@@ -38,6 +38,13 @@ namespace parity
 {
 	namespace binary
 	{
+
+		unsigned short FileHeader::TargetMachineType()
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			return ctx.getMachine();
+		}
+
 		FileHeader::FileHeader(const utils::GenericFile* file, void* ptr, bool isArchive)
 			: start_(ptr), file_(file), hdr_(*reinterpret_cast<FHStruct*>(ptr)), stringtable_(), map_(), sections_()
 			, nextStringOffset_(sizeof(unsigned int)), nextSectionIndex_(1), nextSymbolIndex_(0), isArchive_(isArchive)
@@ -87,11 +94,11 @@ namespace parity
 		{
 			switch(mach)
 			{
-			case MachineUnknown:
-			case MachineAMD64:
-			case MachineARM:
-			case MachineI386:
-			case MachineIA64:
+			case utils::MachineUnknown:
+			case utils::MachineAMD64:
+			case utils::MachineARM:
+			case utils::MachineI386:
+			case utils::MachineIA64:
 				return true;
 			default:
 				return false;

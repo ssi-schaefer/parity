@@ -54,7 +54,7 @@ namespace parity
 			//
 			// at the moment this is 32bit!
 			//
-			hdr.setMachine(binary::FileHeader::MachineI386);
+			hdr.setMachine(binary::FileHeader::TargetMachineType());
 
 			const unsigned char dummyData[] = { 0x00, 0x00, 0x00, 0x00 };
 
