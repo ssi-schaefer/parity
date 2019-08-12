@@ -849,8 +849,18 @@ ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a
 			esac # )
 
 			case ${vsarch} in # (
-			x86) echo "TimeT32Bit = true" ;;
-			*)   echo "TimeT32Bit = false" ;;
+			x86)
+				echo "Machine = I386"
+				echo "TimeT32Bit = true"
+				;;
+			x64)
+				echo "Machine = AMD64"
+				echo "TimeT32Bit = false"
+				;;
+			*)
+				echo "Machine = unknown"
+				echo "TimeT32Bit = false"
+				;;
 			esac
 
 			echo "

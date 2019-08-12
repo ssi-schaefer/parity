@@ -333,6 +333,11 @@ void saveSetting(std::ostringstream& target, const std::string& name, const Runt
 	target << name << " = " << Context::getContext().printable(value);
 }
 
+void saveSetting(std::ostringstream& target, const std::string& name, const MachineType& value)
+{
+	target << name << " = " << Context::getContext().printable(value);
+}
+
 void saveSetting(std::ostringstream& target, const std::string& name, const SubsystemType& value)
 {
 	target << name << " = ";
