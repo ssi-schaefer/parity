@@ -47,6 +47,7 @@ namespace parity
 			//
 			// CL and LINK command line switches
 			//
+			{ "-o"			,setOutputFile				}, // deprecated, but still in use
 			{ "/X"			,setNoStdIncludes			},
 			{ "/D"			,addDefine					},
 			{ "/U"			,removeDefine				},
