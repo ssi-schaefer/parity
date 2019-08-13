@@ -61,6 +61,7 @@ namespace parity
 			{ "/I"			,addIncludePath				},
 			{ "/LIBPATH:"	,addLibraryPath				},
 			{ "/Zi"			,setDebugable				},
+			{ "-g"			,setDebugable				},
 			{ "/Fo"			,setOutputFile				},
 			{ "/Fe"			,setOutputFile				},
 			{ "/TP"			,setForcedLanguage			},
