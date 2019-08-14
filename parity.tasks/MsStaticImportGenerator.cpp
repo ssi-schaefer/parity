@@ -39,7 +39,13 @@ namespace parity
 
 		void MsStaticImportGenerator::doWork()
 		{
-			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+			unsigned short targetMachine = binary::FileHeader::TargetMachineType();
+
+			switch(targetMachine) {
+			case utils::MachineI386:
+			case utils::MachineAMD64:
+				break;
+			default:
 				return;
 			}
 
@@ -55,12 +61,9 @@ namespace parity
 			binary::FileHeader& hdr = obj.getHeader();
 			binary::Section& dataSection = hdr.addSection(".data");
 
-			//
-			// at the moment this is 32bit!
-			//
 			hdr.setMachine(binary::FileHeader::TargetMachineType());
 
-			const unsigned char dummyData[] = { 0x00, 0x00, 0x00, 0x00 };
+			const unsigned char dummyData64[8] = { 0 };
 
 			for(binary::Symbol::SymbolVector::const_iterator it = imports_.begin(); it != imports_.end(); ++it)
 			{
@@ -69,8 +72,16 @@ namespace parity
 				binary::Symbol& imp = hdr.addSymbol(importName);
 				
 				dataSection.markSymbol(imp);
-				dataSection.markRelocation(ext, binary::Relocation::i386Direct32);
-				dataSection.addData(dummyData, 4);
+				switch(targetMachine) {
+				case utils::MachineI386:
+					dataSection.markRelocation(ext, binary::Relocation::i386Direct32);
+					dataSection.addData(dummyData64, 4);
+					break;
+				case utils::MachineAMD64:
+					dataSection.markRelocation(ext, binary::Relocation::TypeAmd64Addr64);
+					dataSection.addData(dummyData64, 8);
+					break;
+				}
 
 				ext.setStorageClass(binary::Symbol::ClassExternal);
 				imp.setStorageClass(binary::Symbol::ClassExternal);
