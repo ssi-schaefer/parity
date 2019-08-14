@@ -184,18 +184,26 @@ get-vsver() {
 	return 0
 }
 test_get-vsver() {
-	local input
+	local input expected output ret=0
 	for input in \
-		i686-msvc11.0-mingw32    \
-		i686-msvc11-mingw32      \
-		i686-msvc11.0-winnt      \
-		i686-msvc11-winnt        \
-		x86-msvc11.0             \
-		msvc11                   \
+		msvc11.0:i686-msvc11.0-mingw32    \
+		msvc11.0:i686-msvc11-mingw32      \
+		msvc11.0:i686-msvc11.0-winnt      \
+		msvc11.0:i686-msvc11-winnt        \
+		msvc11.0:x86-msvc11.0             \
+		msvc11.0:msvc11                   \
 	; do
-		[[ $(get-vsver "${input}") == msvc11.0 ]] || return 1
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-vsver "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-vsver '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-vsver '${input}' returns '${output}', expected '${expected}'"
+		fi
 	done
-	return 0
+	return ${ret}
 }
 unittests+=( test_get-vsver )
 
@@ -215,16 +223,24 @@ get-vsarch() {
 	return 0
 }
 test_get-vsarch() {
-	local input
+	local input expected output ret=0
 	for input in \
-		i686-msvc11.0-winnt      \
-		i686-msvc11.0-mingw32    \
-		x86-msvc11.0             \
-		i686                     \
+		x86:i686-msvc11.0-winnt      \
+		x86:i686-msvc11.0-mingw32    \
+		x86:x86-msvc11.0             \
+		x86:i686                     \
 	; do
-		[[ $(get-vsarch "${input}") == x86 ]] || return 1
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-vsarch "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-vsarch '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-vsarch '${input}' returns '${output}', expected '${expected}'"
+		fi
 	done
-	return 0
+	return ${ret}
 }
 unittests+=( test_get-vsarch )
 
@@ -262,15 +278,23 @@ get-chost() {
 	return 0
 }
 test_get-chost() {
-	local input
+	local input expected output ret=0
 	for input in \
-	    i686-msvc11.0:i686-msvc11.0-winnt \
-	    x86-msvc11:i686-msvc11.0-winnt \
-	    i686:i686-msvc-winnt \
+	    i686-msvc11.0-winnt:i686-msvc11.0 \
+	    i686-msvc11.0-winnt:x86-msvc11 \
+	    i686-msvc-winnt:i686 \
 	; do
-		[[ $(get-chost "${input%%:*}") == "${input#*:}" ]] || return 1
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-chost "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-chost '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-chost '${input}' returns '${output}', expected '${expected}'"
+		fi
 	done
-	return 0
+	return ${ret}
 }
 unittests+=( test_get-chost )
 
