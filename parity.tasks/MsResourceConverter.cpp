@@ -114,8 +114,18 @@ namespace parity
 
 			if (ctx.getBfdTarget().find("-x86-64") != std::string::npos) {
 				vec.push_back("/MACHINE:X64");
-			} else {
+			} else
+			if (ctx.getBfdTarget().find("-i386") != std::string::npos) {
 				vec.push_back("/MACHINE:X86");
+			} else {
+				switch (ctx.getMachine()) {
+				case utils::MachineAMD64:
+					vec.push_back("/MACHINE:X64");
+					break;
+				case utils::MachineI386:
+					vec.push_back("/MACHINE:X86");
+					break;
+				}
 			}
 		}
 
