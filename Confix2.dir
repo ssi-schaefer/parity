@@ -25,6 +25,7 @@ CONFIGURE_AC(
 				parity.gnu.ar/parity.gnu.ar \
 				parity.gnu.nm/parity.gnu.dumpbin \
 				parity.ms.link/parity.ms.lib \
+				parity.ms.link/parity.ms.nmake \
 				parity.ms.link/parity.ms.rc \
 		  )'],
 	order=AC_BOILERPLATE)
@@ -220,6 +221,7 @@ MSCOMMANDS = \
 	cl$(EXEEXT) \
 	link$(EXEEXT) \
 	lib$(EXEEXT):lib \
+	nmake$(EXEEXT):nmake \
 	rc$(EXEEXT):rc
 
 install-setup-files: install-recursive
