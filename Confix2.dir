@@ -229,16 +229,6 @@ install-setup-files: install-recursive
 	defchosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
 	cd "$(DESTDIR)$(bindir)" || exit $$? ; \\
 	for chost in $${chosts} $${defchosts} ; do \\
-		for exe in $(GNUCOMMANDS) ; do \\
-			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
-			$(LN_S) -f parity.gnu.$$2 $${chost}-$$1 || exit $$? ; \\
-		done ; \\
-		for exe in $(MSCOMMANDS) ; do \\
-			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
-			$(LN_S) -f parity.ms.$$2 $${chost}-$$1 || exit $$? ; \\
-		done ; \\
-	done ; \\
-	for chost in $${chosts} $${defchosts} ; do \\
 		$(MKDIR_P) "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
 		cd "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
 		case $${chost%%-*} in \\
@@ -252,11 +242,15 @@ install-setup-files: install-recursive
 			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
 			echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/$$1" ; \\
 			$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o $$1 -DWRAP_REALBIN="$(bindir)/parity.gnu.$$2" -DWRAP_OPTIONS="$${mopt}" || exit $$? ; \\
+			echo "creating $(DESTDIR)$(bindir)/$${chost}-$$1" ; \\
+			cp -f $$1 "$(DESTDIR)$(bindir)/$${chost}-$$1" || exit $$? ; \\
 		done ; \\
 		for exe in $(MSCOMMANDS) ; do \\
 			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
 			echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/$$1" ; \\
 			$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o $$1 -DWRAP_REALBIN="$(bindir)/parity.ms.$$2" -DWRAP_OPTIONS="$${mopt}" || exit $$? ; \\
+			echo "creating $(DESTDIR)$(bindir)/$${chost}-$$1" ; \\
+			cp -f $$1 "$(DESTDIR)$(bindir)/$${chost}-$$1" || exit $$? ; \\
 		done ; \\
 		echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/cmd.exe" ; \\
 		$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o cmd.exe -DWRAP_REALBIN="`cygpath -S`/cmd.exe" -DWRAP_OPTIONS= || exit $$? ; \\
