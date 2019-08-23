@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <dbghelp.h>
 
@@ -124,7 +125,7 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 		return;
 	}
 
-#define ST_FW_ADDRESS 8
+#define ST_FW_ADDRESS ((int)(sizeof(void*)*2))
 #define ST_FW_MODULE  20
 #define ST_FW_NAME    45
 
@@ -143,7 +144,7 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 		modinfo_t mod = PcrtGetContainingModule((void*)walk->hwFrame.AddrPC.Offset);
 
 		if(walk->sym.addr) {
-			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)+0x%p\n"
+			fprintf(stream, " [%2d] %-*p %*s!%s(%zu bytes)+0x%p\n"
 				, num++
 				, ST_FW_ADDRESS, (void*)walk->hwFrame.AddrPC.Offset
 				, ST_FW_MODULE, basename(mod.name)
@@ -152,7 +153,7 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 				, (void*)((uintptr_t)walk->hwFrame.AddrPC.Offset - (uintptr_t)walk->sym.addr)
 			);
 		} else {
-			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)\n"
+			fprintf(stream, " [%2d] %-*p %*s!%s(%zu bytes)\n"
 				, num++
 				, ST_FW_ADDRESS, (void*)walk->hwFrame.AddrPC.Offset
 				, ST_FW_MODULE, basename(mod.name)
@@ -206,7 +207,10 @@ stackframe_t* PcrtGetStackTraceFrom(CONTEXT const *inContext)
 #if defined(_M_IX86)
 	DWORD machineType = IMAGE_FILE_MACHINE_I386;
 #endif
-	// want compiler error if an unknown machine architecture is defined
+#if defined(_M_AMD64)
+	DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
+#endif
+	// want compiler error if neither or more than one _M_XXX is defined
 
 	if (!inContext) {
 		return NULL;
@@ -240,6 +244,17 @@ stackframe_t* PcrtGetStackTraceFrom(CONTEXT const *inContext)
 			frame->hwFrame.AddrStack.Mode    = AddrModeFlat;
 			frame->hwFrame.AddrStack.Segment = 0;
 			frame->hwFrame.AddrStack.Offset  = context.Esp;
+#endif
+#if defined(_M_AMD64)
+			frame->hwFrame.AddrPC.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrPC.Segment = 0;
+			frame->hwFrame.AddrPC.Offset  = context.Rip;
+			frame->hwFrame.AddrFrame.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrFrame.Segment = 0;
+			frame->hwFrame.AddrFrame.Offset  = context.Rbp;
+			frame->hwFrame.AddrStack.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrStack.Segment = 0;
+			frame->hwFrame.AddrStack.Offset  = context.Rsp;
 #endif
 		}
 		if (!fStackWalk64(machineType, curProc, curThread, &frame->hwFrame, &context, NULL, NULL, NULL, NULL)) {
@@ -470,8 +485,8 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		// if getting many, many stack traces (or sym infos).
 		//
 		while(symtab->addr && symtab->name) {
-			if(((unsigned long)symtab->addr <= (unsigned long)addr)
-				&& ((unsigned long)symtab->addr > (unsigned long)info.addr))
+			if(((uintptr_t)symtab->addr <= (uintptr_t)addr)
+				&& ((uintptr_t)symtab->addr > (uintptr_t)info.addr))
 			{
 				info = *symtab;
 			}
@@ -623,6 +638,22 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 			PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
 			PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
 #endif
+#if defined(_M_AMD64)
+			PcrtOutPrint(hCore, "  R15   : %p,", ex->ContextRecord->R15);
+			PcrtOutPrint(hCore, "  R14   : %p,", ex->ContextRecord->R14);
+			PcrtOutPrint(hCore, "  R13   : %p,", ex->ContextRecord->R13);
+			PcrtOutPrint(hCore, "  R12   : %p\n", ex->ContextRecord->R12);
+			PcrtOutPrint(hCore, "  R11   : %p,", ex->ContextRecord->R11);
+			PcrtOutPrint(hCore, "  R10   : %p,", ex->ContextRecord->R10);
+			PcrtOutPrint(hCore, "  R9    : %p,", ex->ContextRecord->R9);
+			PcrtOutPrint(hCore, "  R8    : %p\n", ex->ContextRecord->R8);
+			PcrtOutPrint(hCore, "  RDI   : %p,", ex->ContextRecord->Rdi);
+			PcrtOutPrint(hCore, "  RSI   : %p,", ex->ContextRecord->Rsi);
+			PcrtOutPrint(hCore, "  RBX   : %p\n", ex->ContextRecord->Rbx);
+			PcrtOutPrint(hCore, "  RDX   : %p,", ex->ContextRecord->Rdx);
+			PcrtOutPrint(hCore, "  RCX   : %p,", ex->ContextRecord->Rcx);
+			PcrtOutPrint(hCore, "  RAX   : %p\n", ex->ContextRecord->Rax);
+#endif
 		}
 
 		if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
@@ -632,6 +663,14 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
 			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
 			PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
+			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+#endif
+#if defined(_M_AMD64)
+			PcrtOutPrint(hCore, "  RBP   : %p,", ex->ContextRecord->Rbp);
+			PcrtOutPrint(hCore, "  RIP   : %p,", ex->ContextRecord->Rip);
+			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
+			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
+			PcrtOutPrint(hCore, "  RSP   : %p,", ex->ContextRecord->Rsp);
 			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
 #endif
 		}

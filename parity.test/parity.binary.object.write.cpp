@@ -53,7 +53,7 @@ namespace parity
 
 				Object obj;
 				FileHeader& hdr = obj.getHeader();
-				hdr.setMachine(FileHeader::MachineI386);
+				hdr.setMachine(FileHeader::TargetMachineType());
 
 				utils::Log::verbose("creating sections...\n");
 				

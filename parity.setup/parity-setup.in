@@ -28,7 +28,7 @@ then
 	PARITYincludedir=${SELFDIR}/..
 
 	# <loaded from parity-setup.in by Confix2.dir>
-	PARITYsupported_archs="x86"
+	PARITYsupported_archs="x86 x64"
 	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
 	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
 	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
@@ -849,8 +849,18 @@ ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a
 			esac # )
 
 			case ${vsarch} in # (
-			x86) echo "TimeT32Bit = true" ;;
-			*)   echo "TimeT32Bit = false" ;;
+			x86)
+				echo "Machine = I386"
+				echo "TimeT32Bit = true"
+				;;
+			x64)
+				echo "Machine = AMD64"
+				echo "TimeT32Bit = false"
+				;;
+			*)
+				echo "Machine = unknown"
+				echo "TimeT32Bit = false"
+				;;
 			esac
 
 			echo "

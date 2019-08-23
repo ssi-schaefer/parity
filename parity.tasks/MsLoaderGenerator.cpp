@@ -113,6 +113,10 @@ namespace parity
 
 		void MsLoaderGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
+
 			//
 			// 1) Generate the object for the loader
 			// 2) Remove all libraries that are handled by the loader.
@@ -133,7 +137,7 @@ namespace parity
 			binary::Object obj;
 			binary::FileHeader& hdr = obj.getHeader();
 
-			hdr.setMachine(binary::FileHeader::MachineI386);
+			hdr.setMachine(binary::FileHeader::TargetMachineType());
 
 			binary::Section& sectText = hdr.addSection(".text");
 			binary::Section& sectData = hdr.addSection(".data");

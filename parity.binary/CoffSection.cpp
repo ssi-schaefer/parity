@@ -190,6 +190,26 @@ namespace parity
 			relocs_.push_back(rel);
 		}
 
+		//
+		// amd64 version
+		//
+		void Section::markRelocation(Symbol& sym, Relocation::Amd64TypeFlags type)
+		{
+			//
+			// Maybe check if there is a relocation at this position already?
+			//
+			struct_.NumberOfRelocations++;
+
+			Relocation rel;
+
+			// relocation from current position to given symbol's index.
+			rel.setSymbolTableIndex(sym.getIndex());
+			rel.setType(static_cast<unsigned short>(type));
+			rel.setVirtualAddress(struct_.SizeOfRawData);
+
+			relocs_.push_back(rel);
+		}
+
 		void Section::markSymbol(Symbol& sym)
 		{
 			//

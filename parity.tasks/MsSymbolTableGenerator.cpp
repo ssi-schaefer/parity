@@ -42,6 +42,10 @@ namespace parity
 
 		void MsSymbolTableGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
+
 			utils::Context& ctx = utils::Context::getContext();
 
 			if(symbols_.empty())
@@ -55,7 +59,7 @@ namespace parity
 			binary::Object obj;
 			binary::FileHeader& hdr = obj.getHeader();
 
-			hdr.setMachine(binary::FileHeader::MachineI386);
+			hdr.setMachine(binary::FileHeader::TargetMachineType());
 
 			binary::Section& sectText = hdr.addSection(".text");
 			binary::Section& sectRData = hdr.addSection(".rdata");

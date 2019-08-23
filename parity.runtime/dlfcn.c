@@ -20,6 +20,8 @@
 *                                                                *
 \****************************************************************/
 
+#include <stdlib.h>
+
 #include "dlfcn.h"
 #include "internal/pcrt.h"
 

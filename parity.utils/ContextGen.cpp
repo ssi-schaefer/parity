@@ -162,6 +162,20 @@ namespace parity
 				throw Exception("cannot convert %s to a valid RuntimeType!", ref.c_str());
 		}
 
+		void ContextGen::convert(MachineType& target, const std::string& ref)
+		{
+			if(ref == "I386")
+				target = MachineI386;
+			else if(ref == "AMD64")
+				target = MachineAMD64;
+			else if(ref == "ARM")
+				target = MachineARM;
+			else if(ref == "IA64")
+				target = MachineIA64;
+			else
+				throw Exception("cannot convert %s to a valid MachineType!", ref.c_str());
+		}
+
 		void ContextGen::convert(LanguageType& target, const std::string& ref)
 		{
 			//
@@ -337,6 +351,26 @@ namespace parity
 				break;
 			case RuntimeStaticDebug:
 				return "static debug";
+				break;
+			}
+			return "unknown";
+		}
+
+		std::string ContextGen::printable(const MachineType& val)
+		{
+			switch(val)
+			{
+			case MachineI386:
+				return "I386";
+				break;
+			case MachineAMD64:
+				return "AMD64";
+				break;
+			case MachineARM:
+				return "ARM";
+				break;
+			case MachineIA64:
+				return "IA64";
 				break;
 			}
 			return "unknown";

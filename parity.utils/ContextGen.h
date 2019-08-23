@@ -105,6 +105,20 @@ namespace parity
 			RuntimeDynamicDebug
 		} RuntimeType;
 
+		//
+		// Public Types
+		//
+		typedef enum {
+			//
+			// Note: Not all types implemented here!
+			//
+			MachineUnknown	= 0x0, // applicable to all machines if encountered (c runtime, etc.)
+			MachineI386		= 0x14c,
+			MachineAMD64	= 0x8664,
+			MachineARM		= 0x1c0,
+			MachineIA64		= 0x200
+		} MachineType;
+
 		typedef std::map<std::string, std::string> DefineMap;
 		typedef std::map<Path, LanguageType> SourceMap;
 		typedef std::vector<Path> PathVector;
@@ -129,6 +143,7 @@ namespace parity
 			void convert(SubsystemType& target, const std::string& ref);
 			void convert(SourceMap& target, const std::string& ref);
 			void convert(RuntimeType& target, const std::string& ref);
+			void convert(MachineType& target, const std::string& ref);
 
 			std::string printable(const bool& val) { return (val ? "true" : "false"); }
 			std::string printable(const ToolchainType& val);
@@ -142,6 +157,7 @@ namespace parity
 			std::string printable(const SubsystemType& val);
 			std::string printable(const SourceMap& val);
 			std::string printable(const RuntimeType& val);
+			std::string printable(const MachineType& val);
 
 			bool operator==(const ContextGen& other);
 			bool operator!=(const ContextGen& other) { return !operator ==(other); }
@@ -229,6 +245,7 @@ namespace parity
 				CTX_GETSET   (Path			,AssemblerExe		,""				)  /* compiler (assembler) */ \
 				CTX_GETSET   (bool			,TimeT32Bit			,true			)  /* compiler (MS) */ \
 				CTX_GETSET   (RuntimeType	,Runtime			,RuntimeDynamic	)  /* compiler (MS) */ \
+				CTX_GETSET   (MachineType	,Machine			,MachineI386	)  /* compiler (MS) */ \
 				CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
 				CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
 				CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \
