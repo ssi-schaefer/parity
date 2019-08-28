@@ -25,6 +25,11 @@
 
 #include "internal/pcrt.h"
 
+#if (_MSC_VER - 0) < 1900
+/* before Windows 10 SDK, off_t is defined in wchar.h as well */
+# include "internal/pcrt-off_t.h"
+#endif /* _MSC_VER < 1900 */
+
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
 #  if !defined(_POSIX_) && defined(__PARITY_GNU__)

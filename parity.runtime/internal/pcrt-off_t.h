@@ -1,6 +1,7 @@
 /****************************************************************\
 *                                                                *
-* Copyright (C) 2007 by Markus Duft <markus.duft@salomon.at>     *
+* Copyright (C) 2007 by Markus Duft <markus.duft@ssi-schaefer.com>
+* Copyright (C) 2019 by Michaek Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
 *                                                                *
 * This file is part of parity.                                   *
 *                                                                *
@@ -20,23 +21,29 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_SYS_TYPES_H__
-#define __PCRT_SYS_TYPES_H__
+#if !defined(_OFF_T_DEFINED)
 
-#include "../internal/pcrt.h"
+/*
+ * Unfortunately, even with MSVC 2019/Win10, off_t is 32bit only,
+ * but for POSIX fseeko/ftello, we do need 64bit off_t eventually.
+ *
+ * Fortunately, MSVC headers internally use _off_t only,
+ * so we can leave _off_t as 32bit for struct stat.
+ */
+typedef long _off_t;
 
-#include "../internal/pcrt-off_t.h"
-
-#pragma push_macro("__STDC__")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
-#  include UCRT_INC(sys/Types.h)
-#pragma pop_macro("__STDC__")
-
-typedef long pid_t;
-typedef int mode_t;
-typedef signed int ssize_t;
-
+/*
+ * OTOH, off_t needs to match fpos_t:
+ * up to MSVC 2010 the _FPOSOFF() macro does 32bit only,
+ * since MSVC 2011 the _FPOSOFF() macro does 64bit only.
+ */
+# if _MSC_VER - 0 < 1700
+typedef long off_t;
+# else
+typedef long long off_t;
 #endif
+
+# define _OFF_T_DEFINED
+
+#endif /* !_OFF_T_DEFINED */
 

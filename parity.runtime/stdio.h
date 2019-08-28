@@ -25,6 +25,9 @@
 
 #include "internal/pcrt.h"
 
+/* need off_t for fseeko/ftello */
+#include "internal/pcrt-off_t.h"
+
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
 #  if !defined(_POSIX_) && defined(__PARITY_GNU__)
@@ -57,6 +60,8 @@ PCRT_BEGIN_C
 #pragma push_macro("popen")
 #pragma push_macro("pclose")
 #pragma push_macro("tempnam")
+#pragma push_macro("fseeko")
+#pragma push_macro("ftello")
 
 #undef snprintf
 #undef unlink
@@ -71,11 +76,27 @@ static PCRT_INLINE FILE* popen(const char* c, const char* m) { return _popen(c, 
 static PCRT_INLINE int pclose(FILE* f) { return _pclose(f); }
 static PCRT_INLINE char* tempnam(const char* d, const char* p) { return _tempnam(PCRT_CONV(d), p); }
 
+static PCRT_INLINE int fseeko(FILE* f, off_t o, int w)
+{
+  if (sizeof(off_t) == 8)
+	return _fseeki64(f, o, w);
+  return fseek(f, o, w);
+}
+
+static PCRT_INLINE off_t ftello(FILE* f)
+{
+  if (sizeof(off_t) == 8)
+	return _ftelli64(f);
+  return ftell(f);
+}
+
 #pragma pop_macro("snprintf")
 #pragma pop_macro("unlink")
 #pragma pop_macro("popen")
 #pragma pop_macro("pclose")
 #pragma pop_macro("tempnam")
+#pragma pop_macro("fseeko")
+#pragma pop_macro("ftello")
 
 PCRT_END_C
 
