@@ -61,7 +61,8 @@ PCRT_BEGIN_C
 // we have to declare a fresh 'struct pcrt_stat' instead:
 // Keep synchronized with MSVC header!
 //
-struct pcrt_stat {
+#ifndef _WIN64
+struct pcrt_stat32 {
         _dev_t     st_dev;
         _ino_t     st_ino;
         unsigned short st_mode;
@@ -69,19 +70,115 @@ struct pcrt_stat {
         short      st_uid;
         short      st_gid;
         _dev_t     st_rdev;
-        _off_t     st_size;
-        time_t st_atime;
-        time_t st_mtime;
-        time_t st_ctime;
+        long       st_size;
+#ifdef _USE_32BIT_TIME_T
+        long       st_atime;
+        long       st_mtime;
+        long       st_ctime;
+#else // !_USE_32BIT_TIME_T
+        long long  st_atime;
+        long long  st_mtime;
+        long long  st_ctime;
+#endif // !_USE_32BIT_TIME_T
 };
 
-static PCRT_INLINE int pcrt_stat(const char * p, struct pcrt_stat* b) { return _stat(PCRT_CONV(p), (struct _stat*)b); }
-static PCRT_INLINE int pcrt_fstat(int f, struct pcrt_stat* b) { return _fstat(f, (struct _stat*)b); }
+static PCRT_INLINE int pcrt_stat32(const char * p, struct pcrt_stat32* b)
+{
+#ifdef _USE_32BIT_TIME_T
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat32) == sizeof(struct _stat32) != 0)];
+	return _stat32(PCRT_CONV(p), (struct _stat32*)b);
+#else // !_USE_32BIT_TIME_T
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat32) == sizeof(struct _stat64i32) != 0)];
+	return _stat64i32(PCRT_CONV(p), (struct _stat64i32*)b);
+#endif // !_USE_32BIT_TIME_T
+}
+static PCRT_INLINE int pcrt_fstat32(int f, struct pcrt_stat32* b)
+{
+#ifdef _USE_32BIT_TIME_T
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat32) == sizeof(struct _stat32) != 0)];
+	return _fstat32(f, (struct _stat32*)b);
+#else // !_USE_32BIT_TIME_T
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat32) == sizeof(struct _stat64i32) != 0)];
+	return _fstat64i32(f, (struct _stat64i32*)b);
+#endif // !_USE_32BIT_TIME_T
+}
+#endif // !_WIN64
 
-#undef stat
-#undef fstat
-#define stat pcrt_stat
-#define fstat pcrt_fstat
+struct pcrt_stat64 {
+        _dev_t     st_dev;
+        _ino_t     st_ino;
+        unsigned short st_mode;
+        short      st_nlink;
+        short      st_uid;
+        short      st_gid;
+        _dev_t     st_rdev;
+        long long  st_size;
+#if !defined(_WIN64) && defined(_USE_32BIT_TIME_T)
+        long       st_atime;
+        long       st_mtime;
+        long       st_ctime;
+#else // !_USE_32BIT_TIME_T
+        long long  st_atime;
+        long long  st_mtime;
+        long long  st_ctime;
+#endif // !_USE_32BIT_TIME_T
+};
+
+static PCRT_INLINE int pcrt_stat64(const char * p, struct pcrt_stat64* b)
+{
+#if !defined(_WIN64) && defined(_USE_32BIT_TIME_T)
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat64) == sizeof(struct _stat32i64) != 0)];
+	return _stat32i64(PCRT_CONV(p), (struct _stat32i64*)b);
+#else // !_USE_32BIT_TIME_T
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat64) == sizeof(struct _stat64) != 0)];
+	return _stat64(PCRT_CONV(p), (struct _stat64*)b);
+#endif // !_USE_32BIT_TIME_T
+}
+static PCRT_INLINE int pcrt_fstat64(int f, struct pcrt_stat64* b)
+{
+#if !defined(_WIN64) && defined(_USE_32BIT_TIME_T)
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat64) == sizeof(struct _stat32i64) != 0)];
+	return _fstat32i64(f, (struct _stat32i64*)b);
+#else // !_USE_32BIT_TIME_T
+	typedef char __static_assert_t[(sizeof(struct pcrt_stat64) == sizeof(struct _stat64) != 0)];
+	return _fstat64(f, (struct _stat64*)b);
+#endif // !_USE_32BIT_TIME_T
+}
+
+#undef   stat
+#undef  _stat
+#undef   stat64
+#undef  _stat64
+#undef  _stati64
+#undef  fstat
+#undef _fstat
+#undef  fstat64
+#undef _fstat64
+#undef _fstati64
+
+#ifdef _WIN64
+# define   stat    pcrt_stat64
+# define  _stat    pcrt_stat64
+# define   stat64  pcrt_stat64
+# define  _stat64  pcrt_stat64
+# define  _stati64 pcrt_stat64
+# define  fstat    pcrt_fstat64
+# define _fstat    pcrt_fstat64
+# define  fstat64  pcrt_fstat64
+# define _fstat64  pcrt_fstat64
+# define _fstati64 pcrt_fstat64
+#else
+# define   stat    pcrt_stat32
+# define  _stat    pcrt_stat32
+# define   stat64  pcrt_stat64
+# define  _stat64  pcrt_stat64
+# define  _stati64 pcrt_stat64
+# define  fstat    pcrt_fstat32
+# define _fstat    pcrt_fstat32
+# define  fstat64  pcrt_fstat64
+# define _fstat64  pcrt_fstat64
+# define _fstati64 pcrt_fstat64
+#endif
 
 PCRT_END_C
 
