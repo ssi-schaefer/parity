@@ -12,6 +12,7 @@ PARITYbindir="@PARITY_BINDIR@"
 PARITYincludedir="@PARITY_INCLUDEDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
 PARITYsupported_versions="@PARITY_SUPPORTED_VERSIONS@"
+PARITYsupported_runtimes="@PARITY_SUPPORTED_RUNTIMES@"
 PARITYhas_default_version="@PARITY_SUPPORTS_DEFAULT_MSVC_VERSION@"
 PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
@@ -29,6 +30,7 @@ then
 
 	# <loaded from parity-setup.in by Confix2.dir>
 	PARITYsupported_archs="x86 x64"
+	PARITYsupported_runtimes="dynamic static"
 	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
 	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
 	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
@@ -164,34 +166,90 @@ parityconf-unittest() {
 	return ${success}
 }
 
-# get-vsver [end-of-chost|[vsarch-]vsver]
+# get-vscrt [end-of-chost|[vsarch-][vsver-]vscrt]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vsver i686-msvc11.0-mingw32    -> msvc11.0
-#  get-vsver i686-msvc11-mingw32      -> msvc11.0
-#  get-vsver i686-msvc11.0-winnt      -> msvc11.0
-#  get-vsver i686-msvc11-winnt        -> msvc11.0
-#  get-vsver x86-msvc11.0             -> msvc11.0
-#  get-vsver msvc11                   -> msvc11.0
+#  get-vscrt i686-libcmt11.0-mingw32 -> libcmt
+#  get-vscrt i686-msvc11-mingw32     -> msvc
+#  get-vscrt i686-libcmt11.0-winnt   -> libcmt
+#  get-vscrt i686-msvc11.0-winnt     -> msvc
+#  get-vscrt i686-msvc11-winnt       -> msvc
+#  get-vscrt x86-libcmt11.0          -> libcmt
+#  get-vscrt x86-msvc11.0            -> msvc
+#  get-vscrt libcmt11                -> libcmt
+#  get-vscrt static                  -> libcmt
+#  get-vscrt dynamic                 -> msvc
+#  get-vscrt junk                    -> msvc
+get-vscrt() {
+	local vscrt=${1}
+	case ${vscrt} in
+	libcmt*|*-libcmt*|static) echo "libcmt" ;;
+	*) echo "msvc" ;;
+	esac
+	return 0
+}
+test_get-vscrt() {
+	local input expected output ret=0
+	for input in \
+		libcmt:i686-libcmt11.0-mingw32 \
+		msvc:i686-msvc11-mingw32    \
+		libcmt:i686-libcmt11.0-winnt   \
+		msvc:i686-msvc11.0-winnt    \
+		msvc:i686-msvc11-winnt      \
+		libcmt:x86-libcmt11.0          \
+		msvc:x86-msvc11.0           \
+		msvc:msvc11                 \
+		msvc:dynamic                \
+		libcmt:static                  \
+		msvc:junk                   \
+	; do
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-vscrt "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-vscrt '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-vscrt '${input}' returns '${output}', expected '${expected}'"
+		fi
+	done
+	return ${ret}
+}
+unittests+=( test_get-vscrt )
+
+# get-vsver [end-of-chost|[vsarch-][vscrt]vsver]
+#  The argument needs to contain enough information only.
+# Examples:
+#  get-vsver i686-msvc11.0-mingw32  -> 11.0
+#  get-vsver i686-msvc11-mingw32    -> 11.0
+#  get-vsver i686-libcmt11.0-winnt  -> 11.0
+#  get-vsver i686-msvc11.0-winnt    -> 11.0
+#  get-vsver i686-msvc11-winnt      -> 11.0
+#  get-vsver x86-msvc11.0           -> 11.0
+#  get-vsver libcmt11               -> 11.0
+#  get-vsver libcmt11               -> 11.0
+#  get-vsver msvc11                 -> 11.0
 get-vsver() {
-	local vsver=${1##*msvc}
-	vsver=${vsver%%-mingw*}
-	vsver=${vsver%%-winnt*}
+	local vscrt=$(get-vscrt "$1")
+	local vsver=${1##*${vscrt}}
+	vsver=${vsver%%-*}
 	case ${vsver} in
-	[7-9]      |[1-9][0-9]      ) echo "msvc${vsver}.0" ;;
-	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "msvc${vsver}" ;;
+	[7-9]      |[1-9][0-9]      ) echo "${vsver}.0" ;;
+	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "${vsver}" ;;
 	esac
 	return 0
 }
 test_get-vsver() {
 	local input expected output ret=0
 	for input in \
-		msvc11.0:i686-msvc11.0-mingw32    \
-		msvc11.0:i686-msvc11-mingw32      \
-		msvc11.0:i686-msvc11.0-winnt      \
-		msvc11.0:i686-msvc11-winnt        \
-		msvc11.0:x86-msvc11.0             \
-		msvc11.0:msvc11                   \
+		11.0:i686-msvc11.0-mingw32  \
+		11.0:i686-msvc11-mingw32    \
+		11.0:i686-libcmt11.0-winnt  \
+		11.0:i686-msvc11.0-winnt    \
+		11.0:i686-msvc11-winnt      \
+		11.0:x86-msvc11.0           \
+		11.0:libcmt11               \
+		11.0:msvc11                 \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -214,6 +272,7 @@ unittests+=( test_get-vsver )
 #  get-vsarch i686-msvc11.0-mingw32    -> x86
 #  get-vsarch x86-msvc11.0             -> x86
 #  get-vsarch i686                     -> x86
+#  get-vsarch x86_64                   -> x64
 get-vsarch() {
 	local vsarch=${1%%-*}
 	case ${vsarch} in
@@ -229,6 +288,7 @@ test_get-vsarch() {
 		x86:i686-msvc11.0-mingw32    \
 		x86:x86-msvc11.0             \
 		x86:i686                     \
+		x64:x86_64                   \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -254,6 +314,16 @@ get-supported-vsvers() {
     return 0
 }
 
+get-supported-vscrts() {
+    local vscrts=( ${PARITYsupported_runtimes} )
+    local vscrt
+    for vscrt in "${vscrts[@]}"
+    do
+		get-vscrt "${vscrt}"
+    done
+    return 0
+}
+
 get-supported-vsarchs() {
     local vsarch
     for vsarch in ${PARITYsupported_archs}
@@ -263,26 +333,38 @@ get-supported-vsarchs() {
     return 0
 }
 
-# get-chost [begin[+end]-of-chost|vsarch[-vsver]]
+# get-chost [begin[+end]-of-chost|vsarch[-[vscrt]vsver]]
 # Examples:
-#  get-chost i686-msvc11.0     -> i686-msvc11.0-winnt
-#  get-chost x86-msvc11        -> i686-msvc11.0-winnt
-#  get-chost i686              -> i686-msvc-winnt
+#  get-chost i686-libcmt11.0 -> i686-libcmt11.0-winnt
+#  get-chost i686-msvc11.0   -> i686-msvc11.0-winnt
+#  get-chost i686-msvc11.0   -> i686-msvc11.0-winnt
+#  get-chost x86-libcmt11    -> i686-libcmt11.0-winnt
+#  get-chost x86-msvc11      -> i686-msvc11.0-winnt
+#  get-chost i686-libcmt     -> i686-libcmt-winnt
+#  get-chost i686-msvc       -> i686-msvc-winnt
+#  get-chost i686            -> i686-msvc-winnt
 get-chost() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
+	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "i686-msvc${vsver#msvc}-winnt" ;;
-	x64) echo "x86_64-msvc${vsver#msvc}-winnt" ;;
+	x86) echo "i686-${vscrt}${vsver}-winnt" ;;
+	x64) echo "x86_64-${vscrt}${vsver}-winnt" ;;
 	esac
 	return 0
 }
 test_get-chost() {
 	local input expected output ret=0
 	for input in \
-	    i686-msvc11.0-winnt:i686-msvc11.0 \
-	    i686-msvc11.0-winnt:x86-msvc11 \
-	    i686-msvc-winnt:i686 \
+	    i686-libcmt11.0-winnt:i686-libcmt11.0 \
+	    i686-msvc11.0-winnt:i686-msvc11.0     \
+	    i686-libcmt11.0-winnt:i686-libcmt11.0 \
+	    i686-msvc11.0-winnt:i686-msvc11.0     \
+	    i686-libcmt11.0-winnt:x86-libcmt11    \
+	    i686-msvc11.0-winnt:x86-msvc11        \
+	    i686-libcmt-winnt:i686-libcmt         \
+	    i686-msvc-winnt:i686-msvc             \
+	    i686-msvc-winnt:i686                  \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -299,12 +381,15 @@ test_get-chost() {
 unittests+=( test_get-chost )
 
 get-supported-chosts() {
-	local vsarch vsver
+	local vsarch vsver vscrt
 	for vsarch in $(get-supported-vsarchs)
 	do
 		for vsver in $(get-supported-vsvers)
 		do
-			get-chost "${vsarch}-${vsver}"
+			for vscrt in $(get-supported-vscrts)
+			do
+				get-chost "${vsarch}-${vscrt}${vsver}"
+			done
 		done
 	done
 	return 0
@@ -378,9 +463,10 @@ get-supported-sdklibs() {
 get-parityflags() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
+	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "-m32${vsver:+ -m}${vsver}" ;;
-	x64) echo "-m64${vsver:+ -m}${vsver}" ;;
+	x86) echo "-m32 -m${vscrt}${vsver}" ;;
+	x64) echo "-m64 -m${vscrt}${vsver}" ;;
 	esac
 	return 0
 }
@@ -417,7 +503,7 @@ sysdir=$(cygpath -S)
 eval "cmd() {
   ( set -x
 	tmpfile=\`mktemp\`
-	: trap \"rm -f '\${tmpfile}' '\${tmpfile}.bat'\" 0
+	trap \"rm -f '\${tmpfile}' '\${tmpfile}.bat'\" 0
 	mv -f \"\${tmpfile}\" \"\${tmpfile}.bat\"
 	for x in \"\$@\"; do echo \"\$x\"; done > \"\${tmpfile}.bat\"
 	chmod +x \"\${tmpfile}.bat\"
@@ -441,7 +527,6 @@ regquery() {
 
 regquery_vsroot() {
 	local vsver=$(get-vsver "${1}")
-	vsver=${vsver#msvc}
 	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
 	|| regquery HKEY_CURRENT_USER/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
 	|| regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
@@ -506,7 +591,6 @@ vswhere() {
 
 vswhere_installationPath() {
 	local vsver=$(get-vsver "${1}")
-	vsver=${vsver#msvc}
 	vswhere_installationPath_result=
 	vswhere -nologo \
 		-version "[${vsver},${vsver}.65535]" \
@@ -572,10 +656,10 @@ query-vcvars() {
 	# MSVC 10.0 and above query their VSxxCOMNTOOLS on their own
 	local comntoolsvar=
 	case ${vsver} in
-	msvc7.0) comntoolsvar=VS70COMNTOOLS ;;
-	msvc7.1) comntoolsvar=VS71COMNTOOLS ;;
-	msvc8.0) comntoolsvar=VS80COMNTOOLS ;;
-	msvc9.0) comntoolsvar=VS90COMNTOOLS ;;
+	7.0) comntoolsvar=VS70COMNTOOLS ;;
+	7.1) comntoolsvar=VS71COMNTOOLS ;;
+	8.0) comntoolsvar=VS80COMNTOOLS ;;
+	9.0) comntoolsvar=VS90COMNTOOLS ;;
 	esac
 	if [[ -n ${comntoolsvar} ]]
 	then
@@ -639,20 +723,21 @@ prune-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-	local hostconf="${PARITYlocalstatedir}/parity.${vsarch}-${vsver}"
+	local vscrt=$(get-vscrt "${chost}")
+	local hostconf="${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}"
 	local hostdefconf="${PARITYlocalstatedir}/parity.${vsarch}"
-	local userconf="${PARITYsysconfdir}/parity.${vsarch}-${vsver}"
+	local userconf="${PARITYsysconfdir}/parity.${vsarch}-${vscrt}${vsver}"
 
 	local hostconfheader="${PARITYheader}
 #
-# PARITY CONFIGURATION for ${vsarch}-${vsver}
+# PARITY CONFIGURATION for ${vsarch}-${vscrt}${vsver}
 #"
 	local userconfheader="${PARITYheader}
 #
-# override parts of parity configuration for ${vsarch}-${vsver}
+# override parts of parity configuration for ${vsarch}-${vscrt}${vsver}
 #"
-	local noconf="MSVC ${vsver#msvc} (${vsarch}) is ${reason} (try ${SELF##*/} --enable ${chost})"
-	local defnoconf="Default MSVC version (${vsarch}) is ${reason} (try ${SELF##*/} --set-default ${vsarch}-newest)"
+	local noconf="MSVC ${vsver} (${vsarch}-${vscrt}) is ${reason} (try ${SELF##*/} --enable ${chost})"
+	local defnoconf="Default MSVC version (${vsarch}-${vscrt}) is ${reason} (try ${SELF##*/} --set-default ${vsarch}-newest)"
 	local defchost=
 	local ret=0
 
@@ -717,8 +802,8 @@ prune-parityconf() {
 	then
 		rm -f "${DESTDIR}${userconf}.conf"
 		rm -f "${DESTDIR}${hostconf}.conf" "${DESTDIR}${hostconf}.sh"
-		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vsver}.a
-		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vsver}.a
+		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vscrt}${vsver}.a
+		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vscrt}${vsver}.a
 		return 0
 	fi
 
@@ -744,8 +829,8 @@ prune-parityconf() {
 		echo "echo '${noconf}' >&2"
 		echo "false"
 	} > "${DESTDIR}${hostconf}.sh" &&
-	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vsver}.a &&
-	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vsver}.a
+	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vscrt}${vsver}.a &&
+	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vscrt}${vsver}.a
 	if ! traceoff $?
 	then
 		verbose "Disabling ${hostconf} failed."
@@ -790,12 +875,13 @@ update-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
+	local vscrt=$(get-vscrt "${chost}")
 	local parityflags=$(get-parityflags "${chost}")
 
 	(
 		local p
-		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} ..."
-		tmpdir=${TMPDIR:-/tmp}/parity-setup.${vsarch}-${vsver}.$$
+		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver} ..."
+		tmpdir=${TMPDIR:-/tmp}/parity-setup.${vsarch}-${vscrt}${vsver}.$$
 		rm -rf "${tmpdir}"
 
 		trap "rm -rf '${tmpdir}'" 0
@@ -804,15 +890,15 @@ update-parityconf() {
 
 		{
 			echo "#
-# PARITY CONFIGURATION for ${vsarch}-${vsver}
+# PARITY CONFIGURATION for ${vsarch}-${vscrt}${vsver}
 #
 #  Automatically generated by ${SELF##*/}.
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
 #
 
 Colored = true"
-            case ${PARITYrexsupport} in
-            yes|enabled) echo "WaitForOutputFile = true" ;;
+            case ${PARITYrexsupport} in # (
+            yes|enabled) echo "WaitForOutputFile = true" ;; # (
             *) echo "WaitForOutputFile = false" ;;
             esac
 
@@ -840,23 +926,18 @@ Colored = true"
 			'
 			echo "
 PCRTInclude = ${PARITYincludedir}/parity.runtime
-PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a
-ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a
+PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a
+ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a
 "
-			case ${vsver} in # (
-			7.*) echo "Runtime = static"  ;; # (
-			*)   echo "Runtime = dynamic" ;; # (
-			esac # )
-
 			case ${vsarch} in # (
 			x86)
 				echo "Machine = I386"
 				echo "TimeT32Bit = true"
-				;;
+				;; # (
 			x64)
 				echo "Machine = AMD64"
 				echo "TimeT32Bit = false"
-				;;
+				;; # (
 			*)
 				echo "Machine = unknown"
 				echo "TimeT32Bit = false"
@@ -880,13 +961,13 @@ section windows {
 	Subsystem = Windows
 }
 "
-		} > parity.${vsarch}-${vsver}.conf
+		} > parity.${vsarch}-${vscrt}${vsver}.conf
 		[[ $? -eq 0 ]] || exit 1
 
 		{
 			# Remember: This is parsed in getenv-parityconf().
 			echo "#
-# PARITY CONFIGURATION for ${vsarch}-${vsver}
+# PARITY CONFIGURATION for ${vsarch}-${vscrt}${vsver}
 #
 #  Automatically generated by ${SELF##*/}.
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
@@ -895,46 +976,46 @@ PATH=\"${vcPATH}\${PATH:+:}\${PATH}\" export PATH
 LIB=\"$(cygpath -mp "${vcLIB}")\${LIB:+;}\${LIB}\" export LIB
 INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUDE
 "
-		} > parity.${vsarch}-${vsver}.sh
+		} > parity.${vsarch}-${vscrt}${vsver}.sh
 		[[ $? -eq 0 ]] || exit 1
 
 		unset PARITY_CONFIG
 
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a ..."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a ..."
 		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
 			"${DESTDIR}${PARITYlibdir}"/parity.runtime/{{diagnose,dirent,dlfcn,getopt,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c,cxxeh.cc,ios-fixup.cpp} &&
-		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vsver}.a *.o
+		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vscrt}${vsver}.a *.o
 		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a done."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a done."
 
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a ..."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a ..."
 		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
-		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vsver}.a Loader*.o
+		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vscrt}${vsver}.a Loader*.o
 		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a done."
+		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a done."
 
 		traceon
 		mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-		mv -f libparity.runtime.${vsarch}-${vsver}.a libparity.loader.${vsarch}-${vsver}.a "${DESTDIR}${PARITYlocalstatedir}"/ &&
-		mv -f parity.${vsarch}-${vsver}.conf parity.${vsarch}-${vsver}.sh "${DESTDIR}${PARITYlocalstatedir}"/
+		mv -f libparity.runtime.${vsarch}-${vscrt}${vsver}.a libparity.loader.${vsarch}-${vscrt}${vsver}.a "${DESTDIR}${PARITYlocalstatedir}"/ &&
+		mv -f parity.${vsarch}-${vscrt}${vsver}.conf parity.${vsarch}-${vscrt}${vsver}.sh "${DESTDIR}${PARITYlocalstatedir}"/
 		traceoff $? || exit 1
 
 		if supports-default && ${setdefault:+:} false
 		then
 			traceon
-			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.conf" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.conf" &&
-			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.sh"
+			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}-dynamic.conf" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.conf" &&
+			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}-dynamic.sh" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.sh"
 			traceoff $? || exit 1
 		fi
 	)
 	if [[ $? -ne 0 ]]
 	then
-		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} failed."
+		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver} failed."
 		return 1
 	fi
-	verbose "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} done."
+	verbose "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver} done."
 	return 0
 }
 
@@ -949,10 +1030,11 @@ getenv-parityconf() {
 	is-supported-chost "${chost}" || return 1
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
+	local vscrt=$(get-vscrt "${chost}")
 
-	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh ..."
+	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh ..."
 	(
-		${bare} || . "${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh"
+		${bare} || . "${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh"
 		while read line
 		do
 			line=${line%%#*}
@@ -964,9 +1046,9 @@ getenv-parityconf() {
 			else
 				echo "${var} ${!var}"
 			fi
-		done < "${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh"
+		done < "${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh"
 	)
-	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh done."
+	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh done."
 	return 0
 }
 

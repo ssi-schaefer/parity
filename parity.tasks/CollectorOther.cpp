@@ -107,36 +107,62 @@ namespace parity
 			}
 
 			//
-			// Second, identify which MSVC version to load the configuration for.
+			// Second, identify which MSVC runtime, and
+			// third, which version to load the configuration for.
 			//
+			std::string vcruntime = "msvc";
+			utils::RuntimeType ctxruntime = utils::RuntimeDynamic;
 			int msvcmajor = 0, msvcminor = 0;
 			//
 			// We may have an msvc version in the executable filename,
 			// that is basename of argv[0], or as an argument "-mmsvcX.Y".
 			//
-			// Find "msvc" in argv[0].
-			char * pmsvcver = strstr(argv0, "msvc");
-			// Find "-mmsvc" in arguments, overriding argv[0].
+			// Find "-msvc" or "-libcmt" in argv[0].
+			char * pmsvcver = strstr(argv0, "-libcmt");
+			if (pmsvcver) {
+				vcruntime = "libcmt";
+				ctxruntime = utils::RuntimeStatic;
+				pmsvcver += 7;
+			} else {
+				pmsvcver = strstr(argv0, "-msvc");
+				if (pmsvcver) {
+					vcruntime = "msvc";
+					ctxruntime = utils::RuntimeDynamic;
+					pmsvcver += 5;
+				}
+			}
+			// Find "-mmsvc" or "-mlibcmt" in arguments, overriding argv[0].
 			for (int i = 1; i < argc; ++i) {
 				if (strncmp(argv[i], "-mmsvc", 6) == 0) {
-					pmsvcver = argv[i] + 2;
+					vcruntime = "msvc";
+					ctxruntime = utils::RuntimeDynamic;
+					pmsvcver = argv[i] + 6;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+				if (strncmp(argv[i], "-mlibcmt", 8) == 0) {
+					vcruntime = "libcmt";
+					ctxruntime = utils::RuntimeStatic;
+					pmsvcver = argv[i] + 8;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
 				}
 			}
 			if (pmsvcver != NULL) {
-				sscanf(pmsvcver, "msvc%d.%d", &msvcmajor, &msvcminor);
+				sscanf(pmsvcver, "%d.%d", &msvcmajor, &msvcminor);
 				// Ignore sscanf failure, use default version then.
 				// If there's only one number, use "0" as minor version.
 			}
 			if (msvcmajor != 0) {
 				std::stringstream v;
-				v << vcvariant << "-msvc" << msvcmajor << "." << msvcminor;
+				v << vcvariant << "-" << vcruntime << msvcmajor << "." << msvcminor;
 				vcvariant = v.str();
 			}
 
 			utils::Context& context = utils::Context::getContext();
+			context.setRuntime(ctxruntime);
 			utils::Timing::instance().start("Configuration loading");
 			ConfigFileVector files;
 
