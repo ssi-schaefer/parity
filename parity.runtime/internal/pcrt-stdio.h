@@ -1,6 +1,7 @@
 /****************************************************************\
 *                                                                *
-* Copyright (C) 2007 by Markus Duft <markus.duft@salomon.at>     *
+* Copyright (C) 2007 by Markus Duft <markus.duft@ssi-schaefer.com>
+* Copyright (C) 2019 by Michaek Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
 *                                                                *
 * This file is part of parity.                                   *
 *                                                                *
@@ -20,48 +21,46 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_DIRECT_H__
-#define __PCRT_DIRECT_H__
 
-#include "internal/pcrt.h"
+#ifdef __PCRT_INTERNAL_STDIO_H_NEED_PREAMBLE
+#undef __PCRT_INTERNAL_STDIO_H_NEED_PREAMBLE
 
-#undef  chdir
-#undef _chdir
-#undef  mkdir
-#undef _mkdir
-#undef  rmdir
-#undef _rmdir
+#define __PCRT_INTERNAL_COREIO_H_NEED_PREAMBLE
+#include "pcrt-coreio.h"
 
-#pragma push_macro("__STDC__")
-#  undef __STDC__
-#  include UCRT_INC(Direct.h)
-#pragma pop_macro("__STDC__")
+#undef  tempnam
+#undef _tempnam
 
+#endif // __PCRT_INTERNAL_STDIO_H_NEED_PREAMBLE
+
+
+#ifdef __PCRT_INTERNAL_STDIO_H_NEED_POSTAMBLE
+#undef __PCRT_INTERNAL_STDIO_H_NEED_POSTAMBLE
+
+
+#define __PCRT_INTERNAL_COREIO_H_NEED_POSTAMBLE
+#include "pcrt-coreio.h"
+
+
+#ifndef __PCRT_INTERNAL_STDIO_H_IMPL
+#define __PCRT_INTERNAL_STDIO_H_IMPL
+//
+// redefine io.h functions which work with files to be able
+// of parsing non-native paths.
+//
 PCRT_BEGIN_C
 
-static PCRT_INLINE int pcrt_chdir(const char* p)
+static PCRT_INLINE char * pcrt_tempnam(const char* dir, const char *prefix)
 {
-  return _chdir(PCRT_CONV(p));
-}
-
-static PCRT_INLINE int pcrt_mkdir(const char* p, ... /* ignored */)
-{
-  return _mkdir(PCRT_CONV(p));
-}
-
-static PCRT_INLINE int pcrt_rmdir(const char* p)
-{
-  return _rmdir(PCRT_CONV(p));
+  return _tempnam(PCRT_CONV(dir), prefix);
 }
 
 PCRT_END_C
 
-#define  chdir pcrt_chdir
-#define _chdir pcrt_chdir
-#define  mkdir pcrt_mkdir
-#define _mkdir pcrt_mkdir
-#define  rmdir pcrt_rmdir
-#define _rmdir pcrt_rmdir
+#endif // __PCRT_INTERNAL_STDIO_H_IMPL
 
-#endif
 
+#define  tempnam pcrt_tempnam
+#define _tempnam pcrt_tempnam
+
+#endif // __PCRT_INTERNAL_STDIO_H_NEED_POSTAMBLE

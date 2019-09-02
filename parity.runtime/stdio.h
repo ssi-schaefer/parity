@@ -28,35 +28,62 @@
 /* need off_t for fseeko/ftello */
 #include "internal/pcrt-off_t.h"
 
+#define __PCRT_INTERNAL_STDIO_H_NEED_PREAMBLE
+#include "internal/pcrt-stdio.h"
+
+#undef fopen
+#undef fopen_s
+#undef freopen
+#undef freopen_s
+#undef _fsopen
+
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
 #  if !defined(_POSIX_) && defined(__PARITY_GNU__)
 #    define _POSIX_ 1
 #  endif
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
-#  pragma push_macro("unlink")
-#    define unlink __crt_invalid_unlink
-#    include UCRT_INC(Stdio.h)
-#  pragma pop_macro("unlink")
+#  undef __STDC__
+#  include UCRT_INC(Stdio.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")
 
 #include RUNTIME_INC(Stdarg.h)
 
-//
-// redefine with path conversion attached. We simply hope
-// that nobody is stupid enough to use those names as
-// something else then a call to this functions.
-//
-#define fopen(f, m)				fopen(PCRT_CONV(f), m)
-#define freopen(f, m, p)		freopen(PCRT_CONV(f), m, p)
+#define __PCRT_INTERNAL_STDIO_H_NEED_POSTAMBLE
+#include "internal/pcrt-stdio.h"
+
 
 PCRT_BEGIN_C
 
+static PCRT_INLINE FILE* pcrt_fopen(const char *filename, const char *mode)
+{
+  return fopen(PCRT_CONV(filename), mode);
+}
+
+static PCRT_INLINE errno_t pcrt_fopen_s(FILE **pFile, const char *filename, const char *mode)
+{
+  return fopen_s(pFile, PCRT_CONV(filename), mode);
+}
+
+static PCRT_INLINE FILE* pcrt_freopen(const char *filename, const char *mode, FILE *stream)
+{
+  return freopen(PCRT_CONV(filename), mode, stream);
+}
+
+static PCRT_INLINE errno_t pcrt_freopen_s(FILE **pFile, const char *filename, const char *mode, FILE *stream)
+{
+  return freopen_s(pFile, PCRT_CONV(filename), mode, stream);
+}
+
+#if (_MSC_VER - 0) >= 1800
+// _fsopen does have 3 arguments since MSVC 2012 only
+static PCRT_INLINE FILE* pcrt_fsopen(const char *filename, const char *mode, int shflag)
+{
+  return _fsopen(PCRT_CONV(filename), mode, shflag);
+}
+#endif // _MSC_VER >= 1800
+
 #pragma push_macro("snprintf")
-#pragma push_macro("unlink")
 #pragma push_macro("popen")
 #pragma push_macro("pclose")
 #pragma push_macro("tempnam")
@@ -64,14 +91,12 @@ PCRT_BEGIN_C
 #pragma push_macro("ftello")
 
 #undef snprintf
-#undef unlink
 #undef popen
 #undef pclose
 #undef tempnam
 
 extern int snprintf(char* b, size_t c, const char* fmt, ...);
 
-static PCRT_INLINE int unlink(const char* f) { return _unlink(PCRT_CONV(f)); }
 static PCRT_INLINE FILE* popen(const char* c, const char* m) { return _popen(c, m); }
 static PCRT_INLINE int pclose(FILE* f) { return _pclose(f); }
 static PCRT_INLINE char* tempnam(const char* d, const char* p) { return _tempnam(PCRT_CONV(d), p); }
@@ -91,7 +116,6 @@ static PCRT_INLINE off_t ftello(FILE* f)
 }
 
 #pragma pop_macro("snprintf")
-#pragma pop_macro("unlink")
 #pragma pop_macro("popen")
 #pragma pop_macro("pclose")
 #pragma pop_macro("tempnam")
@@ -99,6 +123,14 @@ static PCRT_INLINE off_t ftello(FILE* f)
 #pragma pop_macro("ftello")
 
 PCRT_END_C
+
+#define fopen     pcrt_fopen
+#define fopen_s   pcrt_fopen_s
+#define freopen   pcrt_freopen
+#define freopen_s pcrt_freopen_s
+#if (_MSC_VER - 0) >= 1800
+# define _fsopen  pcrt_fsopen
+#endif // _MSC_VER >= 1800
 
 //
 // TODO: Wide character versions?
