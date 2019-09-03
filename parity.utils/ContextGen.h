@@ -245,7 +245,7 @@ namespace parity
 				CTX_GETSET   (Path			,AssemblerExe		,""				)  /* compiler (assembler) */ \
 				CTX_GETSET   (bool			,TimeT32Bit			,true			)  /* compiler (MS) */ \
 				CTX_GETSET_I (RuntimeType	,Runtime			,RuntimeInvalid	)  /* compiler (MS) */ \
-				CTX_GETSET   (MachineType	,Machine			,MachineI386	)  /* compiler (MS) */ \
+				CTX_GETSET_I (MachineType	,Machine			,MachineUnknown	)  /* compiler (MS) */ \
 				CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
 				CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
 				CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \

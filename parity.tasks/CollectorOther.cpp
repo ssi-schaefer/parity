@@ -76,10 +76,15 @@ namespace parity
 			//
 			// Find "x86_64" or "x86" in argv[0]:
 			std::string vcvariant;
-			if (strstr(argv0, "x86_64"))
+			utils::MachineType ctxmachine = utils::MachineUnknown;
+			if (strstr(argv0, "x86_64")) {
 				vcvariant = "x64";
-			else if (strstr(argv0, "x86"))
+				ctxmachine = utils::MachineAMD64;
+			} else
+			if (strstr(argv0, "x86")) {
 				vcvariant = "x86";
+				ctxmachine = utils::MachineI386;
+			}
 			// Find "i[0-9]86" in argv[0]:
 			for(char const * x = strstr(argv0, "i"); x; x = strstr(x+1, "i")) {
 				if (strlen(x) >= 4
@@ -87,6 +92,7 @@ namespace parity
 				 && x[1] >= '1' && x[1] <= '9'
 				) {
 					vcvariant = "x86";
+					ctxmachine = utils::MachineI386;
 					break;
 				}
 			}
@@ -94,12 +100,14 @@ namespace parity
 			for (int i = 1; i < argc; ++i) {
 				if (strcmp(argv[i], "-m64") == 0) {
 					vcvariant = "x64";
+					ctxmachine = utils::MachineAMD64;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
 				}
 				if (strcmp(argv[i], "-m32") == 0) {
 					vcvariant = "x86";
+					ctxmachine = utils::MachineI386;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
@@ -111,7 +119,7 @@ namespace parity
 			// third, which version to load the configuration for.
 			//
 			std::string vcruntime = "msvc";
-			utils::RuntimeType ctxruntime = utils::RuntimeDynamic;
+			utils::RuntimeType ctxruntime = utils::RuntimeInvalid;
 			int msvcmajor = 0, msvcminor = 0;
 			//
 			// We may have an msvc version in the executable filename,
@@ -163,6 +171,7 @@ namespace parity
 
 			utils::Context& context = utils::Context::getContext();
 			context.setRuntime(ctxruntime);
+			context.setMachine(ctxmachine);
 			utils::Timing::instance().start("Configuration loading");
 			ConfigFileVector files;
 
