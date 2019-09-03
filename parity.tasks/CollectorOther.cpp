@@ -125,26 +125,50 @@ namespace parity
 			// We may have an msvc version in the executable filename,
 			// that is basename of argv[0], or as an argument "-mmsvcX.Y".
 			//
-			// Find "-msvc" or "-libcmt" in argv[0].
-			char * pmsvcver = strstr(argv0, "-libcmt");
-			if (pmsvcver) {
+			// Find "-msvc", "-msvcd", "-libcmtd" or "-libcmt" in argv[0].
+			char * pmsvcver;
+			if ((pmsvcver = strstr(argv0, "-msvcd"))) {
+				vcruntime = "msvcd";
+				ctxruntime = utils::RuntimeDynamicDebug;
+				pmsvcver += 6;
+			} else
+			if ((pmsvcver = strstr(argv0, "-msvc"))) {
+				vcruntime = "msvc";
+				ctxruntime = utils::RuntimeDynamic;
+				pmsvcver += 5;
+			} else
+			if ((pmsvcver = strstr(argv0, "-libcmtd"))) {
+				vcruntime = "libcmtd";
+				ctxruntime = utils::RuntimeStaticDebug;
+				pmsvcver += 8;
+			} else
+			if ((pmsvcver = strstr(argv0, "-libcmt"))) {
 				vcruntime = "libcmt";
 				ctxruntime = utils::RuntimeStatic;
 				pmsvcver += 7;
-			} else {
-				pmsvcver = strstr(argv0, "-msvc");
-				if (pmsvcver) {
-					vcruntime = "msvc";
-					ctxruntime = utils::RuntimeDynamic;
-					pmsvcver += 5;
-				}
 			}
 			// Find "-mmsvc" or "-mlibcmt" in arguments, overriding argv[0].
 			for (int i = 1; i < argc; ++i) {
+				if (strncmp(argv[i], "-mmsvcd", 7) == 0) {
+					vcruntime = "msvcd";
+					ctxruntime = utils::RuntimeDynamicDebug;
+					pmsvcver = argv[i] + 7;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
 				if (strncmp(argv[i], "-mmsvc", 6) == 0) {
 					vcruntime = "msvc";
 					ctxruntime = utils::RuntimeDynamic;
 					pmsvcver = argv[i] + 6;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+				if (strncmp(argv[i], "-mlibcmtd", 9) == 0) {
+					vcruntime = "libcmtd";
+					ctxruntime = utils::RuntimeStaticDebug;
+					pmsvcver = argv[i] + 9;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;

@@ -276,7 +276,9 @@ install-setup-files: install-recursive
 		x86|i?86*) mopt=-m32 ;; \\
 		esac ; \\
 		case $${chost} in \\
+		*-libcmtd*) mcrt="libcmtd" ;; \\
 		*-libcmt*) mcrt="libcmt" ;; \\
+		*-msvcd*) mcrt="msvcd" ;; \\
 		*) mcrt="msvc" ;; \\
 		esac ; \\
 		mver=$${chost#*-$${mcrt}} ; \\

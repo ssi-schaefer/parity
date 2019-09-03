@@ -30,7 +30,7 @@ then
 
 	# <loaded from parity-setup.in by Confix2.dir>
 	PARITYsupported_archs="x86 x64"
-	PARITYsupported_runtimes="dynamic static"
+	PARITYsupported_runtimes="dynamic static dynamicdebug staticdebug"
 	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
 	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
 	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
@@ -169,21 +169,27 @@ parityconf-unittest() {
 # get-vscrt [end-of-chost|[vsarch-][vsver-]vscrt]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vscrt i686-libcmt11.0-mingw32 -> libcmt
-#  get-vscrt i686-msvc11-mingw32     -> msvc
-#  get-vscrt i686-libcmt11.0-winnt   -> libcmt
-#  get-vscrt i686-msvc11.0-winnt     -> msvc
-#  get-vscrt i686-msvc11-winnt       -> msvc
-#  get-vscrt x86-libcmt11.0          -> libcmt
-#  get-vscrt x86-msvc11.0            -> msvc
-#  get-vscrt libcmt11                -> libcmt
-#  get-vscrt static                  -> libcmt
-#  get-vscrt dynamic                 -> msvc
-#  get-vscrt junk                    -> msvc
+#  get-vscrt i686-libcmt11.0-mingw32  -> libcmt
+#  get-vscrt i686-libcmtd11.0-mingw32 -> libcmtd
+#  get-vscrt i686-msvc11-mingw32      -> msvc
+#  get-vscrt i686-msvcd11-mingw32     -> msvcd
+#  get-vscrt i686-libcmt11.0-winnt    -> libcmt
+#  get-vscrt i686-msvc11.0-winnt      -> msvc
+#  get-vscrt i686-msvcd11-winnt       -> msvcd
+#  get-vscrt x86-libcmt11.0           -> libcmt
+#  get-vscrt x86-msvc11.0             -> msvc
+#  get-vscrt libcmt11                 -> libcmt
+#  get-vscrt static                   -> libcmt
+#  get-vscrt staticdebug              -> libcmtd
+#  get-vscrt dynamic                  -> msvc
+#  get-vscrt dynamicdebug             -> msvcd
+#  get-vscrt junk                     -> msvc
 get-vscrt() {
 	local vscrt=${1}
 	case ${vscrt} in
+	libcmtd*|*-libcmtd*|staticdebug) echo "libcmtd" ;;
 	libcmt*|*-libcmt*|static) echo "libcmt" ;;
+	msvcd*|*-msvcd*|dynamicdebug) echo "msvcd" ;;
 	*) echo "msvc" ;;
 	esac
 	return 0
@@ -191,17 +197,21 @@ get-vscrt() {
 test_get-vscrt() {
 	local input expected output ret=0
 	for input in \
-		libcmt:i686-libcmt11.0-mingw32 \
-		msvc:i686-msvc11-mingw32    \
-		libcmt:i686-libcmt11.0-winnt   \
-		msvc:i686-msvc11.0-winnt    \
-		msvc:i686-msvc11-winnt      \
-		libcmt:x86-libcmt11.0          \
-		msvc:x86-msvc11.0           \
-		msvc:msvc11                 \
-		msvc:dynamic                \
-		libcmt:static                  \
-		msvc:junk                   \
+		libcmt:i686-libcmt11.0-mingw32   \
+		libcmtd:i686-libcmtd11.0-mingw32 \
+		msvc:i686-msvc11-mingw32         \
+		libcmt:i686-libcmt11.0-winnt     \
+		msvc:i686-msvc11.0-winnt         \
+		msvc:i686-msvc11-winnt           \
+		libcmt:x86-libcmt11.0            \
+		msvc:x86-msvc11.0                \
+		msvc:msvc11                      \
+		msvcd:msvcd11                    \
+		msvc:dynamic                     \
+		msvcd:dynamicdebug               \
+		libcmt:static                    \
+		libcmtd:staticdebug              \
+		msvc:junk                        \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -221,13 +231,17 @@ unittests+=( test_get-vscrt )
 #  The argument needs to contain enough information only.
 # Examples:
 #  get-vsver i686-msvc11.0-mingw32  -> 11.0
+#  get-vsver i686-msvcd11.0-mingw32 -> 11.0
 #  get-vsver i686-msvc11-mingw32    -> 11.0
 #  get-vsver i686-libcmt11.0-winnt  -> 11.0
+#  get-vsver i686-libcmtd11.0-winnt -> 11.0
 #  get-vsver i686-msvc11.0-winnt    -> 11.0
 #  get-vsver i686-msvc11-winnt      -> 11.0
+#  get-vsver i686-msvcd11-winnt     -> 11.0
 #  get-vsver x86-msvc11.0           -> 11.0
+#  get-vsver libcmtd11              -> 11.0
 #  get-vsver libcmt11               -> 11.0
-#  get-vsver libcmt11               -> 11.0
+#  get-vsver msvcd11                -> 11.0
 #  get-vsver msvc11                 -> 11.0
 get-vsver() {
 	local vscrt=$(get-vscrt "$1")
@@ -243,13 +257,25 @@ test_get-vsver() {
 	local input expected output ret=0
 	for input in \
 		11.0:i686-msvc11.0-mingw32  \
+		11.0:i686-msvcd11.0-mingw32 \
 		11.0:i686-msvc11-mingw32    \
+		11.0:i686-msvcd11-mingw32   \
 		11.0:i686-libcmt11.0-winnt  \
+		11.0:i686-libcmtd11.0-winnt \
 		11.0:i686-msvc11.0-winnt    \
+		11.0:i686-msvcd11.0-winnt   \
 		11.0:i686-msvc11-winnt      \
+		11.0:i686-msvcd11-winnt     \
 		11.0:x86-msvc11.0           \
+		11.0:x86-msvcd11.0          \
+		11.0:libcmt11.0             \
+		11.0:libcmtd11.0            \
 		11.0:libcmt11               \
+		11.0:libcmtd11              \
+		11.0:msvc11.0               \
+		11.0:msvcd11.0              \
 		11.0:msvc11                 \
+		11.0:msvcd11                \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -269,9 +295,12 @@ unittests+=( test_get-vsver )
 #  The argument needs to contain enough information only.
 # Examples:
 #  get-vsarch i686-msvc11.0-winnt      -> x86
+#  get-vsarch i686-msvcd11.0-winnt     -> x86
 #  get-vsarch i686-msvc11.0-mingw32    -> x86
+#  get-vsarch i686-libcmtd11.0-winnt   -> x86
 #  get-vsarch x86-msvc11.0             -> x86
 #  get-vsarch i686                     -> x86
+#  get-vsarch x86_64-libcmtd11.0-winnt -> x64
 #  get-vsarch x86_64                   -> x64
 get-vsarch() {
 	local vsarch=${1%%-*}
@@ -285,10 +314,11 @@ test_get-vsarch() {
 	local input expected output ret=0
 	for input in \
 		x86:i686-msvc11.0-winnt      \
-		x86:i686-msvc11.0-mingw32    \
+		x86:i686-msvcd11.0-mingw32   \
 		x86:x86-msvc11.0             \
 		x86:i686                     \
 		x64:x86_64                   \
+		x86:i686-libcmtd11.0-winnt   \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -335,14 +365,18 @@ get-supported-vsarchs() {
 
 # get-chost [begin[+end]-of-chost|vsarch[-[vscrt]vsver]]
 # Examples:
-#  get-chost i686-libcmt11.0 -> i686-libcmt11.0-winnt
-#  get-chost i686-msvc11.0   -> i686-msvc11.0-winnt
-#  get-chost i686-msvc11.0   -> i686-msvc11.0-winnt
-#  get-chost x86-libcmt11    -> i686-libcmt11.0-winnt
-#  get-chost x86-msvc11      -> i686-msvc11.0-winnt
-#  get-chost i686-libcmt     -> i686-libcmt-winnt
-#  get-chost i686-msvc       -> i686-msvc-winnt
-#  get-chost i686            -> i686-msvc-winnt
+#  get-chost i686-libcmt11.0  -> i686-libcmt11.0-winnt
+#  get-chost i686-libcmtd11.0 -> i686-libcmtd11.0-winnt
+#  get-chost i686-msvc11.0    -> i686-msvc11.0-winnt
+#  get-chost i686-msvcd11.0   -> i686-msvcd11.0-winnt
+#  get-chost x86-libcmt11     -> i686-libcmt11.0-winnt
+#  get-chost x86-msvc11       -> i686-msvc11.0-winnt
+#  get-chost i686-libcmt      -> i686-libcmt-winnt
+#  get-chost i686-msvc        -> i686-msvc-winnt
+#  get-chost i686-msvcd       -> i686-msvcd-winnt
+#  get-chost i686-libcmt      -> i686-libcmt-winnt
+#  get-chost i686-libcmtd     -> i686-libcmtd-winnt
+#  get-chost i686             -> i686-msvc-winnt
 get-chost() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
@@ -356,15 +390,20 @@ get-chost() {
 test_get-chost() {
 	local input expected output ret=0
 	for input in \
-	    i686-libcmt11.0-winnt:i686-libcmt11.0 \
-	    i686-msvc11.0-winnt:i686-msvc11.0     \
-	    i686-libcmt11.0-winnt:i686-libcmt11.0 \
-	    i686-msvc11.0-winnt:i686-msvc11.0     \
-	    i686-libcmt11.0-winnt:x86-libcmt11    \
-	    i686-msvc11.0-winnt:x86-msvc11        \
-	    i686-libcmt-winnt:i686-libcmt         \
-	    i686-msvc-winnt:i686-msvc             \
-	    i686-msvc-winnt:i686                  \
+	    i686-libcmt11.0-winnt:i686-libcmt11.0             \
+	    i686-libcmtd11.0-winnt:i686-libcmtd11.0           \
+	    i686-msvc11.0-winnt:i686-msvc11.0                 \
+	    i686-msvcd11.0-winnt:i686-msvcd11.0               \
+	    i686-libcmt11.0-winnt:i686-libcmt11.0             \
+	    i686-msvc11.0-winnt:i686-msvc11.0                 \
+	    i686-libcmt11.0-winnt:x86-libcmt11                \
+	    i686-msvc11.0-winnt:x86-msvc11                    \
+	    i686-libcmt-winnt:i686-libcmt                     \
+	    i686-msvc-winnt:i686-msvc                         \
+	    i686-msvc-winnt:i686                              \
+	    x86_64-libcmtd11.0-winnt:x86_64-libcmtd11.0-winnt \
+	    x86_64-libcmtd-winnt:x86_64-libcmtd               \
+	    x86_64-msvc-winnt:x64-msvc                        \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
