@@ -28,14 +28,8 @@
 /* need off_t for fseeko/ftello */
 #include "internal/pcrt-off_t.h"
 
-#define __PCRT_INTERNAL_STDIO_H_NEED_PREAMBLE
+#define __PCRT_INTERNAL_STDIO_H_NEED_PREWRAP
 #include "internal/pcrt-stdio.h"
-
-#undef fopen
-#undef fopen_s
-#undef freopen
-#undef freopen_s
-#undef _fsopen
 
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
@@ -49,57 +43,29 @@
 
 #include RUNTIME_INC(Stdarg.h)
 
-#define __PCRT_INTERNAL_STDIO_H_NEED_POSTAMBLE
+#define __PCRT_INTERNAL_STDIO_H_NEED_POSTWRAP 1
 #include "internal/pcrt-stdio.h"
 
 
+//
+// additional functions not available from MSVC
+//
 PCRT_BEGIN_C
 
-static PCRT_INLINE FILE* pcrt_fopen(const char *filename, const char *mode)
-{
-  return fopen(PCRT_CONV(filename), mode);
-}
-
-static PCRT_INLINE errno_t pcrt_fopen_s(FILE **pFile, const char *filename, const char *mode)
-{
-  return fopen_s(pFile, PCRT_CONV(filename), mode);
-}
-
-static PCRT_INLINE FILE* pcrt_freopen(const char *filename, const char *mode, FILE *stream)
-{
-  return freopen(PCRT_CONV(filename), mode, stream);
-}
-
-static PCRT_INLINE errno_t pcrt_freopen_s(FILE **pFile, const char *filename, const char *mode, FILE *stream)
-{
-  return freopen_s(pFile, PCRT_CONV(filename), mode, stream);
-}
-
-#if (_MSC_VER - 0) >= 1800
-// _fsopen does have 3 arguments since MSVC 2012 only
-static PCRT_INLINE FILE* pcrt_fsopen(const char *filename, const char *mode, int shflag)
-{
-  return _fsopen(PCRT_CONV(filename), mode, shflag);
-}
-#endif // _MSC_VER >= 1800
-
-#pragma push_macro("snprintf")
-#pragma push_macro("popen")
-#pragma push_macro("pclose")
-#pragma push_macro("tempnam")
-#pragma push_macro("fseeko")
-#pragma push_macro("ftello")
-
-#undef snprintf
-#undef popen
-#undef pclose
-#undef tempnam
-
+#if defined(_MSC_VER) && ((_MSC_VER - 0) < 1900)
+// available since Windows 10 SDK (MSVC 14.0)
 extern int snprintf(char* b, size_t c, const char* fmt, ...);
+#endif
 
-static PCRT_INLINE FILE* popen(const char* c, const char* m) { return _popen(c, m); }
-static PCRT_INLINE int pclose(FILE* f) { return _pclose(f); }
-static PCRT_INLINE char* tempnam(const char* d, const char* p) { return _tempnam(PCRT_CONV(d), p); }
+static PCRT_INLINE FILE* popen(const char* c, const char* m)
+{
+  return _popen(c, m);
+}
+
+static PCRT_INLINE int pclose(FILE* f)
+{
+  return _pclose(f);
+}
 
 static PCRT_INLINE int fseeko(FILE* f, off_t o, int w)
 {
@@ -115,26 +81,10 @@ static PCRT_INLINE off_t ftello(FILE* f)
   return ftell(f);
 }
 
-#pragma pop_macro("snprintf")
-#pragma pop_macro("popen")
-#pragma pop_macro("pclose")
-#pragma pop_macro("tempnam")
-#pragma pop_macro("fseeko")
-#pragma pop_macro("ftello")
-
 PCRT_END_C
-
-#define fopen     pcrt_fopen
-#define fopen_s   pcrt_fopen_s
-#define freopen   pcrt_freopen
-#define freopen_s pcrt_freopen_s
-#if (_MSC_VER - 0) >= 1800
-# define _fsopen  pcrt_fsopen
-#endif // _MSC_VER >= 1800
 
 //
 // TODO: Wide character versions?
 //
 
-#endif
-
+#endif // __PCRT_STDIO_H__

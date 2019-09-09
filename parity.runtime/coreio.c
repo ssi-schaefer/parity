@@ -20,24 +20,21 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_IO_H__
-#define __PCRT_IO_H__
+#define __PCRT_INTERNAL_COREIO_H_NEED_REAL
+#include "io.h"
 
-#include "internal/pcrt.h"
+int pcrt_remove(const char* f)
+{
+  return remove(PCRT_CONV(f));
+}
 
-#define __PCRT_INTERNAL_IO_H_NEED_PREWRAP
-#include "internal/pcrt-io.h"
+int pcrt_rename(const char* o, const char *n)
+{
+  return rename(PCRT_CONV(o), PCRT_CONV(n));
+}
 
+int pcrt_unlink(const char* f)
+{
+  return _unlink(PCRT_CONV(f));
+}
 
-#pragma push_macro("__STDC__")
-#  undef __STDC__
-#  include UCRT_INC(Io.h)
-#pragma pop_macro("__STDC__")
-
-#include RUNTIME_INC(Stdarg.h)
-
-
-#define __PCRT_INTERNAL_IO_H_NEED_POSTWRAP
-#include "internal/pcrt-io.h"
-
-#endif

@@ -20,24 +20,50 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_IO_H__
-#define __PCRT_IO_H__
+#define __PCRT_INTERNAL_IO_H_NEED_REAL 0
+#include "io.h"
 
-#include "internal/pcrt.h"
+int pcrt_access(const char* f, int m)
+{
+  return _access(PCRT_CONV(f), m);
+}
 
-#define __PCRT_INTERNAL_IO_H_NEED_PREWRAP
-#include "internal/pcrt-io.h"
+errno_t pcrt_access_s(const char* f, int m)
+{
+  return _access_s(PCRT_CONV(f), m);
+}
 
+int pcrt_chmod(const char* f, int m)
+{
+  return _chmod(PCRT_CONV(f), m);
+}
 
-#pragma push_macro("__STDC__")
-#  undef __STDC__
-#  include UCRT_INC(Io.h)
-#pragma pop_macro("__STDC__")
+int pcrt_creat(const char* f, int m)
+{
+  return _creat(PCRT_CONV(f), m);
+}
 
-#include RUNTIME_INC(Stdarg.h)
+int pcrt_open(const char* f, int fl, ...)
+{
+    int ret;
+    va_list args;
+    va_start(args, fl);
+    ret = _open(f, fl, va_arg(args, int));
+    va_end(args);
+    return ret;
+}
 
+int pcrt_sopen(const char *filename, int oflag, int shflag, ...)
+{
+    int ret;
+    va_list args;
+    va_start(args, shflag);
+    ret = _sopen(PCRT_CONV(filename), oflag, shflag, va_arg(args, int));
+    va_end(args);
+    return ret;
+}
 
-#define __PCRT_INTERNAL_IO_H_NEED_POSTWRAP
-#include "internal/pcrt-io.h"
-
-#endif
+errno_t pcrt_sopen_s(int *pfh, const char *filename, int oflag, int shflag, int pmode)
+{
+  return _sopen_s(pfh, PCRT_CONV(filename), oflag, shflag, pmode);
+}

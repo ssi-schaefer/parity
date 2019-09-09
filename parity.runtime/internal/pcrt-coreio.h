@@ -22,51 +22,79 @@
 \****************************************************************/
 
 
-#ifdef __PCRT_INTERNAL_COREIO_H_NEED_PREAMBLE
-#undef __PCRT_INTERNAL_COREIO_H_NEED_PREAMBLE
+#ifdef    __PCRT_INTERNAL_COREIO_H_NEED_PREWRAP
+# ifndef  __PCRT_INTERNAL_COREIO_H_NEED_REAL
 
-#undef remove
-#undef rename
-#undef  unlink
-#undef _unlink
+#  pragma push_macro( "remove")
+#  pragma push_macro( "rename")
+#  pragma push_macro( "unlink")
+#  pragma push_macro("_unlink")
 
-#endif // __PCRT_INTERNAL_COREIO_H_NEED_PREAMBLE
+#  define  remove pcrt_no_remove
+#  define  rename pcrt_no_rename
+#  define  unlink pcrt_no_unlink
+#  define _unlink pcrt_no__unlink
+
+# endif // !__PCRT_INTERNAL_COREIO_H_NEED_REAL
+# undef     __PCRT_INTERNAL_COREIO_H_NEED_PREWRAP
+#endif //   __PCRT_INTERNAL_COREIO_H_NEED_PREWRAP
 
 
-#ifdef __PCRT_INTERNAL_COREIO_H_NEED_POSTAMBLE
-#undef __PCRT_INTERNAL_COREIO_H_NEED_POSTAMBLE
+#ifdef __PCRT_INTERNAL_COREIO_H_NEED_POSTWRAP
 
-#ifndef __PCRT_INTERNAL_COREIO_H_IMPL
-#define __PCRT_INTERNAL_COREIO_H_IMPL
+PCRT_BEGIN_C
+
+extern int pcrt_remove(const char* f);
+extern int pcrt_rename(const char* o, const char *n);
+extern int pcrt_unlink(const char* f);
+
+PCRT_END_C
+
+# ifndef __PCRT_INTERNAL_COREIO_H_NEED_REAL
+
+#  undef  remove
+#  undef  rename
+#  undef  unlink
+#  undef _unlink
+
+#  pragma pop_macro( "remove")
+#  pragma pop_macro( "rename")
+#  pragma pop_macro( "unlink")
+#  pragma pop_macro("_unlink")
+
+#  ifndef  __PCRT_INTERNAL_COREIO_H
+#   define __PCRT_INTERNAL_COREIO_H
+
 //
 // redefine io.h functions which work with files to be able
 // of parsing non-native paths.
 //
 PCRT_BEGIN_C
 
-static PCRT_INLINE int pcrt_remove(const char* f)
+static PCRT_INLINE int remove(const char* f)
 {
-  return  remove(PCRT_CONV(f));
+  return pcrt_remove(f);
 }
 
-static PCRT_INLINE int pcrt_rename(const char* o, const char *n)
+static PCRT_INLINE int rename(const char* o, const char *n)
 {
-  return  rename(PCRT_CONV(o), PCRT_CONV(n));
+  return pcrt_rename(o, n);
 }
 
-static PCRT_INLINE int pcrt_unlink(const char* f)
+static PCRT_INLINE int unlink(const char* f)
 {
-  return _unlink(PCRT_CONV(f));
+  return pcrt_unlink(f);
+}
+
+static PCRT_INLINE int _unlink(const char* f)
+{
+  return pcrt_unlink(f);
 }
 
 PCRT_END_C
 
-#endif // __PCRT_INTERNAL_COREIO_H_IMPL
+#  endif // __PCRT_INTERNAL_COREIO_H
 
-
-#define remove  pcrt_remove
-#define rename  pcrt_rename
-#define  unlink pcrt_unlink
-#define _unlink pcrt_unlink
-
-#endif // __PCRT_INTERNAL_COREIO_H_NEED_POSTAMBLE
+# endif // !__PCRT_INTERNAL_COREIO_H_NEED_REAL
+# undef     __PCRT_INTERNAL_COREIO_H_NEED_POSTWRAP
+#endif //   __PCRT_INTERNAL_COREIO_H_NEED_POSTWRAP

@@ -22,101 +22,167 @@
 \****************************************************************/
 
 
-#ifdef __PCRT_INTERNAL_IO_H_NEED_PREAMBLE
-#undef __PCRT_INTERNAL_IO_H_NEED_PREAMBLE
+#ifdef __PCRT_INTERNAL_IO_H_NEED_PREWRAP
 
-#define __PCRT_INTERNAL_COREIO_H_NEED_PREAMBLE
-#include "pcrt-coreio.h"
+# define __PCRT_INTERNAL_COREIO_H_NEED_PREWRAP
+# include "pcrt-coreio.h"
 
-#undef  access
-#undef _access
-#undef _access_s
-#undef  chmod
-#undef _chmod
-#undef  creat
-#undef _creat
-#undef  open
-#undef _open
-#undef _sopen
-#undef _sopen_s
+# ifndef __PCRT_INTERNAL_IO_H_NEED_REAL
 
-#endif // __PCRT_INTERNAL_IO_H_NEED_PREAMBLE
+#  pragma push_macro( "access")
+#  pragma push_macro("_access")
+#  pragma push_macro("_access_s")
+#  pragma push_macro( "chmod")
+#  pragma push_macro("_chmod")
+#  pragma push_macro( "creat")
+#  pragma push_macro("_creat")
+#  pragma push_macro( "open")
+#  pragma push_macro("_open")
+#  pragma push_macro("_sopen")
+#  pragma push_macro("_sopen_s")
+
+#  define  access   pcrt_no_access
+#  define _access   pcrt_no__access
+#  define _access_s pcrt_no__access_s
+#  define  chmod    pcrt_no_chmod
+#  define _chmod    pcrt_no__chmod
+#  define  creat    pcrt_no_creat
+#  define _creat    pcrt_no__creat
+#  define  open     pcrt_no_open
+#  define _open     pcrt_no__open
+#  define _sopen    pcrt_no__sopen
+#  define _sopen_s  pcrt_no__sopen_s
+
+# endif // !__PCRT_INTERNAL_IO_H_NEED_REAL
+# undef     __PCRT_INTERNAL_IO_H_NEED_PREWRAP
+#endif //   __PCRT_INTERNAL_IO_H_NEED_PREWRAP
 
 
-#ifdef __PCRT_INTERNAL_IO_H_NEED_POSTAMBLE
-#undef __PCRT_INTERNAL_IO_H_NEED_POSTAMBLE
+#ifdef __PCRT_INTERNAL_IO_H_NEED_POSTWRAP
 
-#define __PCRT_INTERNAL_COREIO_H_NEED_POSTAMBLE
-#include "pcrt-coreio.h"
+# define __PCRT_INTERNAL_COREIO_H_NEED_POSTWRAP
+# include "pcrt-coreio.h"
 
-#ifndef __PCRT_INTERNAL_IO_H_IMPL
-#define __PCRT_INTERNAL_IO_H_IMPL
+PCRT_BEGIN_C
+
+extern int pcrt_access(const char* f, int m);
+extern errno_t pcrt_access_s(const char* f, int m);
+extern int pcrt_chmod(const char* f, int m);
+extern int pcrt_creat(const char* f, int m);
+extern int pcrt_open(const char* f, int fl, ...);
+extern int pcrt_sopen(const char *filename, int oflag, int shflag, ...);
+extern errno_t pcrt_sopen_s(int *pfh, const char *filename, int oflag, int shflag, int pmode);
+
+PCRT_END_C
+
+# ifndef __PCRT_INTERNAL_IO_H_NEED_REAL
+
+#  undef  access
+#  undef _access
+#  undef _access_s
+#  undef  chmod
+#  undef _chmod
+#  undef  creat
+#  undef _creat
+#  undef  open
+#  undef _open
+#  undef _sopen
+#  undef _sopen_s
+
+#  pragma pop_macro( "access")
+#  pragma pop_macro("_access")
+#  pragma pop_macro("_access_s")
+#  pragma pop_macro( "chmod")
+#  pragma pop_macro("_chmod")
+#  pragma pop_macro( "creat")
+#  pragma pop_macro("_creat")
+#  pragma pop_macro( "open")
+#  pragma pop_macro("_open")
+#  pragma pop_macro("_sopen")
+#  pragma pop_macro("_sopen_s")
+
+#  ifndef  __PCRT_INTERNAL_IO_H
+#   define __PCRT_INTERNAL_IO_H
 //
 // redefine io.h functions which work with files to be able
 // of parsing non-native paths.
 //
 PCRT_BEGIN_C
 
-static PCRT_INLINE int pcrt_access(const char* f, int m)
+static PCRT_INLINE int access(const char* f, int m)
 {
-  return _access(PCRT_CONV(f), m);
+  return pcrt_access(f, m);
 }
 
-static PCRT_INLINE errno_t pcrt_access_s(const char* f, int m)
+static PCRT_INLINE int _access(const char* f, int m)
 {
-  return _access_s(PCRT_CONV(f), m);
+  return pcrt_access(f, m);
 }
 
-static PCRT_INLINE int pcrt_chmod(const char* f, int m)
+static PCRT_INLINE errno_t _access_s(const char* f, int m)
 {
-  return _chmod(PCRT_CONV(f), m);
+  return pcrt_access_s(f, m);
 }
 
-static PCRT_INLINE int pcrt_creat(const char* f, int m)
+static PCRT_INLINE int chmod(const char* f, int m)
 {
-  return _creat(PCRT_CONV(f), m);
+  return pcrt_chmod(f, m);
 }
 
-static PCRT_INLINE int pcrt_open(const char* f, int fl, ...)
+static PCRT_INLINE int _chmod(const char* f, int m)
+{
+  return pcrt_chmod(f, m);
+}
+
+static PCRT_INLINE int creat(const char* f, int m)
+{
+  return pcrt_creat(f, m);
+}
+
+static PCRT_INLINE int _creat(const char* f, int m)
+{
+  return pcrt_creat(f, m);
+}
+
+static PCRT_INLINE int open(const char* f, int fl, ...)
 {
     int ret;
     va_list args;
     va_start(args, fl);
-    ret = _open(PCRT_CONV(f), fl, va_arg(args, int));
+    ret = pcrt_open(f, fl, va_arg(args, int));
     va_end(args);
     return ret;
 }
 
-static PCRT_INLINE int pcrt_sopen(const char *filename, int oflag, int shflag, ...)
+static PCRT_INLINE int _open(const char* f, int fl, ...)
+{
+    int ret;
+    va_list args;
+    va_start(args, fl);
+    ret = pcrt_open(f, fl, va_arg(args, int));
+    va_end(args);
+    return ret;
+}
+
+static PCRT_INLINE int _sopen(const char *f, int oflag, int shflag, ...)
 {
     int ret;
     va_list args;
     va_start(args, shflag);
-    ret = _sopen(PCRT_CONV(filename), oflag, shflag, va_arg(args, int));
+    ret = pcrt_sopen(f, oflag, shflag, va_arg(args, int));
     va_end(args);
     return ret;
 }
 
-static PCRT_INLINE errno_t pcrt_sopen_s(int *pfh, const char *filename, int oflag, int shflag, int pmode)
+static PCRT_INLINE errno_t _sopen_s(int *pfh, const char *f, int oflag, int shflag, int pmode)
 {
-  return _sopen_s(pfh, PCRT_CONV(filename), oflag, shflag, pmode);
+  return pcrt_sopen_s(pfh, f, oflag, shflag, pmode);
 }
 
 PCRT_END_C
 
-#endif // __PCRT_INTERNAL_IO_H_IMPL
+#  endif // __PCRT_INTERNAL_IO_H
 
-
-#define  access   pcrt_access
-#define _access   pcrt_access
-#define _access_s pcrt_access_s
-#define  chmod    pcrt_chmod
-#define _chmod    pcrt_chmod
-#define  creat    pcrt_creat
-#define _creat    pcrt_creat
-#define  open     pcrt_open
-#define _open     pcrt_open
-#define _sopen    pcrt_sopen
-#define _sopen_s  pcrt_sopen_s
-
-#endif // __PCRT_INTERNAL_IO_H_NEED_POSTAMBLE
+# endif // !__PCRT_INTERNAL_IO_H_NEED_REAL
+# undef     __PCRT_INTERNAL_IO_H_NEED_POSTWRAP
+#endif //   __PCRT_INTERNAL_IO_H_NEED_POSTWRAP
