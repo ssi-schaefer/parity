@@ -48,6 +48,10 @@ namespace parity
 			// GCC command line switches
 			//
 			{ "-C"			,setKeepComments			},
+			{ "-dumpmachine", printProperty				},
+			{ "-dumpversion", printProperty				},
+			{ "-dumpfullversion", printProperty			},
+			{ "-print-prog-name=", printProperty		},
 			{ "-O"			,setOptimizeLevel			},
 			{ "-fomit-fr"	,setOmitFramePointer		},
 			{ "-finline"	,setInlineFunctions			},

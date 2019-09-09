@@ -967,6 +967,12 @@ Colored = true"
 PCRTInclude = ${PARITYincludedir}/parity.runtime
 PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a
 ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a
+
+HostTriplet = ${chost}
+CompilerVersion = ${vsver}
+ProgNameLD = ${PARITYbindir}/${chost}-ld.exe
+ProgNameAR = ${PARITYbindir}/${chost}-ar.exe
+ProgNameAS = ${PARITYbindir}/${chost}-as.exe
 "
 			case ${vsarch} in # (
 			x86)

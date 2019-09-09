@@ -207,6 +207,11 @@ namespace parity
 				CTX_GETSET_I (std::string	,LinkerPassThrough	,""				)  /* internal (linker) */ \
 				CTX_GETSET   (bool			,ExportAll			,false			)  /* internal (linker) */ \
 				CTX_GETSET   (bool			,ExportFromExe		,false			)  /* internal (linker) */ \
+				CTX_GETSET   (std::string	,HostTriplet		,""				)  /* frontent (GCC -dumpmachine) */ \
+				CTX_GETSET   (std::string	,CompilerVersion	,""				)  /* frontent (GCC -dumpversion) */ \
+				CTX_GETSET   (std::string	,ProgNameLD			,""				)  /* frontent (GCC -print-prog-name) */ \
+				CTX_GETSET   (std::string	,ProgNameAR			,""				)  /* frontent (GCC -print-prog-name) */ \
+				CTX_GETSET   (std::string	,ProgNameAS			,""				)  /* frontent (GCC -print-prog-name) */ \
 				CTX_GETSET_I (bool			,Preprocess			,false			)  /* preprocessor */ \
 				CTX_GETSET   (bool			,KeepComments		,false			)  /* preprocessor */ \
 				CTX_GETSET   (bool			,NoStdIncludes		,false			)  /* preprocessor */ \

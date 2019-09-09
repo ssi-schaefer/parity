@@ -140,6 +140,33 @@ namespace parity
 			#endif
 		}
 
+		bool printProperty(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			if (strcmp(option, "-dumpmachine") == 0) {
+				std::cout << ctx.getHostTriplet() << std::endl;
+				exit(0);
+			}
+			if (strcmp(option, "-dumpversion") == 0
+			 || strcmp(option, "-dumpfullversion") == 0
+			) {
+				std::cout << ctx.getCompilerVersion() << std::endl;
+				exit(0);
+			}
+			if (strcmp(option, "-print-prog-name=ar") == 0) {
+				std::cout << ctx.getProgNameAR() << std::endl;
+				exit(0);
+			}
+			if (strcmp(option, "-print-prog-name=as") == 0) {
+				std::cout << ctx.getProgNameAS() << std::endl;
+				exit(0);
+			}
+			if (strcmp(option, "-print-prog-name=ld") == 0) {
+				std::cout << ctx.getProgNameLD() << std::endl;
+				exit(0);
+			}
+		}
+
 		bool setCtxDump(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
 		{
 			utils::Context& ctx = utils::Context::getContext();
