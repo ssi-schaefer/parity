@@ -40,6 +40,7 @@ parity.inspector/parity.inspector
 parity.ms.cl/parity.ms.cl
 parity.ms.link/parity.ms.lib
 parity.ms.link/parity.ms.link
+parity.ms.link/parity.ms.nmake
 parity.ms.link/parity.ms.rc
 parity.setup/parity-environment.sh
 parity.setup/parity-setup
