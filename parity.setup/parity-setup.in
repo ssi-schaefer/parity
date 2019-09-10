@@ -5,6 +5,7 @@ SELF=$0
 PACKAGE="@PACKAGE@"
 VERSION="@VERSION@"
 
+PARITYprefix="@prefix@"
 PARITYsysconfdir="@PARITY_SYSCONFDIR@"
 PARITYlocalstatedir="@PARITY_LOCALSTATEDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
@@ -968,11 +969,13 @@ PCRTInclude = ${PARITYincludedir}/parity.runtime
 PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a
 ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a
 
+# gcc -dumpmachine
 HostTriplet = ${chost}
+# gcc -dumpversion
+# gcc -dumpfullversion
 CompilerVersion = ${vsver}
-ProgNameLD = ${PARITYbindir}/${chost}-ld.exe
-ProgNameAR = ${PARITYbindir}/${chost}-ar.exe
-ProgNameAS = ${PARITYbindir}/${chost}-as.exe
+# gcc -print-prog-name=
+KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 "
 			case ${vsarch} in # (
 			x86)

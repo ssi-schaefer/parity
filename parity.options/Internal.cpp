@@ -153,18 +153,20 @@ namespace parity
 				std::cout << ctx.getCompilerVersion() << std::endl;
 				exit(0);
 			}
-			if (strcmp(option, "-print-prog-name=ar") == 0) {
-				std::cout << ctx.getProgNameAR() << std::endl;
+			if (strncmp(option, "-print-prog-name=", 17) == 0) {
+				option += 17;
+				if (*option) {
+					utils::Path prog(ctx.getKnownProgramsPath());
+					prog.append(option);
+					if (prog.isFile()) {
+						std::cout << prog.get() << std::endl;
+						exit(0);
+					}
+				}
+				std::cout << option << std::endl;
 				exit(0);
 			}
-			if (strcmp(option, "-print-prog-name=as") == 0) {
-				std::cout << ctx.getProgNameAS() << std::endl;
-				exit(0);
-			}
-			if (strcmp(option, "-print-prog-name=ld") == 0) {
-				std::cout << ctx.getProgNameLD() << std::endl;
-				exit(0);
-			}
+			return false;
 		}
 
 		bool setCtxDump(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
