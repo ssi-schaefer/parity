@@ -34,7 +34,7 @@
 #  include UCRT_INC(sys/Types.h)
 #pragma pop_macro("__STDC__")
 
-typedef long pid_t;
+typedef int pid_t;
 typedef int mode_t;
 
 #if defined(_WIN64)
