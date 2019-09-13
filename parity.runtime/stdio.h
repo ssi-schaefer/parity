@@ -71,6 +71,7 @@ static PCRT_INLINE int fseeko(FILE* f, off_t o, int w)
 {
   if (sizeof(off_t) == 8)
 	return _fseeki64(f, o, w);
+#pragma warning(suppress: 4244) // conversion from 'off_t' to 'long', possible loss of data
   return fseek(f, o, w);
 }
 
