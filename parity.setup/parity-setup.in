@@ -989,10 +989,6 @@ KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 				;;
 			esac
 
-			echo "
-Defines = WIN32_LEAN_AND_MEAN
-Defines = _WIN32_WINNT=0x7fff
-"
 			local sdklib p
 			for sdklib in $(get-supported-sdklibs "${chost}")
 			do
@@ -1000,13 +996,41 @@ Defines = _WIN32_WINNT=0x7fff
 				[[ -n ${p} ]] || continue
 				echo "ObjectsLibraries = ${p}"
 			done
+		} > parity.${vsarch}-${vscrt}${vsver}.conf
+		[[ $? -eq 0 ]] || exit 1
 
+		verbose "Querying SDK versions ..."
+		traceon
+		echo '
+#if _MSC_VER - 0 >= 1600
+# include <winsdkver.h>
+#else
+# include <sdkddkver.h>
+#endif
+#define PCRTSTR(x) #x
+#define PCRTDEF(n) "Defines = " #n
+#define PCRTDEFV(n, v) "Defines = " #n "=" PCRTSTR(v)
+PCRTDEF(WIN32_LEAN_AND_MEAN)
+#if            defined(_WIN32_WINNT_MAXVER) /* by <winsdkver.h> */
+PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT_MAXVER)
+#elif          defined(_WIN32_WINNT) /* by <sdkddkver.h> */
+PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT)
+#endif
+' | "${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -E - \
+		  | sed -n -e '/"Defines = "/{s/" "//g;s/"//g;p}' \
+		  >> parity.${vsarch}-${vscrt}${vsver}.conf
+		[[ ${PIPESTATUS} == "0 0 0" ]]
+		traceoff $?
+
+		{
+			# The config parser does not understand splitted sections,
+			# even not the global section.
 			echo "
 section windows {
 	Subsystem = Windows
 }
 "
-		} > parity.${vsarch}-${vscrt}${vsver}.conf
+		} >> parity.${vsarch}-${vscrt}${vsver}.conf
 		[[ $? -eq 0 ]] || exit 1
 
 		{
