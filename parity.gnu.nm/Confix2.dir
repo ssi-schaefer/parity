@@ -3,5 +3,5 @@
 
 MAKEFILE_AM(line='bin_SCRIPTS = parity.gnu.nm parity.gnu.dumpbin')
 
-ADD_EXTRA_DIST('parity.gnu.nm')
+ADD_EXTRA_DIST('parity.gnu.nm.in')
 ADD_EXTRA_DIST('parity.gnu.dumpbin.in')

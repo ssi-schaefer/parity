@@ -28,6 +28,7 @@ CONFIGURE_AC(
 				parity.setup/parity-environment.sh \
 				parity.gnu.ar/parity.gnu.ar \
 				parity.gnu.nm/parity.gnu.dumpbin \
+				parity.gnu.nm/parity.gnu.nm \
 				parity.ms.link/parity.ms.lib \
 				parity.ms.link/parity.ms.nmake \
 				parity.ms.link/parity.ms.rc \
@@ -254,6 +255,7 @@ GNUCOMMANDS = \
 	windres:windres$(EXEEXT) \
 	ar \
 	dumpbin \
+	nm \
 	ranlib \
 	strip
 
