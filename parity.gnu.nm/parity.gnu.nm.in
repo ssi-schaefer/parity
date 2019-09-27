@@ -270,28 +270,40 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
     };
     fileType == "LIBRARY" && /^Archive member name at /,/^$/{
 	if ($2 == "mode" && length(memberName) > 0) {
-	    currentFile = currentArchive memberName ":";
-	    '"$(optA ||
-		ECHO 'print ""; print currentFile; currentFile="";'
-	    )"'
+	    if (optA) {
+		symbolHeader = currentFile ":" memberName ":";
+	    } else {
+		memberHeader = "\n" memberName ":\n";
+	    }
 	}
 	next;
     };
     # any
     /^File Type: /{
 	# "DLL", "LIBRARY" or "COFF OBJECT"
-    	fileType = $3 $4;
+	fileType = $3 $4;
+	if (fileType == "LIBRARY") {
+	    if (haveMore) {
+		fileHeader = "\n" currentFile ":\n";
+	    } else {
+		fileHeader = "";
+	    }
+	}
 	# reset info for LIBRARY
 	split("", public_symbol);
 	next;
     };
     # any
     /^Dump of file /{
-    	currentFile = substr($0, 14) ":";
-	'"$(optA ||
-	    ECHO 'print ""; print currentFile; currentFile="";'
-	)"'
-	currentArchive = currentFile;
+	currentFile = substr($0, 14);
+	currentMember = "";
+	if (optA) {
+	    symbolHeader = currentFile ":";
+	} else
+	if (haveMore) {
+	    fileHeader = "\n" currentFile ":\n";
+	}
+	memberHeader = "";
 	split("", public_symbols);
 	next;
     };
@@ -305,11 +317,23 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	} else {
 	    addr = sprintf("%0" addrwidth "'$optt'", addr);
 	}
-	printf("%s%s %s %s\n", currentFile, '"$(
-	    optP 'symbol, type, addr' ||
-	    ECHO 'addr, type, symbol'
-	)"');
+	if (optP) {
+	    print fileHeader memberHeader symbolHeader symbol " " type " " addr;
+	} else {
+	    print fileHeader memberHeader symbolHeader addr " " type " " symbol;
+	}
+	fileHeader = "";
+	memberHeader = "";
     };
+
+    BEGIN {
+	optA = "'$(optA y)'";
+	optP = "'$(optP y)'";
+	haveMore = "'$([[ $# -gt 1 ]] && ECHO y)'";
+	fileHeader = "";
+	memberHeader = "";
+	symbolHeader = "";
+    }
 
     {last_section=section; section=$3};
     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};
