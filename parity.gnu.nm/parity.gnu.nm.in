@@ -293,6 +293,14 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	split("", public_symbol);
 	next;
     };
+    # libtool does test for -B flag using /dev/null,
+    # and does expect in the first line either /dev/null,
+    # or "Invalid file or object type".  Dumpbin yields:
+    # \\.\NUL : fatal error LNK1136: invalid or corrupt file
+    /: fatal error LNK1136:/{
+	print currentFile ": Invalid file or object type";
+	next;
+    }
     # any
     /^Dump of file /{
 	currentFile = substr($0, 14);
