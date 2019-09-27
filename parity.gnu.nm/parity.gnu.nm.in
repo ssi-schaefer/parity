@@ -32,25 +32,25 @@ optt=
 
 while getopts ABPvefoxgut: option
 do
-	case ${option} in
-	A) optA() { ECHO "$@"; } ;;
-	B) optP() { false; } ;;
-	P) optP() { ECHO "$@"; } ;;
-	v) optv() { ECHO "$@"; } ;;
-	e) opte() { ECHO "$@"; } ;;
-	f) optf() { ECHO "$@"; } ;;
-	o) opto() { ECHO "$@"; } ;;
-	x) optx() { ECHO "$@"; } ;;
-	g) optg() { ECHO "$@"; } ;;
-	u) optu() { ECHO "$@"; } ;;
-	t) optt=$OPTARG ;;
-	h)
-		cat <<-EOH
+    case ${option} in
+    A) optA() { ECHO "$@"; } ;;
+    B) optP() { false; } ;;
+    P) optP() { ECHO "$@"; } ;;
+    v) optv() { ECHO "$@"; } ;;
+    e) opte() { ECHO "$@"; } ;;
+    f) optf() { ECHO "$@"; } ;;
+    o) opto() { ECHO "$@"; } ;;
+    x) optx() { ECHO "$@"; } ;;
+    g) optg() { ECHO "$@"; } ;;
+    u) optu() { ECHO "$@"; } ;;
+    t) optt=$OPTARG ;;
+    h)
+	cat <<-EOH
 Usage: $0 [-APv] [-g|-u] [-efox] [-t format] file...
-		EOH
-		exit 0
-		;;
-	esac
+	EOH
+	exit 0
+	;;
+    esac
 done
 
 shift $(($OPTIND - 1))
@@ -62,6 +62,8 @@ IFS='
 
 # awk script from libtool.m4, extended for dlls
 dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | tee xx | POSIXLY_CORRECT=1 LC_ALL=C awk '
+    # dos2unix
+    { sub(/\r$/, ""); }
     # dll
     /^OPTIONAL HEADER VALUES/,/^$/{
 	# got dll
@@ -129,7 +131,7 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
     # dll
     $1 $2 $3 $4 == "ordinalhintRVAname"{
 	# got dll
-    	exportsNR = NR + 2;
+	exportsNR = NR + 2;
 	baseOfCode = 0 + baseOfCode; sizeOfCode = 0 + sizeOfCode;
 	baseOfData = 0 + baseOfData; sizeOfData = 0 + sizeOfData;
 	baseOfBss  = 0 + baseOfBss;  sizeOfBss  = 0 + sizeOfBss;
@@ -175,7 +177,7 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
     };
     fileType == "LIBRARY" && /^ *[1-9][0-9]* public symbols$/{
 	# locate the list of public symbols
-    	publicSymbolsNR = NR + 2;
+	publicSymbolsNR = NR + 2;
 	next;
     };
     /^SECTION HEADER /{
@@ -228,7 +230,7 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	next;
     };
     /^FILE HEADER VALUES/{
-    	# got obj, lib or dll
+	# got obj, lib or dll
 	# reset info: split("", array) for portable "delete array"
 	split("", section_type);
 	split("", section_vaddr);
@@ -248,17 +250,17 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	baseOfCode = 0; sizeOfCode = 0; endOfCode = 0;
 	baseOfData = 0; sizeOfData = 0; endOfData = 0;
 	baseOfBss  = 0; sizeOfBss  = 0; endOfBss  = 0;
-    	exportsNR = 0;
+	exportsNR = 0;
     };
     /^FILE HEADER VALUES/,/^$/{
 	if ($2 == "machine" && $1 != "0") {
 	    if ($3 == "(x86)") {
-	    	addrwidth = 8;
+		addrwidth = 8;
 	    } else { # $3 == "(x64)"
-	    	addrwidth = 16;
+		addrwidth = 16;
 	    }
 	}
-    	next;
+	next;
     };
     fileType == "LIBRARY" && /^Archive member name at [0-9A-Za-z]+: /{
 	memberName = $0;
