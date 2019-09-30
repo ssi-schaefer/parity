@@ -23,14 +23,13 @@ optA() { false; }
 optP() { false; }
 optv() { false; }
 opte() { false; }
-optf() { false; }
 opto() { false; }
 optx() { false; }
 optg() { false; }
 optu() { false; }
 optt=
 
-while getopts ABPvefoxgut: option
+while getopts ABPvef:oxgut: option
 do
     case ${option} in
     A) optA() { ECHO "$@"; } ;;
@@ -38,7 +37,12 @@ do
     P) optP() { ECHO "$@"; } ;;
     v) optv() { ECHO "$@"; } ;;
     e) opte() { ECHO "$@"; } ;;
-    f) optf() { ECHO "$@"; } ;;
+    f)
+	case $OPTARG in
+	posix) optP() { ECHO "$@"; } ;;
+	*)     optP() { false; } ;;
+	esac
+	;;
     o) opto() { ECHO "$@"; } ;;
     x) optx() { ECHO "$@"; } ;;
     g) optg() { ECHO "$@"; } ;;
