@@ -131,6 +131,20 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	printSymbol(symbol, type, addr);
 	next;
     };
+    implibexportsNR == NR,/^$/{
+	symbol = $1;
+	if (private_symbol[symbol] == "data") {
+	    if (public_symbol["__imp_" symbol]) {
+		printSymbol("__imp_" symbol, "I", 0);
+		delete public_symbol["__imp_" symbol];
+	    }
+	    # for data symbols, beyond the __imp_ prefixed symbol,
+	    # Cygwin/MinGW provide an extra __nm_ prefixed symbol
+	    printSymbol("__nm_" symbol, "I", 0);
+	    delete private_symbol[symbol];
+	}
+	next;
+    };
 
     # dll
     $1 $2 $3 $4 == "ordinalhintRVAname"{
@@ -144,6 +158,11 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	endOfData = baseOfData + sizeOfData;
 	if (baseOfBss  == 0) { baseOfBss  = endOfData }; # FIXME
 	endOfBss  = baseOfBss  + sizeOfBss;
+	next;
+    };
+    # named exports found in import lib
+    fileType == "LIBRARY" && $1 $2 $3 == "ordinalname"{
+	implibexportsNR = NR + 2;
 	next;
     };
     fileType == "LIBRARY" && / +Symbol name +:/,/^$/{
@@ -163,6 +182,8 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 		    printSymbol(symbol, "X", 0);
 		}
 		delete public_symbol[symbol];
+	    } else {
+		private_symbol[symbol] = $3;
 	    }
 	    symbol = "__imp_" symbol;
 	    if (public_symbol[symbol]) {
@@ -295,6 +316,7 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
 	}
 	# reset info for LIBRARY
 	split("", public_symbol);
+	split("", private_symbol);
 	next;
     };
     # libtool does test for -B flag using /dev/null,
