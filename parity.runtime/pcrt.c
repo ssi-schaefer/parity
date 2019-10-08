@@ -245,16 +245,6 @@ int PcrtInit(int staticCrt)
 		//
 		setvbuf(stdout, NULL, _IONBF, 0);
 		setvbuf(stderr, NULL, _IONBF, 0);
-
-		//
-		// Set stream modes to binary to stay compatible with the
-		// rest of the world. this makes some autoconf patches
-		// obsolete, which handled line ending conversion in some
-		// check macros which rely on a single \n
-		//
-		_setmode(STDIN_FILENO, _O_BINARY);
-		_setmode(STDOUT_FILENO, _O_BINARY);
-		_setmode(STDERR_FILENO, _O_BINARY);
 	}
 	//
 	// This effectively adds a VecoredExceptionHandler to the
