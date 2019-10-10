@@ -323,7 +323,9 @@ dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | te
     # and does expect in the first line either /dev/null,
     # or "Invalid file or object type".  Dumpbin yields:
     # \\.\NUL : fatal error LNK1136: invalid or corrupt file
-    /: fatal error LNK1136:/{
+    # Up to MSVC12 (VS 2013), dumpbin yields:
+    # LINK : fatal error LNK1104: cannot open file \\.\NUL
+    /: fatal error LNK(1136|1104):/{
 	print currentFile ": Invalid file or object type";
 	next;
     }
