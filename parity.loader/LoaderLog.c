@@ -43,7 +43,7 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 
 	if(isNewLine)
 	{
-		lstrcat(buffer, ParityLoaderGeneratedImageName);
+		lstrcat(buffer, ParityLoaderGetGeneratedImageName());
 		lstrcat(buffer, ": ");
 	}
 

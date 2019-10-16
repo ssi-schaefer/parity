@@ -198,7 +198,7 @@ static const char* LibStrChr(const char* ptr, char c)
 static void LibCreatePathCache()
 {
 	unsigned int szLdLib = 0;
-	const char* ptrRPath = ParityLoaderGeneratedRunPath;
+	const char* ptrRPath = ParityLoaderGetGeneratedRunPath();
 
 	//
 	// first lookup from LD_LIBRARY_PATH!
