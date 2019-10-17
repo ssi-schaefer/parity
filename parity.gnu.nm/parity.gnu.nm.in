@@ -65,7 +65,7 @@ IFS='
 ' eval 'set -- $(cygpath -w "$@")'
 
 # awk script from libtool.m4, extended for dlls
-dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | tee xx | POSIXLY_CORRECT=1 LC_ALL=C awk '
+dumpbin.exe /linkermember:1 /symbols /headers /exports /archivemembers "$@" | POSIXLY_CORRECT=1 LC_ALL=C awk '
     # dos2unix
     { sub(/\r$/, ""); }
     # dll
