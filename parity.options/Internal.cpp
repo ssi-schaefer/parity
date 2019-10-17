@@ -166,6 +166,49 @@ namespace parity
 				std::cout << option << std::endl;
 				exit(0);
 			}
+			if (strcmp(option, "-print-search-dirs") == 0) {
+				std::cout << "install: " << PARITY_LIBEXECDIR;
+				utils::PathVector const & execPaths = ctx.getAdditionalExecPaths();
+				if (!execPaths.empty()) {
+					std::cout << "\nprograms: ";
+				}
+				std::string sep = "="; // seen with gcc
+				for(utils::PathVector::const_iterator it = execPaths.begin()
+				  ; it != execPaths.end()
+				  ; ++it
+				) {
+					std::cout << sep;
+					sep = ":";
+					if (it->isNative()) {
+						std::cout << it->get();
+					} else {
+						utils::Path nat(it->get());
+						nat.toNative();
+						std::cout << nat.get();
+					}
+				}
+				utils::PathVector const & libPaths = ctx.getSysLibraryPaths();
+				if (!libPaths.empty()) {
+					std::cout << "\nlibraries: ";
+				}
+				sep = "="; // seen with gcc
+				for(utils::PathVector::const_iterator it = libPaths.begin()
+				  ; it != libPaths.end()
+				  ; ++it
+				) {
+					std::cout << sep;
+					sep = ":";
+					if (it->isNative()) {
+						std::cout << it->get();
+					} else {
+						utils::Path nat(it->get());
+						nat.toNative();
+						std::cout << nat.get();
+					}
+				}
+				std::cout << std::endl;
+				exit(0);
+			}
 			return false;
 		}
 

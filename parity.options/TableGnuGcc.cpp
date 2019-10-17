@@ -52,6 +52,7 @@ namespace parity
 			{ "-dumpversion", printProperty				},
 			{ "-dumpfullversion", printProperty			},
 			{ "-print-prog-name=", printProperty		},
+			{ "-print-search-dirs", printProperty		},
 			{ "-O"			,setOptimizeLevel			},
 			{ "-fomit-fr"	,setOmitFramePointer		},
 			{ "-finline"	,setInlineFunctions			},
