@@ -45,7 +45,7 @@ struct _wdirent
 typedef struct {
 	struct _finddata_t	dd_data;
 	struct dirent		dd_dir;
-	int					dd_handle;
+	intptr_t			dd_handle;
 	int					dd_index;
 	char				dd_name[1];
 } DIR;
@@ -53,7 +53,7 @@ typedef struct {
 typedef struct {
 	struct _wfinddata_t	dd_data;
 	struct _wdirent		dd_dir;
-	int					dd_handle;
+	intptr_t			dd_handle;
 	int					dd_index;
 	wchar_t				dd_name[1];
 } _WDIR;
