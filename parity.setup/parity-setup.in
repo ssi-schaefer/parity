@@ -643,6 +643,7 @@ vswhere_installationPath() {
 	local vsver=$(get-vsver "${1}")
 	vswhere_installationPath_result=
 	vswhere -nologo \
+		-products "*" \
 		-version "[${vsver},${vsver}.65535]" \
 		-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
 		-latest \
