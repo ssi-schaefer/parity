@@ -41,11 +41,17 @@ then
 	# 12.0:	Visual Studio 2013, cl.exe Version 18.00
 	# 13.0: there is no msvc version 13.0
 	# 14.0:	Visual Studio 2015, cl.exe Version 19.00
-	# 15.0: Visual Studio 2017, cl.exe Version 19.10
-	# 16.2: Visual Studio 2019, cl.exe Version 19.22
+	#
+	# Starting with Visual Studio 2017, updates may bump
+	# the minor version we search for using vswhere.exe.
+	# We probably do not need a CHOST per minor version,
+	# so we omit the minor version instead.
+	#
+	# 15: Visual Studio 2017, latest installed minor version
+	# 16: Visual Studio 2019, latest installed minor version
 	#
 	# parityconf-set-default() relies on old to new order
-	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15.0 16.2"
+	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15 16"
 	# </loaded from parity-setup.in by Confix2.dir>
 
 	PARITYhas_default_version=:
@@ -244,12 +250,15 @@ unittests+=( test_get-vscrt )
 #  get-vsver libcmt11               -> 11.0
 #  get-vsver msvcd11                -> 11.0
 #  get-vsver msvc11                 -> 11.0
+#  get-vsver x86-msvc15.0           -> 15
 get-vsver() {
 	local vscrt=$(get-vscrt "$1")
 	local vsver=${1##*${vscrt}}
 	vsver=${vsver%%-*}
 	case ${vsver} in
-	[7-9]      |[1-9][0-9]      ) echo "${vsver}.0" ;;
+	            1[5-9].*        ) echo "${vsver%.*}" ;;
+	            1[5-9]          ) echo "${vsver}" ;;
+	[7-9]      |1[0-4]          ) echo "${vsver}.0" ;;
 	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "${vsver}" ;;
 	esac
 	return 0
@@ -277,6 +286,7 @@ test_get-vsver() {
 		11.0:msvcd11.0              \
 		11.0:msvc11                 \
 		11.0:msvcd11                \
+		15:x86-msvcd15.0            \
 	; do
 		expected=${input%:*}
 		input=${input#*:}

@@ -189,7 +189,12 @@ namespace parity
 			}
 			if (msvcmajor != 0) {
 				std::stringstream v;
-				v << vcvariant << "-" << vcruntime << msvcmajor << "." << msvcminor;
+				v << vcvariant << "-" << vcruntime << msvcmajor;
+				// Since Visual Studio 2017 we omit the minor version number,
+				// as updates may bump it, but we don't want another CHOST for.
+				if (msvcmajor < 15) {
+					v << "." << msvcminor;
+				}
 				vcvariant = v.str();
 			}
 
