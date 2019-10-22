@@ -593,8 +593,8 @@ locate_vswhere_exe() {
 	# https://devblogs.microsoft.com/setup/vswhere-is-now-installed-with-visual-studio-2017/
 	#
 	local folderIDs=(
-		38 # ProgramFiles(x86)
-		42 # ProgramFiles
+		42 # CSIDL_PROGRAM_FILESX86
+		38 # CSIDL_PROGRAM_FILES
 	)
 	local folderID
 	for folderID in ${folderIDs[*]}
