@@ -624,7 +624,7 @@ vswhere() {
 		# redefine vswhere() to execute vswhere.exe
 		eval "vswhere() {
 			vswhere_result=
-			vswhere_result=\$(\"${locate_vswhere_exe_result}\" \"\$@\" | dos2unix)
+			vswhere_result=\$(\"${locate_vswhere_exe_result}\" \"\$@\" | tr -d "\\\\r")
 			return \$?
 		}"
 	else
