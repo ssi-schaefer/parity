@@ -45,13 +45,21 @@ static unsigned int gPathCacheCount = 0;
 
 static void* LibLoad(const char* name, unsigned int strict)
 {
-	void* handle = 0;
+	HMODULE handle = 0;
 	unsigned int i;
 	LoaderErrorList lst[LOADER_MAX_ERRORS+1];
 	unsigned int longest = 0;
 
-	if(!name)
-		return GetModuleHandle(0);
+	if(!name) {
+		if (!GetModuleHandleEx(0, NULL, &handle) && LogGetLevel() > LevelWarning) {
+			unsigned long lastError = GetLastError();
+			char* tmp = LoaderFormatErrorMessage(lastError);
+			LogDebug("error %d querying main module handle (%s)\n", lastError, tmp);
+			LocalFree(tmp);
+			SetLastError(lastError);
+		}
+		return handle;
+	}
 
 	for(i = 0; i < gPathCacheCount; ++i)
 	{
@@ -286,3 +294,7 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	return 0;
 }
 
+int LoaderLibraryReleaseHandle(void *handle)
+{
+	return FreeLibrary(handle);
+}

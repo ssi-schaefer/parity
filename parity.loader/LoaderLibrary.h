@@ -24,6 +24,7 @@
 #define __LOADERLIBRARY_H__
 
 void* LoaderLibraryGetHandle(const char* name, int strict);
+int LoaderLibraryReleaseHandle(void *handle);
 
 #endif
 
