@@ -31,11 +31,6 @@
 #define LOADER_PATHFIELD_LEN 50
 
 typedef struct {
-	const char* name;
-	void* handle;
-} LoaderLibraryCacheNode;
-
-typedef struct {
 	const char* path;
 } LoaderPathCacheNode;
 
@@ -44,11 +39,9 @@ typedef struct {
 	unsigned long error;
 } LoaderErrorList;
 
-static LoaderLibraryCacheNode* gHandleCache = 0;
 static LoaderPathCacheNode* gPathCache = 0;
 
 static unsigned int gPathCacheCount = 0;
-static unsigned int gHandleCacheCount = 0;
 
 static void* LibLoad(const char* name, unsigned int strict)
 {
@@ -145,44 +138,6 @@ static void* LibLoad(const char* name, unsigned int strict)
 	}
 
 	return 0;
-}
-
-static void* LibGetCached(const char* name)
-{
-	unsigned int i;
-
-	for(i = 0; i < gHandleCacheCount; ++i)
-	{
-		if(CompareString(LOCALE_USER_DEFAULT, 0, name, -1, gHandleCache[i].name, -1) == CSTR_EQUAL)
-		{
-			//LogDebug("found cached handle for %s (0x%x)\n", name, gHandleCache[i].handle);
-			return gHandleCache[i].handle;
-		}
-	}
-
-	return 0;
-}
-
-static void LibAddToCache(const char* name, void* handle)
-{
-	if(gHandleCache == 0)
-		gHandleCache = HeapAlloc(GetProcessHeap(), 0, sizeof(LoaderLibraryCacheNode));
-	else
-		gHandleCache = HeapReAlloc(GetProcessHeap(), 0, gHandleCache, sizeof(LoaderLibraryCacheNode) * (gHandleCacheCount + 1));
-
-	if(!gHandleCache)
-	{
-		LogWarning("cannot allocate %d bytes for the handle cache, this will slow down things a little!\n", sizeof(LoaderLibraryCacheNode) * (gHandleCacheCount + 1));
-		LoaderWriteLastWindowsError();
-		gHandleCacheCount = 0;
-	} else {
-		gHandleCache[gHandleCacheCount].name = name;
-		gHandleCache[gHandleCacheCount].handle = handle;
-
-		++gHandleCacheCount;
-
-		LogDebug("cached handle for %s (0x%x)\n", name, handle);
-	}
 }
 
 static const char* LibStrChr(const char* ptr, char c)
@@ -312,11 +267,6 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	if(gPathCache == 0)
 		LibCreatePathCache();
 
-	handle = LibGetCached(name);
-
-	if(handle)
-		return handle;
-
 	errormode = SetErrorMode(SEM_FAILCRITICALERRORS);
 	SetErrorMode(errormode | SEM_FAILCRITICALERRORS);
 
@@ -325,7 +275,6 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	SetErrorMode(errormode);
 
 	if(handle) {
-		LibAddToCache(name, handle);
 		return handle;
 	} else if(strict) {
 		/*
