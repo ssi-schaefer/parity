@@ -87,6 +87,21 @@ int main(int argc, char** argv)
 	context.setFrontendType(utils::ToolchainInterixGNU);
 
 	try {
+		char * argv0 = strrchr(argv[0], '/'); // find last path sep
+		if (argv0 == NULL) {
+			argv0 = strrchr(argv[0], '\\'); // find last path sep
+		}
+		if (argv0 == NULL) {
+			argv0 = argv[0]; // no path component
+		} else {
+			++argv0; // skip last path sep
+		}
+		if (strstr(argv0, "g++") != NULL) {
+			context.setDefaultLanguage(utils::LanguageCpp);
+		} else {
+			context.setDefaultLanguage(utils::LanguageC);
+		}
+
 		/* backup configuration-set paths. */
 		parity::utils::PathVector cfgIncludePaths = parity::utils::Context::getContext().getIncludePaths();
 		parity::utils::PathVector cfgLibraryPaths = parity::utils::Context::getContext().getLibraryPaths();

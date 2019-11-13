@@ -1066,7 +1066,8 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a ..."
 		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
-			"${DESTDIR}${PARITYlibdir}"/parity.runtime/{{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c,cxxeh.cc,ios-fixup.cpp} &&
+			-xc "${DESTDIR}${PARITYlibdir}"/parity.runtime/{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c \
+			-xc++ "${DESTDIR}${PARITYlibdir}"/parity.runtime/{cxxeh.cc,ios-fixup.cpp} &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vscrt}${vsver}.a {coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times,cxxeh,ios-fixup}.o
 		traceoff $? || exit 1
 		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a done."
@@ -1074,7 +1075,7 @@ INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUD
 		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a ..."
 		traceon
 		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
-			"${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
+			-xc "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
 		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vscrt}${vsver}.a Loader{Helper,Init,Lazy,Library,Log}.o
 		traceoff $? || exit 1
 		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a done."

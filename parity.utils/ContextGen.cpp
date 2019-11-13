@@ -195,12 +195,17 @@ namespace parity
 		void ContextGen::convert(SourceMap& target, const std::string& ref)
 		{
 			Context& ctx = Context::getContext();
+			utils::LanguageType defaultLang = ctx.getDefaultLanguage();
 
 			if(ref.compare(ref.length() - 2, 2, ".c") == 0
 				|| ref.compare(ref.length() - 2, 2, ".i") == 0)
 				if(ctx.getForcedLanguage() != LanguageInvalid) {
 					Log::verbose("adding forced source file (originally c): %s\n", ref.c_str());
 					target[ref] = ctx.getForcedLanguage();
+				} else
+				if (defaultLang != LanguageUnknown) {
+					Log::verbose("adding %s source file: %s\n", ctx.printable(defaultLang).c_str(), ref.c_str());
+					target[ref] = defaultLang;
 				} else {
 					Log::verbose("adding c source file: %s\n", ref.c_str());
 					target[ref] = LanguageC;
@@ -213,6 +218,10 @@ namespace parity
 				if(ctx.getForcedLanguage() != LanguageInvalid) {
 					Log::verbose("adding forced source file (originally c++): %s\n", ref.c_str());
 					target[ref] = ctx.getForcedLanguage();
+				} else
+				if (defaultLang != LanguageUnknown) {
+					Log::verbose("adding %s source file: %s\n", ctx.printable(defaultLang).c_str(), ref.c_str());
+					target[ref] = defaultLang;
 				} else {
 					Log::verbose("adding c++ source file: %s\n", ref.c_str());
 					target[ref] = LanguageCpp;

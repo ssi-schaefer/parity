@@ -250,6 +250,7 @@ namespace parity
 				CTX_GETSET_I (RuntimeType	,Runtime			,RuntimeInvalid	)  /* compiler (MS) */ \
 				CTX_GETSET_I (MachineType	,Machine			,MachineUnknown	)  /* compiler (MS) */ \
 				CTX_GETSET   (LanguageType	,ForcedLanguage		,LanguageInvalid)  /* compiler (GCC) */ \
+				CTX_GETSET_I (LanguageType	,DefaultLanguage	,LanguageUnknown)  /* compiler (GCC) */ \
 				CTX_GETSET   (bool			,AnsiMode			,false			)  /* compiler (GCC) */ \
 				CTX_GETSET_I (bool			,PositionIndep		,false			)  /* compiler (GCC) */ \
 				CTX_GETSET   (Path			,ResourceCompilerExe,""				)  /* resource compiler */ \
