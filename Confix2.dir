@@ -323,6 +323,7 @@ uninstall-setup-files:
 				set -- `IFS=: eval 'echo $${exe}'` ; \\
 				rm -f $$1 ; \\
 			done ; \\
+			rm -f cmd.exe ; \\
 		fi ; \\
 	done ; :
 	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --uninstall ; :
