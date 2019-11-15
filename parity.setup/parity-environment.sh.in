@@ -70,9 +70,14 @@ done
 
 set -- "${__parityenv_args[@]}"
 
-if [[ -r "${__parityenv_confdir}/parity.${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}.sh" ]]
+if [[ -r ${__parityenv_confdir}/${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}/parity.sh ]]
 then
-	if . "${__parityenv_confdir}/parity.${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}.sh"
+	__parityenv_confdir="${__parityenv_confdir}/${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}"
+fi
+
+if [[ -r "${__parityenv_confdir}/parity.sh" ]]
+then
+	if . "${__parityenv_confdir}/parity.sh"
 	then
 		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
 		true
@@ -81,7 +86,7 @@ then
 		false
 	fi
 else
-	echo "Invalid MSVC version specified (${__parityenv_crtspec}${__parityenv_verspec})." >&2
+	echo "Invalid MSVC version specified (${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec})." >&2
 	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
 	false
 fi

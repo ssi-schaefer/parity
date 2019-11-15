@@ -225,7 +225,8 @@ namespace parity
 			//
 			for (int i = 1; i < argc; ++i) {
 				if (strncmp(argv[i], "-mparityconfdir=", 16) == 0) {
-					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16), true));
+					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16) + "/" + vcvariant, true));
+					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16) + "/parity." + vcvariant + ".conf", true));
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
@@ -236,17 +237,17 @@ namespace parity
 				char fnBuffer[1024];
 				GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 
-				files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
+				files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base() + "/" + vcvariant, true));
 #endif
 #if defined(PARITY_LOCALSTATEDIR)
 				utils::Path localstatepath(PARITY_LOCALSTATEDIR);
 				localstatepath.toNative();
-				files.push_back(ConfigFileVector::value_type(localstatepath, true));
+				files.push_back(ConfigFileVector::value_type(localstatepath + "/" + vcvariant, true));
 #endif
 #if defined(PARITY_SYSCONFDIR)
 				utils::Path sysconfpath(PARITY_SYSCONFDIR);
 				sysconfpath.toNative();
-				files.push_back(ConfigFileVector::value_type(sysconfpath, false));
+				files.push_back(ConfigFileVector::value_type(sysconfpath + "/" + vcvariant, false));
 #endif
 			}
 
@@ -269,7 +270,7 @@ namespace parity
 				utils::Path pth = it->first;
 
 				if(pth.isDirectory()) {
-					pth.append("parity." + vcvariant + ".conf");
+					pth.append("parity.conf");
 				}
 
 				pth.toNative();

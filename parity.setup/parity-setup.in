@@ -61,10 +61,6 @@ fi
 
 defrexsupport=${PARITYrexsupport}
 
-supports-default() {
-	false
-}
-
 PARITYheader="# This file is part of ${PACKAGE}-${VERSION}"
 
 usage() {
@@ -81,7 +77,6 @@ Where options is a combination of:
   --quiet   No progress output at all.
   --verbose More progress output.
   --debug   Enable shell trace.
-  --trace   Enable shell trace when running external commands.
 
   --destdir dir
     Operate in staging directory dir.
@@ -430,21 +425,12 @@ get-supported-chosts() {
 	return 0
 }
 
-get-default-chosts() {
-	local vsarch
-	for vsarch in $(get-supported-vsarchs)
-	do
-		get-chost "${vsarch}"
-	done
-	return 0
-}
-
 #
 # Cached value, allows to match with *" <chost> "*
 #
 SUPPORTED_CHOSTS=" $(echo $(get-supported-chosts) ) "
 is-supported-chost() {
-	[[ ${SUPPORTED_CHOSTS} == *" ${1} "* ]]
+	[[ ${SUPPORTED_CHOSTS} == *" ${1:-none} "* ]]
 }
 
 get-supported-executables() {
@@ -454,21 +440,17 @@ get-supported-executables() {
 	local vsver=$(get-vsver "${chost}")
 
 	local vsexes=(
-		'name=Compiler          executable=cl.exe    '
-		'name=Linker            executable=link.exe  '
-		'name=Manifest          executable=mt.exe    '
-		'name=ResourceCompiler  executable=rc.exe    '
-		'name=ResourceConverter executable=cvtres.exe'
+		'Compiler=cl.exe'
+		'Linker=link.exe'
+		'Manifest=mt.exe'
+		'ResourceCompiler=rc.exe'
+		'ResourceConverter=cvtres.exe'
 	)
 	case ${vsarch} in
-	x86) vsexes+=( 'name=Assembler executable=ml.exe  ' ) ;;
-	x64) vsexes+=( 'name=Assembler executable=ml64.exe' ) ;;
+	x86) vsexes+=( 'Assembler=ml.exe' ) ;;
+	x64) vsexes+=( 'Assembler=ml64.exe' ) ;;
 	esac
-	local vsexe
-	for vsexe in "${vsexes[@]}"
-	do
-		echo "${vsexe}"
-	done
+	printf "%s\n" "${vsexes[@]}"
 	return 0
 }
 
@@ -648,11 +630,20 @@ query-novcvars-once() {
 	novcPATH= novcINCLUDE= novcLIB= novcLIBPATH=
 
 	verbose "Querying environment without MSVC ..."
-	traceon
-	eval $(cmd '@set PATH & set INCLUDE & set LIB' 2>/dev/null |
-		sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/novc\1=$'\2'/p"
+	local line var val
+	while read line
+	do
+		case ${line} in
+		PATH=* | INCLUDE=* | LIB=* | LIBPATH=* )
+			var=${line%%=*}
+			val=${line#*=}
+			eval "novc${var}=\${val}"
+			;;
+		esac
+	done < <(
+		cmd '@set PATH & set INCLUDE & set LIB' 2>/dev/null \
+		| sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/p"
 	)
-	traceoff $?
 
 	if [[ -n ${novcPATH}${novcINCLUDE}${novcLIB}${novcLIBPATH} ]]
 	then
@@ -709,19 +700,29 @@ query-vcvars() {
 		fi
 	fi
 
-	traceon
-    INCLUDE= LIB= LIBPATH= \
-    eval $(cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null |
-      sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/vc\1=$'\2'/p"
+	local line var val
+	while read line
+	do
+		case ${line} in
+		PATH=* | INCLUDE=* | LIB=* | LIBPATH=* )
+			var=${line%%=*}
+			val=${line#*=}
+			eval "vc${var}=\${val}"
+			;;
+		esac
+	done < <(
+		INCLUDE= LIB= LIBPATH= \
+		cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null \
+		| sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/p"
     )
-	traceoff $?
     vcPATH=${vcPATH%${novcPATH}};          vcPATH=${vcPATH%%;}
     vcINCLUDE=${vcINCLUDE%${novcINCLUDE}}; vcINCLUDE=${vcINCLUDE%%;}
     vcLIB=${vcLIB%${novcLIB}};             vcLIB=${vcLIB%%;}
     vcLIBPATH=${vcLIBPATH%${novcLIBPATH}}; vcLIBPATH=${vcLIBPATH%%;}
 
-    if [[ "::${vcPATH}::${vcINCLUDE}::${vcLIB}::${vcLIBPATH}::" == *::::* ]]
+    if [[ ::${vcPATH}::${vcINCLUDE}::${vcLIB}::${vcLIBPATH}:: == *::::* ]]
 	then
+		# at least one of the variables is empty
 		verbose "Querying environment for ${chost} failed."
 		return 1
 	fi
@@ -732,24 +733,21 @@ query-vcvars() {
 prune-parityconf() {
 	local reason=disabled
 	local noquiet=noquiet
-	local setdefault=
 	local uninstall=false
-	local arg
+	local vaction='Disabling'
 	while ${1+:} false
 	do
 		arg=$1
 		shift
-		case ${arg} in
-		--set-default)
-			setdefault=${arg}
-			;;
+		case ${arg} in # (
 		--reason=*)
 			reason=${arg#--reason=}
 			noquiet=verbose
-			;;
+			;; # (
 		--uninstall)
 			uninstall=:
-			;;
+			vaction='Uninstalling'
+			;; # (
 		*)
 			break
 			;;
@@ -762,129 +760,99 @@ prune-parityconf() {
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
 	local vscrt=$(get-vscrt "${chost}")
-	local hostconf="${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}"
-	local hostdefconf="${PARITYlocalstatedir}/parity.${vsarch}"
-	local userconf="${PARITYsysconfdir}/parity.${vsarch}-${vscrt}${vsver}"
+	local conf="${vsarch}-${vscrt}${vsver}"
 
-	local hostconfheader="${PARITYheader}
-#
-# PARITY CONFIGURATION for ${vsarch}-${vscrt}${vsver}
-#"
-	local userconfheader="${PARITYheader}
-#
-# override parts of parity configuration for ${vsarch}-${vscrt}${vsver}
-#"
-	local noconf="MSVC ${vsver} (${vsarch}-${vscrt}) is ${reason} (try ${SELF##*/} --enable ${chost})"
-	local defnoconf="Default MSVC version (${vsarch}-${vscrt}) is ${reason} (try ${SELF##*/} --set-default ${vsarch}-newest)"
-	local defchost=
-	local ret=0
+	(
+		confdir="${PARITYlocalstatedir}"
+		userconfdir="${PARITYsysconfdir}"
 
-	local confline
-	if supports-default && ${setdefault:+:} false
-	then
-		defchost=${chost}
-	fi
-	if ${defchost:+false} : && [[ -s ${DESTDIR}${hostdefconf}.conf ]]
-	then
-		while read confline
-		do
-			if [[ ${confline} == *"PARITY CONFIGURATION for "* ]]
-			then
-				defchost=${confline#*PARITY CONFIGURATION for }
-				defchost=$(get-chost "${defchost}")
-				break
-			fi
-		done < "${DESTDIR}${hostdefconf}.conf"
-	fi
-	if ${defchost:+false} : && [[ -s ${DESTDIR}${hostdefconf}.sh ]]
-	then
-		while read confline
-		do
-			if [[ ${confline} == *"PARITY CONFIGURATION for "* ]]
-			then
-				defchost=${confline#*PARITY CONFIGURATION for }
-				defchost=$(get-chost "${defchost}")
-				break
-			fi
-		done < "${DESTDIR}${hostdefconf}.sh"
-	fi
-	if [[ ${defchost} == "${chost}" ]]
-	then
 		if ${uninstall}
 		then
-			rm -f "${DESTDIR}${hostdefconf}.conf" "${DESTDIR}${hostdefconf}.sh"
-		else
-			${noquiet} "Disabling ${hostdefconf} ..."
-			traceon
-			mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-			{
-				echo "${hostconfheader}"
-				echo "${defnoconf} = true"
-			} > "${DESTDIR}${hostdefconf}.conf" &&
-			{
-				echo "${hostconfheader}"
-				echo "echo '${defnoconf}' >&2"
-				echo "false"
-			} > "${DESTDIR}${hostdefconf}.sh" &&
-			if ! traceoff $?
-			then
-				ret=1
-				${noquiet} "Disabling ${hostdefconf} failed."
-			else
-				verbose "Disabling ${hostdefconf} done."
+			cd "${DESTDIR}/." || exit 0
+
+			# When using parity-setup.in inside srcdir,
+			# confdir and userconfdir are identical.
+			# So remove all the known files first,
+			# and the directories second.
+			[[ -e .${confdir}/${conf} ]] &&
+			rm -f ".${confdir}/${conf}/"parity.{conf,sh}
+
+			if [[ -d .${confdir}/${conf}/lib ]]; then
+				rm -f "./${confdir}/${conf}/lib/libparity."{runtime,loader}.a
 			fi
+
+			# Let rmdir yell if this is not a directory.
+			[[ -e .${confdir}/${conf}/lib ]] &&
+			rmdir "./${confdir}/${conf}/lib"
+
+			[[ -e .${userconfdir}/${conf} ]] &&
+			rm -f ".${userconfdir}/${conf}/parity.conf.sample"
+
+			[[ -e .${confdir}/${conf} ]] &&
+			rmdir ".${confdir}/${conf}"
+
+			[[ -e .${userconfdir}/${conf} ]] &&
+			rmdir ".${userconfdir}/${conf}"
+
+			# be silent if confdir is missing or not empty
+			rmdir ".${confdir}" 2>/dev/null
+			rmdir ".${userconfdir}" 2>/dev/null
+
+			exit 0
 		fi
-	fi
 
-	if ${uninstall}
-	then
-		rm -f "${DESTDIR}${userconf}.conf"
-		rm -f "${DESTDIR}${hostconf}.conf" "${DESTDIR}${hostconf}.sh"
-		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vscrt}${vsver}.a
-		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vscrt}${vsver}.a
-		return 0
-	fi
+		${noquiet} "Disabling ${conf} ..."
 
-	${noquiet} "Disabling ${hostconf} ..."
-	traceon
-	mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
-	{
-		test -s "${DESTDIR}${userconf}.conf" ||
+		# any failure is a problem here
+		set -e
+
+		# do not mkdir -p DESTDIR, but confdir only
+		cd "${DESTDIR}/."
+
+		hostconfheader="${PARITYheader}
+#
+# PARITY CONFIGURATION for ${conf}
+#"
+		userconfheader="${PARITYheader}
+#
+# override parts of parity configuration for ${conf}
+#"
+		noconf="${vscrt} ${vsver} ${vsarch} (${chost}) is ${reason} (try ${SELF##*/} --enable ${chost})"
+
+		mkdir -p ".${confdir}/${conf}"
+		{
+			echo "${hostconfheader}"
+			echo "${noconf} = true"
+		} > ".${confdir}/${conf}/parity.conf"
+		{
+			echo "${hostconfheader}"
+			echo "echo '${noconf}' >&2"
+			echo "false"
+		} > ".${confdir}/${conf}/parity.sh"
+
+		mkdir -p ".${userconfdir}/${conf}"
 		{
 			echo "${userconfheader}"
 			echo "# For an idea how and what to override, the complete config is"
-			echo "#  ${hostconf}.conf"
+			echo "#  ${confdir}/${conf}/parity.conf"
 			echo "#"
-		} > "${DESTDIR}${userconf}.conf"
-	} &&
-	mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-	{
-		echo "${hostconfheader}"
-		echo "${noconf} = true"
-	} > "${DESTDIR}${hostconf}.conf" &&
-	{
-		echo "${hostconfheader}"
-		echo "echo '${noconf}' >&2"
-		echo "false"
-	} > "${DESTDIR}${hostconf}.sh" &&
-	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vscrt}${vsver}.a &&
-	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vscrt}${vsver}.a
-	if ! traceoff $?
+		} > ".${userconfdir}/${conf}/parity.conf.sample"
+
+		mkdir -p ".${confdir}/${conf}/lib"
+
+		: > ".${confdir}/${conf}/lib/libparity.loader.a"
+		: > ".${confdir}/${conf}/lib/libparity.runtime.a"
+	)
+	if [[ $? -ne 0 ]]
 	then
-		verbose "Disabling ${hostconf} failed."
-		return 1
+		${noquiet} "${vaction} ${chost} failed."
+	else
+		verbose "${vaction} ${chost} done."
 	fi
-	verbose "Disabling ${hostconf} done."
-	return ${ret}
+	return $?
 }
 
 update-parityconf() {
-	local setdefault=
-	if [[ $1 == --set-default ]]
-	then
-		setdefault=$1
-		shift
-	fi
 	local chost=$(get-chost "$1")
 	is-supported-chost "${chost}" || return 1
 
@@ -893,42 +861,47 @@ update-parityconf() {
 		prune-parityconf --reason="missing" "${chost}"
 		return 1
 	fi
-	vcPATH=$(cygpath -up "${vcPATH}")
-	vcINCLUDE=$(cygpath -up "${vcINCLUDE}")
-	vcLIB=$(cygpath -up "${vcLIB}")
-	vcLIBPATH=$(cygpath -up "${vcLIBPATH}")
-
-	local vsexes
-	IFS=${NL} eval 'vsexes=( $(get-supported-executables '${chost}') )'
-
-	local vsexe
-	local name executable
-	for vsexe in "${vsexes[@]}"
-	do
-		name= executable=
-		eval ${vsexe}
-		eval ${name}Exe=
-		IFS=: eval ${name}Exe='$(find ${vcPATH} -maxdepth 1 -iname "${executable}" -print -quit 2>/dev/null)'
-	done
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
 	local vscrt=$(get-vscrt "${chost}")
 	local parityflags=$(get-parityflags "${chost}")
+	local confdir="${PARITYlocalstatedir}"
+	local conf="${vsarch}-${vscrt}${vsver}"
 
 	(
-		local p
-		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver} ..."
-		tmpdir=${TMPDIR:-/tmp}/parity-setup.${vsarch}-${vscrt}${vsver}.$$
-		rm -rf "${tmpdir}"
+		noquiet "Configuring for ${conf} ..."
 
-		trap "rm -rf '${tmpdir}'" 0
-		mkdir -p "${tmpdir}" || exit 1
-		cd "${tmpdir}" || exit 1
+		set -e
 
+		vcPATH=$(cygpath -up "${vcPATH}")
+		vcINCLUDE=$(cygpath -up "${vcINCLUDE}")
+		vcLIB=$(cygpath -up "${vcLIB}")
+		vcLIBPATH=$(cygpath -up "${vcLIBPATH}")
+
+		# set IFS before ${vcVAR} is evaluated
+		IFS=: eval 'vcPATHdirs=( ${vcPATH} )'
+		IFS=: eval 'vcINCLUDEdirs=( ${vcINCLUDE} )'
+		IFS=: eval 'vcLIBdirs=( ${vcLIB} )'
+		IFS=: eval 'vcLIBPATHdirs=( ${vcLIBPATH} )'
+
+		# do not mkdir -p DESTDIR but confdir only
+		cd "${DESTDIR}/."
+		mkdir -p ".${confdir}"
+		cd ".${confdir}"
+
+		tmpdir=".${conf}.tmp.$$"
+		rm -rf "./${tmpdir}"
+		trap "rm -rf './${tmpdir}'" 0
+		mkdir "./${tmpdir}"
+		mkdir "./${tmpdir}/${conf}"
+		mkdir "./${tmpdir}/${conf}/lib"
+
+		# minimal ${conf}/parity.conf for the preprocessor
+		# to query SDK versions and some Defines
 		{
 			echo "#
-# PARITY CONFIGURATION for ${vsarch}-${vscrt}${vsver}
+# PARITY CONFIGURATION for ${conf}
 #
 #  Automatically generated by ${SELF##*/}.
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
@@ -936,69 +909,89 @@ update-parityconf() {
 
 Colored = true"
             case ${PARITYrexsupport} in # (
-            yes|enabled) echo "WaitForOutputFile = true" ;; # (
-            *) echo "WaitForOutputFile = false" ;;
+            yes|enabled)
+				echo "WaitForOutputFile = true"
+				;; # (
+            *)
+				echo "WaitForOutputFile = false"
+				;;
             esac
 
-			for vsexe in "${vsexes[@]}"
+			get-supported-executables "${chost}" |
+			while read line
 			do
-				name= executable=
-				eval ${vsexe}
-				eval "[[ -n \${${name}Exe} ]]" || continue
-				eval "echo \"${name}Exe = \${${name}Exe}\""
+				case ${line} in # (
+				=* | *=) ;; # (
+				*=*)
+					name=${line%%=*}
+					executable=${line#*=}
+					executable=$(
+						find "${vcPATHdirs[@]}" \
+							-maxdepth 1 \
+							-iname "${executable}" \
+							-print \
+							-quit \
+							2>/dev/null \
+						|| :
+					)
+					echo "${name}Exe = ${executable}"
+					;; # (
+				*) ;;
+				esac
 			done
 
-			IFS=: eval '
-				for p in ${vcPATH}
-				do
-					echo "AdditionalExecPaths = ${p}"
-				done
-				for p in ${vcINCLUDE}
-				do
-					echo "SysIncludePaths = ${p}"
-				done
-				for p in ${vcLIB}
-				do
-					echo "SysLibraryPaths = ${p}"
-				done
-			'
+			for p in "${vcPATHdirs[@]}"
+			do
+				echo "AdditionalExecPaths = ${p}"
+			done
+			for p in "${vcINCLUDEdirs[@]}"
+			do
+				echo "SysIncludePaths = ${p}"
+			done
+			for p in "${vcLIBdirs[@]}"
+			do
+				echo "SysLibraryPaths = ${p}"
+			done
+
 			echo "
 PCRTInclude = ${PARITYincludedir}/parity.runtime
-PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a
-ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a
+PCRTLibrary = ${confdir}/${conf}/lib/libparity.runtime.a
+ParityLoader = ${confdir}/${conf}/lib/libparity.loader.a
 
-# gcc -dumpmachine
+# for gcc -dumpmachine
 HostTriplet = ${chost}
-# gcc -dumpversion
-# gcc -dumpfullversion
+# for gcc -dumpversion
+# for gcc -dumpfullversion
 CompilerVersion = ${vsver}
-# gcc -print-prog-name=
+# for gcc -print-prog-name=
 KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 "
 			case ${vsarch} in # (
 			x86)
 				echo "TimeT32Bit = true"
 				;; # (
-			x64)
-				echo "TimeT32Bit = false"
-				;; # (
 			*)
 				echo "TimeT32Bit = false"
 				;;
 			esac
 
-			local sdklib p
 			for sdklib in $(get-supported-sdklibs "${chost}")
 			do
-				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${sdklib}.lib" -print -quit 2>/dev/null)'
-				[[ -n ${p} ]] || continue
-				echo "ObjectsLibraries = ${p}"
+				lib=$(
+					find "${vcLIBdirs[@]}" \
+						-maxdepth 1 \
+						-iname "${sdklib}.lib" \
+						-print \
+						-quit \
+						2>/dev/null \
+					|| :
+				)
+				[[ -n ${lib} ]] || continue
+				echo "ObjectsLibraries = ${lib}"
 			done
-		} > parity.${vsarch}-${vscrt}${vsver}.conf
-		[[ $? -eq 0 ]] || exit 1
+		} > "./${tmpdir}/${conf}/parity.conf"
 
 		verbose "Querying SDK versions ..."
-		traceon
 		echo '
 #if _MSC_VER - 0 >= 1600
 # include <winsdkver.h>
@@ -1014,27 +1007,29 @@ PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT_MAXVER)
 #elif          defined(_WIN32_WINNT) /* by <sdkddkver.h> */
 PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT)
 #endif
-' | "${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -E - \
+		' | "${DESTDIR}${CC}" \
+				"-mparityconfdir=./${tmpdir}" \
+				${parityflags} \
+				-E - \
 		  | sed -n -e '/"Defines = "/{s/" "//g;s/"//g;p}' \
-		  >> parity.${vsarch}-${vscrt}${vsver}.conf
-		[[ ${PIPESTATUS} == "0 0 0" ]]
-		traceoff $?
+		  >> "./${tmpdir}/${conf}/parity.conf"
+		[[ ${PIPESTATUS[*]} == '0 0 0' ]]
 
 		{
-			# The config parser does not understand splitted sections,
-			# even not the global section.
+			# The config parser does not understand split sections,
+			# so we need to complete the global section before we
+			# can define other sections.
 			echo "
 section windows {
 	Subsystem = Windows
 }
 "
-		} >> parity.${vsarch}-${vscrt}${vsver}.conf
-		[[ $? -eq 0 ]] || exit 1
+		} >> "./${tmpdir}/${conf}/parity.conf"
 
 		{
-			# Remember: This is parsed in getenv-parityconf().
+			# the second line here is parsed in getenv-parityconf()
 			echo "#
-# PARITY CONFIGURATION for ${vsarch}-${vscrt}${vsver}
+# PARITY CONFIGURATION for ${conf}
 #
 #  Automatically generated by ${SELF##*/}.
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
@@ -1043,48 +1038,57 @@ PATH=\"${vcPATH}\${PATH:+:}\${PATH}\" export PATH
 LIB=\"$(cygpath -mp "${vcLIB}")\${LIB:+;}\${LIB}\" export LIB
 INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUDE
 "
-		} > parity.${vsarch}-${vscrt}${vsver}.sh
-		[[ $? -eq 0 ]] || exit 1
+		} > "./${tmpdir}/${conf}/parity.sh"
 
-		unset PARITY_CONFIG
+		(
+			# change into tmpdir for intermediate object files, but in
+			# another subshell to leave above trap in current workdir
+			set -e
+			cd "./${tmpdir}"
 
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a ..."
-		traceon
-		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
-			-xc "${DESTDIR}${PARITYlibdir}"/parity.runtime/{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c \
-			-xc++ "${DESTDIR}${PARITYlibdir}"/parity.runtime/{cxxeh.cc,ios-fixup.cpp} &&
-		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vscrt}${vsver}.a {coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times,cxxeh,ios-fixup}.o
-		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vscrt}${vsver}.a done."
+			unset PARITY_CONFIG
 
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a ..."
-		traceon
-		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
-			-xc "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
-		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vscrt}${vsver}.a Loader{Helper,Init,Lazy,Library,Log}.o
-		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vscrt}${vsver}.a done."
+			verbose "Compiling ${conf}/lib/libparity.runtime.a ..."
+			"${DESTDIR}${CC}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				-I"${DESTDIR}${PARITYincludedir}"/parity.runtime \
+				-c \
+				-xc "${DESTDIR}${PARITYlibdir}"/parity.runtime/{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c \
+				-xc++ "${DESTDIR}${PARITYlibdir}"/parity.runtime/{cxxeh.cc,ios-fixup.cpp}
+			"${DESTDIR}${AR}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				cr "./${conf}/lib/libparity.runtime.a" \
+				{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times,cxxeh,ios-fixup}.o
+			verbose "Compiling ${conf}/lib/libparity.runtime.a done."
 
-		traceon
-		mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-		mv -f libparity.runtime.${vsarch}-${vscrt}${vsver}.a libparity.loader.${vsarch}-${vscrt}${vsver}.a "${DESTDIR}${PARITYlocalstatedir}"/ &&
-		mv -f parity.${vsarch}-${vscrt}${vsver}.conf parity.${vsarch}-${vscrt}${vsver}.sh "${DESTDIR}${PARITYlocalstatedir}"/
-		traceoff $? || exit 1
+			verbose "Compiling ${conf}/lib/libparity.loader.a ..."
+			"${DESTDIR}${CC}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				-I"${DESTDIR}${PARITYincludedir}"/parity.loader \
+				-I"${DESTDIR}${PARITYincludedir}"/parity.runtime \
+				-c \
+				-xc "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c
+			"${DESTDIR}${AR}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				cr "./${conf}/lib/libparity.loader.a" \
+				Loader{Helper,Init,Lazy,Library,Log}.o
+			verbose "Compiling ${conf}/lib/libparity.loader.a done."
+		)
 
-		if supports-default && ${setdefault:+:} false
-		then
-			traceon
-			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}-dynamic.conf" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.conf" &&
-			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}-dynamic.sh" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.sh"
-			traceoff $? || exit 1
-		fi
+		verbose "Populating ${confdir}/${conf} ..."
+		rm -rf "./${conf}"
+		mv -f "./${tmpdir}/${conf}" "./${conf}"
 	)
 	if [[ $? -ne 0 ]]
 	then
-		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver} failed."
+		noquiet "Updating ${confdir} failed."
 		return 1
 	fi
-	verbose "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver} done."
+	verbose "Updating ${confdir} done."
 	return 0
 }
 
@@ -1101,9 +1105,9 @@ getenv-parityconf() {
 	local vsarch=$(get-vsarch "${chost}")
 	local vscrt=$(get-vscrt "${chost}")
 
-	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh ..."
+	verbose "Loading ${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh ..."
 	(
-		${bare} || . "${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh"
+		${bare} || . "${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh"
 		while read line
 		do
 			line=${line%%#*}
@@ -1115,25 +1119,15 @@ getenv-parityconf() {
 			else
 				echo "${var} ${!var}"
 			fi
-		done < "${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh"
+		done < "${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh"
 	)
-	verbose "Loading ${PARITYlocalstatedir}/parity.${vsarch}-${vscrt}${vsver}.sh done."
+	verbose "Loading ${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh done."
 	return 0
 }
 
 parityconf-list-supported() {
 	verbose() { _verbose "$@" >&2; }
 	noquiet() { _verbose "$@" >&2; }
-	if [[ $1 == --default ]]
-	then
-		supports-default || return 0
-		local vsarch
-		for vsarch in $(get-supported-vsarchs)
-		do
-			get-chost "${vsarch}"
-		done
-		return 0
-	fi
 	local chost
 	for chost in $(get-supported-chosts)
 	do
@@ -1213,7 +1207,7 @@ parityconf-disable-all() {
 	local chost
 	for chost in $(get-supported-chosts)
 	do
-		prune-parityconf --set-default --reason="disabled" "${chost}"
+		prune-parityconf --reason="disabled" "${chost}"
 	done
 	noquiet "Disabling all configurations done."
 	return 0
@@ -1261,75 +1255,11 @@ parityconf-get-environ() {
 	return 0
 }
 
-# parity-setup --set-default [[arch-]newest|[arch-]oldest|[start+]end-of-chost|[arch-]vsver]
-#  Set available vsarch-vsver config as the default for vsarch, last one fires.
-parityconf-set-default() {
-	[[ ${#@} -lt 1 ]] && die "Need a configuration value (try --list-available)."
-	local newavail=()
-	local oldavail=()
-	local chost vsarchver
-	case $* in
-	*newest*|*oldest*)
-		for chost in $( parityconf-list-available ) # old to new order
-		do
-			vsarchver=$(get-vsarch "${chost}")-$(get-vsver "${chost}")
-			oldavail=( "${oldavail[@]}" "${vsarchver}" )
-			newavail=( "${vsarchver}" "${newavail[@]}" )
-		done
-		;;
-	esac
-
-	local ret=0
-	local vsarchs vsarch vsver vschoice
-	for arg in "$@"
-	do
-		vsarchs=( $(get-vsarch "${arg}") )
-		if [[ ${#vsarchs[@]} -eq 0 ]]
-		then
-			# no arch specified: apply to all archs
-			vsarchs=( $(get-supported-vsarchs) )
-		fi
-		for vsarch in "${vsarchs[@]}"
-		do
-			vsver=
-			vschoice=()
-			case ${arg} in
-			*oldest) vschoice=( "${oldavail[@]}" ) ;; # prefer old
-			*newest) vschoice=( "${newavail[@]}" ) ;; # prefer new
-			*)       vsver=$(get-vsver "${arg}") ;; # explicit version
-			esac
-			for vsarchver in ${vschoice[@]}
-			do
-				if [[ ${vsarchver} == ${vsarch}-* ]]
-				then
-					# first version supporting requested arch
-					vsver=$(get-vsver "${vsarchver}")
-					break
-				fi
-			done
-			if [[ -z ${vsver} && ${#vschoice[@]} -gt 0 ]]
-			then
-				# arch not available with any version
-				continue
-			fi
-			update-parityconf --set-default "$(get-chost "${vsarch}-${vsver}")" || ret=1
-		done
-	done
-
-	if [[ ${ret} -ne 0 ]]
-	then
-		noquiet "Setting default configuration failed."
-		return 1
-	fi
-	noquiet "Setting default configuration done."
-	return 0
-}
-
 parityconf-install() {
 	local chost
 	for chost in $(get-supported-chosts)
 	do
-		prune-parityconf --reason="disabled" --set-default "${chost}"
+		prune-parityconf --reason="disabled" "${chost}"
 	done
 	return 0
 }
@@ -1338,13 +1268,11 @@ parityconf-uninstall() {
 	local chost
 	for chost in $(get-supported-chosts)
 	do
-		prune-parityconf --uninstall --reason="uninstalled" --set-default "${chost}"
+		prune-parityconf --uninstall --reason="uninstalled" "${chost}"
 	done
 	return $?
 }
 
-traceon() { :; }
-traceoff() { set +x; return $1; }
 _verbose() { :; }
 _noquiet() { :
     ${1+echo "$@"}
@@ -1359,11 +1287,7 @@ do
 	shift
 	case ${arg} in
 	--debug)
-		traceoff() { :; return $1; }
 		set -x
-		;;
-	--trace)
-		traceon() { set -x; }
 		;;
 	--verbose)
 		_verbose() { :
