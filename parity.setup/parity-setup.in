@@ -14,7 +14,6 @@ PARITYincludedir="@PARITY_INCLUDEDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
 PARITYsupported_versions="@PARITY_SUPPORTED_VERSIONS@"
 PARITYsupported_runtimes="@PARITY_SUPPORTED_RUNTIMES@"
-PARITYhas_default_version="@PARITY_SUPPORTS_DEFAULT_MSVC_VERSION@"
 PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
 DESTDIR=
@@ -50,11 +49,8 @@ then
 	# 15: Visual Studio 2017, latest installed minor version
 	# 16: Visual Studio 2019, latest installed minor version
 	#
-	# parityconf-set-default() relies on old to new order
 	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15 16"
 	# </loaded from parity-setup.in by Confix2.dir>
-
-	PARITYhas_default_version=:
 
 	CC=${SELFDIR}/../parity.gnu.gcc/parity.gnu.gcc
 	AR=${SELFDIR}/../parity.gnu.ar/parity.gnu.ar.in
@@ -66,7 +62,7 @@ fi
 defrexsupport=${PARITYrexsupport}
 
 supports-default() {
-	${PARITYhas_default_version}
+	false
 }
 
 PARITYheader="# This file is part of ${PACKAGE}-${VERSION}"
@@ -100,12 +96,10 @@ Where action is one of:
   --help
      This help.
 
-  --list-supported $(supports-default && echo -n "[--default]")
+  --list-supported
       List any hosttriplet identifiers supported.
       Unless --quiet, progress output goes to standard error.
-$(supports-default && echo "\
-      With --default, lists supported hostconfigs without MSVC version.
- ")
+
   --list-available
       List hosttriplet identifiers for installed MSVC compilers found.
       Unless --quiet, progress output goes to standard error.
@@ -131,16 +125,7 @@ $(supports-default && echo "\
 
   --disable-all
       Disables configuration for all supported hosttriplet identifiers.
-$(supports-default && echo "
-  --set-default hosttriplet|[arch-]newest|[arch-]oldest...
-      Enables configuration for hosttriplet identifiers, and does set
-      each one as default for the hosttriplet's architecture, in order,
-      so the last one specified per architecture becomes the default.
-      Specify either newest or oldest to choose the newest or oldest
-      MSVC version available for the specified architecture.
-      If no arch is specified, given default is set for each supported
-      and available architecture.
- ")
+
 Additional actions for package managers:
 
   --install
@@ -1442,7 +1427,7 @@ noquiet() { _noquiet "$@"; }
 case ${arg} in
 --list-supported|--list-available|--is-available|--get-environ|\
 --help|--enable|--enable-all|--disable|--disable-all|\
---set-default|--install|--uninstall|--unittest)
+--install|--uninstall|--unittest)
     action=${arg#--}
     ;;
 *)

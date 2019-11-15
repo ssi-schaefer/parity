@@ -175,19 +175,6 @@ AC_DEFUN([PARITY_CONFIGURE],
 	AC_SUBST([PARITY_SUPPORTED_RUNTIMES], [$enable_msvc_runtimes])
 	AC_MSG_RESULT([$enable_msvc_runtimes])
 
-    AC_MSG_CHECKING([whether to support host triplet without MSVC version])
-    AC_ARG_ENABLE([default-msvc-version],
-      [AS_HELP_STRING([--disable-default-msvc-version],
-        [Disable support for the host triplet without an MSVC version.])],
-      [enable_default_msvc_version=$enableval],
-      [enable_default_msvc_version=yes])
-	AS_CASE([$enable_default_msvc_version],
-	  [yes], [PARITY_SUPPORTS_DEFAULT_MSVC_VERSION=:],
-	  [no], [PARITY_SUPPORTS_DEFAULT_MSVC_VERSION=false],
-	  [AC_MSG_ERROR([Invalid argument $enableval to --enable-default-msvc-version.])])
-    AC_SUBST([PARITY_SUPPORTS_DEFAULT_MSVC_VERSION])
-    AC_MSG_RESULT([$enable_default_msvc_version])
-
 	AC_MSG_CHECKING([whether to support Remote EXecution service])
 	AC_ARG_WITH([default-remote-execution-support],
 	  [AS_HELP_STRING([--with-remote-execution-support=[[yes|no|enabled|disabled]]],
@@ -268,9 +255,8 @@ MSCOMMANDS = \
 
 install-setup-files: install-recursive
 	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported`; \\
-	defchosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
 	cd "$(DESTDIR)$(bindir)" || exit $$? ; \\
-	for chost in $${chosts} $${defchosts} ; do \\
+	for chost in $${chosts} ; do \\
 		$(MKDIR_P) "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
 		cd "$(DESTDIR)$(exec_prefix)/$${chost}/bin" || exit $$? ; \\
 		case $${chost%%-*} in \\
@@ -304,13 +290,14 @@ install-setup-files: install-recursive
 		$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o cmd.exe -DWRAP_REALBIN="`cygpath -S`/cmd.exe" -DWRAP_OPTIONS= || exit $$? ; \\
 		rm -f paritywrapper.c || exit $$? ; \\
 	done
+	$(MKDIR_P) "$(DESTDIR)$(localstatedir)"
 	"$(DESTDIR)$(bindir)/parity-setup" --destdir="$(DESTDIR)" --install
 	test -n "$(DESTDIR)" || "$(bindir)/parity-setup" --enable-all
 
 install: install-setup-files
 
 uninstall-setup-files:
-	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported; "$(DESTDIR)$(bindir)/parity-setup" --list-supported --default`; \\
+	chosts=`"$(DESTDIR)$(bindir)/parity-setup" --list-supported`; \\
 	for chost in $${chosts}; do \\
 		if cd "$(DESTDIR)$(bindir)" ; then \\
 			for exe in $(GNUCOMMANDS) $(MSCOMMANDS) ; do \\
