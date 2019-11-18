@@ -778,6 +778,7 @@ prune-parityconf() {
 			rm -f ".${confdir}/${conf}/"parity.{conf,sh}
 
 			if [[ -d .${confdir}/${conf}/lib ]]; then
+				rm -rf "./${confdir}/${conf}/lib/sdk"
 				rm -f "./${confdir}/${conf}/lib/libparity."{runtime,loader}.a
 			fi
 
@@ -838,10 +839,27 @@ prune-parityconf() {
 			echo "#"
 		} > ".${userconfdir}/${conf}/parity.conf.sample"
 
-		mkdir -p ".${confdir}/${conf}/lib"
+		mkdir -p ".${confdir}/${conf}/lib/sdk"
 
 		: > ".${confdir}/${conf}/lib/libparity.loader.a"
 		: > ".${confdir}/${conf}/lib/libparity.runtime.a"
+
+		cat > ".${confdir}/${conf}/lib/sdk/README" <<-EOF
+		In this directory you will find symbolic links to the libraries
+		provided by Visual Studio in both the POSIX variant libNAME.so
+		needed by the -lNAME libtool option, and the MSVC variant
+		NAME.lib, needed by the NAME.lib libtool option.  Beyond the
+		libNAME.so naming scheme, the second reason is to provide the
+		libraries in a directory name not containing blanks, which break
+		shell scripts like libtool.
+
+		To enable the configuration for ${chost} you may want to run:
+		${SELF##*/} --enable ${chost}
+		EOF
+
+		# we're disabling, might have been enabled before
+		rm -f "./${confdir}/${conf}/lib/sdk/"*.lib || :
+		rm -f "./${confdir}/${conf}/lib/sdk/"lib*.so || :
 	)
 	if [[ $? -ne 0 ]]
 	then
@@ -896,6 +914,51 @@ update-parityconf() {
 		mkdir "./${tmpdir}"
 		mkdir "./${tmpdir}/${conf}"
 		mkdir "./${tmpdir}/${conf}/lib"
+		mkdir "./${tmpdir}/${conf}/lib/sdk"
+
+		# MSVC installation directories often contain blanks,
+		# breaking libtool and similar shell scripts.
+		# When --prefix is configured to not contain blanks,
+		# we can provide library locations without blanks
+		# even for MSVC libraries.  Additionally, we provide
+		# libNAME.so for import libs to use -lNAME with libtool.
+
+		for p in "${vcLIBdirs[@]}"
+		do
+			verbose "Creating library symlinks for ${p} ..."
+			libcount=0
+			dblcount=0
+			while read vclib
+			do
+				libfile=${vclib##*/}
+				libfile=${libfile,,} # tolower
+				libname=${libfile%.lib}
+				if [[ -e "./${tmpdir}/${conf}/lib/sdk/${libfile}" ]]
+				then
+					(( ++dblcount ))
+					noquiet "Redundant library ${vclib##*/} ignored."
+					continue
+				fi
+				(( ++libcount ))
+				ln -sf "${vclib}" "./${tmpdir}/${conf}/lib/sdk/${libfile}"
+				[[ ${libname} != 'lib'* ]] || continue
+				ln -sf "${vclib}" "./${tmpdir}/${conf}/lib/sdk/lib${libname}.so"
+			done < <(find "${p}" -maxdepth 1 -type f -iname '*.lib' 2>/dev/null || :)
+			verbose "Creating library symlinks for ${p} ... ${libcount} done, ${dblcount} dups ignored."
+		done
+
+		cat > "./${tmpdir}/${conf}/lib/sdk/README" <<-EOF
+		In this directory you will find symbolic links to the libraries
+		provided by Visual Studio in both the POSIX variant libNAME.so
+		needed by the -lNAME libtool option, and the MSVC variant
+		NAME.lib, needed by the NAME.lib libtool option.  Beyond the
+		libNAME.so naming scheme, the second reason is to provide the
+		libraries in a directory name not containing blanks, which break
+		shell scripts like libtool.
+
+		The libs found here are for the ${chost} target, which can be
+		disabled using: ${SELF##*/} --enable ${chost}
+		EOF
 
 		# minimal ${conf}/parity.conf for the preprocessor
 		# to query SDK versions and some Defines
@@ -948,7 +1011,7 @@ Colored = true"
 			do
 				echo "SysIncludePaths = ${p}"
 			done
-			for p in "${vcLIBdirs[@]}"
+			for p in "${vcLIBdirs[@]}" "${confdir}/${conf}/lib/sdk"
 			do
 				echo "SysLibraryPaths = ${p}"
 			done
