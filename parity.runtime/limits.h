@@ -30,6 +30,13 @@
 #    define _POSIX_ 1
 #  endif
 #  include RUNTIME_INC(Limits.h)
+
+#if defined(_POSIX_) && (_MSC_VER - 0 >= 1800)
+   /* gone since MSVC 2013 */
+#  define _POSIX_PATH_MAX     255
+#  define PATH_MAX            512
+#endif
+
 #pragma pop_macro("_POSIX_")
 
 #endif
