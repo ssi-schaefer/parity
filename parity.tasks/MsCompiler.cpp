@@ -390,6 +390,23 @@ namespace parity
 
 					vec.insert(vec.begin(), temp.begin(), temp.end());
 				}
+
+				//
+				// Set optimization level.
+				//
+				switch(ctx.getOptimizeLevel()) {
+				case 0:
+					vec.push_back("/Od");
+					break;
+				case 1:
+					vec.push_back("/O1");
+					break;
+				case 2:
+					vec.push_back("/O2");
+					break;
+				case 3:
+					vec.push_back("/Ox");
+				}
 				break;
 			default:
 				throw utils::Exception("unknown language type, or language not supported by backend!");
@@ -524,23 +541,6 @@ namespace parity
 				utils::Log::verbose("define: %s\n", def.c_str());
 
 				vec.push_back(def);
-			}
-
-			//
-			// Set optimization level.
-			//
-			switch(ctx.getOptimizeLevel()) {
-			case 0:
-				vec.push_back("/Od");
-				break;
-			case 1:
-				vec.push_back("/O1");
-				break;
-			case 2:
-				vec.push_back("/O2");
-				break;
-			case 3:
-				vec.push_back("/Ox");
 			}
 		}
 
