@@ -57,7 +57,7 @@ namespace parity
 
 				switch(it->second)
 				{
-				case utils::LanguageAsssembler:
+				case utils::LanguageAssembler:
 					if(ctx.getAssemblerExe().get().empty()) {
 						utils::Log::error("Assembler executable not set, cannot compile assembler source file!\n");
 						exit(1);
@@ -287,7 +287,7 @@ namespace parity
 				// Only difference to assembler: /EP given to the compiler means
 				// that the preprocessor output does not have #line's.
 				//
-				if(lang == utils::LanguageAsssembler) {
+				if(lang == utils::LanguageAssembler) {
 					vec.push_back("/EP");
 				} else {
 					if(ctx.getKeepHashLine())
@@ -350,7 +350,7 @@ namespace parity
 
 			switch(lang)
 			{
-			case utils::LanguageAsssembler:
+			case utils::LanguageAssembler:
 				vec.push_back("/Ta" + sourceFile.get());
 				break;
 			case utils::LanguageC:
@@ -372,7 +372,7 @@ namespace parity
 			//
 			switch(lang)
 			{
-			case utils::LanguageAsssembler:
+			case utils::LanguageAssembler:
 				{
 					utils::Task::ArgumentVector temp;
 					vectorize(ctx.getAssemblerDefaults(), temp);

@@ -232,7 +232,7 @@ namespace parity
 				if(ctx.getForcedLanguage() != LanguageInvalid)
 					Log::warning("ignoring forced language for assembler, continuing normally!\n");
 				Log::verbose("adding assembler source file: %s\n", ref.c_str());
-				target[ref] = LanguageAsssembler;
+				target[ref] = LanguageAssembler;
 			} else if (_stricmp(ref.substr(ref.length() - 3).c_str(), ".rc") == 0) {
 				Log::verbose("adding resource file: %s\n", ref.c_str());
 				target[ref] = LanguageResource;
@@ -452,7 +452,7 @@ namespace parity
 				ret.append("\n   * ");
 				switch(it->second)
 				{
-				case LanguageAsssembler:
+				case LanguageAssembler:
 					ret.append(col.blue("[ASM] "));
 					break;
 				case LanguageC:

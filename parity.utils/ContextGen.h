@@ -77,7 +77,7 @@ namespace parity
 			LanguageUnknown,
 			LanguageC,
 			LanguageCpp,
-			LanguageAsssembler,
+			LanguageAssembler,
 			LanguageModuleDefinition, // .def
 			LanguageResource, // .rc
 			LanguageCompiledResource // .res
