@@ -188,6 +188,10 @@ namespace parity
 				target = LanguageCpp;
 			else if(ref == "resource")
 				target = LanguageResource;
+			else if(ref == "assembler-with-cpp")
+				target = LanguageAssemblerWithCpp;
+			else if(ref == "assembler")
+				target = LanguageAssembler;
 			else
 				throw Exception("cannot convert %s to a valid LanguageType!", ref.c_str());
 		}
@@ -229,10 +233,20 @@ namespace parity
 			} else if(ref.compare(ref.length() - 4, 4, ".asm") == 0
 				|| ref.compare(ref.length() - 2, 2, ".s") == 0
 				|| ref.compare(ref.length() - 2, 2, ".S") == 0) {
-				if(ctx.getForcedLanguage() != LanguageInvalid)
-					Log::warning("ignoring forced language for assembler, continuing normally!\n");
-				Log::verbose("adding assembler source file: %s\n", ref.c_str());
-				target[ref] = LanguageAssembler;
+				switch(ctx.getForcedLanguage()) {
+				case LanguageAssembler:
+				case LanguageAssemblerWithCpp:
+					Log::verbose("adding forced source file (originally assembler-with-cpp): %s\n", ref.c_str());
+					target[ref] = ctx.getForcedLanguage();
+					break;
+				default:
+					Log::verbose("ignoring forced language for assembler, continuing normally!\n");
+					// fallthrough
+				case LanguageInvalid:
+					Log::verbose("adding assembler-with-cpp source file: %s\n", ref.c_str());
+					target[ref] = LanguageAssemblerWithCpp;
+					break;
+				}
 			} else if (_stricmp(ref.substr(ref.length() - 3).c_str(), ".rc") == 0) {
 				Log::verbose("adding resource file: %s\n", ref.c_str());
 				target[ref] = LanguageResource;

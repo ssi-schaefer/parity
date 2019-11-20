@@ -63,9 +63,14 @@ namespace parity
 				//
 				// check wether the source file is C or C++
 				//
-				if(it->second != utils::LanguageC && it->second != utils::LanguageCpp)
-				{
+				switch(it->second) {
+				case utils::LanguageC:
+				case utils::LanguageCpp:
+				case utils::LanguageAssemblerWithCpp:
+					break;
+				default:
 					utils::Log::verbose("skipping non C/C++ file %s\n", file.get().c_str());
+					break;
 				}
 
 				//
