@@ -243,7 +243,7 @@ namespace parity
 				CTX_GETSET_CI(SourceMap		,Sources			,SourceMap()	)  /* compiler */ \
 				CTX_GETSET   (bool			,ShortWchar			,false			)  /* compiler */ \
 				CTX_GETSET   (std::string	,CompilerDefaults	,"/nologo"		)  /* compiler */ \
-				CTX_GETSET   (std::string	,AssemblerDefaults	,"/nologo /Cp"	)  /* compiler */ \
+				CTX_GETSET   (std::string	,AssemblerDefaults	,"/nologo /Cx"	)  /* compiler */ \
 				CTX_GETSET   (Path			,CompilerExe		,""				)  /* compiler */ \
 				CTX_GETSET   (Path			,AssemblerExe		,""				)  /* compiler (assembler) */ \
 				CTX_GETSET   (bool			,TimeT32Bit			,true			)  /* compiler (MS) */ \
