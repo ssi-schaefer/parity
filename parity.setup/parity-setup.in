@@ -846,11 +846,8 @@ prune-parityconf() {
 
 		cat > ".${confdir}/${conf}/lib/sdk/README" <<-EOF
 		In this directory you will find symbolic links to the libraries
-		provided by Visual Studio in both the POSIX variant libNAME.so
-		needed by the -lNAME libtool option, and the MSVC variant
-		NAME.lib, needed by the NAME.lib libtool option.  Beyond the
-		libNAME.so naming scheme, the second reason is to provide the
-		libraries in a directory name not containing blanks, which break
+		provided by Visual Studio.  This is to provide the libraries in
+		a directory name not containing blanks, which usually break
 		shell scripts like libtool.
 
 		To enable the configuration for ${chost} you may want to run:
@@ -859,7 +856,6 @@ prune-parityconf() {
 
 		# we're disabling, might have been enabled before
 		rm -f "./${confdir}/${conf}/lib/sdk/"*.lib || :
-		rm -f "./${confdir}/${conf}/lib/sdk/"lib*.so || :
 	)
 	if [[ $? -ne 0 ]]
 	then
@@ -920,8 +916,7 @@ update-parityconf() {
 		# breaking libtool and similar shell scripts.
 		# When --prefix is configured to not contain blanks,
 		# we can provide library locations without blanks
-		# even for MSVC libraries.  Additionally, we provide
-		# libNAME.so for import libs to use -lNAME with libtool.
+		# even for MSVC libraries.
 
 		for p in "${vcLIBdirs[@]}"
 		do
@@ -941,19 +936,14 @@ update-parityconf() {
 				fi
 				(( ++libcount ))
 				ln -sf "${vclib}" "./${tmpdir}/${conf}/lib/sdk/${libfile}"
-				[[ ${libname} != 'lib'* ]] || continue
-				ln -sf "${vclib}" "./${tmpdir}/${conf}/lib/sdk/lib${libname}.so"
 			done < <(find "${p}" -maxdepth 1 -type f -iname '*.lib' 2>/dev/null || :)
 			verbose "Creating library symlinks for ${p} ... ${libcount} done, ${dblcount} dups ignored."
 		done
 
 		cat > "./${tmpdir}/${conf}/lib/sdk/README" <<-EOF
 		In this directory you will find symbolic links to the libraries
-		provided by Visual Studio in both the POSIX variant libNAME.so
-		needed by the -lNAME libtool option, and the MSVC variant
-		NAME.lib, needed by the NAME.lib libtool option.  Beyond the
-		libNAME.so naming scheme, the second reason is to provide the
-		libraries in a directory name not containing blanks, which break
+		provided by Visual Studio.  This is to provide the libraries in
+		a directory name not containing blanks, which usually break
 		shell scripts like libtool.
 
 		The libs found here are for the ${chost} target, which can be
