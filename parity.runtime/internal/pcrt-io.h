@@ -89,18 +89,6 @@ PCRT_END_C
 #  undef _sopen
 #  undef _sopen_s
 
-#  pragma pop_macro( "access")
-#  pragma pop_macro("_access")
-#  pragma pop_macro("_access_s")
-#  pragma pop_macro( "chmod")
-#  pragma pop_macro("_chmod")
-#  pragma pop_macro( "creat")
-#  pragma pop_macro("_creat")
-#  pragma pop_macro( "open")
-#  pragma pop_macro("_open")
-#  pragma pop_macro("_sopen")
-#  pragma pop_macro("_sopen_s")
-
 #  ifndef  __PCRT_INTERNAL_IO_H
 #   define __PCRT_INTERNAL_IO_H
 //
@@ -182,6 +170,18 @@ static PCRT_INLINE errno_t _sopen_s(int *pfh, const char *f, int oflag, int shfl
 PCRT_END_C
 
 #  endif // __PCRT_INTERNAL_IO_H
+
+#  pragma pop_macro( "access")
+#  pragma pop_macro("_access")
+#  pragma pop_macro("_access_s")
+#  pragma pop_macro( "chmod")
+#  pragma pop_macro("_chmod")
+#  pragma pop_macro( "creat")
+#  pragma pop_macro("_creat")
+#  pragma pop_macro( "open")
+#  pragma pop_macro("_open")
+#  pragma pop_macro("_sopen")
+#  pragma pop_macro("_sopen_s")
 
 # endif // !__PCRT_INTERNAL_IO_H_NEED_REAL
 # undef     __PCRT_INTERNAL_IO_H_NEED_POSTWRAP

@@ -79,14 +79,6 @@ PCRT_END_C
 #  undef  tempnam
 #  undef _tempnam
 
-#  pragma pop_macro( "fopen")
-#  pragma pop_macro( "fopen_s")
-#  pragma pop_macro( "freopen")
-#  pragma pop_macro( "freopen_s")
-#  pragma pop_macro("_fsopen")
-#  pragma pop_macro( "tempnam")
-#  pragma pop_macro("_tempnam")
-
 #  ifndef  __PCRT_INTERNAL_STDIO_H
 #   define __PCRT_INTERNAL_STDIO_H
 //
@@ -136,6 +128,14 @@ static PCRT_INLINE char * _tempnam(const char* dir, const char *prefix)
 PCRT_END_C
 
 #  endif // __PCRT_INTERNAL_STDIO_H
+
+#  pragma pop_macro( "fopen")
+#  pragma pop_macro( "fopen_s")
+#  pragma pop_macro( "freopen")
+#  pragma pop_macro( "freopen_s")
+#  pragma pop_macro("_fsopen")
+#  pragma pop_macro( "tempnam")
+#  pragma pop_macro("_tempnam")
 
 #  endif // !__PCRT_INTERNAL_STDIO_H_NEED_REAL
 # undef      __PCRT_INTERNAL_STDIO_H_NEED_POSTWRAP

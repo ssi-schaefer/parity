@@ -57,11 +57,6 @@ PCRT_END_C
 #  undef  unlink
 #  undef _unlink
 
-#  pragma pop_macro( "remove")
-#  pragma pop_macro( "rename")
-#  pragma pop_macro( "unlink")
-#  pragma pop_macro("_unlink")
-
 #  ifndef  __PCRT_INTERNAL_COREIO_H
 #   define __PCRT_INTERNAL_COREIO_H
 
@@ -94,6 +89,11 @@ static PCRT_INLINE int _unlink(const char* f)
 PCRT_END_C
 
 #  endif // __PCRT_INTERNAL_COREIO_H
+
+#  pragma pop_macro( "remove")
+#  pragma pop_macro( "rename")
+#  pragma pop_macro( "unlink")
+#  pragma pop_macro("_unlink")
 
 # endif // !__PCRT_INTERNAL_COREIO_H_NEED_REAL
 # undef     __PCRT_INTERNAL_COREIO_H_NEED_POSTWRAP
