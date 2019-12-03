@@ -30,6 +30,11 @@
 #  pragma push_macro( "unlink")
 #  pragma push_macro("_unlink")
 
+#  undef  remove
+#  undef  rename
+#  undef  unlink
+#  undef _unlink
+
 #  define  remove pcrt_no_remove
 #  define  rename pcrt_no_rename
 #  define  unlink pcrt_no_unlink

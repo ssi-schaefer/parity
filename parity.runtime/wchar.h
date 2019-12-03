@@ -35,9 +35,7 @@
 #  if !defined(_POSIX_) && defined(__PARITY_GNU__)
 #    define _POSIX_ 1
 #  endif
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
+#  undef __STDC__
 #  include UCRT_INC(Wchar.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")

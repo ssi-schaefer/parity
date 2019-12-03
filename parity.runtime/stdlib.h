@@ -27,12 +27,8 @@
 
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
-#  ifdef _POSIX_
-#    undef _POSIX_
-#  endif
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
+#  undef _POSIX_
+#  undef __STDC__
 #  include UCRT_INC(Stdlib.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")

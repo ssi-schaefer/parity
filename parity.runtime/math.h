@@ -28,9 +28,7 @@
 
 #pragma push_macro("__STDC__")
 #pragma push_macro("_USE_MATH_DEFINES")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
+#  undef __STDC__
 #  ifndef _USE_MATH_DEFINES
 #    define _USE_MATH_DEFINES 1
 #  endif

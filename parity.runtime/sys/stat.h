@@ -26,9 +26,7 @@
 #include "../internal/pcrt.h"
 
 #pragma push_macro("__STDC__")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
+#  undef __STDC__
    // WARNING: The 'S' in stat.h is uppercase
    // intentionally to avoid inclusion of __crt_invalid_stat.h
 #  include UCRT_INC(sys/Stat.h)

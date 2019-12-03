@@ -41,6 +41,18 @@
 #  pragma push_macro("_sopen")
 #  pragma push_macro("_sopen_s")
 
+#  undef  access
+#  undef _access
+#  undef _access_s
+#  undef  chmod
+#  undef _chmod
+#  undef  creat
+#  undef _creat
+#  undef  open
+#  undef _open
+#  undef _sopen
+#  undef _sopen_s
+
 #  define  access   pcrt_no_access
 #  define _access   pcrt_no__access
 #  define _access_s pcrt_no__access_s

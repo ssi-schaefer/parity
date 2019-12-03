@@ -37,6 +37,14 @@
 #  pragma push_macro( "tempnam")
 #  pragma push_macro("_tempnam")
 
+#  undef  fopen
+#  undef  fopen_s
+#  undef  freopen
+#  undef  freopen_s
+#  undef _fsopen
+#  undef  tempnam
+#  undef _tempnam
+
 #  define  fopen     pcrt_no_fopen
 #  define  fopen_s   pcrt_no_fopen_s
 #  define  freopen   pcrt_no_freopen
