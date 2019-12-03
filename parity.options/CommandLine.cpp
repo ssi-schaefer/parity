@@ -43,6 +43,15 @@ namespace parity
 				bool bMatched = false;
 
 				size_t argvLen = ::strlen(argv[i]);
+				bool isPath = false;
+
+				if (argv[i][0] == '/') {
+					// distinguish "/cygdrive/c/path/to/file" from "/c" option
+					parity::utils::Path argpath(argv[i]);
+					if (argpath.exists()) {
+						isPath = true;
+					}
+				}
 
 				if(argvLen == 0)
 					continue;
@@ -59,6 +68,7 @@ namespace parity
 							&& ( argv[i][0] == '-'
 							  || argv[i][0] == '/'
 							  )
+							&& !isPath
 							)
 						  )
 						&& ::strncmp(&entry->option[1], &argv[i][1], entryLen - 1) == 0
