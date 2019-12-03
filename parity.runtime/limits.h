@@ -34,7 +34,9 @@
 #if defined(_POSIX_) && (_MSC_VER - 0 >= 1800)
    /* gone since MSVC 2013 */
 #  define _POSIX_PATH_MAX     255
-#  define PATH_MAX            512
+#  ifndef PATH_MAX
+#    define PATH_MAX          512
+#  endif
 #endif
 
 #pragma pop_macro("_POSIX_")
