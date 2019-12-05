@@ -238,6 +238,7 @@ MAKEFILE_AM(line='''
 GNUCOMMANDS = \
 	gcc:gcc$(EXEEXT) \
 	g++:gcc$(EXEEXT) \
+	cpp:gcc$(EXEEXT):-E \
 	ld:ld$(EXEEXT) \
 	windres:windres$(EXEEXT) \
 	ar \
@@ -273,18 +274,22 @@ install-setup-files: install-recursive
 		mver=$${mver%%-*} ; \\
 		mopt="$${mopt} -m$${mcrt}$${mver}" ; \\
 		for exe in $(GNUCOMMANDS) ; do \\
-			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
-			echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/$$1 with $${mopt}" ; \\
-			$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o $$1 -DWRAP_REALBIN="$(bindir)/parity.gnu.$$2" -DWRAP_OPTIONS="$${mopt}" || exit $$? ; \\
-			echo "creating $(DESTDIR)$(bindir)/$${chost}-$$1" ; \\
-			cp -f $$1 "$(DESTDIR)$(bindir)/$${chost}-$$1" || exit $$? ; \\
+			set -- `IFS=: eval 'echo $${exe}'` ; \\
+			out=$$1; shift ; \\
+			real=$${1-$${out}}; $${1+shift} ; \\
+			echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/$${out} for parity.gnu.$${real} $${mopt} $$*" ; \\
+			$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o $${out} -DWRAP_REALBIN="$(bindir)/parity.gnu.$${real}" -DWRAP_OPTIONS="$${mopt} $$*" || exit $$? ; \\
+			echo "creating $(DESTDIR)$(bindir)/$${chost}-$${out}" ; \\
+			cp -f $${out} "$(DESTDIR)$(bindir)/$${chost}-$${out}" || exit $$? ; \\
 		done ; \\
 		for exe in $(MSCOMMANDS) ; do \\
-			set -- `IFS=: eval 'echo $${exe} $${exe}'` ; \\
-			echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/$$1 with $${mopt}" ; \\
-			$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o $$1 -DWRAP_REALBIN="$(bindir)/parity.ms.$$2" -DWRAP_OPTIONS="$${mopt}" || exit $$? ; \\
-			echo "creating $(DESTDIR)$(bindir)/$${chost}-$$1" ; \\
-			cp -f $$1 "$(DESTDIR)$(bindir)/$${chost}-$$1" || exit $$? ; \\
+			set -- `IFS=: eval 'echo $${exe}'` ; \\
+			out=$$1; shift ; \\
+			real=$${1-$${out}}; $${1+shift} ; \\
+			echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/$${out} for parity.ms.$${real} $${mopt} $$*" ; \\
+			$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o $${out} -DWRAP_REALBIN="$(bindir)/parity.ms.$${real}" -DWRAP_OPTIONS="$${mopt} $$*" || exit $$? ; \\
+			echo "creating $(DESTDIR)$(bindir)/$${chost}-$${out}" ; \\
+			cp -f $${out} "$(DESTDIR)$(bindir)/$${chost}-$${out}" || exit $$? ; \\
 		done ; \\
 		echo "creating $(DESTDIR)$(exec_prefix)/$${chost}/bin/cmd.exe" ; \\
 		$(CC) $(CFLAGS) "$(DESTDIR)$(parity_runtimedir)/optswrap.c" -o cmd.exe -DWRAP_REALBIN="`cygpath -S`/cmd.exe" -DWRAP_OPTIONS= || exit $$? ; \\

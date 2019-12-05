@@ -25,6 +25,7 @@
 #include <Timing.h>
 
 #include <TableGnuGcc.h>
+#include <Compiler.h>
 
 #include <CollectorStubs.h>
 #include <CollectorOther.h>
@@ -161,9 +162,19 @@ int main(int argc, char** argv)
 	//
 	// Check if there is something to do.
 	//
-	if(context.getCompileOnly() && context.getSources().empty()) {
-		Log::error("no source files to compile!\n");
-		exit(1);
+	if (context.getSources().empty()) {
+		if(context.getCompileOnly()) {
+			Log::error("no source files to compile!\n");
+			exit(1);
+		}
+		if (context.getPreprocess()) {
+			// Without an explicit input file, the preprocessor reads from stdin.
+			bool used = false;
+			if (!parity::options::addSourceFromStdin("-", "", used)) {
+				utils::Log::error("Failed to load preprocessor input from stdin!\n");
+				exit(1);
+			}
+		}
 	}
 
 	//
