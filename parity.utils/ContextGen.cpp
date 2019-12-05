@@ -200,12 +200,13 @@ namespace parity
 		{
 			Context& ctx = Context::getContext();
 			utils::LanguageType defaultLang = ctx.getDefaultLanguage();
+			utils::LanguageType forcedLang = ctx.getForcedLanguage();
 
 			if(ref.compare(ref.length() - 2, 2, ".c") == 0
 				|| ref.compare(ref.length() - 2, 2, ".i") == 0)
-				if(ctx.getForcedLanguage() != LanguageInvalid) {
+				if(forcedLang != LanguageInvalid) {
 					Log::verbose("adding forced source file (originally c): %s\n", ref.c_str());
-					target[ref] = ctx.getForcedLanguage();
+					target[ref] = forcedLang;
 				} else
 				if (defaultLang != LanguageUnknown) {
 					Log::verbose("adding %s source file: %s\n", ctx.printable(defaultLang).c_str(), ref.c_str());
@@ -219,9 +220,9 @@ namespace parity
 				|| ref.compare(ref.length() - 4, 4, ".cxx") == 0
 				|| ref.compare(ref.length() - 3, 3, ".ii") == 0
 				|| ref.compare(ref.length() - 2, 2, ".C") == 0) {
-				if(ctx.getForcedLanguage() != LanguageInvalid) {
+				if(forcedLang != LanguageInvalid) {
 					Log::verbose("adding forced source file (originally c++): %s\n", ref.c_str());
-					target[ref] = ctx.getForcedLanguage();
+					target[ref] = forcedLang;
 				} else
 				if (defaultLang != LanguageUnknown) {
 					Log::verbose("adding %s source file: %s\n", ctx.printable(defaultLang).c_str(), ref.c_str());
@@ -233,11 +234,11 @@ namespace parity
 			} else if(ref.compare(ref.length() - 4, 4, ".asm") == 0
 				|| ref.compare(ref.length() - 2, 2, ".s") == 0
 				|| ref.compare(ref.length() - 2, 2, ".S") == 0) {
-				switch(ctx.getForcedLanguage()) {
+				switch(forcedLang) {
 				case LanguageAssembler:
 				case LanguageAssemblerWithCpp:
 					Log::verbose("adding forced source file (originally assembler-with-cpp): %s\n", ref.c_str());
-					target[ref] = ctx.getForcedLanguage();
+					target[ref] = forcedLang;
 					break;
 				default:
 					Log::verbose("ignoring forced language for assembler, continuing normally!\n");
@@ -257,7 +258,11 @@ namespace parity
 				Log::verbose("adding module definition file: %s\n", ref.c_str());
 				target[ref] = LanguageModuleDefinition;
 			} else {
-				target[ref] = LanguageUnknown;
+				if(forcedLang != LanguageInvalid) {
+					target[ref] = forcedLang;
+				} else {
+					target[ref] = LanguageUnknown;
+				}
 			}
 		}
 
