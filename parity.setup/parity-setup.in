@@ -514,6 +514,13 @@ die() {
 : ${SYSTEMDRIVE:=${SYSTEMROOT%%\\*}}
 export SYSTEMDRIVE
 
+# The ProgramData environment variable is required by vswhere.exe versions like
+#  Visual Studio Locator version 2.5.2+gebb9f26a3d [query version 1.18.21.37008]
+# while it is not needed (any more) by vswhere.exe versions like
+#  Visual Studio Locator version 2.7.1+180c706d56 [query version 2.3.2200.14893]
+: ${PROGRAMDATA=$(cygpath -w -F 35)}
+export PROGRAMDATA
+
 windir=$(cygpath -W)
 sysdir=$(cygpath -S)
 
