@@ -46,6 +46,9 @@ namespace parity
 
 		void MsPcrtInitEntryGenerator::doWork()
 		{
+			if (binary::FileHeader::TargetMachineType() != utils::MachineI386) {
+				return;
+			}
 			//
 			// generate a temporary object file and add it to the
 			// objects list. The object contains only the entrypoint
@@ -62,7 +65,7 @@ namespace parity
 
 			binary::Object obj;
 			binary::FileHeader& hdr = obj.getHeader();
-			hdr.setMachine(binary::FileHeader::MachineI386);
+			hdr.setMachine(binary::FileHeader::TargetMachineType());
 			
 			binary::Section& sectText = hdr.addSection(".text");
 			sectText.setCharacteristics( binary::Section::CharAlign16Bytes | binary::Section::CharMemoryExecute | binary::Section::CharMemoryRead | binary::Section::CharContentCode);

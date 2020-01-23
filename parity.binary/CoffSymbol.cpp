@@ -55,8 +55,11 @@ namespace parity
 				if(name_.empty())
 					name_ = "<invalid>";
 			} else {
-				size_t len = ::strlen(struct_.N.ShortName);
-				name_ = std::string(struct_.N.ShortName, (len < 8 ? len : 8));
+				// Cannot perform strlen(char[8]), as the optimizer may
+				// realize this to be no longer than 8 and optimize away.
+				// We need to do the strlen on the std::string buffer instead.
+				name_ = std::string(struct_.N.ShortName, 8);
+				name_.resize(::strlen(name_.c_str()));
 			}
 		}
 

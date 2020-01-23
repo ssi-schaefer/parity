@@ -74,19 +74,7 @@ namespace parity
 				return *this;
 			}
 
-			//
-			// Public Types
-			//
-			typedef enum {
-				//
-				// Note: Not all types implemented here!
-				//
-				MachineUnknown	= 0x0, // applicable to all machines if encountered (c runtime, etc.)
-				MachineI386		= 0x14c,
-				MachineAMD64	= 0x8664,
-				MachineARM		= 0x1c0,
-				MachineIA64		= 0x200
-			} MachineType;
+			static unsigned short TargetMachineType();
 
 			typedef enum {
 				CharRelocsStripped			= 0x0001,

@@ -25,16 +25,21 @@
 
 #include "../internal/pcrt.h"
 
+#include "../internal/pcrt-off_t.h"
+
 #pragma push_macro("__STDC__")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
+#  undef __STDC__
 #  include UCRT_INC(sys/Types.h)
 #pragma pop_macro("__STDC__")
 
-typedef long pid_t;
+typedef int pid_t;
 typedef int mode_t;
+
+#if defined(_WIN64)
+typedef signed __int64 ssize_t;
+#else
 typedef signed int ssize_t;
+#endif
 
 #endif
 

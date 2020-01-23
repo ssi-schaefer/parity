@@ -1,6 +1,7 @@
 /****************************************************************\
 *                                                                *
-* Copyright (C) 2007 by Markus Duft <markus.duft@salomon.at>     *
+* Copyright (C) 2011-2019 by Markus Duft <markus.duft@ssi-schaefer.com>
+* Copyright (C) 2019 by Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
 *                                                                *
 * This file is part of parity.                                   *
 *                                                                *
@@ -20,26 +21,55 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_LIMITS_H__
-#define __PCRT_LIMITS_H__
+#if defined(WRAP_REALBIN) && defined(WRAP_OPTIONS)
+/*
+ * While installed as part of runtime sources,
+ * this is used to create the .exe wrappers only.
+ */
 
-#include "internal/pcrt.h"
+#include <unistd.h>
+#include <string.h>
 
-#pragma push_macro("_POSIX_")
-#  if !defined(_POSIX_) && defined(__PARITY_GNU__)
-#    define _POSIX_ 1
-#  endif
-#  include RUNTIME_INC(Limits.h)
+#define _wrapstr(x) #x
+#define wrapstr(x) _wrapstr(x)
+#define wrapper main /* have Confix ignore this main */
+int wrapper(int argc, char **argv)
+{
+  char opts[] = wrapstr(WRAP_OPTIONS);
+  int i, nopts;
+  i = nopts = 0;
+  while(opts[i]) {
+    if (opts[i] == ' ') {
+      ++i;
+      continue;
+    }
+    ++nopts;
+    ++i;
+    while(opts[i] && opts[i] != ' ') {
+      ++i;
+    }
+  }
+  char *newargv[argc+nopts+1];
+  newargv[0] = argv[0];
+  i = nopts = 0;
+  while(opts[i]) {
+    if (opts[i] == ' ') {
+      opts[i] = '\0';
+      ++i;
+      continue;
+    }
+    ++nopts;
+    newargv[nopts] = &opts[i];
+    ++i;
+    while(opts[i] && opts[i] != ' ') {
+      ++i;
+    }
+  }
+  for(i = 1; i <= argc; ++i) {
+    ++nopts;
+    newargv[nopts] = argv[i];
+  }
+  execv(wrapstr(WRAP_REALBIN), newargv);
+}
 
-#if defined(_POSIX_) && (_MSC_VER - 0 >= 1800)
-   /* gone since MSVC 2013 */
-#  define _POSIX_PATH_MAX     255
-#  ifndef PATH_MAX
-#    define PATH_MAX          512
-#  endif
-#endif
-
-#pragma pop_macro("_POSIX_")
-
-#endif
-
+#endif /* WRAP_REALBIN */

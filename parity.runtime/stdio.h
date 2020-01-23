@@ -25,57 +25,62 @@
 
 #include "internal/pcrt.h"
 
+/* need off_t for fseeko/ftello */
+#include "internal/pcrt-off_t.h"
+
+#define __PCRT_INTERNAL_STDIO_H_NEED_PREWRAP
+#include "internal/pcrt-stdio.h"
+
 #pragma push_macro("_POSIX_")
 #pragma push_macro("__STDC__")
 #  if !defined(_POSIX_) && defined(__PARITY_GNU__)
 #    define _POSIX_ 1
 #  endif
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
-#  pragma push_macro("unlink")
-#    define unlink __crt_invalid_unlink
-#    include UCRT_INC(Stdio.h)
-#  pragma pop_macro("unlink")
+#  undef __STDC__
+#  include UCRT_INC(Stdio.h)
 #pragma pop_macro("_POSIX_")
 #pragma pop_macro("__STDC__")
 
 #include RUNTIME_INC(Stdarg.h)
 
-//
-// redefine with path conversion attached. We simply hope
-// that nobody is stupid enough to use those names as
-// something else then a call to this functions.
-//
-#define fopen(f, m)				fopen(PCRT_CONV(f), m)
-#define freopen(f, m, p)		freopen(PCRT_CONV(f), m, p)
+#define __PCRT_INTERNAL_STDIO_H_NEED_POSTWRAP 1
+#include "internal/pcrt-stdio.h"
 
+
+//
+// additional functions not available from MSVC
+//
 PCRT_BEGIN_C
 
-#pragma push_macro("snprintf")
-#pragma push_macro("unlink")
-#pragma push_macro("popen")
-#pragma push_macro("pclose")
-#pragma push_macro("tempnam")
-
-#undef snprintf
-#undef unlink
-#undef popen
-#undef pclose
-#undef tempnam
-
+#if defined(_MSC_VER) && ((_MSC_VER - 0) < 1900)
+// available since Windows 10 SDK (MSVC 14.0)
 extern int snprintf(char* b, size_t c, const char* fmt, ...);
+#endif
 
-static PCRT_INLINE int unlink(const char* f) { return _unlink(PCRT_CONV(f)); }
-static PCRT_INLINE FILE* popen(const char* c, const char* m) { return _popen(c, m); }
-static PCRT_INLINE int pclose(FILE* f) { return _pclose(f); }
-static PCRT_INLINE char* tempnam(const char* d, const char* p) { return _tempnam(PCRT_CONV(d), p); }
+static PCRT_INLINE FILE* popen(const char* c, const char* m)
+{
+  return _popen(c, m);
+}
 
-#pragma pop_macro("snprintf")
-#pragma pop_macro("unlink")
-#pragma pop_macro("popen")
-#pragma pop_macro("pclose")
-#pragma pop_macro("tempnam")
+static PCRT_INLINE int pclose(FILE* f)
+{
+  return _pclose(f);
+}
+
+static PCRT_INLINE int fseeko(FILE* f, off_t o, int w)
+{
+  if (sizeof(off_t) == 8)
+	return _fseeki64(f, o, w);
+#pragma warning(suppress: 4244) // conversion from 'off_t' to 'long', possible loss of data
+  return fseek(f, o, w);
+}
+
+static PCRT_INLINE off_t ftello(FILE* f)
+{
+  if (sizeof(off_t) == 8)
+	return _ftelli64(f);
+  return ftell(f);
+}
 
 PCRT_END_C
 
@@ -83,5 +88,4 @@ PCRT_END_C
 // TODO: Wide character versions?
 //
 
-#endif
-
+#endif // __PCRT_STDIO_H__

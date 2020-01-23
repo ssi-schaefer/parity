@@ -20,57 +20,50 @@
 *                                                                *
 \****************************************************************/
 
-#ifndef __PCRT_MATH_H__
-#define __PCRT_MATH_H__
+#define __PCRT_INTERNAL_IO_H_NEED_REAL 0
+#include "io.h"
 
-#include "internal/pcrt.h"
-#include "float.h"
+int pcrt_access(const char* f, int m)
+{
+  return _access(PCRT_CONV(f), m);
+}
 
-#pragma push_macro("__STDC__")
-#pragma push_macro("_USE_MATH_DEFINES")
-#  undef __STDC__
-#  ifndef _USE_MATH_DEFINES
-#    define _USE_MATH_DEFINES 1
-#  endif
-#  include UCRT_INC(Math.h)
-#pragma pop_macro("_USE_MATH_DEFINES")
-#pragma pop_macro("__STDC__")
+errno_t pcrt_access_s(const char* f, int m)
+{
+  return _access_s(PCRT_CONV(f), m);
+}
 
-typedef float		float_t;
-typedef double		double_t;
+int pcrt_chmod(const char* f, int m)
+{
+  return _chmod(PCRT_CONV(f), m);
+}
 
-PCRT_BEGIN_C
+int pcrt_creat(const char* f, int m)
+{
+  return _creat(PCRT_CONV(f), m);
+}
 
-#pragma push_macro("copysign")
-#pragma push_macro("copysignl")
-#pragma push_macro("finite")
-#pragma push_macro("nextafter")
-#pragma push_macro("remainder")
+int pcrt_open(const char* f, int fl, ...)
+{
+    int ret;
+    va_list args;
+    va_start(args, fl);
+    ret = _open(f, fl, va_arg(args, int));
+    va_end(args);
+    return ret;
+}
 
-#undef copysign
-#undef copysignl
-#undef finite
-#undef nextafter
-#undef remainder
+int pcrt_sopen(const char *filename, int oflag, int shflag, ...)
+{
+    int ret;
+    va_list args;
+    va_start(args, shflag);
+    ret = _sopen(PCRT_CONV(filename), oflag, shflag, va_arg(args, int));
+    va_end(args);
+    return ret;
+}
 
-static PCRT_INLINE double copysign(double x, double y) { return _copysign(x, y); }
-#if (_MSC_VER-0) >= 1400
-/* available since Visual Studio 2005 */
-static PCRT_INLINE long double copysignl(long double x, long double y) { return _copysignl(x, y); }
-#endif
-
-static PCRT_INLINE int finite(double x) { return _finite(x); }
-
-static PCRT_INLINE double nextafter(double x, double y) { return _nextafter(x, y); }
-static PCRT_INLINE double remainder(double x, double y) { return fmod(x, y); }
-
-#pragma pop_macro("copysign")
-#pragma pop_macro("copysignl")
-#pragma pop_macro("finite")
-#pragma pop_macro("nextafter")
-#pragma pop_macro("remainder")
-
-PCRT_END_C
-
-#endif
-
+errno_t pcrt_sopen_s(int *pfh, const char *filename, int oflag, int shflag, int pmode)
+{
+  return _sopen_s(pfh, PCRT_CONV(filename), oflag, shflag, pmode);
+}

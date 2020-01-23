@@ -162,6 +162,20 @@ namespace parity
 				throw Exception("cannot convert %s to a valid RuntimeType!", ref.c_str());
 		}
 
+		void ContextGen::convert(MachineType& target, const std::string& ref)
+		{
+			if(ref == "I386")
+				target = MachineI386;
+			else if(ref == "AMD64")
+				target = MachineAMD64;
+			else if(ref == "ARM")
+				target = MachineARM;
+			else if(ref == "IA64")
+				target = MachineIA64;
+			else
+				throw Exception("cannot convert %s to a valid MachineType!", ref.c_str());
+		}
+
 		void ContextGen::convert(LanguageType& target, const std::string& ref)
 		{
 			//
@@ -174,6 +188,10 @@ namespace parity
 				target = LanguageCpp;
 			else if(ref == "resource")
 				target = LanguageResource;
+			else if(ref == "assembler-with-cpp")
+				target = LanguageAssemblerWithCpp;
+			else if(ref == "assembler")
+				target = LanguageAssembler;
 			else
 				throw Exception("cannot convert %s to a valid LanguageType!", ref.c_str());
 		}
@@ -181,12 +199,18 @@ namespace parity
 		void ContextGen::convert(SourceMap& target, const std::string& ref)
 		{
 			Context& ctx = Context::getContext();
+			utils::LanguageType defaultLang = ctx.getDefaultLanguage();
+			utils::LanguageType forcedLang = ctx.getForcedLanguage();
 
 			if(ref.compare(ref.length() - 2, 2, ".c") == 0
 				|| ref.compare(ref.length() - 2, 2, ".i") == 0)
-				if(ctx.getForcedLanguage() != LanguageInvalid) {
+				if(forcedLang != LanguageInvalid) {
 					Log::verbose("adding forced source file (originally c): %s\n", ref.c_str());
-					target[ref] = ctx.getForcedLanguage();
+					target[ref] = forcedLang;
+				} else
+				if (defaultLang != LanguageUnknown) {
+					Log::verbose("adding %s source file: %s\n", ctx.printable(defaultLang).c_str(), ref.c_str());
+					target[ref] = defaultLang;
 				} else {
 					Log::verbose("adding c source file: %s\n", ref.c_str());
 					target[ref] = LanguageC;
@@ -196,9 +220,13 @@ namespace parity
 				|| ref.compare(ref.length() - 4, 4, ".cxx") == 0
 				|| ref.compare(ref.length() - 3, 3, ".ii") == 0
 				|| ref.compare(ref.length() - 2, 2, ".C") == 0) {
-				if(ctx.getForcedLanguage() != LanguageInvalid) {
+				if(forcedLang != LanguageInvalid) {
 					Log::verbose("adding forced source file (originally c++): %s\n", ref.c_str());
-					target[ref] = ctx.getForcedLanguage();
+					target[ref] = forcedLang;
+				} else
+				if (defaultLang != LanguageUnknown) {
+					Log::verbose("adding %s source file: %s\n", ctx.printable(defaultLang).c_str(), ref.c_str());
+					target[ref] = defaultLang;
 				} else {
 					Log::verbose("adding c++ source file: %s\n", ref.c_str());
 					target[ref] = LanguageCpp;
@@ -206,10 +234,20 @@ namespace parity
 			} else if(ref.compare(ref.length() - 4, 4, ".asm") == 0
 				|| ref.compare(ref.length() - 2, 2, ".s") == 0
 				|| ref.compare(ref.length() - 2, 2, ".S") == 0) {
-				if(ctx.getForcedLanguage() != LanguageInvalid)
-					Log::warning("ignoring forced language for assembler, continuing normally!\n");
-				Log::verbose("adding assembler source file: %s\n", ref.c_str());
-				target[ref] = LanguageAsssembler;
+				switch(forcedLang) {
+				case LanguageAssembler:
+				case LanguageAssemblerWithCpp:
+					Log::verbose("adding forced source file (originally assembler-with-cpp): %s\n", ref.c_str());
+					target[ref] = forcedLang;
+					break;
+				default:
+					Log::verbose("ignoring forced language for assembler, continuing normally!\n");
+					// fallthrough
+				case LanguageInvalid:
+					Log::verbose("adding assembler-with-cpp source file: %s\n", ref.c_str());
+					target[ref] = LanguageAssemblerWithCpp;
+					break;
+				}
 			} else if (_stricmp(ref.substr(ref.length() - 3).c_str(), ".rc") == 0) {
 				Log::verbose("adding resource file: %s\n", ref.c_str());
 				target[ref] = LanguageResource;
@@ -220,7 +258,11 @@ namespace parity
 				Log::verbose("adding module definition file: %s\n", ref.c_str());
 				target[ref] = LanguageModuleDefinition;
 			} else {
-				target[ref] = LanguageUnknown;
+				if(forcedLang != LanguageInvalid) {
+					target[ref] = forcedLang;
+				} else {
+					target[ref] = LanguageUnknown;
+				}
 			}
 		}
 
@@ -342,6 +384,26 @@ namespace parity
 			return "unknown";
 		}
 
+		std::string ContextGen::printable(const MachineType& val)
+		{
+			switch(val)
+			{
+			case MachineI386:
+				return "I386";
+				break;
+			case MachineAMD64:
+				return "AMD64";
+				break;
+			case MachineARM:
+				return "ARM";
+				break;
+			case MachineIA64:
+				return "IA64";
+				break;
+			}
+			return "unknown";
+		}
+
 		std::string ContextGen::printable(const LanguageType& val)
 		{
 			//
@@ -409,7 +471,7 @@ namespace parity
 				ret.append("\n   * ");
 				switch(it->second)
 				{
-				case LanguageAsssembler:
+				case LanguageAssembler:
 					ret.append(col.blue("[ASM] "));
 					break;
 				case LanguageC:

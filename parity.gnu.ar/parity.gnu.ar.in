@@ -82,6 +82,7 @@ elif [[ ${_replace} == yes ]]; then
     [[ ! -e ${archive} && ${_warn_create} == yes ]] && { echo "warning: file does not exist: ${archive}"; };
     [[ -e ${archive} ]] && arg_arch="${archive_win}"
     tmpfile=.ar.tmp.$$
+    trap "rm -f '${tmpfile}'" 0
     echo "/OUT:${archive_win}" >> ${tmpfile}
     echo ${arg_arch} >> ${tmpfile}
     for arg in "$@"; do
@@ -90,7 +91,6 @@ elif [[ ${_replace} == yes ]]; then
     done
     ${LIB} "@${tmpfile}" || exit 1
     wait_for "${archive}"
-    rm -f "${tmpfile}"
 elif [[ ${_extract} == yes ]]; then
     members=()
     doneOne=no

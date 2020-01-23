@@ -38,6 +38,8 @@ namespace parity
 		bool setUnhandledSourceFilePassthrough(const char* option, const char* argument, bool& used);
 		bool setUnhandledObjectFilePassthrough(const char* option, const char* argument, bool& used);
 		bool showParityVersion(const char* option, const char* argument, bool& used);
+		bool showParityConfig(const char* option, const char* argument, bool& used);
+		bool printProperty(const char* option, const char* argument, bool& used);
 		bool setCtxDump(const char* option, const char* argument, bool& used);
 		bool setColorMode(const char* option, const char* argument, bool& used);
 		bool addConfigString(const char* option, const char* argument, bool& used);

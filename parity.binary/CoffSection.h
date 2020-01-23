@@ -123,6 +123,7 @@ namespace parity
 			const Relocation::RelocationVector& getRelocations() const { return relocs_; }
 
 			void markRelocation(Symbol& sym, Relocation::i386TypeFlags flags);		// only add relocation
+			void markRelocation(Symbol& sym, Relocation::Amd64TypeFlags type);
 			void markSymbol(Symbol& sym);											// modifies sym to point at the current end of the data, and adds a Relocation
 			void addData(const void* data, size_t len);									// only add data without setting a marker.
 			void insert(FileHeader& hdr, const void* data, size_t len, size_t pos);	// insert data at given position.

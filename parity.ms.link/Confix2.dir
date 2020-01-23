@@ -1,1 +1,11 @@
 ADD_EXTRA_DIST('parity.ms.link.vcproj')
+
+MAKEFILE_AM(line='bin_SCRIPTS = \
+	parity.ms.lib \
+	parity.ms.nmake \
+	parity.ms.rc \
+')
+
+ADD_EXTRA_DIST('parity.ms.lib.in')
+ADD_EXTRA_DIST('parity.ms.nmake.in')
+ADD_EXTRA_DIST('parity.ms.rc.in')

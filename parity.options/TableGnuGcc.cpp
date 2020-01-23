@@ -40,13 +40,19 @@ namespace parity
 			{ "-dbg"		,setDebugLevel				},
 			{ "-X"			,setCompilerPassthrough		},
 			{ "-Y"			,setLinkerPassthrough		},	// GCC knows -Xlinker here.
-			{ "-v"			,showParityVersion			},
+			{ "--version"	,showParityVersion			},
+			{ "-v"			,showParityConfig			},
 			{ "-ctxdump"	,setCtxDump					},
 			{ "-cfg"		,addConfigString			},
 			//
 			// GCC command line switches
 			//
 			{ "-C"			,setKeepComments			},
+			{ "-dumpmachine", printProperty				},
+			{ "-dumpversion", printProperty				},
+			{ "-dumpfullversion", printProperty			},
+			{ "-print-prog-name=", printProperty		},
+			{ "-print-search-dirs", printProperty		},
 			{ "-O"			,setOptimizeLevel			},
 			{ "-fomit-fr"	,setOmitFramePointer		},
 			{ "-finline"	,setInlineFunctions			},

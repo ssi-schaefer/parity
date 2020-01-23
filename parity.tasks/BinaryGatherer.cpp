@@ -389,7 +389,11 @@ namespace parity
 					static std::map<std::string, bool> locals_seen_;
 					bool& ref = locals_seen_[it->second.getName()];
 
-					if(!ref)
+					if (ref)
+					{
+						utils::Log::verbose("  (again) exportable symbol: '%s'\n", it->second.getName().c_str());
+					}
+					else
 					{
 						ref = true;
 
@@ -403,9 +407,11 @@ namespace parity
 						{
 						case binary::File::TypeLibrary:
 							maybeExports_.push_back(it->second);
+							utils::Log::verbose("  (maybe) exportable symbol: '%s'\n", it->second.getName().c_str());
 							break;
 						case binary::File::TypeObject:
 							exports_.push_back(it->second);
+							utils::Log::verbose("          exportable symbol: '%s'\n", it->second.getName().c_str());
 							break;
 						default:
 							throw utils::Exception("wrong file type while processing header!");

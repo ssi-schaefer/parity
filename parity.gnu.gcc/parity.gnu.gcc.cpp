@@ -25,6 +25,7 @@
 #include <Timing.h>
 
 #include <TableGnuGcc.h>
+#include <Compiler.h>
 
 #include <CollectorStubs.h>
 #include <CollectorOther.h>
@@ -87,6 +88,21 @@ int main(int argc, char** argv)
 	context.setFrontendType(utils::ToolchainInterixGNU);
 
 	try {
+		char * argv0 = strrchr(argv[0], '/'); // find last path sep
+		if (argv0 == NULL) {
+			argv0 = strrchr(argv[0], '\\'); // find last path sep
+		}
+		if (argv0 == NULL) {
+			argv0 = argv[0]; // no path component
+		} else {
+			++argv0; // skip last path sep
+		}
+		if (strstr(argv0, "g++") != NULL) {
+			context.setDefaultLanguage(utils::LanguageCpp);
+		} else {
+			context.setDefaultLanguage(utils::LanguageC);
+		}
+
 		/* backup configuration-set paths. */
 		parity::utils::PathVector cfgIncludePaths = parity::utils::Context::getContext().getIncludePaths();
 		parity::utils::PathVector cfgLibraryPaths = parity::utils::Context::getContext().getLibraryPaths();
@@ -146,9 +162,19 @@ int main(int argc, char** argv)
 	//
 	// Check if there is something to do.
 	//
-	if(context.getCompileOnly() && context.getSources().empty()) {
-		Log::error("no source files to compile!\n");
-		exit(1);
+	if (context.getSources().empty()) {
+		if(context.getCompileOnly()) {
+			Log::error("no source files to compile!\n");
+			exit(1);
+		}
+		if (context.getPreprocess()) {
+			// Without an explicit input file, the preprocessor reads from stdin.
+			bool used = false;
+			if (!parity::options::addSourceFromStdin("-", "", used)) {
+				utils::Log::error("Failed to load preprocessor input from stdin!\n");
+				exit(1);
+			}
+		}
 	}
 
 	//

@@ -99,9 +99,27 @@ namespace parity
 			std::cout << "cygwin g++ build" << std::endl;
 #endif
 			std::cout << "Copyright (c) 2007 - 2009 Markus Duft <markus.duft@salomon.at>" << std::endl;
-
 			std::cout << PACKAGE_NAME << " comes with ABSOLUTELY NO WARRANTY; This is free software, and you are" << std::endl;
 			std::cout << "welcome to redistribute it under certain conditions; see COPYING.LESSER for details." << std::endl;
+			std::cout << "Use " << PACKAGE_NAME << " like GNU compilers from the Free Software Foundation." << std::endl;
+			exit(0);
+
+			#ifndef _WIN32
+			/* never reached (this is there for some gcc versions)! */
+			return false;
+			#endif
+		}
+
+		bool showParityConfig(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ") ";
+#ifdef _WIN32
+			std::cout << "native windows build" << std::endl;
+#elif defined(__INTERIX)
+			std::cout << "interix g++ build" << std::endl;
+#elif defined(__CYGWIN__)
+			std::cout << "cygwin g++ build" << std::endl;
+#endif
 
 			/* output some configuration values... */
 			#ifdef HAVE_CONFIG_H
@@ -120,6 +138,78 @@ namespace parity
 			/* never reached (this is there for some gcc versions)! */
 			return false;
 			#endif
+		}
+
+		bool printProperty(const char* option, const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			if (strcmp(option, "-dumpmachine") == 0) {
+				std::cout << ctx.getHostTriplet() << std::endl;
+				exit(0);
+			}
+			if (strcmp(option, "-dumpversion") == 0
+			 || strcmp(option, "-dumpfullversion") == 0
+			) {
+				std::cout << ctx.getCompilerVersion() << std::endl;
+				exit(0);
+			}
+			if (strncmp(option, "-print-prog-name=", 17) == 0) {
+				option += 17;
+				if (*option) {
+					utils::Path prog(ctx.getKnownProgramsPath());
+					prog.append(option);
+					if (prog.isFile()) {
+						std::cout << prog.get() << std::endl;
+						exit(0);
+					}
+				}
+				std::cout << option << std::endl;
+				exit(0);
+			}
+			if (strcmp(option, "-print-search-dirs") == 0) {
+				std::cout << "install: " << PARITY_LIBEXECDIR;
+				utils::PathVector const & execPaths = ctx.getAdditionalExecPaths();
+				if (!execPaths.empty()) {
+					std::cout << "\nprograms: ";
+				}
+				std::string sep = "="; // seen with gcc
+				for(utils::PathVector::const_iterator it = execPaths.begin()
+				  ; it != execPaths.end()
+				  ; ++it
+				) {
+					std::cout << sep;
+					sep = ":";
+					if (it->isNative()) {
+						std::cout << it->get();
+					} else {
+						utils::Path nat(it->get());
+						nat.toNative();
+						std::cout << nat.get();
+					}
+				}
+				utils::PathVector const & libPaths = ctx.getSysLibraryPaths();
+				if (!libPaths.empty()) {
+					std::cout << "\nlibraries: ";
+				}
+				sep = "="; // seen with gcc
+				for(utils::PathVector::const_iterator it = libPaths.begin()
+				  ; it != libPaths.end()
+				  ; ++it
+				) {
+					std::cout << sep;
+					sep = ":";
+					if (it->isNative()) {
+						std::cout << it->get();
+					} else {
+						utils::Path nat(it->get());
+						nat.toNative();
+						std::cout << nat.get();
+					}
+				}
+				std::cout << std::endl;
+				exit(0);
+			}
+			return false;
 		}
 
 		bool setCtxDump(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))

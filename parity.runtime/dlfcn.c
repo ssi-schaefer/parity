@@ -20,6 +20,8 @@
 *                                                                *
 \****************************************************************/
 
+#include <stdlib.h>
+
 #include "dlfcn.h"
 #include "internal/pcrt.h"
 
@@ -52,14 +54,14 @@ enum {
 
 static const char* curError;
 
-int dlclose(void* unused)
+int dlclose(void* handle)
 {
-	//
-	// due to limitations in the library cache this
-	// cannot be done!
-	//
-	curError = tabErrors[NoError];
-	return 0;
+	if (LoaderLibraryReleaseHandle(handle)) {
+		curError = tabErrors[NoError];
+		return 0;
+	}
+	curError = tabErrors[LibError];
+	return GetLastError();
 }
 
 char* dlerror()

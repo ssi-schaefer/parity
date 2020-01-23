@@ -31,11 +31,6 @@
 #define LOADER_PATHFIELD_LEN 50
 
 typedef struct {
-	const char* name;
-	void* handle;
-} LoaderLibraryCacheNode;
-
-typedef struct {
 	const char* path;
 } LoaderPathCacheNode;
 
@@ -44,21 +39,27 @@ typedef struct {
 	unsigned long error;
 } LoaderErrorList;
 
-static LoaderLibraryCacheNode* gHandleCache = 0;
 static LoaderPathCacheNode* gPathCache = 0;
 
 static unsigned int gPathCacheCount = 0;
-static unsigned int gHandleCacheCount = 0;
 
 static void* LibLoad(const char* name, unsigned int strict)
 {
-	void* handle = 0;
+	HMODULE handle = 0;
 	unsigned int i;
-	LoaderErrorList lst[LOADER_MAX_ERRORS];
+	LoaderErrorList lst[LOADER_MAX_ERRORS+1];
 	unsigned int longest = 0;
 
-	if(!name)
-		return GetModuleHandle(0);
+	if(!name) {
+		if (!GetModuleHandleEx(0, NULL, &handle) && LogGetLevel() > LevelWarning) {
+			unsigned long lastError = GetLastError();
+			char* tmp = LoaderFormatErrorMessage(lastError);
+			LogDebug("error %d querying main module handle (%s)\n", lastError, tmp);
+			LocalFree(tmp);
+			SetLastError(lastError);
+		}
+		return handle;
+	}
 
 	for(i = 0; i < gPathCacheCount; ++i)
 	{
@@ -70,7 +71,13 @@ static void* LibLoad(const char* name, unsigned int strict)
 
 		handle = LoadLibrary(ptrTry);
 
-		if(!handle && i <= LOADER_MAX_ERRORS) {
+		if(!handle && LogGetLevel() > LevelWarning) {
+			unsigned long lastError = GetLastError();
+			char* tmp = LoaderFormatErrorMessage(lastError);
+			LogDebug("error %d loading '%s' (%s)\n", lastError, ptrTry, tmp);
+			LocalFree(tmp);
+		} else
+		if(!handle && i < LOADER_MAX_ERRORS) {
 			register int len;
 
 			lst[i].error = GetLastError();
@@ -94,9 +101,15 @@ static void* LibLoad(const char* name, unsigned int strict)
 	//
 	handle = LoadLibrary(name);
 
+	if(!handle && LogGetLevel() > LevelWarning) {
+		unsigned long lastError = GetLastError();
+		char* tmp = LoaderFormatErrorMessage(lastError);
+		LogDebug("error %d loading '%s' (%s)\n", lastError, name, tmp);
+		LocalFree(tmp);
+	} else
 	if(!handle && i < LOADER_MAX_ERRORS) {
 		lst[i].error = GetLastError();
-		lst[i].path = "...";
+		lst[i].path = name;
 	}
 
 	if(handle)
@@ -105,13 +118,16 @@ static void* LibLoad(const char* name, unsigned int strict)
 		return handle;
 	}
 
-	if(strict) {
+	if(strict && LogGetLevel() <= LevelWarning) {
 		unsigned int y = 0;
 		char spaces[MAX_PATH];
 
 		FillMemory(spaces, sizeof(spaces), ' ');
 
 		LogWarning("failed to load %s from following paths (%d in cache):\n", name, gPathCacheCount);
+
+		lst[LOADER_MAX_ERRORS].error = ERROR_MORE_DATA;
+		lst[LOADER_MAX_ERRORS].path = "...";
 
 		for(y = 0; y <= i && y <= LOADER_MAX_ERRORS; ++y) {
 			char* tmp = LoaderFormatErrorMessage(lst[y].error);
@@ -132,44 +148,6 @@ static void* LibLoad(const char* name, unsigned int strict)
 	return 0;
 }
 
-static void* LibGetCached(const char* name)
-{
-	unsigned int i;
-
-	for(i = 0; i < gHandleCacheCount; ++i)
-	{
-		if(CompareString(LOCALE_USER_DEFAULT, 0, name, -1, gHandleCache[i].name, -1) == CSTR_EQUAL)
-		{
-			//LogDebug("found cached handle for %s (0x%x)\n", name, gHandleCache[i].handle);
-			return gHandleCache[i].handle;
-		}
-	}
-
-	return 0;
-}
-
-static void LibAddToCache(const char* name, void* handle)
-{
-	if(gHandleCache == 0)
-		gHandleCache = HeapAlloc(GetProcessHeap(), 0, sizeof(LoaderLibraryCacheNode));
-	else
-		gHandleCache = HeapReAlloc(GetProcessHeap(), 0, gHandleCache, sizeof(LoaderLibraryCacheNode) * (gHandleCacheCount + 1));
-
-	if(!gHandleCache)
-	{
-		LogWarning("cannot allocate %d bytes for the handle cache, this will slow down things a little!\n", sizeof(LoaderLibraryCacheNode) * (gHandleCacheCount + 1));
-		LoaderWriteLastWindowsError();
-		gHandleCacheCount = 0;
-	} else {
-		gHandleCache[gHandleCacheCount].name = name;
-		gHandleCache[gHandleCacheCount].handle = handle;
-
-		++gHandleCacheCount;
-
-		LogDebug("cached handle for %s (0x%x)\n", name, handle);
-	}
-}
-
 static const char* LibStrChr(const char* ptr, char c)
 {
 	while(*ptr != '\0' && *ptr != c) ++ptr;
@@ -183,7 +161,7 @@ static const char* LibStrChr(const char* ptr, char c)
 static void LibCreatePathCache()
 {
 	unsigned int szLdLib = 0;
-	const char* ptrRPath = ParityLoaderGeneratedRunPath;
+	const char* ptrRPath = ParityLoaderGetGeneratedRunPath();
 
 	//
 	// first lookup from LD_LIBRARY_PATH!
@@ -297,11 +275,6 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	if(gPathCache == 0)
 		LibCreatePathCache();
 
-	handle = LibGetCached(name);
-
-	if(handle)
-		return handle;
-
 	errormode = SetErrorMode(SEM_FAILCRITICALERRORS);
 	SetErrorMode(errormode | SEM_FAILCRITICALERRORS);
 
@@ -310,7 +283,6 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	SetErrorMode(errormode);
 
 	if(handle) {
-		LibAddToCache(name, handle);
 		return handle;
 	} else if(strict) {
 		/*
@@ -322,3 +294,7 @@ void* LoaderLibraryGetHandle(const char* name, int strict)
 	return 0;
 }
 
+int LoaderLibraryReleaseHandle(void *handle)
+{
+	return FreeLibrary(handle);
+}

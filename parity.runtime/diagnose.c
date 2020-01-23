@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <dbghelp.h>
 
@@ -42,6 +43,28 @@ extern void* _ReturnAddress();
 #if (_MSC_VER - 0) < 1500
 int __stdcall IsDebuggerPresent();
 #endif
+
+struct _stackframe_t {
+	STACKFRAME64 hwFrame;
+	size_t size;
+	syminfo_t sym;
+
+	struct _stackframe_t* next;
+};
+
+#define PCRT_DBGHELP_SYMS \
+	PCRT_DBGHELP_SYM(BOOL, SymInitialize, (HANDLE, PCTSTR, BOOL)) \
+	PCRT_DBGHELP_SYM(BOOL, SymFromAddr, (HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*)) \
+	PCRT_DBGHELP_SYM(BOOL, SymRefreshModuleList, (HANDLE)) \
+	PCRT_DBGHELP_SYM(BOOL, EnumerateLoadedModules64, (HANDLE, PENUMLOADED_MODULES_CALLBACK64, PVOID)) \
+	PCRT_DBGHELP_SYM(BOOL, StackWalk64, (DWORD, HANDLE, HANDLE, LPSTACKFRAME64, PVOID, PREAD_PROCESS_MEMORY_ROUTINE64, PFUNCTION_TABLE_ACCESS_ROUTINE64, PGET_MODULE_BASE_ROUTINE64, PTRANSLATE_ADDRESS_ROUTINE64)) \
+/* eom */
+
+#define PCRT_DBGHELP_SYM(ret, name, args) \
+	typedef ret (WINAPI * f ## name ## _t)args; \
+	static f ## name ## _t f ## name;
+PCRT_DBGHELP_SYMS
+#undef PCRT_DBGHELP_SYM
 
 int PcrtWaitForDebugger(int timeout) {
 	PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Process %d waiting for Debugger to be attached (%d seconds): ", GetCurrentProcessId(), timeout);
@@ -102,7 +125,7 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 		return;
 	}
 
-#define ST_FW_ADDRESS 8
+#define ST_FW_ADDRESS ((int)(sizeof(void*)*2))
 #define ST_FW_MODULE  20
 #define ST_FW_NAME    45
 
@@ -118,13 +141,25 @@ void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack)
 
 	num = 0;
 	while(1) {
-		modinfo_t mod = PcrtGetContainingModule(walk->eip);
+		modinfo_t mod = PcrtGetContainingModule((void*)walk->hwFrame.AddrPC.Offset);
 
 		if(walk->sym.addr) {
-			
-			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)+0x%x\n", num++, ST_FW_ADDRESS, walk->eip, ST_FW_MODULE, basename(mod.name), walk->sym.name, walk->size, ((unsigned long)walk->eip - (unsigned long)walk->sym.addr));
+			fprintf(stream, " [%2d] %-*p %*s!%s(%zu bytes)+0x%p\n"
+				, num++
+				, ST_FW_ADDRESS, (void*)walk->hwFrame.AddrPC.Offset
+				, ST_FW_MODULE, basename(mod.name)
+				, walk->sym.name
+				, walk->size
+				, (void*)((uintptr_t)walk->hwFrame.AddrPC.Offset - (uintptr_t)walk->sym.addr)
+			);
 		} else {
-			fprintf(stream, " [%2d] %-*p %*s!%s(%u bytes)\n", num++, ST_FW_ADDRESS, walk->eip, ST_FW_MODULE, basename(mod.name), "???", walk->size);
+			fprintf(stream, " [%2d] %-*p %*s!%s(%zu bytes)\n"
+				, num++
+				, ST_FW_ADDRESS, (void*)walk->hwFrame.AddrPC.Offset
+				, ST_FW_MODULE, basename(mod.name)
+				, "???"
+				, walk->size
+			);
 		}
 
 		if(!walk->next)
@@ -158,64 +193,89 @@ SymbolLookupType PcrtUseDebugSymbols() {
 	return LookupDebugInfo;
 }
 
-stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
+stackframe_t* PcrtGetStackTraceFrom(CONTEXT const *inContext)
 {
+	CONTEXT context;
+	HANDLE curThread = GetCurrentThread();
+	HANDLE curProc = GetCurrentProcess();
+
 	stackframe_t* trace = NULL;
+	stackframe_t* frame = NULL;
 	stackframe_t* last = NULL;
 	int numCallers = 0;
 
-	while(numCallers++ < 100 && _bp && _ip
-	 /* stack growing still valid */
-	 && (intptr_t)_bp >= (last ? ( ((intptr_t)last->ebp) + (sizeof(void*)*2) ) : (intptr_t)0)
-	) {
-		stackframe_t* frame = (stackframe_t*)malloc(sizeof(stackframe_t));
+#if defined(_M_IX86)
+	DWORD machineType = IMAGE_FILE_MACHINE_I386;
+#endif
+#if defined(_M_AMD64)
+	DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
+#endif
+	// want compiler error if neither or more than one _M_XXX is defined
 
+	if (!inContext) {
+		return NULL;
+	}
+
+	PcrtInitializeDebugInformation();
+
+	if (!fStackWalk64) {
+		return NULL;
+	}
+
+	context = *inContext;
+
+	while(numCallers++ < 100) {
+		frame = (stackframe_t*)calloc(1, sizeof(stackframe_t));
 		if(!frame) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot allocate memory for stack trace!");
-			return NULL;
-		}		
-
-		frame->eip = _ip;
-		frame->ebp = _bp;
-		frame->next= NULL;
-		frame->size = 0;
-
-		if(last) {
-			frame->size = (unsigned long)frame->ebp - (unsigned long)last->ebp;
-
-			//
-			// subtract from the size the room that the own ebp
-			// and the call return address take up in the frame.
-			//
-			// left in the size if the accumulated size of:
-			//  * local variables
-			//  * parameters for the next frame (!)
-			//    (the parameters for the call it is right now executing!)
-			//
-			frame->size -= (sizeof(void*)*2);
+			break;
 		}
 
-		_ip = _bp[1];
-
-		frame->ret = _ip;
+		if (last) {
+			frame->hwFrame = last->hwFrame;
+		} else {
+#if defined(_M_IX86)
+			frame->hwFrame.AddrPC.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrPC.Segment = 0;
+			frame->hwFrame.AddrPC.Offset  = context.Eip;
+			frame->hwFrame.AddrFrame.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrFrame.Segment = 0;
+			frame->hwFrame.AddrFrame.Offset  = context.Ebp;
+			frame->hwFrame.AddrStack.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrStack.Segment = 0;
+			frame->hwFrame.AddrStack.Offset  = context.Esp;
+#endif
+#if defined(_M_AMD64)
+			frame->hwFrame.AddrPC.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrPC.Segment = 0;
+			frame->hwFrame.AddrPC.Offset  = context.Rip;
+			frame->hwFrame.AddrFrame.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrFrame.Segment = 0;
+			frame->hwFrame.AddrFrame.Offset  = context.Rbp;
+			frame->hwFrame.AddrStack.Mode    = AddrModeFlat;
+			frame->hwFrame.AddrStack.Segment = 0;
+			frame->hwFrame.AddrStack.Offset  = context.Rsp;
+#endif
+		}
+		if (!fStackWalk64(machineType, curProc, curThread, &frame->hwFrame, &context, NULL, NULL, NULL, NULL)) {
+			free(frame);
+			break;
+		}
 
 		//
 		// ATTENTION: contains an allocated (strdup) pointer
 		// to the name, so free it again!
 		//
-		frame->sym = PcrtGetNearestSymbol(frame->eip, PcrtUseDebugSymbols());
+		frame->sym = PcrtGetNearestSymbol((void*)frame->hwFrame.AddrPC.Offset, PcrtUseDebugSymbols());
+		frame->size = (size_t)(frame->hwFrame.AddrFrame.Offset - frame->hwFrame.AddrStack.Offset);
 
-		if(!trace) {
-			trace = frame;
-		} else if(last) {
+		if(last) {
 			last->next = frame;
 		} else {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "internal error creating stack trace (missing nodes).");
-			return NULL;
+			trace = frame;
 		}
 
 		last = frame;
-		_bp = (void**)_bp[0];
 	}
 
 	return trace;
@@ -223,20 +283,13 @@ stackframe_t* PcrtGetStackTraceFrom(void** _bp, void* _ip)
 
 stackframe_t* PcrtGetStackTrace()
 {
-	//
-	// Our starting point is the frame above ourselves.
-	//
-	void* _ip = _ReturnAddress();
-	void** _bp;
-	
+	CONTEXT context = {0};
 
-	__asm {
-		mov _bp, ebp
+	if (!GetThreadContext(GetCurrentThread(), &context)) {
+		return NULL;
 	}
 
-	_bp = (void**)_bp[0];
-
-	return PcrtGetStackTraceFrom(_bp, _ip);
+	return PcrtGetStackTraceFrom(&context);
 }
 
 stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace)
@@ -306,18 +359,8 @@ static void PcrtGuardDebugInitialization() {
 	}
 }
 
-typedef BOOL (WINAPI * SymInitFunc)(HANDLE, PCTSTR, BOOL);
-typedef BOOL (WINAPI * SymAddrFunc)(HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*);
-typedef BOOL (WINAPI * SymRefreshFunc)(HANDLE);
-typedef BOOL (WINAPI * EnumModulesFunc)(HANDLE, PENUMLOADED_MODULES_CALLBACK64, PVOID);
-
-static HANDLE			hDbgLib;
-static SymInitFunc		hInit;
-static SymAddrFunc		hSym;
-static SymRefreshFunc	hRefresh;
-static EnumModulesFunc	hEnumModules;
-
 void PcrtInitializeDebugInformation() {
+	static HANDLE hDbgLib = NULL;
 	if(!PcrtIsDebugInitialized())
 	{
 		PcrtGuardDebugInitialization();
@@ -329,22 +372,21 @@ void PcrtInitializeDebugInformation() {
 			return;
 		}
 
-		hInit	= (SymInitFunc)		GetProcAddress(hDbgLib, "SymInitialize");
-		hSym	= (SymAddrFunc)		GetProcAddress(hDbgLib, "SymFromAddr");
-		hRefresh= (SymRefreshFunc)	GetProcAddress(hDbgLib, "SymRefreshModuleList");
-		hEnumModules= (EnumModulesFunc)	GetProcAddress(hDbgLib, "EnumerateLoadedModules64");
+#define PCRT_DBGHELP_SYM(ret, name, args) f ## name = (f ## name ## _t)GetProcAddress(hDbgLib, #name);
+		PCRT_DBGHELP_SYMS
+#undef PCRT_DBGHELP_SYM
 
 		//
-		// don't check for hRefresh, since this requires dbghelp.dll v6.5
+		// don't check for SymRefreshModuleList, since this requires dbghelp.dll v6.5
 		// which won't be there always.
 		//
-		if(!hInit || !hSym) {
+		if(!fSymInitialize || !fSymFromAddr) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot load dbghelp.dll symbols.\n");
 		}
 
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "initializing debug information, please wait ... ");
 
-		if(!hInit(GetCurrentProcess(), NULL, TRUE)) {
+		if(!fSymInitialize(GetCurrentProcess(), NULL, TRUE)) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "failed!\n");
 		} else {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "done.\n");
@@ -353,7 +395,7 @@ void PcrtInitializeDebugInformation() {
 		//
 		// refresh symbol list.
 		//
-		if(hRefresh && !hRefresh(GetCurrentProcess())) {
+		if(fSymRefreshModuleList && !fSymRefreshModuleList(GetCurrentProcess())) {
 			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cannot refresh debug information for loaded modules.\n");
 		}
 	}
@@ -370,7 +412,7 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "warning: requested debug symbols, but those are not enabled!\n");
 	}
 	
-	if(t == LookupDebugInfo && hSym) {
+	if(t == LookupDebugInfo && fSymFromAddr) {
 		//
 		// Symbol initialization should be done only once, except
 		// when it is de-initialized. for now we take the penalty
@@ -408,7 +450,7 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		hSymInfo->MaxNameLen = MAX_SYM_NAME;
 		hSymInfo->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-		if(!hSym(GetCurrentProcess(), (DWORD64)addr, &iDisplacement, hSymInfo)) {
+		if(!fSymFromAddr(GetCurrentProcess(), (DWORD64)addr, &iDisplacement, hSymInfo)) {
 			return info;
 		}
 
@@ -443,8 +485,8 @@ syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t)
 		// if getting many, many stack traces (or sym infos).
 		//
 		while(symtab->addr && symtab->name) {
-			if(((unsigned long)symtab->addr <= (unsigned long)addr)
-				&& ((unsigned long)symtab->addr > (unsigned long)info.addr))
+			if(((uintptr_t)symtab->addr <= (uintptr_t)addr)
+				&& ((uintptr_t)symtab->addr > (uintptr_t)info.addr))
 			{
 				info = *symtab;
 			}
@@ -588,21 +630,49 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 		}
 
 		if(ex->ContextRecord->ContextFlags & CONTEXT_INTEGER) {
+#if defined(_M_IX86)
 			PcrtOutPrint(hCore, "  EDI   : %p,", ex->ContextRecord->Edi);
 			PcrtOutPrint(hCore, "  ESI   : %p,", ex->ContextRecord->Esi);
 			PcrtOutPrint(hCore, "  EBX   : %p\n", ex->ContextRecord->Ebx);
 			PcrtOutPrint(hCore, "  EDX   : %p,", ex->ContextRecord->Edx);
 			PcrtOutPrint(hCore, "  ECX   : %p,", ex->ContextRecord->Ecx);
 			PcrtOutPrint(hCore, "  EAX   : %p\n", ex->ContextRecord->Eax);
+#endif
+#if defined(_M_AMD64)
+			PcrtOutPrint(hCore, "  R15   : %p,", ex->ContextRecord->R15);
+			PcrtOutPrint(hCore, "  R14   : %p,", ex->ContextRecord->R14);
+			PcrtOutPrint(hCore, "  R13   : %p,", ex->ContextRecord->R13);
+			PcrtOutPrint(hCore, "  R12   : %p\n", ex->ContextRecord->R12);
+			PcrtOutPrint(hCore, "  R11   : %p,", ex->ContextRecord->R11);
+			PcrtOutPrint(hCore, "  R10   : %p,", ex->ContextRecord->R10);
+			PcrtOutPrint(hCore, "  R9    : %p,", ex->ContextRecord->R9);
+			PcrtOutPrint(hCore, "  R8    : %p\n", ex->ContextRecord->R8);
+			PcrtOutPrint(hCore, "  RDI   : %p,", ex->ContextRecord->Rdi);
+			PcrtOutPrint(hCore, "  RSI   : %p,", ex->ContextRecord->Rsi);
+			PcrtOutPrint(hCore, "  RBX   : %p\n", ex->ContextRecord->Rbx);
+			PcrtOutPrint(hCore, "  RDX   : %p,", ex->ContextRecord->Rdx);
+			PcrtOutPrint(hCore, "  RCX   : %p,", ex->ContextRecord->Rcx);
+			PcrtOutPrint(hCore, "  RAX   : %p\n", ex->ContextRecord->Rax);
+#endif
 		}
 
 		if(ex->ContextRecord->ContextFlags & CONTEXT_CONTROL) {
+#if defined(_M_IX86)
 			PcrtOutPrint(hCore, "  EBP   : %p,", ex->ContextRecord->Ebp);
 			PcrtOutPrint(hCore, "  EIP   : %p,", ex->ContextRecord->Eip);
 			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
 			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
 			PcrtOutPrint(hCore, "  ESP   : %p,", ex->ContextRecord->Esp);
 			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+#endif
+#if defined(_M_AMD64)
+			PcrtOutPrint(hCore, "  RBP   : %p,", ex->ContextRecord->Rbp);
+			PcrtOutPrint(hCore, "  RIP   : %p,", ex->ContextRecord->Rip);
+			PcrtOutPrint(hCore, "  SegCS : %p\n", ex->ContextRecord->SegCs);
+			PcrtOutPrint(hCore, "  EFlags: %p,", ex->ContextRecord->EFlags);
+			PcrtOutPrint(hCore, "  RSP   : %p,", ex->ContextRecord->Rsp);
+			PcrtOutPrint(hCore, "  SegSS : %p\n", ex->ContextRecord->SegSs);
+#endif
 		}
 	}
 
@@ -613,7 +683,7 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 	// on the CRT working after an exception. the kernel functions
 	// should still work i guess ;)
 	//
-	trace = PcrtGetStackTraceFrom((void*)ex->ContextRecord->Ebp, (void*)ex->ContextRecord->Eip);
+	trace = PcrtGetStackTraceFrom(ex->ContextRecord);
 
 	PcrtOutPrint(hCore, "Stack Layout at the time the exception occured:\n\n");
 
@@ -622,7 +692,7 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 		// PcrtOutPrint does not know too extensive formatting stuff, so
 		// we have to do some of the work per pedes here.
 		//
-		modinfo_t mod = PcrtGetContainingModule(trace->eip);
+		modinfo_t mod = PcrtGetContainingModule((void*)trace->hwFrame.AddrPC.Offset);
 		char modname_aligned[ST_FW_MODULE + 2];
 		char * modname_unaligned = basename(mod.name);
 		long len = lstrlen(modname_unaligned);
@@ -636,7 +706,16 @@ void PcrtWriteExceptionInformation(HANDLE hCore, struct _EXCEPTION_POINTERS* ex,
 		++num;
 
 		PcrtOutPrint(hCore, " [%s%d]", ( num < 100000 ? ( num < 10000 ? ( num < 1000 ? ( num < 100 ? ( num < 10 ? "     " : "    " ) : "   ") : "  ") : " ") : ""), num);
-		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n", modname_aligned, trace->eip, (trace->sym.name ? trace->sym.name : "???"), trace->size, (trace->sym.addr ? ((unsigned long)trace->eip - (unsigned long)trace->sym.addr) : 0));
+		PcrtOutPrint(hCore, " %s!%p %s(%d bytes)+0x%x\n"
+			, modname_aligned
+			, (void*)trace->hwFrame.AddrPC.Offset
+			, (trace->sym.name ? trace->sym.name : "???")
+			, trace->size
+			, (trace->sym.addr
+			   ? ((size_t)trace->hwFrame.AddrPC.Offset - (size_t)trace->sym.addr)
+			   : 0
+			  )
+		);
 
 		if(!trace->next)
 			break;
@@ -673,12 +752,12 @@ static void PcrtWriteModulesInformation(HANDLE hCore)
 {
 	PcrtOutPrint(hCore, "Loaded Modules:\n");
 
-	if (!hEnumModules) {
+	if (!fEnumerateLoadedModules64) {
 		PcrtOutPrint(hCore, "  Enumerating loaded modules not available.\n");
 		return;
 	}
 
-	hEnumModules(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
+	fEnumerateLoadedModules64(GetCurrentProcess(), PcrtWriteModuleInformationCb, (PVOID)hCore);
 }
 
 //

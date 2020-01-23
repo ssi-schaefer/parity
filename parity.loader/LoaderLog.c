@@ -43,7 +43,7 @@ static void LogFormatString(char* buffer, const char* fmt, va_list args)
 
 	if(isNewLine)
 	{
-		lstrcat(buffer, ParityLoaderGeneratedImageName);
+		lstrcat(buffer, ParityLoaderGetGeneratedImageName());
 		lstrcat(buffer, ": ");
 	}
 
@@ -250,6 +250,11 @@ void LogDebug(const char* fmt, ...)
 void LogSetLevel(LoaderLogLevel lvl)
 {
 	gLevel = lvl;
+}
+
+LoaderLogLevel LogGetLevel(void)
+{
+	return gLevel;
 }
 
 void LogSetDebugStream(HANDLE stream)

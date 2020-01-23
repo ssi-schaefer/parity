@@ -25,41 +25,43 @@
 
 #include "internal/pcrt.h"
 
+#undef  chdir
+#undef _chdir
+#undef  mkdir
+#undef _mkdir
+#undef  rmdir
+#undef _rmdir
+
 #pragma push_macro("__STDC__")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
-#  pragma push_macro("chdir")
-#  pragma push_macro("mkdir")
-#  pragma push_macro("rmdir")
-#    define chdir __crt_invalid_chdir
-#    define mkdir __crt_invalid_mkdir
-#    define rmdir __crt_invalid_rmdir
-#    include UCRT_INC(Direct.h)
-#  pragma pop_macro("chdir")
-#  pragma pop_macro("mkdir")
-#  pragma pop_macro("rmdir")
+#  undef __STDC__
+#  include UCRT_INC(Direct.h)
 #pragma pop_macro("__STDC__")
 
 PCRT_BEGIN_C
 
-#pragma push_macro("chdir")
-#pragma push_macro("mkdir")
-#pragma push_macro("rmdir")
+static PCRT_INLINE int pcrt_chdir(const char* p)
+{
+  return _chdir(PCRT_CONV(p));
+}
 
-#undef chdir
-#undef mkdir
-#undef rmdir
+static PCRT_INLINE int pcrt_mkdir(const char* p, ... /* ignored */)
+{
+  return _mkdir(PCRT_CONV(p));
+}
 
-static PCRT_INLINE int chdir(const char* p) { return _chdir(PCRT_CONV(p)); }
-static PCRT_INLINE int mkdir(const char* p, ... /* ignored */) { return _mkdir(PCRT_CONV(p)); }
-static PCRT_INLINE int rmdir(const char* p) { return _rmdir(PCRT_CONV(p)); }
-
-#pragma pop_macro("chdir")
-#pragma pop_macro("mkdir")
-#pragma pop_macro("rmdir")
+static PCRT_INLINE int pcrt_rmdir(const char* p)
+{
+  return _rmdir(PCRT_CONV(p));
+}
 
 PCRT_END_C
+
+#define  chdir pcrt_chdir
+#define _chdir pcrt_chdir
+#define  mkdir pcrt_mkdir
+#define _mkdir pcrt_mkdir
+#define  rmdir pcrt_rmdir
+#define _rmdir pcrt_rmdir
 
 #endif
 

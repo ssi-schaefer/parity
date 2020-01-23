@@ -47,6 +47,8 @@ namespace parity
 			//
 			// CL and LINK command line switches
 			//
+			{ "-o"			,setOutputFile				}, // deprecated, but still in use
+			{ "/link"		,setLinkerPassthrough		},
 			{ "/X"			,setNoStdIncludes			},
 			{ "/D"			,addDefine					},
 			{ "/U"			,removeDefine				},
@@ -59,6 +61,7 @@ namespace parity
 			{ "/I"			,addIncludePath				},
 			{ "/LIBPATH:"	,addLibraryPath				},
 			{ "/Zi"			,setDebugable				},
+			{ "-g"			,setDebugable				},
 			{ "/Fo"			,setOutputFile				},
 			{ "/Fe"			,setOutputFile				},
 			{ "/TP"			,setForcedLanguage			},

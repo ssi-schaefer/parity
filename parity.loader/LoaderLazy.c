@@ -134,7 +134,7 @@ void ParityLoaderPreloadSymbols()
 	for(i = 0; i < gPreloadLibCacheCount; ++i)
 	{
 		void * handle = LoaderLibraryGetHandle(LoaderConvertPathToNative(gPreloadLibCache[i].name), 0);
-		LibraryItem* libs = ParityLoaderGeneratedTable.libraries;
+		LibraryItem* libs = ParityLoaderGetGeneratedTable()->libraries;
 
 		if(!handle) {
 			LogDebug("cannot load preload library %s, skipping\n", gPreloadLibCache[i].name);

@@ -8,6 +8,7 @@ __parityenv_args=()
 __parityenv_arg=${0##*/}
 for __parityenv_arch in @PARITY_SUPPORTED_ARCHS@ ""; do break; done
 __parityenv_verspec=
+__parityenv_crtspec=-msvc
 
 while test "${__parityenv_arg#*-}" != "${__parityenv_arg}"
 do
@@ -18,9 +19,12 @@ do
 	i?86-*)
 		__parityenv_arch=x86
 		;;
-	msvc*)
-		__parityenv_arg=${__parityenv_arg#winnt}
-		__parityenv_arg=${__parityenv_arg#msvc}
+	msvc*|libcmt*)
+		case ${__parityenv_arg} in
+		msvc*) __parityenv_crtspec=-msvc ;;
+		libcmt*) __parityenv_crtspec=-libcmt ;;
+		esac
+		__parityenv_arg=${__parityenv_arg#${__parityenv_crtspec}}
 		__parityenv_major=${__parityenv_arg%%[^0-9]*}
 		case ${__parityenv_major} in
 		[0-9]|[0-9][0-9])
@@ -28,8 +32,8 @@ do
 			__parityenv_arg=${__parityenv_arg#.}
 			__parityenv_minor=${__parityenv_arg%%[^0-9]*}
 			case ${__parityenv_minor} in
-			[0-9]) __parityenv_verspec=-msvc${__parityenv_major}.${__parityenv_minor} ;;
-			*)     __parityenv_verspec=-msvc${__parityenv_major}.0 ;;
+			[0-9]) __parityenv_verspec=${__parityenv_major}.${__parityenv_minor} ;;
+			*)     __parityenv_verspec=${__parityenv_major}.0 ;;
 			esac
 			;;
 		esac
@@ -51,7 +55,12 @@ do
 		__parityenv_arch=x64
 		;;
 	-mmsvc*)
-		__parityenv_verspec=-${__parityenv_arg#-m}
+		__parityenv_crtspec=-msvc
+		__parityenv_verspec=${__parityenv_arg#-mmsvc}
+		;;
+	-mlibcmt*)
+		__parityenv_crtspec=-libcmt
+		__parityenv_verspec=${__parityenv_arg#-mlibcmt}
 		;;
 	*)
 		__parityenv_args=( "${__parityenv_args[@]}" "${__parityenv_arg}" )
@@ -61,18 +70,23 @@ done
 
 set -- "${__parityenv_args[@]}"
 
-if [[ -r "${__parityenv_confdir}/parity.${__parityenv_arch}${__parityenv_verspec}.sh" ]]
+if [[ -r ${__parityenv_confdir}/${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}/parity.sh ]]
 then
-	if . "${__parityenv_confdir}/parity.${__parityenv_arch}${__parityenv_verspec}.sh"
+	__parityenv_confdir="${__parityenv_confdir}/${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}"
+fi
+
+if [[ -r "${__parityenv_confdir}/parity.sh" ]]
+then
+	if . "${__parityenv_confdir}/parity.sh"
 	then
-		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
+		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
 		true
 	else
-		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
+		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
 		false
 	fi
 else
-	echo "Invalid MSVC version specified (${__parityenv_verspec})." >&2
-	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec
+	echo "Invalid MSVC version specified (${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec})." >&2
+	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
 	false
 fi

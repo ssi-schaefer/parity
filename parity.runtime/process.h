@@ -23,16 +23,13 @@
 #ifndef __PCRT_PROCESS_H__
 #define __PCRT_PROCESS_H__
 
-#include "internal/pcrt.h"
+#  include "internal/pcrt.h"
 
-#pragma push_macro("__STDC__")
-#pragma push_macro("_POSIX_")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
-#  ifdef _POSIX_
-#    undef _POSIX_
-#  endif
+#  pragma push_macro("__STDC__")
+#  pragma push_macro("_POSIX_")
+#  undef __STDC__
+#  undef _POSIX_
+
 #  pragma push_macro("execl")
 #  pragma push_macro("execle")
 #  pragma push_macro("execlp")
@@ -49,23 +46,43 @@
 #  pragma push_macro("spawnve")
 #  pragma push_macro("spawnvp")
 #  pragma push_macro("spawnvpe")
-#    define execl __crt_invalid_execl
-#    define execle __crt_invalid_execle
-#    define execlp __crt_invalid_execlp
-#    define execlpe __crt_invalid_execlpe
-#    define execv __crt_invalid_execv
-#    define execve __crt_invalid_execve
-#    define execvp __crt_invalid_execvp
-#    define execvpe __crt_invalid_execvpe
-#    define spawnl __crt_invalid_spawnl
-#    define spawnle __crt_invalid_spawnle
-#    define spawnlp __crt_invalid_spawnlp
-#    define spawnlpe __crt_invalid_spawnlpe
-#    define spawnv __crt_invalid_spawnv
-#    define spawnve __crt_invalid_spawnve
-#    define spawnvp __crt_invalid_spawnvp
-#    define spawnvpe __crt_invalid_spawnvpe
-#    include UCRT_INC(Process.h)
+
+#  undef execl
+#  undef execle
+#  undef execlp
+#  undef execlpe
+#  undef execv
+#  undef execve
+#  undef execvp
+#  undef execvpe
+#  undef spawnl
+#  undef spawnle
+#  undef spawnlp
+#  undef spawnlpe
+#  undef spawnv
+#  undef spawnve
+#  undef spawnvp
+#  undef spawnvpe
+
+#  define execl __crt_invalid_execl
+#  define execle __crt_invalid_execle
+#  define execlp __crt_invalid_execlp
+#  define execlpe __crt_invalid_execlpe
+#  define execv __crt_invalid_execv
+#  define execve __crt_invalid_execve
+#  define execvp __crt_invalid_execvp
+#  define execvpe __crt_invalid_execvpe
+#  define spawnl __crt_invalid_spawnl
+#  define spawnle __crt_invalid_spawnle
+#  define spawnlp __crt_invalid_spawnlp
+#  define spawnlpe __crt_invalid_spawnlpe
+#  define spawnv __crt_invalid_spawnv
+#  define spawnve __crt_invalid_spawnve
+#  define spawnvp __crt_invalid_spawnvp
+#  define spawnvpe __crt_invalid_spawnvpe
+
+#  include UCRT_INC(Process.h)
+
 #  pragma pop_macro("execl")
 #  pragma pop_macro("execle")
 #  pragma pop_macro("execlp")
@@ -82,10 +99,11 @@
 #  pragma pop_macro("spawnve")
 #  pragma pop_macro("spawnvp")
 #  pragma pop_macro("spawnvpe")
-#pragma pop_macro("__STDC__")
-#pragma pop_macro("_POSIX_")
 
-#include RUNTIME_INC(Stdarg.h)
+#  pragma pop_macro("__STDC__")
+#  pragma pop_macro("_POSIX_")
+
+#  include RUNTIME_INC(Stdarg.h)
 
 PCRT_BEGIN_C
 

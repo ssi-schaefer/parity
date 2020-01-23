@@ -37,6 +37,19 @@ PCRT_BEGIN_C
 extern size_t _pcrt_strftime_safe(char* buf, size_t size, const char* fmt, const struct tm* time);
 #define strftime _pcrt_strftime_safe
 
+#if !defined(_CRT_NO_TIME_T) && defined(TIME_UTC)
+
+#define CLOCK_REALTIME TIME_UTC
+
+typedef int clockid_t;
+
+static PCRT_INLINE int clock_gettime(clockid_t clock_id, struct timespec *tp)
+{
+	return timespec_get(tp, clock_id);
+}
+
+#endif // TIME_UTC
+
 PCRT_END_C
 
 #endif

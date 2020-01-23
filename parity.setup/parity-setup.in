@@ -5,6 +5,7 @@ SELF=$0
 PACKAGE="@PACKAGE@"
 VERSION="@VERSION@"
 
+PARITYprefix="@prefix@"
 PARITYsysconfdir="@PARITY_SYSCONFDIR@"
 PARITYlocalstatedir="@PARITY_LOCALSTATEDIR@"
 PARITYlibdir="@PARITY_LIBDIR@"
@@ -12,7 +13,7 @@ PARITYbindir="@PARITY_BINDIR@"
 PARITYincludedir="@PARITY_INCLUDEDIR@"
 PARITYsupported_archs="@PARITY_SUPPORTED_ARCHS@"
 PARITYsupported_versions="@PARITY_SUPPORTED_VERSIONS@"
-PARITYhas_default_version="@PARITY_SUPPORTS_DEFAULT_MSVC_VERSION@"
+PARITYsupported_runtimes="@PARITY_SUPPORTED_RUNTIMES@"
 PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
 DESTDIR=
@@ -28,7 +29,8 @@ then
 	PARITYincludedir=${SELFDIR}/..
 
 	# <loaded from parity-setup.in by Confix2.dir>
-	PARITYsupported_archs="x86"
+	PARITYsupported_archs="x86 x64"
+	PARITYsupported_runtimes="dynamic static dynamicdebug staticdebug"
 	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
 	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
 	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
@@ -38,13 +40,17 @@ then
 	# 12.0:	Visual Studio 2013, cl.exe Version 18.00
 	# 13.0: there is no msvc version 13.0
 	# 14.0:	Visual Studio 2015, cl.exe Version 19.00
-	# 15.0: Visual Studio 2017, cl.exe Version 19.10
 	#
-	# parityconf-set-default() relies on old to new order
-	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15.0"
+	# Starting with Visual Studio 2017, updates may bump
+	# the minor version we search for using vswhere.exe.
+	# We probably do not need a CHOST per minor version,
+	# so we omit the minor version instead.
+	#
+	# 15: Visual Studio 2017, latest installed minor version
+	# 16: Visual Studio 2019, latest installed minor version
+	#
+	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15 16"
 	# </loaded from parity-setup.in by Confix2.dir>
-
-	PARITYhas_default_version=:
 
 	CC=${SELFDIR}/../parity.gnu.gcc/parity.gnu.gcc
 	AR=${SELFDIR}/../parity.gnu.ar/parity.gnu.ar.in
@@ -54,10 +60,6 @@ else
 fi
 
 defrexsupport=${PARITYrexsupport}
-
-supports-default() {
-	${PARITYhas_default_version}
-}
 
 PARITYheader="# This file is part of ${PACKAGE}-${VERSION}"
 
@@ -75,7 +77,6 @@ Where options is a combination of:
   --quiet   No progress output at all.
   --verbose More progress output.
   --debug   Enable shell trace.
-  --trace   Enable shell trace when running external commands.
 
   --destdir dir
     Operate in staging directory dir.
@@ -90,12 +91,10 @@ Where action is one of:
   --help
      This help.
 
-  --list-supported $(supports-default && echo -n "[--default]")
+  --list-supported
       List any hosttriplet identifiers supported.
       Unless --quiet, progress output goes to standard error.
-$(supports-default && echo "\
-      With --default, lists supported hostconfigs without MSVC version.
- ")
+
   --list-available
       List hosttriplet identifiers for installed MSVC compilers found.
       Unless --quiet, progress output goes to standard error.
@@ -103,6 +102,12 @@ $(supports-default && echo "\
   --is-available hosttriplet
       Test if MSVC compiler for hosttriplet identifier is installed.
       Unless --quiet, progress output goes to standard error.
+
+  --get-environ [--bare] hosttriplet
+      Display the environment variables and their values required to
+      enable the vanilla MSVC toolchain in some shell environment,
+      formatted as "VAR VALUE" without any quoting.  Without --bare,
+      VALUE is prepended to eventually existing environment VAR.
 
   --enable hosttriplet...
       Enables configuration for hosttriplet identifiers.
@@ -115,16 +120,7 @@ $(supports-default && echo "\
 
   --disable-all
       Disables configuration for all supported hosttriplet identifiers.
-$(supports-default && echo "
-  --set-default hosttriplet|[arch-]newest|[arch-]oldest...
-      Enables configuration for hosttriplet identifiers, and does set
-      each one as default for the hosttriplet's architecture, in order,
-      so the last one specified per architecture becomes the default.
-      Specify either newest or oldest to choose the newest or oldest
-      MSVC version available for the specified architecture.
-      If no arch is specified, given default is set for each supported
-      and available architecture.
- ")
+
 Additional actions for package managers:
 
   --install
@@ -157,38 +153,132 @@ parityconf-unittest() {
 	return ${success}
 }
 
-# get-vsver [end-of-chost|[vsarch-]vsver]
+# get-vscrt [end-of-chost|[vsarch-][vsver-]vscrt]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vsver i686-msvc11.0-mingw32    -> msvc11.0
-#  get-vsver i686-msvc11-mingw32      -> msvc11.0
-#  get-vsver i686-msvc11.0-winnt      -> msvc11.0
-#  get-vsver i686-msvc11-winnt        -> msvc11.0
-#  get-vsver x86-msvc11.0             -> msvc11.0
-#  get-vsver msvc11                   -> msvc11.0
+#  get-vscrt i686-libcmt11.0-mingw32  -> libcmt
+#  get-vscrt i686-libcmtd11.0-mingw32 -> libcmtd
+#  get-vscrt i686-msvc11-mingw32      -> msvc
+#  get-vscrt i686-msvcd11-mingw32     -> msvcd
+#  get-vscrt i686-libcmt11.0-winnt    -> libcmt
+#  get-vscrt i686-msvc11.0-winnt      -> msvc
+#  get-vscrt i686-msvcd11-winnt       -> msvcd
+#  get-vscrt x86-libcmt11.0           -> libcmt
+#  get-vscrt x86-msvc11.0             -> msvc
+#  get-vscrt libcmt11                 -> libcmt
+#  get-vscrt static                   -> libcmt
+#  get-vscrt staticdebug              -> libcmtd
+#  get-vscrt dynamic                  -> msvc
+#  get-vscrt dynamicdebug             -> msvcd
+#  get-vscrt junk                     -> msvc
+get-vscrt() {
+	local vscrt=${1}
+	case ${vscrt} in
+	libcmtd*|*-libcmtd*|staticdebug) echo "libcmtd" ;;
+	libcmt*|*-libcmt*|static) echo "libcmt" ;;
+	msvcd*|*-msvcd*|dynamicdebug) echo "msvcd" ;;
+	*) echo "msvc" ;;
+	esac
+	return 0
+}
+test_get-vscrt() {
+	local input expected output ret=0
+	for input in \
+		libcmt:i686-libcmt11.0-mingw32   \
+		libcmtd:i686-libcmtd11.0-mingw32 \
+		msvc:i686-msvc11-mingw32         \
+		libcmt:i686-libcmt11.0-winnt     \
+		msvc:i686-msvc11.0-winnt         \
+		msvc:i686-msvc11-winnt           \
+		libcmt:x86-libcmt11.0            \
+		msvc:x86-msvc11.0                \
+		msvc:msvc11                      \
+		msvcd:msvcd11                    \
+		msvc:dynamic                     \
+		msvcd:dynamicdebug               \
+		libcmt:static                    \
+		libcmtd:staticdebug              \
+		msvc:junk                        \
+	; do
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-vscrt "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-vscrt '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-vscrt '${input}' returns '${output}', expected '${expected}'"
+		fi
+	done
+	return ${ret}
+}
+unittests+=( test_get-vscrt )
+
+# get-vsver [end-of-chost|[vsarch-][vscrt]vsver]
+#  The argument needs to contain enough information only.
+# Examples:
+#  get-vsver i686-msvc11.0-mingw32  -> 11.0
+#  get-vsver i686-msvcd11.0-mingw32 -> 11.0
+#  get-vsver i686-msvc11-mingw32    -> 11.0
+#  get-vsver i686-libcmt11.0-winnt  -> 11.0
+#  get-vsver i686-libcmtd11.0-winnt -> 11.0
+#  get-vsver i686-msvc11.0-winnt    -> 11.0
+#  get-vsver i686-msvc11-winnt      -> 11.0
+#  get-vsver i686-msvcd11-winnt     -> 11.0
+#  get-vsver x86-msvc11.0           -> 11.0
+#  get-vsver libcmtd11              -> 11.0
+#  get-vsver libcmt11               -> 11.0
+#  get-vsver msvcd11                -> 11.0
+#  get-vsver msvc11                 -> 11.0
+#  get-vsver x86-msvc15.0           -> 15
 get-vsver() {
-	local vsver=${1##*msvc}
-	vsver=${vsver%%-mingw*}
-	vsver=${vsver%%-winnt*}
+	local vscrt=$(get-vscrt "$1")
+	local vsver=${1##*${vscrt}}
+	vsver=${vsver%%-*}
 	case ${vsver} in
-	[7-9]      |[1-9][0-9]      ) echo "msvc${vsver}.0" ;;
-	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "msvc${vsver}" ;;
+	            1[5-9].*        ) echo "${vsver%.*}" ;;
+	            1[5-9]          ) echo "${vsver}" ;;
+	[7-9]      |1[0-4]          ) echo "${vsver}.0" ;;
+	[7-9].[0-9]|[1-9][0-9].[0-9]) echo "${vsver}" ;;
 	esac
 	return 0
 }
 test_get-vsver() {
-	local input
+	local input expected output ret=0
 	for input in \
-		i686-msvc11.0-mingw32    \
-		i686-msvc11-mingw32      \
-		i686-msvc11.0-winnt      \
-		i686-msvc11-winnt        \
-		x86-msvc11.0             \
-		msvc11                   \
+		11.0:i686-msvc11.0-mingw32  \
+		11.0:i686-msvcd11.0-mingw32 \
+		11.0:i686-msvc11-mingw32    \
+		11.0:i686-msvcd11-mingw32   \
+		11.0:i686-libcmt11.0-winnt  \
+		11.0:i686-libcmtd11.0-winnt \
+		11.0:i686-msvc11.0-winnt    \
+		11.0:i686-msvcd11.0-winnt   \
+		11.0:i686-msvc11-winnt      \
+		11.0:i686-msvcd11-winnt     \
+		11.0:x86-msvc11.0           \
+		11.0:x86-msvcd11.0          \
+		11.0:libcmt11.0             \
+		11.0:libcmtd11.0            \
+		11.0:libcmt11               \
+		11.0:libcmtd11              \
+		11.0:msvc11.0               \
+		11.0:msvcd11.0              \
+		11.0:msvc11                 \
+		11.0:msvcd11                \
+		15:x86-msvcd15.0            \
 	; do
-		[[ $(get-vsver "${input}") == msvc11.0 ]] || return 1
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-vsver "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-vsver '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-vsver '${input}' returns '${output}', expected '${expected}'"
+		fi
 	done
-	return 0
+	return ${ret}
 }
 unittests+=( test_get-vsver )
 
@@ -196,9 +286,13 @@ unittests+=( test_get-vsver )
 #  The argument needs to contain enough information only.
 # Examples:
 #  get-vsarch i686-msvc11.0-winnt      -> x86
+#  get-vsarch i686-msvcd11.0-winnt     -> x86
 #  get-vsarch i686-msvc11.0-mingw32    -> x86
+#  get-vsarch i686-libcmtd11.0-winnt   -> x86
 #  get-vsarch x86-msvc11.0             -> x86
 #  get-vsarch i686                     -> x86
+#  get-vsarch x86_64-libcmtd11.0-winnt -> x64
+#  get-vsarch x86_64                   -> x64
 get-vsarch() {
 	local vsarch=${1%%-*}
 	case ${vsarch} in
@@ -208,16 +302,26 @@ get-vsarch() {
 	return 0
 }
 test_get-vsarch() {
-	local input
+	local input expected output ret=0
 	for input in \
-		i686-msvc11.0-winnt      \
-		i686-msvc11.0-mingw32    \
-		x86-msvc11.0             \
-		i686                     \
+		x86:i686-msvc11.0-winnt      \
+		x86:i686-msvcd11.0-mingw32   \
+		x86:x86-msvc11.0             \
+		x86:i686                     \
+		x64:x86_64                   \
+		x86:i686-libcmtd11.0-winnt   \
 	; do
-		[[ $(get-vsarch "${input}") == x86 ]] || return 1
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-vsarch "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-vsarch '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-vsarch '${input}' returns '${output}', expected '${expected}'"
+		fi
 	done
-	return 0
+	return ${ret}
 }
 unittests+=( test_get-vsarch )
 
@@ -231,6 +335,16 @@ get-supported-vsvers() {
     return 0
 }
 
+get-supported-vscrts() {
+    local vscrts=( ${PARITYsupported_runtimes} )
+    local vscrt
+    for vscrt in "${vscrts[@]}"
+    do
+		get-vscrt "${vscrt}"
+    done
+    return 0
+}
+
 get-supported-vsarchs() {
     local vsarch
     for vsarch in ${PARITYsupported_archs}
@@ -240,50 +354,73 @@ get-supported-vsarchs() {
     return 0
 }
 
-# get-chost [begin[+end]-of-chost|vsarch[-vsver]]
+# get-chost [begin[+end]-of-chost|vsarch[-[vscrt]vsver]]
 # Examples:
-#  get-chost i686-msvc11.0     -> i686-msvc11.0-winnt
-#  get-chost x86-msvc11        -> i686-msvc11.0-winnt
-#  get-chost i686              -> i686-msvc-winnt
+#  get-chost i686-libcmt11.0  -> i686-libcmt11.0-winnt
+#  get-chost i686-libcmtd11.0 -> i686-libcmtd11.0-winnt
+#  get-chost i686-msvc11.0    -> i686-msvc11.0-winnt
+#  get-chost i686-msvcd11.0   -> i686-msvcd11.0-winnt
+#  get-chost x86-libcmt11     -> i686-libcmt11.0-winnt
+#  get-chost x86-msvc11       -> i686-msvc11.0-winnt
+#  get-chost i686-libcmt      -> i686-libcmt-winnt
+#  get-chost i686-msvc        -> i686-msvc-winnt
+#  get-chost i686-msvcd       -> i686-msvcd-winnt
+#  get-chost i686-libcmt      -> i686-libcmt-winnt
+#  get-chost i686-libcmtd     -> i686-libcmtd-winnt
+#  get-chost i686             -> i686-msvc-winnt
 get-chost() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
+	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "i686-msvc${vsver#msvc}-winnt" ;;
-	x64) echo "x86_64-msvc${vsver#msvc}-winnt" ;;
+	x86) echo "i686-${vscrt}${vsver}-winnt" ;;
+	x64) echo "x86_64-${vscrt}${vsver}-winnt" ;;
 	esac
 	return 0
 }
 test_get-chost() {
-	local input
+	local input expected output ret=0
 	for input in \
-	    i686-msvc11.0:i686-msvc11.0-winnt \
-	    x86-msvc11:i686-msvc11.0-winnt \
-	    i686:i686-msvc-winnt \
+	    i686-libcmt11.0-winnt:i686-libcmt11.0             \
+	    i686-libcmtd11.0-winnt:i686-libcmtd11.0           \
+	    i686-msvc11.0-winnt:i686-msvc11.0                 \
+	    i686-msvcd11.0-winnt:i686-msvcd11.0               \
+	    i686-libcmt11.0-winnt:i686-libcmt11.0             \
+	    i686-msvc11.0-winnt:i686-msvc11.0                 \
+	    i686-libcmt11.0-winnt:x86-libcmt11                \
+	    i686-msvc11.0-winnt:x86-msvc11                    \
+	    i686-libcmt-winnt:i686-libcmt                     \
+	    i686-msvc-winnt:i686-msvc                         \
+	    i686-msvc-winnt:i686                              \
+	    x86_64-libcmtd11.0-winnt:x86_64-libcmtd11.0-winnt \
+	    x86_64-libcmtd-winnt:x86_64-libcmtd               \
+	    x86_64-msvc-winnt:x64-msvc                        \
 	; do
-		[[ $(get-chost "${input%%:*}") == "${input#*:}" ]] || return 1
+		expected=${input%:*}
+		input=${input#*:}
+		output=$(get-chost "${input}")
+		if [[ ${output} == "${expected}" ]]; then
+			verbose "  OK  : get-chost '${input}' returns '${output}'"
+		else
+			ret=1
+			verbose " FAIL : get-chost '${input}' returns '${output}', expected '${expected}'"
+		fi
 	done
-	return 0
+	return ${ret}
 }
 unittests+=( test_get-chost )
 
 get-supported-chosts() {
-	local vsarch vsver
+	local vsarch vsver vscrt
 	for vsarch in $(get-supported-vsarchs)
 	do
 		for vsver in $(get-supported-vsvers)
 		do
-			get-chost "${vsarch}-${vsver}"
+			for vscrt in $(get-supported-vscrts)
+			do
+				get-chost "${vsarch}-${vscrt}${vsver}"
+			done
 		done
-	done
-	return 0
-}
-
-get-default-chosts() {
-	local vsarch
-	for vsarch in $(get-supported-vsarchs)
-	do
-		get-chost "${vsarch}"
 	done
 	return 0
 }
@@ -293,7 +430,7 @@ get-default-chosts() {
 #
 SUPPORTED_CHOSTS=" $(echo $(get-supported-chosts) ) "
 is-supported-chost() {
-	[[ ${SUPPORTED_CHOSTS} == *" ${1} "* ]]
+	[[ ${SUPPORTED_CHOSTS} == *" ${1:-none} "* ]]
 }
 
 get-supported-executables() {
@@ -303,21 +440,17 @@ get-supported-executables() {
 	local vsver=$(get-vsver "${chost}")
 
 	local vsexes=(
-		'name=Compiler          executable=cl.exe    '
-		'name=Linker            executable=link.exe  '
-		'name=Manifest          executable=mt.exe    '
-		'name=ResourceCompiler  executable=rc.exe    '
-		'name=ResourceConverter executable=cvtres.exe'
+		'Compiler=cl.exe'
+		'Linker=link.exe'
+		'Manifest=mt.exe'
+		'ResourceCompiler=rc.exe'
+		'ResourceConverter=cvtres.exe'
 	)
 	case ${vsarch} in
-	x86) vsexes+=( 'name=Assembler executable=ml.exe  ' ) ;;
-	x64) vsexes+=( 'name=Assembler executable=ml64.exe' ) ;;
+	x86) vsexes+=( 'Assembler=ml.exe' ) ;;
+	x64) vsexes+=( 'Assembler=ml64.exe' ) ;;
 	esac
-	local vsexe
-	for vsexe in "${vsexes[@]}"
-	do
-		echo "${vsexe}"
-	done
+	printf "%s\n" "${vsexes[@]}"
 	return 0
 }
 
@@ -347,9 +480,10 @@ get-supported-sdklibs() {
 get-parityflags() {
 	local vsarch=$(get-vsarch "$*")
 	local vsver=$(get-vsver "$*")
+	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "-m32${vsver:+ -m}${vsver}" ;;
-	x64) echo "-m64${vsver:+ -m}${vsver}" ;;
+	x86) echo "-m32 -m${vscrt}${vsver}" ;;
+	x64) echo "-m64 -m${vscrt}${vsver}" ;;
 	esac
 	return 0
 }
@@ -376,19 +510,30 @@ die() {
 
 [[ -r "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/." ]] || die "Missing Cygwin based POSIX environment."
 
+# https://cygwin.com/ml/cygwin/2019-08/msg00072.html
+: ${SYSTEMDRIVE:=${SYSTEMROOT%%\\*}}
+export SYSTEMDRIVE
+
+# The ProgramData environment variable is required by vswhere.exe versions like
+#  Visual Studio Locator version 2.5.2+gebb9f26a3d [query version 1.18.21.37008]
+# while it is not needed (any more) by vswhere.exe versions like
+#  Visual Studio Locator version 2.7.1+180c706d56 [query version 2.3.2200.14893]
+: ${PROGRAMDATA=$(cygpath -w -F 35)}
+export PROGRAMDATA
+
 windir=$(cygpath -W)
 sysdir=$(cygpath -S)
 
-eval 'cmd() {
+eval "cmd() {
   ( set -x
-	tmpfile=`mktemp`;
-	: trap '"'rm -f \"\${tmpfile}\" \"\${tmpfile}.bat\"'"' 0;
-	mv -f "${tmpfile}" "${tmpfile}.bat";
-	for x in "$@"; do echo "$x"; done > "${tmpfile}.bat"
-	chmod +x "${tmpfile}.bat";
-	PATH="'"${windir}:${sysdir}:${sysdir}/WBEM"'" "${tmpfile}.bat";
-  );
-}'
+	tmpfile=\`mktemp\`
+	trap \"rm -f '\${tmpfile}' '\${tmpfile}.bat'\" 0
+	mv -f \"\${tmpfile}\" \"\${tmpfile}.bat\"
+	for x in \"\$@\"; do echo \"\$x\"; done > \"\${tmpfile}.bat\"
+	chmod +x \"\${tmpfile}.bat\"
+	PATH=\"${windir}:${sysdir}:${sysdir}/WBEM\" \"\${tmpfile}.bat\"
+  )
+}"
 
 regquery() {
 	regquery_result=
@@ -406,7 +551,6 @@ regquery() {
 
 regquery_vsroot() {
 	local vsver=$(get-vsver "${1}")
-	vsver=${vsver#msvc}
 	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
 	|| regquery HKEY_CURRENT_USER/SOFTWARE/Wow6432Node/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
 	|| regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/VisualStudio/SxS/VS7 "${vsver}" \
@@ -418,17 +562,95 @@ regquery_vsroot() {
 	return 1
 }
 
+locate_vswhere_exe() {
+	# Since Visual Studio 2019 there is the standalone "Visual Studio Installer"
+	# package providing vswhere.exe, which does register itself to the registry.
+	local vswhere_exe
+	if regquery HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft/VisualStudio/Setup SharedInstallationPath \
+	&& vswhere_exe=$(dirname "$(cygpath -u "${regquery_result}")")/Installer/vswhere.exe \
+	&& [[ -x ${vswhere_exe} ]] \
+	; then
+		locate_vswhere_exe_result=${vswhere_exe}
+		return 0
+	fi
+	#
+	# https://devblogs.microsoft.com/setup/vswhere-is-now-installed-with-visual-studio-2017/
+	#
+	local folderIDs=(
+		42 # CSIDL_PROGRAM_FILESX86
+		38 # CSIDL_PROGRAM_FILES
+	)
+	local folderID
+	for folderID in ${folderIDs[*]}
+	do
+		vswhere_exe="$(cygpath -F ${folderID})/Microsoft Visual Studio/Installer/vswhere.exe"
+		[[ -x ${vswhere_exe} ]] || continue
+		locate_vswhere_exe_result=${vswhere_exe}
+		return 0
+	done
+	locate_vswhere_exe_result=
+	return 1
+}
+
+vswhere() {
+	# initial vswhere() does set up location of vswhere.exe
+	if locate_vswhere_exe; then
+		# redefine vswhere() to execute vswhere.exe
+		eval "vswhere() {
+			vswhere_result=
+			vswhere_result=\$(\"${locate_vswhere_exe_result}\" \"\$@\" | tr -d "\\\\r")
+			return \$?
+		}"
+	else
+		# missing vswhere.exe, redefine vswhere() as noop
+		vswhere() {
+			vswhere_result=
+			return 1
+		}
+	fi
+	# re-execute vswhere() to return results
+	vswhere "$@"
+	return $?
+}
+
+vswhere_installationPath() {
+	local vsver=$(get-vsver "${1}")
+	vswhere_installationPath_result=
+	# Note that vswhere does require the user to be either an Administrator,
+	# or a member of the "Distributed COM Users" local group.
+	vswhere -nologo \
+		-products "*" \
+		-version "[${vsver},${vsver}.65535]" \
+		-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
+		-latest \
+		-format text \
+		-property installationPath \
+		|| return 1
+	[[ ${vswhere_result} == 'installationPath: '* ]] || return 1
+	vswhere_installationPath_result=${vswhere_result#installationPath: }
+	return 0
+}
+
 query-novcvars-once() {
 	[[ -z ${novcPATH-}${novcINCLUDE-}${novcLIB-}${novcLIBPATH-} ]] || return 0
 
 	novcPATH= novcINCLUDE= novcLIB= novcLIBPATH=
 
 	verbose "Querying environment without MSVC ..."
-	traceon
-	eval $(cmd '@set PATH & set INCLUDE & set LIB' 2>/dev/null |
-		sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/novc\1=$'\2'/p"
+	local line var val
+	while read line
+	do
+		case ${line} in
+		PATH=* | INCLUDE=* | LIB=* | LIBPATH=* )
+			var=${line%%=*}
+			val=${line#*=}
+			eval "novc${var}=\${val}"
+			;;
+		esac
+	done < <(
+		cmd '@set PATH & set INCLUDE & set LIB' 2>/dev/null \
+		| sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/p"
 	)
-	traceoff $?
 
 	if [[ -n ${novcPATH}${novcINCLUDE}${novcLIB}${novcLIBPATH} ]]
 	then
@@ -447,14 +669,20 @@ query-vcvars() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-
-	regquery_vsroot "${vsver}" || return 1
+	local vsroot=
+	if vswhere_installationPath "${vsver}"; then
+		vsroot=${vswhere_installationPath_result}
+	elif regquery_vsroot "${vsver}"; then
+		vsroot=${regquery_vsroot_result}
+	else
+		return 1
+	fi
 
 	noquiet "Querying environment for ${chost} ..."
 
 	vcPATH= vcINCLUDE= vcLIB= vcLIBPATH=
 
-	local vsroot=$(cygpath -u "$regquery_vsroot_result")
+	vsroot=$(cygpath -u "$vsroot")
 	local vcvarsall
 	vcvarsall=${vsroot}/VC/Auxiliary/Build/vcvarsall.bat
 	[[ -r ${vcvarsall} ]] ||
@@ -464,10 +692,10 @@ query-vcvars() {
 	# MSVC 10.0 and above query their VSxxCOMNTOOLS on their own
 	local comntoolsvar=
 	case ${vsver} in
-	msvc7.0) comntoolsvar=VS70COMNTOOLS ;;
-	msvc7.1) comntoolsvar=VS71COMNTOOLS ;;
-	msvc8.0) comntoolsvar=VS80COMNTOOLS ;;
-	msvc9.0) comntoolsvar=VS90COMNTOOLS ;;
+	7.0) comntoolsvar=VS70COMNTOOLS ;;
+	7.1) comntoolsvar=VS71COMNTOOLS ;;
+	8.0) comntoolsvar=VS80COMNTOOLS ;;
+	9.0) comntoolsvar=VS90COMNTOOLS ;;
 	esac
 	if [[ -n ${comntoolsvar} ]]
 	then
@@ -479,19 +707,29 @@ query-vcvars() {
 		fi
 	fi
 
-	traceon
-    INCLUDE= LIB= LIBPATH= \
-    eval $(cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null |
-      sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/s/^([^=]*)=(.*)\$/vc\1=$'\2'/p"
+	local line var val
+	while read line
+	do
+		case ${line} in
+		PATH=* | INCLUDE=* | LIB=* | LIBPATH=* )
+			var=${line%%=*}
+			val=${line#*=}
+			eval "vc${var}=\${val}"
+			;;
+		esac
+	done < <(
+		INCLUDE= LIB= LIBPATH= \
+		cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null \
+		| sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/p"
     )
-	traceoff $?
     vcPATH=${vcPATH%${novcPATH}};          vcPATH=${vcPATH%%;}
     vcINCLUDE=${vcINCLUDE%${novcINCLUDE}}; vcINCLUDE=${vcINCLUDE%%;}
     vcLIB=${vcLIB%${novcLIB}};             vcLIB=${vcLIB%%;}
     vcLIBPATH=${vcLIBPATH%${novcLIBPATH}}; vcLIBPATH=${vcLIBPATH%%;}
 
-    if [[ "::${vcPATH}::${vcINCLUDE}::${vcLIB}::${vcLIBPATH}::" == *::::* ]]
+    if [[ ::${vcPATH}::${vcINCLUDE}::${vcLIB}::${vcLIBPATH}:: == *::::* ]]
 	then
+		# at least one of the variables is empty
 		verbose "Querying environment for ${chost} failed."
 		return 1
 	fi
@@ -502,24 +740,21 @@ query-vcvars() {
 prune-parityconf() {
 	local reason=disabled
 	local noquiet=noquiet
-	local setdefault=
 	local uninstall=false
-	local arg
+	local vaction='Disabling'
 	while ${1+:} false
 	do
 		arg=$1
 		shift
-		case ${arg} in
-		--set-default)
-			setdefault=${arg}
-			;;
+		case ${arg} in # (
 		--reason=*)
 			reason=${arg#--reason=}
 			noquiet=verbose
-			;;
+			;; # (
 		--uninstall)
 			uninstall=:
-			;;
+			vaction='Uninstalling'
+			;; # (
 		*)
 			break
 			;;
@@ -531,129 +766,114 @@ prune-parityconf() {
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
-	local hostconf="${PARITYlocalstatedir}/parity.${vsarch}-${vsver}"
-	local hostdefconf="${PARITYlocalstatedir}/parity.${vsarch}"
-	local userconf="${PARITYsysconfdir}/parity.${vsarch}-${vsver}"
+	local vscrt=$(get-vscrt "${chost}")
+	local conf="${vsarch}-${vscrt}${vsver}"
 
-	local hostconfheader="${PARITYheader}
-#
-# PARITY CONFIGURATION for ${vsarch}-${vsver}
-#"
-	local userconfheader="${PARITYheader}
-#
-# override parts of parity configuration for ${vsarch}-${vsver}
-#"
-	local noconf="MSVC ${vsver#msvc} (${vsarch}) is ${reason} (try ${SELF##*/} --enable ${chost})"
-	local defnoconf="Default MSVC version (${vsarch}) is ${reason} (try ${SELF##*/} --set-default ${vsarch}-newest)"
-	local defchost=
-	local ret=0
+	(
+		confdir="${PARITYlocalstatedir}"
+		userconfdir="${PARITYsysconfdir}"
 
-	local confline
-	if supports-default && ${setdefault:+:} false
-	then
-		defchost=${chost}
-	fi
-	if ${defchost:+false} : && [[ -s ${DESTDIR}${hostdefconf}.conf ]]
-	then
-		while read confline
-		do
-			if [[ ${confline} == *"PARITY CONFIGURATION for "* ]]
-			then
-				defchost=${confline#*PARITY CONFIGURATION for }
-				defchost=$(get-chost "${defchost}")
-				break
-			fi
-		done < "${DESTDIR}${hostdefconf}.conf"
-	fi
-	if ${defchost:+false} : && [[ -s ${DESTDIR}${hostdefconf}.sh ]]
-	then
-		while read confline
-		do
-			if [[ ${confline} == *"PARITY CONFIGURATION for "* ]]
-			then
-				defchost=${confline#*PARITY CONFIGURATION for }
-				defchost=$(get-chost "${defchost}")
-				break
-			fi
-		done < "${DESTDIR}${hostdefconf}.sh"
-	fi
-	if [[ ${defchost} == "${chost}" ]]
-	then
 		if ${uninstall}
 		then
-			rm -f "${DESTDIR}${hostdefconf}.conf" "${DESTDIR}${hostdefconf}.sh"
-		else
-			${noquiet} "Disabling ${hostdefconf} ..."
-			traceon
-			mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-			{
-				echo "${hostconfheader}"
-				echo "${defnoconf} = true"
-			} > "${DESTDIR}${hostdefconf}.conf" &&
-			{
-				echo "${hostconfheader}"
-				echo "echo '${defnoconf}' >&2"
-				echo "false"
-			} > "${DESTDIR}${hostdefconf}.sh" &&
-			if ! traceoff $?
-			then
-				ret=1
-				${noquiet} "Disabling ${hostdefconf} failed."
-			else
-				verbose "Disabling ${hostdefconf} done."
+			cd "${DESTDIR}/." || exit 0
+
+			# When using parity-setup.in inside srcdir,
+			# confdir and userconfdir are identical.
+			# So remove all the known files first,
+			# and the directories second.
+			[[ -e .${confdir}/${conf} ]] &&
+			rm -f ".${confdir}/${conf}/"parity.{conf,sh}
+
+			if [[ -d .${confdir}/${conf}/lib ]]; then
+				rm -rf "./${confdir}/${conf}/lib/sdk"
+				rm -f "./${confdir}/${conf}/lib/libparity."{runtime,loader}.a
 			fi
+
+			# Let rmdir yell if this is not a directory.
+			[[ -e .${confdir}/${conf}/lib ]] &&
+			rmdir "./${confdir}/${conf}/lib"
+
+			[[ -e .${userconfdir}/${conf} ]] &&
+			rm -f ".${userconfdir}/${conf}/parity.conf.sample"
+
+			[[ -e .${confdir}/${conf} ]] &&
+			rmdir ".${confdir}/${conf}"
+
+			[[ -e .${userconfdir}/${conf} ]] &&
+			rmdir ".${userconfdir}/${conf}"
+
+			# be silent if confdir is missing or not empty
+			rmdir ".${confdir}" 2>/dev/null
+			rmdir ".${userconfdir}" 2>/dev/null
+
+			exit 0
 		fi
-	fi
 
-	if ${uninstall}
-	then
-		rm -f "${DESTDIR}${userconf}.conf"
-		rm -f "${DESTDIR}${hostconf}.conf" "${DESTDIR}${hostconf}.sh"
-		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vsver}.a
-		rm -f "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vsver}.a
-		return 0
-	fi
+		${noquiet} "Disabling ${conf} ..."
 
-	${noquiet} "Disabling ${hostconf} ..."
-	traceon
-	mkdir -p "${DESTDIR}${PARITYsysconfdir}" &&
-	{
-		test -s "${DESTDIR}${userconf}.conf" ||
+		# any failure is a problem here
+		set -e
+
+		# do not mkdir -p DESTDIR, but confdir only
+		cd "${DESTDIR}/."
+
+		hostconfheader="${PARITYheader}
+#
+# PARITY CONFIGURATION for ${conf}
+#"
+		userconfheader="${PARITYheader}
+#
+# override parts of parity configuration for ${conf}
+#"
+		noconf="${vscrt} ${vsver} ${vsarch} (${chost}) is ${reason} (try ${SELF##*/} --enable ${chost})"
+
+		mkdir -p ".${confdir}/${conf}"
+		{
+			echo "${hostconfheader}"
+			echo "${noconf} = true"
+		} > ".${confdir}/${conf}/parity.conf"
+		{
+			echo "${hostconfheader}"
+			echo "echo '${noconf}' >&2"
+			echo "false"
+		} > ".${confdir}/${conf}/parity.sh"
+
+		mkdir -p ".${userconfdir}/${conf}"
 		{
 			echo "${userconfheader}"
 			echo "# For an idea how and what to override, the complete config is"
-			echo "#  ${hostconf}.conf"
+			echo "#  ${confdir}/${conf}/parity.conf"
 			echo "#"
-		} > "${DESTDIR}${userconf}.conf"
-	} &&
-	mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-	{
-		echo "${hostconfheader}"
-		echo "${noconf} = true"
-	} > "${DESTDIR}${hostconf}.conf" &&
-	{
-		echo "${hostconfheader}"
-		echo "echo '${noconf}' >&2"
-		echo "false"
-	} > "${DESTDIR}${hostconf}.sh" &&
-	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.runtime.${vsarch}-${vsver}.a &&
-	echo "${empty}" > "${DESTDIR}${PARITYlocalstatedir}"/libparity.loader.${vsarch}-${vsver}.a
-	if ! traceoff $?
+		} > ".${userconfdir}/${conf}/parity.conf.sample"
+
+		mkdir -p ".${confdir}/${conf}/lib/sdk"
+
+		: > ".${confdir}/${conf}/lib/libparity.loader.a"
+		: > ".${confdir}/${conf}/lib/libparity.runtime.a"
+
+		cat > ".${confdir}/${conf}/lib/sdk/README" <<-EOF
+		In this directory you will find symbolic links to the libraries
+		provided by Visual Studio.  This is to provide the libraries in
+		a directory name not containing blanks, which usually break
+		shell scripts like libtool.
+
+		To enable the configuration for ${chost} you may want to run:
+		${SELF##*/} --enable ${chost}
+		EOF
+
+		# we're disabling, might have been enabled before
+		rm -f "./${confdir}/${conf}/lib/sdk/"*.lib || :
+	)
+	if [[ $? -ne 0 ]]
 	then
-		verbose "Disabling ${hostconf} failed."
-		return 1
+		${noquiet} "${vaction} ${chost} failed."
+	else
+		verbose "${vaction} ${chost} done."
 	fi
-	verbose "Disabling ${hostconf} done."
-	return ${ret}
+	return $?
 }
 
 update-parityconf() {
-	local setdefault=
-	if [[ $1 == --set-default ]]
-	then
-		setdefault=$1
-		shift
-	fi
 	local chost=$(get-chost "$1")
 	is-supported-chost "${chost}" || return 1
 
@@ -662,112 +882,214 @@ update-parityconf() {
 		prune-parityconf --reason="missing" "${chost}"
 		return 1
 	fi
-	vcPATH=$(cygpath -up "${vcPATH}")
-	vcINCLUDE=$(cygpath -up "${vcINCLUDE}")
-	vcLIB=$(cygpath -up "${vcLIB}")
-	vcLIBPATH=$(cygpath -up "${vcLIBPATH}")
-
-	local vsexes
-	IFS=${NL} eval 'vsexes=( $(get-supported-executables '${chost}') )'
-
-	local vsexe
-	local name executable
-	for vsexe in "${vsexes[@]}"
-	do
-		name= executable=
-		eval ${vsexe}
-		eval ${name}Exe=
-		IFS=: eval ${name}Exe='$(find ${vcPATH} -maxdepth 1 -iname "${executable}" -print -quit)'
-	done
 
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
+	local vscrt=$(get-vscrt "${chost}")
 	local parityflags=$(get-parityflags "${chost}")
+	local confdir="${PARITYlocalstatedir}"
+	local conf="${vsarch}-${vscrt}${vsver}"
 
 	(
-		local p
-		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} ..."
-		tmpdir=${TMPDIR:-/tmp}/parity-setup.${vsarch}-${vsver}.$$
-		rm -rf "${tmpdir}"
+		noquiet "Configuring for ${conf} ..."
 
-		trap "rm -rf '${tmpdir}'" 0
-		mkdir -p "${tmpdir}" || exit 1
-		cd "${tmpdir}" || exit 1
+		set -e
 
+		vcPATH=$(cygpath -up "${vcPATH}")
+		vcINCLUDE=$(cygpath -up "${vcINCLUDE}")
+		vcLIB=$(cygpath -up "${vcLIB}")
+		vcLIBPATH=$(cygpath -up "${vcLIBPATH}")
+
+		# set IFS before ${vcVAR} is evaluated
+		IFS=: eval 'vcPATHdirs=( ${vcPATH} )'
+		IFS=: eval 'vcINCLUDEdirs=( ${vcINCLUDE} )'
+		IFS=: eval 'vcLIBdirs=( ${vcLIB} )'
+		IFS=: eval 'vcLIBPATHdirs=( ${vcLIBPATH} )'
+
+		# do not mkdir -p DESTDIR but confdir only
+		cd "${DESTDIR}/."
+		mkdir -p ".${confdir}"
+		cd ".${confdir}"
+
+		tmpdir=".${conf}.tmp.$$"
+		rm -rf "./${tmpdir}"
+		trap "rm -rf './${tmpdir}'" 0
+		mkdir "./${tmpdir}"
+		mkdir "./${tmpdir}/${conf}"
+		mkdir "./${tmpdir}/${conf}/lib"
+		mkdir "./${tmpdir}/${conf}/lib/sdk"
+
+		# MSVC installation directories often contain blanks,
+		# breaking libtool and similar shell scripts.
+		# When --prefix is configured to not contain blanks,
+		# we can provide library locations without blanks
+		# even for MSVC libraries.
+
+		for p in "${vcLIBdirs[@]}"
+		do
+			verbose "Creating library symlinks for ${p} ..."
+			libcount=0
+			dblcount=0
+			while read vclib
+			do
+				libfile=${vclib##*/}
+				libfile=${libfile,,} # tolower
+				libname=${libfile%.lib}
+				if [[ -e "./${tmpdir}/${conf}/lib/sdk/${libfile}" ]]
+				then
+					(( ++dblcount ))
+					noquiet "Redundant library ${vclib##*/} ignored."
+					continue
+				fi
+				(( ++libcount ))
+				ln -sf "${vclib}" "./${tmpdir}/${conf}/lib/sdk/${libfile}"
+			done < <(find "${p}" -maxdepth 1 -type f -iname '*.lib' 2>/dev/null || :)
+			verbose "Creating library symlinks for ${p} ... ${libcount} done, ${dblcount} dups ignored."
+		done
+
+		cat > "./${tmpdir}/${conf}/lib/sdk/README" <<-EOF
+		In this directory you will find symbolic links to the libraries
+		provided by Visual Studio.  This is to provide the libraries in
+		a directory name not containing blanks, which usually break
+		shell scripts like libtool.
+
+		The libs found here are for the ${chost} target, which can be
+		disabled using: ${SELF##*/} --enable ${chost}
+		EOF
+
+		# minimal ${conf}/parity.conf for the preprocessor
+		# to query SDK versions and some Defines
 		{
 			echo "#
-# PARITY CONFIGURATION for ${vsarch}-${vsver}
+# PARITY CONFIGURATION for ${conf}
 #
 #  Automatically generated by ${SELF##*/}.
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
 #
 
 Colored = true"
-            case ${PARITYrexsupport} in
-            yes|enabled) echo "WaitForOutputFile = true" ;;
-            *) echo "WaitForOutputFile = false" ;;
+            case ${PARITYrexsupport} in # (
+            yes|enabled)
+				echo "WaitForOutputFile = true"
+				;; # (
+            *)
+				echo "WaitForOutputFile = false"
+				;;
             esac
 
-			for vsexe in "${vsexes[@]}"
+			get-supported-executables "${chost}" |
+			while read line
 			do
-				name= executable=
-				eval ${vsexe}
-				eval "[[ -n \${${name}Exe} ]]" || continue
-				eval "echo \"${name}Exe = \${${name}Exe}\""
+				case ${line} in # (
+				=* | *=) ;; # (
+				*=*)
+					name=${line%%=*}
+					executable=${line#*=}
+					executable=$(
+						find "${vcPATHdirs[@]}" \
+							-maxdepth 1 \
+							-iname "${executable}" \
+							-print \
+							-quit \
+							2>/dev/null \
+						|| :
+					)
+					echo "${name}Exe = ${executable}"
+					;; # (
+				*) ;;
+				esac
 			done
 
-			IFS=: eval '
-				for p in ${vcPATH}
-				do
-					echo "AdditionalExecPaths = ${p}"
-				done
-				for p in ${vcINCLUDE}
-				do
-					echo "SysIncludePaths = ${p}"
-				done
-				for p in ${vcLIB}
-				do
-					echo "SysLibraryPaths = ${p}"
-				done
-			'
+			for p in "${vcPATHdirs[@]}"
+			do
+				echo "AdditionalExecPaths = ${p}"
+			done
+			for p in "${vcINCLUDEdirs[@]}"
+			do
+				echo "SysIncludePaths = ${p}"
+			done
+			for p in "${vcLIBdirs[@]}" "${confdir}/${conf}/lib/sdk"
+			do
+				echo "SysLibraryPaths = ${p}"
+			done
+
 			echo "
 PCRTInclude = ${PARITYincludedir}/parity.runtime
-PCRTLibrary = ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a
-ParityLoader = ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a
-"
-			case ${vsver} in # (
-			7.*) echo "Runtime = static"  ;; # (
-			*)   echo "Runtime = dynamic" ;; # (
-			esac # )
+PCRTLibrary = ${confdir}/${conf}/lib/libparity.runtime.a
+ParityLoader = ${confdir}/${conf}/lib/libparity.loader.a
 
+# for gcc -dumpmachine
+HostTriplet = ${chost}
+# for gcc -dumpversion
+# for gcc -dumpfullversion
+CompilerVersion = ${vsver}
+# for gcc -print-prog-name=
+KnownProgramsPath = ${PARITYprefix}/${chost}/bin
+"
 			case ${vsarch} in # (
-			x86) echo "TimeT32Bit = true" ;;
-			*)   echo "TimeT32Bit = false" ;;
+			x86)
+				echo "TimeT32Bit = true"
+				;; # (
+			*)
+				echo "TimeT32Bit = false"
+				;;
 			esac
 
-			echo "
-Defines = WIN32_LEAN_AND_MEAN
-Defines = _WIN32_WINNT=0x0501
-"
-			local sdklib p
 			for sdklib in $(get-supported-sdklibs "${chost}")
 			do
-				IFS=: eval p='$(find ${vcLIB} -maxdepth 1 -iname "${sdklib}.lib" -print -quit)'
-				[[ -n ${p} ]] || continue
-				echo "ObjectsLibraries = ${p}"
+				lib=$(
+					find "${vcLIBdirs[@]}" \
+						-maxdepth 1 \
+						-iname "${sdklib}.lib" \
+						-print \
+						-quit \
+						2>/dev/null \
+					|| :
+				)
+				[[ -n ${lib} ]] || continue
+				echo "ObjectsLibraries = ${lib}"
 			done
+		} > "./${tmpdir}/${conf}/parity.conf"
 
+		verbose "Querying SDK versions ..."
+		echo '
+#if _MSC_VER - 0 >= 1600
+# include <winsdkver.h>
+#else
+# include <sdkddkver.h>
+#endif
+#define PCRTSTR(x) #x
+#define PCRTDEF(n) "Defines = " #n
+#define PCRTDEFV(n, v) "Defines = " #n "=" PCRTSTR(v)
+PCRTDEF(WIN32_LEAN_AND_MEAN)
+#if            defined(_WIN32_WINNT_MAXVER) /* by <winsdkver.h> */
+PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT_MAXVER)
+#elif          defined(_WIN32_WINNT) /* by <sdkddkver.h> */
+PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT)
+#endif
+		' | "${DESTDIR}${CC}" \
+				"-mparityconfdir=./${tmpdir}" \
+				${parityflags} \
+				-E - \
+		  | sed -n -e '/"Defines = "/{s/" "//g;s/"//g;p}' \
+		  >> "./${tmpdir}/${conf}/parity.conf"
+		[[ ${PIPESTATUS[*]} == '0 0 0' ]]
+
+		{
+			# The config parser does not understand split sections,
+			# so we need to complete the global section before we
+			# can define other sections.
 			echo "
 section windows {
 	Subsystem = Windows
 }
 "
-		} > parity.${vsarch}-${vsver}.conf
-		[[ $? -eq 0 ]] || exit 1
+		} >> "./${tmpdir}/${conf}/parity.conf"
 
 		{
+			# the second line here is parsed in getenv-parityconf()
 			echo "#
-# PARITY CONFIGURATION for ${vsarch}-${vsver}
+# PARITY CONFIGURATION for ${conf}
 #
 #  Automatically generated by ${SELF##*/}.
 #  To regenerate, use ${SELF##*/} --enable ${chost}.
@@ -776,62 +1098,96 @@ PATH=\"${vcPATH}\${PATH:+:}\${PATH}\" export PATH
 LIB=\"$(cygpath -mp "${vcLIB}")\${LIB:+;}\${LIB}\" export LIB
 INCLUDE=\"$(cygpath -mp "${vcINCLUDE}")\${INCLUDE:+;}\${INCLUDE}\" export INCLUDE
 "
-		} > parity.${vsarch}-${vsver}.sh
-		[[ $? -eq 0 ]] || exit 1
+		} > "./${tmpdir}/${conf}/parity.sh"
 
-		unset PARITY_CONFIG
+		(
+			# change into tmpdir for intermediate object files, but in
+			# another subshell to leave above trap in current workdir
+			set -e
+			cd "./${tmpdir}"
 
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a ..."
-		traceon
-		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c \
-			"${DESTDIR}${PARITYlibdir}"/parity.runtime/{{diagnose,dirent,dlfcn,getopt,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c,cxxeh.cc,ios-fixup.cpp} &&
-		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.runtime.${vsarch}-${vsver}.a *.o
-		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.runtime.${vsarch}-${vsver}.a done."
+			unset PARITY_CONFIG
 
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a ..."
-		traceon
-		"${DESTDIR}${CC}" -mparityconfdir=. ${parityflags} -I"${DESTDIR}${PARITYincludedir}"/parity.loader -I"${DESTDIR}${PARITYincludedir}"/parity.runtime -c "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c &&
-		"${DESTDIR}${AR}" -mparityconfdir=. ${parityflags} cr libparity.loader.${vsarch}-${vsver}.a Loader*.o
-		traceoff $? || exit 1
-		verbose "Compiling ${PARITYlocalstatedir}/libparity.loader.${vsarch}-${vsver}.a done."
+			verbose "Compiling ${conf}/lib/libparity.runtime.a ..."
+			"${DESTDIR}${CC}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				-I"${DESTDIR}${PARITYincludedir}"/parity.runtime \
+				-c \
+				-xc "${DESTDIR}${PARITYlibdir}"/parity.runtime/{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times}.c \
+				-xc++ "${DESTDIR}${PARITYlibdir}"/parity.runtime/{cxxeh.cc,ios-fixup.cpp}
+			"${DESTDIR}${AR}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				cr "./${conf}/lib/libparity.runtime.a" \
+				{coreio,diagnose,dirent,dlfcn,getopt,io,libgen,output,pcrt,realpath,regex,setenv,stdio,time,times,cxxeh,ios-fixup}.o
+			verbose "Compiling ${conf}/lib/libparity.runtime.a done."
 
-		traceon
-		mkdir -p "${DESTDIR}${PARITYlocalstatedir}" &&
-		mv -f libparity.runtime.${vsarch}-${vsver}.a libparity.loader.${vsarch}-${vsver}.a "${DESTDIR}${PARITYlocalstatedir}"/ &&
-		mv -f parity.${vsarch}-${vsver}.conf parity.${vsarch}-${vsver}.sh "${DESTDIR}${PARITYlocalstatedir}"/
-		traceoff $? || exit 1
+			verbose "Compiling ${conf}/lib/libparity.loader.a ..."
+			"${DESTDIR}${CC}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				-I"${DESTDIR}${PARITYincludedir}"/parity.loader \
+				-I"${DESTDIR}${PARITYincludedir}"/parity.runtime \
+				-c \
+				-xc "${DESTDIR}${PARITYlibdir}"/parity.loader/Loader{Helper,Init,Lazy,Library,Log}.c
+			"${DESTDIR}${AR}" \
+				-mparityconfdir=. \
+				${parityflags} \
+				cr "./${conf}/lib/libparity.loader.a" \
+				Loader{Helper,Init,Lazy,Library,Log}.o
+			verbose "Compiling ${conf}/lib/libparity.loader.a done."
+		)
 
-		if supports-default && ${setdefault:+:} false
-		then
-			traceon
-			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.conf" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.conf" &&
-			cp -f "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}-${vsver}.sh" "${DESTDIR}${PARITYlocalstatedir}/parity.${vsarch}.sh"
-			traceoff $? || exit 1
-		fi
+		verbose "Populating ${confdir}/${conf} ..."
+		rm -rf "./${conf}"
+		mv -f "./${tmpdir}/${conf}" "./${conf}"
 	)
 	if [[ $? -ne 0 ]]
 	then
-		noquiet "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} failed."
+		noquiet "Updating ${confdir} failed."
 		return 1
 	fi
-	verbose "Creating ${PARITYlocalstatedir}/parity.${vsarch}-${vsver} done."
+	verbose "Updating ${confdir} done."
+	return 0
+}
+
+getenv-parityconf() {
+	local bare=false
+	if [[ $1 == '--bare' ]]
+	then
+		bare=:
+		shift
+	fi
+	local chost=$(get-chost "$1")
+	is-supported-chost "${chost}" || return 1
+	local vsver=$(get-vsver "${chost}")
+	local vsarch=$(get-vsarch "${chost}")
+	local vscrt=$(get-vscrt "${chost}")
+
+	verbose "Loading ${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh ..."
+	(
+		${bare} || . "${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh"
+		while read line
+		do
+			line=${line%%#*}
+			var=${line%%=*}
+			[[ ${var} =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || continue
+			if ${bare}; then
+				line=${line%%\$*}
+				echo "${var} ${line#*=\"}"
+			else
+				echo "${var} ${!var}"
+			fi
+		done < "${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh"
+	)
+	verbose "Loading ${PARITYlocalstatedir}/${vsarch}-${vscrt}${vsver}/parity.sh done."
 	return 0
 }
 
 parityconf-list-supported() {
 	verbose() { _verbose "$@" >&2; }
 	noquiet() { _verbose "$@" >&2; }
-	if [[ $1 == --default ]]
-	then
-		supports-default || return 0
-		local vsarch
-		for vsarch in $(get-supported-vsarchs)
-		do
-			get-chost "${vsarch}"
-		done
-		return 0
-	fi
 	local chost
 	for chost in $(get-supported-chosts)
 	do
@@ -911,7 +1267,7 @@ parityconf-disable-all() {
 	local chost
 	for chost in $(get-supported-chosts)
 	do
-		prune-parityconf --set-default --reason="disabled" "${chost}"
+		prune-parityconf --reason="disabled" "${chost}"
 	done
 	noquiet "Disabling all configurations done."
 	return 0
@@ -919,7 +1275,7 @@ parityconf-disable-all() {
 
 parityconf-is-available() {
 	verbose() { _verbose "$@" >&2; }
-	noquiet() { _verbose "$@" >&2; }
+	noquiet() { _noquiet "$@" >&2; }
 	local chosts
 	chosts=( $(args-to-chosts "$@") ) || die
 	[[ ${#chosts[@]} -lt 1 ]] && die "Need a configuration value (try --list-available)."
@@ -934,67 +1290,28 @@ parityconf-is-available() {
 	return 0
 }
 
-# parity-setup --set-default [[arch-]newest|[arch-]oldest|[start+]end-of-chost|[arch-]vsver]
-#  Set available vsarch-vsver config as the default for vsarch, last one fires.
-parityconf-set-default() {
-	[[ ${#@} -lt 1 ]] && die "Need a configuration value (try --list-available)."
-	local newavail=()
-	local oldavail=()
-	local chost vsarchver
-	case $* in
-	*newest*|*oldest*)
-		for chost in $( parityconf-list-available ) # old to new order
-		do
-			vsarchver=$(get-vsarch "${chost}")-$(get-vsver "${chost}")
-			oldavail=( "${oldavail[@]}" "${vsarchver}" )
-			newavail=( "${vsarchver}" "${newavail[@]}" )
-		done
-		;;
-	esac
-
-	local ret=0
-	local vsarchs vsarch vsver vschoice
-	for arg in "$@"
+parityconf-get-environ() {
+	verbose() { _verbose "$@" >&2; }
+	noquiet() { _noquiet "$@" >&2; }
+	local opts=
+	while (( $# > 0 ))
 	do
-		vsarchs=( $(get-vsarch "${arg}") )
-		if [[ ${#vsarchs[@]} -eq 0 ]]
-		then
-			# no arch specified: apply to all archs
-			vsarchs=( $(get-supported-vsarchs) )
-		fi
-		for vsarch in "${vsarchs[@]}"
-		do
-			vsver=
-			vschoice=()
-			case ${arg} in
-			*oldest) vschoice=( "${oldavail[@]}" ) ;; # prefer old
-			*newest) vschoice=( "${newavail[@]}" ) ;; # prefer new
-			*)       vsver=$(get-vsver "${arg}") ;; # explicit version
-			esac
-			for vsarchver in ${vschoice[@]}
-			do
-				if [[ ${vsarchver} == ${vsarch}-* ]]
-				then
-					# first version supporting requested arch
-					vsver=$(get-vsver "${vsarchver}")
-					break
-				fi
-			done
-			if [[ -z ${vsver} && ${#vschoice[@]} -gt 0 ]]
-			then
-				# arch not available with any version
-				continue
-			fi
-			update-parityconf --set-default "$(get-chost "${vsarch}-${vsver}")" || ret=1
-		done
+		case $1 in
+		--bare)
+			opts+=" --bare"
+			shift
+			;;
+		*)
+			break
+			;;
+		esac
 	done
+	local chosts
+	chosts=( $(args-to-chosts "$@") ) || die
+	[[ ${#chosts[@]} -ne 1 ]] && die "Need a single configuration value (try --list-available)."
 
-	if [[ ${ret} -ne 0 ]]
-	then
-		noquiet "Setting default configuration failed."
-		return 1
-	fi
-	noquiet "Setting default configuration done."
+	getenv-parityconf ${opts} "${chosts[0]}"
+
 	return 0
 }
 
@@ -1002,7 +1319,7 @@ parityconf-install() {
 	local chost
 	for chost in $(get-supported-chosts)
 	do
-		prune-parityconf --reason="disabled" --set-default "${chost}"
+		prune-parityconf --reason="disabled" "${chost}"
 	done
 	return 0
 }
@@ -1011,13 +1328,11 @@ parityconf-uninstall() {
 	local chost
 	for chost in $(get-supported-chosts)
 	do
-		prune-parityconf --uninstall --reason="uninstalled" --set-default "${chost}"
+		prune-parityconf --uninstall --reason="uninstalled" "${chost}"
 	done
 	return $?
 }
 
-traceon() { :; }
-traceoff() { set +x; return $1; }
 _verbose() { :; }
 _noquiet() { :
     ${1+echo "$@"}
@@ -1032,11 +1347,7 @@ do
 	shift
 	case ${arg} in
 	--debug)
-		traceoff() { :; return $1; }
 		set -x
-		;;
-	--trace)
-		traceon() { set -x; }
 		;;
 	--verbose)
 		_verbose() { :
@@ -1098,9 +1409,9 @@ verbose() { _verbose "$@"; }
 noquiet() { _noquiet "$@"; }
 
 case ${arg} in
---list-supported|--list-available|--is-available|\
+--list-supported|--list-available|--is-available|--get-environ|\
 --help|--enable|--enable-all|--disable|--disable-all|\
---set-default|--install|--uninstall|--unittest)
+--install|--uninstall|--unittest)
     action=${arg#--}
     ;;
 *)

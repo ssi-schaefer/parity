@@ -28,7 +28,14 @@
 
 PCRT_BEGIN_C
 
+/*
+ * X11/Xos.h may provide the same wrapper around ftime as a macro,
+ * and may be included earlier
+ */
+#pragma push_macro("gettimeofday")
+#undef gettimeofday
 int gettimeofday(struct timeval *tv, void*);
+#pragma pop_macro("gettimeofday")
 
 PCRT_END_C
 

@@ -76,10 +76,15 @@ namespace parity
 			//
 			// Find "x86_64" or "x86" in argv[0]:
 			std::string vcvariant;
-			if (strstr(argv0, "x86_64"))
+			utils::MachineType ctxmachine = utils::MachineUnknown;
+			if (strstr(argv0, "x86_64")) {
 				vcvariant = "x64";
-			else if (strstr(argv0, "x86"))
+				ctxmachine = utils::MachineAMD64;
+			} else
+			if (strstr(argv0, "x86")) {
 				vcvariant = "x86";
+				ctxmachine = utils::MachineI386;
+			}
 			// Find "i[0-9]86" in argv[0]:
 			for(char const * x = strstr(argv0, "i"); x; x = strstr(x+1, "i")) {
 				if (strlen(x) >= 4
@@ -87,6 +92,7 @@ namespace parity
 				 && x[1] >= '1' && x[1] <= '9'
 				) {
 					vcvariant = "x86";
+					ctxmachine = utils::MachineI386;
 					break;
 				}
 			}
@@ -94,12 +100,14 @@ namespace parity
 			for (int i = 1; i < argc; ++i) {
 				if (strcmp(argv[i], "-m64") == 0) {
 					vcvariant = "x64";
+					ctxmachine = utils::MachineAMD64;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
 				}
 				if (strcmp(argv[i], "-m32") == 0) {
 					vcvariant = "x86";
+					ctxmachine = utils::MachineI386;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
@@ -107,36 +115,92 @@ namespace parity
 			}
 
 			//
-			// Second, identify which MSVC version to load the configuration for.
+			// Second, identify which MSVC runtime, and
+			// third, which version to load the configuration for.
 			//
+			std::string vcruntime = "msvc";
+			utils::RuntimeType ctxruntime = utils::RuntimeInvalid;
 			int msvcmajor = 0, msvcminor = 0;
 			//
 			// We may have an msvc version in the executable filename,
 			// that is basename of argv[0], or as an argument "-mmsvcX.Y".
 			//
-			// Find "msvc" in argv[0].
-			char * pmsvcver = strstr(argv0, "msvc");
-			// Find "-mmsvc" in arguments, overriding argv[0].
+			// Find "-msvc", "-msvcd", "-libcmtd" or "-libcmt" in argv[0].
+			char * pmsvcver;
+			if ((pmsvcver = strstr(argv0, "-msvcd"))) {
+				vcruntime = "msvcd";
+				ctxruntime = utils::RuntimeDynamicDebug;
+				pmsvcver += 6;
+			} else
+			if ((pmsvcver = strstr(argv0, "-msvc"))) {
+				vcruntime = "msvc";
+				ctxruntime = utils::RuntimeDynamic;
+				pmsvcver += 5;
+			} else
+			if ((pmsvcver = strstr(argv0, "-libcmtd"))) {
+				vcruntime = "libcmtd";
+				ctxruntime = utils::RuntimeStaticDebug;
+				pmsvcver += 8;
+			} else
+			if ((pmsvcver = strstr(argv0, "-libcmt"))) {
+				vcruntime = "libcmt";
+				ctxruntime = utils::RuntimeStatic;
+				pmsvcver += 7;
+			}
+			// Find "-mmsvc" or "-mlibcmt" in arguments, overriding argv[0].
 			for (int i = 1; i < argc; ++i) {
+				if (strncmp(argv[i], "-mmsvcd", 7) == 0) {
+					vcruntime = "msvcd";
+					ctxruntime = utils::RuntimeDynamicDebug;
+					pmsvcver = argv[i] + 7;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
 				if (strncmp(argv[i], "-mmsvc", 6) == 0) {
-					pmsvcver = argv[i] + 2;
+					vcruntime = "msvc";
+					ctxruntime = utils::RuntimeDynamic;
+					pmsvcver = argv[i] + 6;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+				if (strncmp(argv[i], "-mlibcmtd", 9) == 0) {
+					vcruntime = "libcmtd";
+					ctxruntime = utils::RuntimeStaticDebug;
+					pmsvcver = argv[i] + 9;
+					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
+					--i; --argc;
+					continue;
+				}
+				if (strncmp(argv[i], "-mlibcmt", 8) == 0) {
+					vcruntime = "libcmt";
+					ctxruntime = utils::RuntimeStatic;
+					pmsvcver = argv[i] + 8;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
 				}
 			}
 			if (pmsvcver != NULL) {
-				sscanf(pmsvcver, "msvc%d.%d", &msvcmajor, &msvcminor);
+				sscanf(pmsvcver, "%d.%d", &msvcmajor, &msvcminor);
 				// Ignore sscanf failure, use default version then.
 				// If there's only one number, use "0" as minor version.
 			}
 			if (msvcmajor != 0) {
 				std::stringstream v;
-				v << vcvariant << "-msvc" << msvcmajor << "." << msvcminor;
+				v << vcvariant << "-" << vcruntime << msvcmajor;
+				// Since Visual Studio 2017 we omit the minor version number,
+				// as updates may bump it, but we don't want another CHOST for.
+				if (msvcmajor < 15) {
+					v << "." << msvcminor;
+				}
 				vcvariant = v.str();
 			}
 
 			utils::Context& context = utils::Context::getContext();
+			context.setRuntime(ctxruntime);
+			context.setMachine(ctxmachine);
 			utils::Timing::instance().start("Configuration loading");
 			ConfigFileVector files;
 
@@ -161,7 +225,8 @@ namespace parity
 			//
 			for (int i = 1; i < argc; ++i) {
 				if (strncmp(argv[i], "-mparityconfdir=", 16) == 0) {
-					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16), true));
+					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16) + "/" + vcvariant, true));
+					files.push_back(ConfigFileVector::value_type(utils::Path(argv[i] + 16) + "/parity." + vcvariant + ".conf", true));
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
@@ -172,17 +237,17 @@ namespace parity
 				char fnBuffer[1024];
 				GetModuleFileName(GetModuleHandle(NULL), fnBuffer, 1024);
 
-				files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base(), true));
+				files.push_back(ConfigFileVector::value_type(utils::Path(fnBuffer).base() + "/" + vcvariant, true));
 #endif
 #if defined(PARITY_LOCALSTATEDIR)
 				utils::Path localstatepath(PARITY_LOCALSTATEDIR);
 				localstatepath.toNative();
-				files.push_back(ConfigFileVector::value_type(localstatepath, true));
+				files.push_back(ConfigFileVector::value_type(localstatepath + "/" + vcvariant, true));
 #endif
 #if defined(PARITY_SYSCONFDIR)
 				utils::Path sysconfpath(PARITY_SYSCONFDIR);
 				sysconfpath.toNative();
-				files.push_back(ConfigFileVector::value_type(sysconfpath, false));
+				files.push_back(ConfigFileVector::value_type(sysconfpath + "/" + vcvariant, false));
 #endif
 			}
 
@@ -205,7 +270,7 @@ namespace parity
 				utils::Path pth = it->first;
 
 				if(pth.isDirectory()) {
-					pth.append("parity." + vcvariant + ".conf");
+					pth.append("parity.conf");
 				}
 
 				pth.toNative();

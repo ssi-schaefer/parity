@@ -26,9 +26,7 @@
 #include "internal/pcrt.h"
 
 #pragma push_macro("__STDC__")
-#  ifdef __STDC__
-#    undef __STDC__
-#  endif
+#  undef __STDC__
 #  pragma push_macro("utime")
 #    undef utime
 #    define utime __crt_invalid_utime

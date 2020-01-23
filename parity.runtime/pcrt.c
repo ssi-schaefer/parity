@@ -179,40 +179,37 @@ const char* PcrtPathToNative(const char* ptr) {
         }
         HeapFree(GetProcessHeap(), 0, ptrRoots);
 	} else {
-		static HMODULE hCygLib = NULL;
-		static int inited = 0;
-		
-		if(!hCygLib)
-			hCygLib = LoadLibrary("cygwin1.dll");
+		FILE *hPipe = NULL;
+		char *converted = NULL;
+		int wasEof = 0;
+		int piperet = 1;
 
-		if(hCygLib)
-		{
-			static cygwin_init_func_t init = NULL; 
-			static cygwin_conv_func_t conv = NULL; 
+		pRing[iRingNum] = HeapAlloc(GetProcessHeap(), 0, _MAX_PATH);
+		if (!pRing[iRingNum]) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Error %x allocating %d bytes!\n", GetLastError(), _MAX_PATH);
+			return ptr;
+		}
+		snprintf(pRing[iRingNum], _MAX_PATH, "cygpath -wa \"%s\"", ptr);
 
-			if(!init)
-				init = (cygwin_init_func_t)GetProcAddress(hCygLib, "cygwin_dll_init");
-			if(!conv)
-				conv = (cygwin_conv_func_t)GetProcAddress(hCygLib, "cygwin_conv_to_full_win32_path");
-
-			if(init && conv)
-			{
-				//
-				// allocate a ring slot, and then convert using cygwin dll.
-				//
-				pRing[iRingNum] = HeapAlloc(GetProcessHeap(), 0, _MAX_PATH);
-
-				if(!inited++)
-					init();
-
-				conv(ptr, pRing[iRingNum]);
-
-				return pRing[iRingNum];
-			} else {
-				PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Cannot load all required functions from cygwin1.dll, cannot convert absolute UNIX paths!\n");
+		hPipe = _popen(pRing[iRingNum], "rb");
+		if (hPipe) {
+			if (pRing[iRingNum]) {
+				converted = fgets(pRing[iRingNum], _MAX_PATH, hPipe);
+				wasEof = feof(hPipe);
 			}
+			piperet = _pclose(hPipe);
+		}
+		if (converted && *converted && !wasEof && piperet == 0) {
+			size_t len = strlen(converted);
+			if (converted[len-1] == '\n') {
+				converted[len-1] = '\0';
+			}
+			return converted;
+		}
+		if (hPipe) {
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "cygpath failed (status %d) to convert absolute UNIX path!\n", piperet);
 		} else {
-			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither REX, Interix Installation, or Cygwin DLL found, cannot convert absolute UNIX paths!\n"
+			PcrtOutPrint(GetStdHandle(STD_ERROR_HANDLE), "Neither REX, Interix Installation, nor the cygpath program found, cannot convert absolute UNIX paths!\n"
 				"You may want to set the environment variable REX_ROOTS like shown in these Cygwin bash commands:\n"
 				"export REX_ROOTS=\"$(mount | awk -v ORS= -v v= -v s= '{gsub(/ on /,\";\");gsub(/ type .*/,\"\");v=v s $0;s=\",\"}END{print v}')\"\n"
 			);
@@ -248,16 +245,6 @@ int PcrtInit(int staticCrt)
 		//
 		setvbuf(stdout, NULL, _IONBF, 0);
 		setvbuf(stderr, NULL, _IONBF, 0);
-
-		//
-		// Set stream modes to binary to stay compatible with the
-		// rest of the world. this makes some autoconf patches
-		// obsolete, which handled line ending conversion in some
-		// check macros which rely on a single \n
-		//
-		_setmode(STDIN_FILENO, _O_BINARY);
-		_setmode(STDOUT_FILENO, _O_BINARY);
-		_setmode(STDERR_FILENO, _O_BINARY);
 	}
 	//
 	// This effectively adds a VecoredExceptionHandler to the

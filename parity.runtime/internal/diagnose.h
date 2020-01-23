@@ -53,15 +53,7 @@ typedef struct {
 // that can be traversed from the top-most to the bottom-most
 // stack frame.
 //
-typedef struct _stackframe_t {
-	void* eip;
-	void* ebp;
-	void* ret;
-	size_t size;
-	syminfo_t sym;
-
-	struct _stackframe_t* next;
-} stackframe_t;
+typedef struct _stackframe_t stackframe_t;
 
 typedef enum {
 	LookupInternal = 0,
@@ -74,9 +66,10 @@ extern int PcrtWaitForDebugger(int timeout);
 extern int PcrtBreakIfDebugged();
 extern int PcrtAttachDebugger();
 
+extern void PcrtInitializeDebugInformation();
 extern void PcrtPrintStackTrace(FILE* stream, stackframe_t* stack);
 extern stackframe_t* PcrtGetStackTrace();
-extern stackframe_t* PcrtGetStackTraceFrom(void* _bp, void* _ip);
+extern stackframe_t* PcrtGetStackTraceFrom(CONTEXT const * inContext);
 extern stackframe_t* PcrtDestroyStackTrace(stackframe_t* trace);
 SymbolLookupType PcrtUseDebugSymbols();
 extern syminfo_t PcrtGetNearestSymbol(void* addr, SymbolLookupType t);

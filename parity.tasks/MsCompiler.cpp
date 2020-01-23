@@ -52,12 +52,44 @@ namespace parity
 
 				utils::Path realSource(origSource);
 
+				if (it->second == utils::LanguageAssemblerWithCpp) {
+					// need to preprocess first
+					if(ctx.getCompilerExe().get().empty()) {
+						utils::Log::error("Compiler executable not set, cannot compile assembler-with-cpp source file!\n");
+						exit(1);
+					}
+
+					std::string asmName = ".parity.preproc.XXXXXX-";
+					asmName += origSource.file();
+					utils::Path asmOutput = utils::Path::getTemporary(asmName);
+					asmOutput.toForeign();
+					ctx.getTemporaryFiles().push_back(asmOutput);
+
+					bool oldPreprocess = ctx.getPreprocess();
+					utils::Path oldOutputFile = ctx.getOutputFile();
+
+					ctx.setPreprocess(true);
+					ctx.setOutputFile(asmOutput);
+
+					utils::Task::ArgumentVector specialized(arguments);
+					prepareGenericFile(origSource, realSource, specialized, it->second);
+					processCOrCppFile(origSource, realSource, specialized);
+					compileGeneric(origSource, realSource, ctx.getCompilerExe(), specialized);
+					prepOut_.close();
+
+					ctx.setOutputFile(oldOutputFile);
+					ctx.setPreprocess(oldPreprocess);
+
+					it->second = utils::LanguageAssembler;
+					realSource = asmOutput;
+				}
+
 				utils::Task::ArgumentVector specialized(arguments);
 				prepareGenericFile(origSource, realSource, specialized, it->second);
 
 				switch(it->second)
 				{
-				case utils::LanguageAsssembler:
+				case utils::LanguageAssembler:
 					if(ctx.getAssemblerExe().get().empty()) {
 						utils::Log::error("Assembler executable not set, cannot compile assembler source file!\n");
 						exit(1);
@@ -287,9 +319,12 @@ namespace parity
 				// Only difference to assembler: /EP given to the compiler means
 				// that the preprocessor output does not have #line's.
 				//
-				if(lang == utils::LanguageAsssembler) {
+				switch(lang) {
+				case utils::LanguageAssembler:
+				case utils::LanguageAssemblerWithCpp:
 					vec.push_back("/EP");
-				} else {
+					break;
+				default:
 					if(ctx.getKeepHashLine())
 						vec.push_back("/E");
 					else
@@ -297,6 +332,7 @@ namespace parity
 
 					if(ctx.getPreprocToFile())
 						vec.push_back("/P");
+					break;
 				}
 			} else {
 				//
@@ -350,8 +386,20 @@ namespace parity
 
 			switch(lang)
 			{
-			case utils::LanguageAsssembler:
+			case utils::LanguageAssembler:
 				vec.push_back("/Ta" + sourceFile.get());
+				break;
+			case utils::LanguageAssemblerWithCpp:
+				switch(ctx.getDefaultLanguage()) {
+				case utils::LanguageCpp:
+					// When we use g++ to assemble the file, make
+					// sure we preprocess with __cplusplus defined.
+					vec.push_back("/Tp" + sourceFile.get());
+					break;
+				default:
+					vec.push_back("/Tc" + sourceFile.get());
+					break;
+				}
 				break;
 			case utils::LanguageC:
 				vec.push_back("/Tc" + sourceFile.get());
@@ -372,7 +420,7 @@ namespace parity
 			//
 			switch(lang)
 			{
-			case utils::LanguageAsssembler:
+			case utils::LanguageAssembler:
 				{
 					utils::Task::ArgumentVector temp;
 					vectorize(ctx.getAssemblerDefaults(), temp);
@@ -382,6 +430,7 @@ namespace parity
 				break;
 			case utils::LanguageC:
 			case utils::LanguageCpp:
+			case utils::LanguageAssemblerWithCpp: // preprocessing only
 			case utils::LanguageUnknown:
 				{
 					utils::Task::ArgumentVector temp;
@@ -389,6 +438,23 @@ namespace parity
 					vectorize(ctx.getCompilerPassThrough(), vec);
 
 					vec.insert(vec.begin(), temp.begin(), temp.end());
+				}
+
+				//
+				// Set optimization level.
+				//
+				switch(ctx.getOptimizeLevel()) {
+				case 0:
+					vec.push_back("/Od");
+					break;
+				case 1:
+					vec.push_back("/O1");
+					break;
+				case 2:
+					vec.push_back("/O2");
+					break;
+				case 3:
+					vec.push_back("/Ox");
 				}
 				break;
 			default:
@@ -524,23 +590,6 @@ namespace parity
 				utils::Log::verbose("define: %s\n", def.c_str());
 
 				vec.push_back(def);
-			}
-
-			//
-			// Set optimization level.
-			//
-			switch(ctx.getOptimizeLevel()) {
-			case 0:
-				vec.push_back("/Od");
-				break;
-			case 1:
-				vec.push_back("/O1");
-				break;
-			case 2:
-				vec.push_back("/O2");
-				break;
-			case 3:
-				vec.push_back("/Ox");
 			}
 		}
 
