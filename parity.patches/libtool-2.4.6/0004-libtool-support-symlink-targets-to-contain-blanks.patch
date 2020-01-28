@@ -1,0 +1,51 @@
+From b7c7d85606e73be2bac552e055521fc2c6236ee0 Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Tue, 26 Nov 2019 15:36:39 +0100
+Subject: [PATCH 4/8] libtool: support symlink targets to contain blanks
+
+Because we do not support blanks in path names in general, users may
+provide symlinks without blanks, where only the symlink target may
+contain blanks.  As we do not really store the symlink target for later
+use, it is quite easy to support symlink targets containing blanks.
+This may allow the user to drop the 8dot3 filename support from Windows
+based file systems.
+
+* build-aux/ltmain.in (func_win32_libid): Quote the file name argument.
+(func_mode_link): Properly quote file names while resolving symlinks.
+---
+ build-aux/ltmain.in | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
+index b9617ec8..89691055 100644
+--- a/build-aux/ltmain.in
++++ b/build-aux/ltmain.in
+@@ -3011,14 +3011,14 @@ func_win32_libid ()
+   $debug_cmd
+ 
+   win32_libid_type=unknown
+-  win32_fileres=`file -L $1 2>/dev/null`
++  win32_fileres=`file -L "$1" 2>/dev/null`
+   case $win32_fileres in
+   *ar\ archive\ import\ library*) # definitely import
+     win32_libid_type="x86 archive import"
+     ;;
+   *ar\ archive*) # could be an import, or static
+     # Keep the egrep pattern in sync with the one in _LT_CHECK_MAGIC_METHOD.
+-    if eval $OBJDUMP -f $1 | $SED -e '10q' 2>/dev/null |
++    if eval $OBJDUMP -f \"\$1\" | $SED -e '10q' 2>/dev/null |
+        $EGREP 'file format (pei*-i386(.*architecture: i386)?|pe-arm-wince|pe-x86-64)' >/dev/null; then
+       case $nm_interface in
+       "MS dumpbin")
+@@ -7398,7 +7398,7 @@ EOF
+ 		      # but so what?
+ 		      potlib=$potent_lib
+ 		      while test -h "$potlib" 2>/dev/null; do
+-			potliblink=`ls -ld $potlib | $SED 's/.* -> //'`
++			potliblink=`ls -ld "$potlib" | $SED 's/.* -> //'`
+ 			case $potliblink in
+ 			[\\/]* | [A-Za-z]:[\\/]*) potlib=$potliblink;;
+ 			*) potlib=`$ECHO "$potlib" | $SED 's|[^/]*$||'`"$potliblink";;
+-- 
+2.22.0
+

@@ -1,0 +1,65 @@
+From 6fcce83a58fc7436728ee9cc904f73b635e32777 Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Wed, 2 Oct 2019 12:04:17 +0200
+Subject: [PATCH 2/8] libtool: fix data imports with GNU ld on 64bit windows
+
+Using '_nm__' to match symbols from GNU ld to enable special data import
+treatment on windows targets does rely on the leading underscore being
+stripped from the __nm_ prefix rather than the subsequent symbol name.
+This does fail on 64bit Windows targets, because there is no leading
+underscore with symbol names any more.
+
+* m4/libtool.m4 (lt_cv_sys_global_symbol_pipe): Strip the leading
+underscore, if any, from the symbol name that follows the optional
+__imp_ or __nm_ prefix, rather than from that prefix.
+* build-aux/ltmain.in (func_generate_dlsyms): Account for the global
+symbol pipe leaving the __nm_ prefix intact now, but stripping the
+leading underscore, if any, from the subsequent symbol name instead.
+---
+ build-aux/ltmain.in | 2 +-
+ m4/libtool.m4       | 9 +++++++--
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
+index 96b37003..ad154fb8 100644
+--- a/build-aux/ltmain.in
++++ b/build-aux/ltmain.in
+@@ -2810,7 +2810,7 @@ extern \"C\" {
+ 	          fi
+ 	          func_to_tool_file "$dlprefile" func_convert_file_msys_to_w32
+ 	          eval "$NM \"$func_to_tool_file_result\" 2>/dev/null | $global_symbol_pipe |
+-	            $SED -e '/I __imp/d' -e 's/I __nm_/D /;s/_nm__//' >> '$nlist'"
++	            $SED -e '/I __imp/d' -e 's/I __nm_/D /;s/ __nm_/ /' >> '$nlist'"
+ 	        }
+ 	      else # not an import lib
+ 	        $opt_dry_run || {
+diff --git a/m4/libtool.m4 b/m4/libtool.m4
+index 416ff1cc..05bf608c 100644
+--- a/m4/libtool.m4
++++ b/m4/libtool.m4
+@@ -4026,7 +4026,12 @@ esac
+ for ac_symprfx in "" "_"; do
+ 
+   # Transform symcode, sympat, and symprfx into a raw symbol and a C symbol.
+-  symxfrm="\\1 $ac_symprfx\\2 \\2"
++  # In Windows import libraries, symbols may be prefixed with __imp_, as well
++  # as __nm_ when using GNU ld.  The leading underscore (in 32bit) comes after
++  # the __imp_ and __nm_ prefix, so make sure to strip the underscore from the
++  # symbol name instead of the __imp_ or __nm_ prefix, leaving these prefixes
++  # intact in the symbol pipe output.
++  symxfrm="\\1 \\2$ac_symprfx\\3 \\2\\3"
+ 
+   # Write the raw and C identifiers.
+   if test "$lt_cv_nm_interface" = "MS dumpbin"; then
+@@ -4052,7 +4057,7 @@ for ac_symprfx in "" "_"; do
+ "     s[1]~prfx {split(s[1],t,\"@\"); print f,t[1],substr(t[1],length(prfx))}"\
+ "     ' prfx=^$ac_symprfx]"
+   else
+-    lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[[	 ]]\($symcode$symcode*\)[[	 ]][[	 ]]*$ac_symprfx$sympat$opt_cr$/$symxfrm/p'"
++    lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[[	 ]]\($symcode$symcode*\)[[	 ]][[	 ]]*\(__imp_\|__nm_\)\{0,1\}$ac_symprfx$sympat$opt_cr$/$symxfrm/p'"
+   fi
+   lt_cv_sys_global_symbol_pipe="$lt_cv_sys_global_symbol_pipe | sed '/ __gnu_lto/d'"
+ 
+-- 
+2.22.0
+

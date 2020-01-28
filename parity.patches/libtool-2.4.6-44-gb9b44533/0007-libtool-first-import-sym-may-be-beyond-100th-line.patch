@@ -1,0 +1,40 @@
+From 5f1a9bd2ed0e0f3a9809c5297627221182e86748 Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Wed, 4 Dec 2019 14:33:51 +0100
+Subject: [PATCH 7/8] libtool: first import sym may be beyond 100th line
+
+When using some nm to identify an import lib along import symbols,
+limiting the search to the first 100 lines is insufficient.  For
+example, in the MS Windows 10 SDK, for ws2_32.lib the first import
+symbol is listed at line 165, and for ksuser.lib this is line 1688.
+
+* build-aux/ltmain.in (func_win32_libid): Drop line number limit when
+using some POSIX nm to query for the first import symbol listed.
+---
+ build-aux/ltmain.in | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
+index 19257a55..a0b35dd9 100644
+--- a/build-aux/ltmain.in
++++ b/build-aux/ltmain.in
+@@ -3049,12 +3049,10 @@ func_win32_libid ()
+ 	func_to_tool_file "$1" func_convert_file_msys_to_w32
+ 	win32_nmres=`eval $NM -f posix -A \"$func_to_tool_file_result\" |
+ 	  $SED -n -e '
+-	    1,100{
+-		/ I /{
+-		    s|.*|import|
+-		    p
+-		    q
+-		}
++	    / I /{
++		s|.*|import|
++		p
++		q
+ 	    }'`
+ 	;;
+       esac
+-- 
+2.22.0
+

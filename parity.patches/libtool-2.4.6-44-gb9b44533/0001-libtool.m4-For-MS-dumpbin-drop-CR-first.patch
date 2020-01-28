@@ -1,0 +1,32 @@
+From 712a79e15ec49ceddae2ee056b63baf443f4b9c9 Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Thu, 11 May 2017 14:10:17 +0200
+Subject: [PATCH 1/8] libtool.m4: For MS dumpbin drop CR first.
+
+On Cygwin, gawk-4.1.4-3 and newer do not treat the input stream as text
+any more, leaving us behind with carriage return in symbol names.
+* m4/libtool.m4 (lt_cv_sys_global_symbol_pipe): In AWK script for MS
+dumpbin drop CR first.
+---
+ m4/libtool.m4 | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/m4/libtool.m4 b/m4/libtool.m4
+index f2d1f398..416ff1cc 100644
+--- a/m4/libtool.m4
++++ b/m4/libtool.m4
+@@ -4033,8 +4033,10 @@ for ac_symprfx in "" "_"; do
+     # Fake it for dumpbin and say T for any non-static function,
+     # D for any global variable and I for any imported variable.
+     # Also find C++ and __fastcall symbols from MSVC++ or ICC,
+-    # which start with @ or ?.
++    # which start with @ or ?.  And Cygwin gawk-4.1.4-3 and newer
++    # treats input as binary, have to drop carriage return first.
+     lt_cv_sys_global_symbol_pipe="$AWK ['"\
++"     {sub(/\\r\$/,\"\")};"\
+ "     {last_section=section; section=\$ 3};"\
+ "     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};"\
+ "     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};"\
+-- 
+2.22.0
+
