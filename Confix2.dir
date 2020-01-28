@@ -1,5 +1,4 @@
 IGNORE_FILE('config.h')
-ADD_EXTRA_DIST('parity.sln')
 ADD_EXTRA_DIST('ReleaseNotes.txt')
 
 PARITYsupported_archs = ''
