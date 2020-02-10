@@ -18,6 +18,10 @@ PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
 DESTDIR=
 
+# set to "installed" during "make install" when using
+# configure --enable-binpkg-per-chost
+CHOSTS_TO_MANAGE="builtin"
+
 if [[ ${PARITYsysconfdir} == @*@ ]]
 then
 	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
@@ -411,14 +415,29 @@ test_get-chost() {
 unittests+=( test_get-chost )
 
 get-supported-chosts() {
-	local vsarch vsver vscrt
+	local vsarch vsver vscrt chost
+	if [[ ${CHOSTS_TO_MANAGE} == 'installed' ]]
+	then
+		CHOSTS_TO_MANAGE=" $(echo $(
+			cd "${PARITYlocalstatedir}" || exit 0
+			for chost in i686-*-winnt x86_64-*-winnt
+			do
+				test -r ./${chost}/. && echo ${chost}
+			done
+		) ) "
+	fi
+
 	for vsarch in $(get-supported-vsarchs)
 	do
 		for vsver in $(get-supported-vsvers)
 		do
 			for vscrt in $(get-supported-vscrts)
 			do
-				get-chost "${vsarch}-${vscrt}${vsver}"
+				chost=$(get-chost "${vsarch}-${vscrt}${vsver}")
+				case ${CHOSTS_TO_MANAGE} in
+				'builtin') echo ${chost} ;;
+				*" ${chost} "*) echo ${chost} ;;
+				esac
 			done
 		done
 	done
@@ -1196,7 +1215,7 @@ parityconf-list-supported() {
 	verbose() { _verbose "$@" >&2; }
 	noquiet() { _verbose "$@" >&2; }
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		echo "${chost}"
 	done
@@ -1209,7 +1228,7 @@ parityconf-list-available() {
 	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		if query-vcvars "${chost}"
 		then
@@ -1246,7 +1265,7 @@ parityconf-enable-all() {
 	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		update-parityconf "${chost}" &
 	done
@@ -1272,7 +1291,7 @@ parityconf-disable() {
 
 parityconf-disable-all() {
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		prune-parityconf --reason="disabled" "${chost}"
 	done
