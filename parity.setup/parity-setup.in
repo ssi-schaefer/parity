@@ -29,7 +29,7 @@ then
 	PARITYincludedir=${SELFDIR}/..
 
 	# <loaded from parity-setup.in by Confix2.dir>
-	PARITYsupported_archs="x86 x64"
+	PARITYsupported_archs="i686 x86_64"
 	PARITYsupported_runtimes="dynamic static dynamicdebug staticdebug"
 	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
 	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
@@ -285,31 +285,31 @@ unittests+=( test_get-vsver )
 # get-vsarch [begin-of-chost|vsarch[-vsver]]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vsarch i686-msvc11.0-winnt      -> x86
-#  get-vsarch i686-msvcd11.0-winnt     -> x86
-#  get-vsarch i686-msvc11.0-mingw32    -> x86
-#  get-vsarch i686-libcmtd11.0-winnt   -> x86
-#  get-vsarch x86-msvc11.0             -> x86
-#  get-vsarch i686                     -> x86
-#  get-vsarch x86_64-libcmtd11.0-winnt -> x64
-#  get-vsarch x86_64                   -> x64
+#  get-vsarch i686-msvc11.0-winnt      -> i686
+#  get-vsarch i686-msvcd11.0-winnt     -> i686
+#  get-vsarch i686-msvc11.0-mingw32    -> i686
+#  get-vsarch i686-libcmtd11.0-winnt   -> i686
+#  get-vsarch x86-msvc11.0             -> i686
+#  get-vsarch i686                     -> i686
+#  get-vsarch x86_64-libcmtd11.0-winnt -> x86_64
+#  get-vsarch x86_64                   -> x86_64
 get-vsarch() {
 	local vsarch=${1%%-*}
 	case ${vsarch} in
-	x64|amd64|x86_64) echo "x64" ;;
-	x86|i?86)         echo "x86" ;;
+	x64|amd64|x86_64) echo "x86_64" ;;
+	x86|i?86)         echo "i686" ;;
 	esac
 	return 0
 }
 test_get-vsarch() {
 	local input expected output ret=0
 	for input in \
-		x86:i686-msvc11.0-winnt      \
-		x86:i686-msvcd11.0-mingw32   \
-		x86:x86-msvc11.0             \
-		x86:i686                     \
-		x64:x86_64                   \
-		x86:i686-libcmtd11.0-winnt   \
+		i686:i686-msvc11.0-winnt      \
+		i686:i686-msvcd11.0-mingw32   \
+		i686:x86-msvc11.0             \
+		i686:i686                     \
+		x86_64:x86_64                  \
+		i686:i686-libcmtd11.0-winnt   \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -373,8 +373,8 @@ get-chost() {
 	local vsver=$(get-vsver "$*")
 	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "i686-${vscrt}${vsver}-winnt" ;;
-	x64) echo "x86_64-${vscrt}${vsver}-winnt" ;;
+	i686)   echo "i686-${vscrt}${vsver}-winnt" ;;
+	x86_64) echo "x86_64-${vscrt}${vsver}-winnt" ;;
 	esac
 	return 0
 }
@@ -394,7 +394,7 @@ test_get-chost() {
 	    i686-msvc-winnt:i686                              \
 	    x86_64-libcmtd11.0-winnt:x86_64-libcmtd11.0-winnt \
 	    x86_64-libcmtd-winnt:x86_64-libcmtd               \
-	    x86_64-msvc-winnt:x64-msvc                        \
+	    x86_64-msvc-winnt:x86_64-msvc                        \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -447,8 +447,8 @@ get-supported-executables() {
 		'ResourceConverter=cvtres.exe'
 	)
 	case ${vsarch} in
-	x86) vsexes+=( 'Assembler=ml.exe' ) ;;
-	x64) vsexes+=( 'Assembler=ml64.exe' ) ;;
+	i686)   vsexes+=( 'Assembler=ml.exe' ) ;;
+	x86_64) vsexes+=( 'Assembler=ml64.exe' ) ;;
 	esac
 	printf "%s\n" "${vsexes[@]}"
 	return 0
@@ -482,8 +482,8 @@ get-parityflags() {
 	local vsver=$(get-vsver "$*")
 	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "-m32 -m${vscrt}${vsver}" ;;
-	x64) echo "-m64 -m${vscrt}${vsver}" ;;
+	i686)   echo "-m32 -m${vscrt}${vsver}" ;;
+	x86_64) echo "-m64 -m${vscrt}${vsver}" ;;
 	esac
 	return 0
 }
@@ -707,6 +707,13 @@ query-vcvars() {
 		fi
 	fi
 
+	local vcarch
+	case ${vsarch} in
+	x86_64) vcarch=x64 ;;
+	i686) vcarch=x86 ;;
+	*) vcarch=${vsarch} ;;
+	esac
+
 	local line var val
 	while read line
 	do
@@ -719,7 +726,7 @@ query-vcvars() {
 		esac
 	done < <(
 		INCLUDE= LIB= LIBPATH= \
-		cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null \
+		cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vcarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null \
 		| sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/p"
     )
     vcPATH=${vcPATH%${novcPATH}};          vcPATH=${vcPATH%%;}
@@ -767,7 +774,7 @@ prune-parityconf() {
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
 	local vscrt=$(get-vscrt "${chost}")
-	local conf="${vsarch}-${vscrt}${vsver}"
+	local conf=${chost}
 
 	(
 		confdir="${PARITYlocalstatedir}"
@@ -888,7 +895,7 @@ update-parityconf() {
 	local vscrt=$(get-vscrt "${chost}")
 	local parityflags=$(get-parityflags "${chost}")
 	local confdir="${PARITYlocalstatedir}"
-	local conf="${vsarch}-${vscrt}${vsver}"
+	local conf=${chost}
 
 	(
 		noquiet "Configuring for ${conf} ..."
@@ -1027,7 +1034,7 @@ CompilerVersion = ${vsver}
 KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 "
 			case ${vsarch} in # (
-			x86)
+			i686)
 				echo "TimeT32Bit = true"
 				;; # (
 			*)

@@ -78,11 +78,11 @@ namespace parity
 			std::string vcvariant;
 			utils::MachineType ctxmachine = utils::MachineUnknown;
 			if (strstr(argv0, "x86_64")) {
-				vcvariant = "x64";
+				vcvariant = "x86_64";
 				ctxmachine = utils::MachineAMD64;
 			} else
 			if (strstr(argv0, "x86")) {
-				vcvariant = "x86";
+				vcvariant = "i686";
 				ctxmachine = utils::MachineI386;
 			}
 			// Find "i[0-9]86" in argv[0]:
@@ -91,7 +91,7 @@ namespace parity
 				 && strncmp(x+2, "86", 2) == 0
 				 && x[1] >= '1' && x[1] <= '9'
 				) {
-					vcvariant = "x86";
+					vcvariant = "i686";
 					ctxmachine = utils::MachineI386;
 					break;
 				}
@@ -99,14 +99,14 @@ namespace parity
 			// Find "-m64" or "-m32" in arguments, overriding argv[0].
 			for (int i = 1; i < argc; ++i) {
 				if (strcmp(argv[i], "-m64") == 0) {
-					vcvariant = "x64";
+					vcvariant = "x86_64";
 					ctxmachine = utils::MachineAMD64;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
 					continue;
 				}
 				if (strcmp(argv[i], "-m32") == 0) {
-					vcvariant = "x86";
+					vcvariant = "i686";
 					ctxmachine = utils::MachineI386;
 					memmove(&argv[i], &argv[i+1], (argc - i) * sizeof(argv[0]));
 					--i; --argc;
@@ -197,6 +197,8 @@ namespace parity
 				}
 				vcvariant = v.str();
 			}
+
+			vcvariant += "-winnt";
 
 			utils::Context& context = utils::Context::getContext();
 			context.setRuntime(ctxruntime);
