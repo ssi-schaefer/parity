@@ -1,0 +1,127 @@
+NAME="parity"
+VERSION="2.0.0"
+RELEASE="0.1"
+CATEGORY="Devel"
+
+MSVC_VERSIONS=(
+# quoted from parity-setup, ignoring the old ones not running on Windows 10
+#  "<vcver> '<vsname>'           <alternative-chost-version>"
+#  "7       'Visual Studio 2003' 7.1"
+   "8       'Visual Studio 2005' 8.0"
+   "9       'Visual Studio 2008' 9.0"
+   "10      'Visual Studio 2010' 10.0"
+   "11      'Visual Studio 2012' 11.0"
+   "12      'Visual Studio 2013' 12.0"
+   "14      'Visual Studio 2015' 14.0"
+   "15      'Visual Studio 2017'"
+   "16      'Visual Studio 2019'"
+)
+
+HOMEPAGE="https://github.com/mduft/parity"
+SUMMARY="GCC like commandline wrapper for Visual Studio toolchain"
+SRC_URI="${HOMEPAGE}/releases/download/${VERSION}/${NAME}-${VERSION}.tar.bz2"
+SRC_DIR="${NAME}-${VERSION}"
+DEPEND="autoconf-archive"
+core_DESCRIPTION="\
+Wraps the MSVC toolchain (cl.exe, link.exe, etc.)
+providing a GCC like toolchain (gcc, g++, etc.)."
+
+chosts-for-ver() {
+	local chostver=$1
+	local chost
+	for chost in \
+		i686-msvc${chostver}-winnt \
+		i686-msvcd${chostver}-winnt \
+		i686-libcmt${chostver}-winnt \
+		i686-libcmtd${chostver}-winnt \
+		x86_64-msvc${chostver}-winnt \
+		x86_64-msvcd${chostver}-winnt \
+		x86_64-libcmt${chostver}-winnt \
+		x86_64-libcmtd${chostver}-winnt \
+	; do
+		echo "${chost}"
+	done
+}
+
+one_pkgspecs() {
+	local vcver=$1
+	local vsname=$2
+	local chostver=$3
+	local pkgvarname="${NAME}_msvc${vcver}"
+	eval "${pkgvarname}_CATEGORY='${CATEGORY}'"
+	eval "${pkgvarname}_SUMMARY='${SUMMARY/Visual Studio/${vsname}}'"
+	eval "${pkgvarname}_DESCRIPTION='${core_DESCRIPTION/MSVC/MSVC ${chostver}}'"
+	eval "${pkgvarname}_CONTENTS='$(
+		echo "etc/postinstall/parity-msvc${vcver}.sh"
+		echo "etc/preremove/parity-msvc${vcver}.sh"
+		for chost in $(chosts-for-ver "${chostver}")
+		do
+			echo "usr/${chost}/"
+			echo "usr/bin/${chost}-*"
+			echo "etc/parity/${chost}/"
+			echo "var/parity/${chost}/"
+		done
+	)'"
+}
+
+all_pkgspecs() {
+	PKG_NAMES="${NAME}-core"
+	eval "${NAME}_core_CATEGORY='${CATEGORY}'"
+	eval "${NAME}_core_SUMMARY='${SUMMARY}'"
+	eval "${NAME}_core_DESCRIPTION='${core_DESCRIPTION}
+Install ${NAME}-msvcXX matching your MSVC versions you want to utilize.'"
+	eval "${NAME}_core_CONTENTS='
+		etc/postinstall/${NAME}-core.sh
+		etc/preremove/${NAME}-core.sh
+		usr/bin/parity*
+		usr/lib/parity/
+		usr/libexec/
+	'"
+	PKG_IGNORE='
+		usr/share/
+		usr/lib/libparity_*
+	'
+	CYGCONF_ARGS=
+	local msvc_version verspecs vcver vsname chostver
+	for msvc_version in "${MSVC_VERSIONS[@]}"
+	do
+		# unbundle "<vcver> '<vsname>' <alternative-chost-version>"
+		eval "verspecs=( ${msvc_version} )"
+		vcver=${verspecs[0]}
+		vsname=${verspecs[1]}
+		chostver=${verspecs[2]:-${vcver}}
+
+		PKG_NAMES+=" ${NAME}-msvc${vcver}"
+		CYGCONF_ARGS+=",${chostver}"
+		one_pkgspecs "${vcver}" "${vsname}" "${chostver}"
+	done
+	CYGCONF_ARGS="--enable-binpkg-per-chost --enable-msvc-versions=${CYGCONF_ARGS#,}"
+}
+
+all_pkgspecs
+
+src_install() {
+	cd ${B};
+	cyginstall
+	dodir /etc/postinstall
+	dodir /etc/preremove
+	echo "/usr/bin/${NAME}-setup --enable-all" > "${D}"/etc/postinstall/${NAME}-core.sh
+	echo "/usr/bin/${NAME}-setup --disable-all" > "${D}"/etc/preremove/${NAME}-core.sh
+	local msvc_version verspecs vcver vsname chostver
+	for msvc_version in "${MSVC_VERSIONS[@]}"
+	do
+		# unbundle "<vcver> '<vsname>' <alternative-chost-version>"
+		eval "verspecs=( ${msvc_version} )"
+		vcver=${verspecs[0]}
+		vsname=${verspecs[1]}
+		chostver=${verspecs[2]:-${vcver}}
+		cat > "${D}"/etc/postinstall/${NAME}-msvc${vcver}.sh <<-EOF
+			for chost in $(echo $(chosts-for-ver "${chostver}"))
+			do
+			      /usr/bin/${NAME}-setup --enable \${chost} &
+			done
+			wait
+		EOF
+		echo /usr/bin/${NAME}-setup --disable $(chosts-for-ver "${chostver}") > "${D}"/etc/preremove/${NAME}-msvc${vcver}.sh
+	done
+}
