@@ -1085,19 +1085,32 @@ KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 # include <sdkddkver.h>
 #endif
 #define PCRTSTR(x) #x
-#define PCRTDEF(n) "Defines = " #n
-#define PCRTDEFV(n, v) "Defines = " #n "=" PCRTSTR(v)
+#define PCRTDEF(n) "conf: Defines = " #n
+#define PCRTDEFV(n, v) "conf: Defines = " #n "=" PCRTSTR(v)
 PCRTDEF(WIN32_LEAN_AND_MEAN)
 #if            defined(_WIN32_WINNT_MAXVER) /* by <winsdkver.h> */
 PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT_MAXVER)
 #elif          defined(_WIN32_WINNT) /* by <sdkddkver.h> */
 PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT)
 #endif
+#if defined(_MSVC_LANG)
+"conf: SupportsStd = true"
+#if __cplusplus - 0 == _MSVC_LANG
+"conf: SupportsZc__cplusplus = true"
+#else
+"conf: SupportsZc__cplusplus = false"
+#endif
+#else
+"conf: SupportsStd = false"
+"conf: SupportsZc__cplusplus = false"
+#endif
 		' | "${DESTDIR}${CC}" \
 				"-mparityconfdir=./${tmpdir}" \
 				${parityflags} \
+				-X /std:c++latest -X /Zc:__cplusplus -xc++ \
 				-E - \
-		  | sed -n -e '/"Defines = "/{s/" "//g;s/"//g;p}' \
+			2>/dev/null \
+		  | sed -n -e '/"conf: /{s/"conf: //;s/" "//g;s/"//g;p}' \
 		  >> "./${tmpdir}/${conf}/parity.conf"
 		[[ ${PIPESTATUS[*]} == '0 0 0' ]]
 

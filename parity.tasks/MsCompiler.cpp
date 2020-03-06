@@ -405,6 +405,10 @@ namespace parity
 				vec.push_back("/Tc" + sourceFile.get());
 				break;
 			case utils::LanguageCpp:
+				if (ctx.getSupportsZc__cplusplus() && ctx.getCplusPlusMacro())
+					vec.push_back("/Zc:__cplusplus");
+				if (ctx.getSupportsStd() && !ctx.getCxxStandardOption().empty())
+					vec.push_back(ctx.getCxxStandardOption());
 				vec.push_back("/Tp" + sourceFile.get());
 				break;
 			case utils::LanguageUnknown:

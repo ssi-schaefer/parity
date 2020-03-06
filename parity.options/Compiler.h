@@ -38,6 +38,7 @@ namespace parity
 		bool setRuntimeTypes(const char* option, const char* argument, bool& used);
 		bool setPositionIndep(const char* option, const char* argument, bool& used);
 		bool setForcedLanguage(const char* option, const char* argument, bool& used);
+		bool setCxxStandard(const char* option, const char* argument, bool& used);
 		bool addSource(const char* option, const char* argument, bool& used);
 		bool addSourceFromStdin(const char* option, const char* argument, bool& used);
 		bool setShortWchar(const char* option, const char* argument, bool& used);

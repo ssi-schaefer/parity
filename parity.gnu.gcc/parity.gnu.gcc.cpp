@@ -157,6 +157,14 @@ int main(int argc, char** argv)
 	context.setDefinesString("__PARITY_GNU__");
 	context.setDefinesString("__PARITY__");
 
+	//
+	// GNU C++ does set the __cplusplus macro value matching the
+	// selected C++ standard in use.  It is a bug in the MSVC C++
+	// compiler to leave it on 199711L, but they decided to add
+	// another /Zc: compiler option for backwards compatibility.
+	//
+	context.setCplusPlusMacro(true);
+
 	Timing::instance().stop("Command Line Processing");
 
 	//

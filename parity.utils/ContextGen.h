@@ -233,6 +233,10 @@ namespace parity
 				CTX_GETSET   (bool			,UseSSE				,false			)  /* feature */ \
 				CTX_GETSET   (bool			,UseSSE2			,false			)  /* feature */ \
 				CTX_GETSET   (bool			,ForScope			,true			)  /* feature */ \
+				CTX_GETSET   (bool			,SupportsZc__cplusplus	,false		)  /* feature */ \
+				CTX_GETSET   (bool			,SupportsStd		,false			)  /* feature */ \
+				CTX_GETSET_I (bool			,CplusPlusMacro		,false			)  /* preprocessor */ \
+				CTX_GETSET_I (std::string	,CxxStandardOption	,""				)  /* compiler */ \
 				CTX_GETSET   (bool			,MsExtensions		,true			)  /* feature */ \
 				CTX_GETSET   (long			,WarningLevel		,3				)  /* feature */ \
 				CTX_GETSET   (bool			,WarningAsError		,false			)  /* feature */ \
