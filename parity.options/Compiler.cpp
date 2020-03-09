@@ -118,7 +118,7 @@ namespace parity
 				{ "-std=c++17", "/std:c++17",     true },
 				{ "-std=c++2a", "/std:c++latest", true },
 			};
-			for(int i = 0; i < sizeof(mapping)/sizeof(mapping[0]); ++i) {
+			for(size_t i = 0; i < sizeof(mapping)/sizeof(mapping[0]); ++i) {
 				if (strcmp(mapping[i].gnuOption, option) == 0) {
 					ctx.setCxxStandardOption(mapping[i].msOption);
 					ctx.setCplusPlusMacro(mapping[i].cxxMacro);

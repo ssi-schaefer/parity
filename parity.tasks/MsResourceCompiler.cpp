@@ -58,7 +58,6 @@ namespace parity
 
 		void MsResourceCompiler::compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec)
 		{
-			utils::Context& ctx = utils::Context::getContext();
 			utils::Task tsk;
 			utils::Path output(outputFile_);
 
@@ -88,7 +87,6 @@ namespace parity
 
 		void MsResourceCompiler::prepareGenericFile(utils::Path file, utils::Task::ArgumentVector& vec)
 		{
-			utils::Context& ctx = utils::Context::getContext();
 			std::string base = file.file();
 
 			std::string out(outputFile_);

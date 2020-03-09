@@ -67,12 +67,14 @@ namespace parity
 			// should not be required anymore hopefully...
 			//::memset(&struct_, 0, sizeof(struct_));
 
+			char buf[22] = {};
 			if(name.length() <= 8)
 			{
-				::strncpy(reinterpret_cast<char*>(struct_.Name), name.c_str(), 8);
+				::strncpy(buf, name.c_str(), 8);
 			} else {
-				::sprintf(reinterpret_cast<char*>(struct_.Name), "/%-7d", fh->addString(name));
+				::snprintf(buf, sizeof(buf), "/%-7d", fh->addString(name));
 			}
+			memcpy(struct_.Name, buf, 8);
 		}
 
 		Section::Section(Section const& rhs)
@@ -130,15 +132,12 @@ namespace parity
 
 			char* ptr = MAKEPTR(char*, fh->getBasePointer(), struct_.PointerToRelocations);
 
-			unsigned int numRelocs = struct_.NumberOfRelocations;
-
 			if(struct_.Characteristics & CharExtendedRelocations)
 			{
 				if(struct_.NumberOfRelocations != 0xFFFF)
 					throw utils::Exception("relocation overflow, but less than 0xFFFF relocations in section!");
 
 				Relocation first(ptr);
-				numRelocs = first.getVirtualAddress();
 			}
 
 			for(int i = 0; i < struct_.NumberOfRelocations; ++i)

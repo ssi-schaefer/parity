@@ -39,7 +39,9 @@ namespace parity
 
 			if(name.length() <= 8)
 			{
-				::strncpy(struct_.N.ShortName, name.c_str(), 8);
+				char buf[9];
+				::strncpy(buf, name.c_str(), 8);
+				memcpy(struct_.N.ShortName, buf, 8);
 			} else {
 				struct_.N.N.Zeros = 0;
 				struct_.N.N.Offset = fh->addString(name);

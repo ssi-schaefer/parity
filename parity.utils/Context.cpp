@@ -242,6 +242,8 @@ namespace parity
 				names.push_back("lib" + name + ".a");
 				names.push_back(        name + ".a");
 				break;
+			default:
+				break;
 			}
 
 			switch(libspec) {
@@ -255,6 +257,8 @@ namespace parity
 
 				names.push_back(name);
 			  } break;
+			default:
+				break;
 			}
 
 			static utils::Environment envLibPath("LIBRARY_PATH");

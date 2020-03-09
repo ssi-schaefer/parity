@@ -139,6 +139,8 @@ namespace parity
 					case parity::utils::RuntimeStaticDebug:
 						sectText.addData(dataExeEntryPart1StaticCrt, sizeof(dataExeEntryPart1StaticCrt));
 						break;
+					default:
+						break;
 				}
 				
 				sectText.markRelocation(symPcrtInit, binary::Relocation::i386Relative32);

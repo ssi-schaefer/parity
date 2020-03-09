@@ -210,7 +210,7 @@ namespace parity
 					}
 				}
 			}
-			catch (std::ifstream::failure e) {
+			catch (std::ifstream::failure &e) {
 				throw; // throw the file error
 			}
 

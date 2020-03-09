@@ -390,18 +390,15 @@ namespace parity
 			{
 			case MachineI386:
 				return "I386";
-				break;
 			case MachineAMD64:
 				return "AMD64";
-				break;
 			case MachineARM:
 				return "ARM";
-				break;
 			case MachineIA64:
 				return "IA64";
-				break;
+			default:
+				return "unknown";
 			}
-			return "unknown";
 		}
 
 		std::string ContextGen::printable(const LanguageType& val)
@@ -431,8 +428,6 @@ namespace parity
 				//
 				return "Invalid";
 			}
-
-			return "unknown";
 		}
 
 		std::string ContextGen::printable(const SubsystemType& val)
@@ -452,8 +447,6 @@ namespace parity
 			default:
 				return "Not Supported";
 			}
-
-			return "unknown";
 		}
 
 		std::string ContextGen::printable(const SourceMap& val)

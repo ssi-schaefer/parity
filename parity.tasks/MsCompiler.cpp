@@ -269,7 +269,7 @@ namespace parity
 			if(!tsk.execute(executable, vec))
 				throw utils::Exception("cannot execute %s", executable.get().c_str());
 
-            if(!output.get().length() < 1) {
+            if(output.get().length()) {
                 output.toNative();
                 if(!output.waitForAppearance()) {
                     throw utils::Exception("cannot await appearance of %s\n", output.get().c_str());
