@@ -12,5 +12,5 @@ from libconfix.setups.script import Script
 SETUP([AutoBoilerplate(),
        AutoC(),
        Automake(use_libtool=False, library_dependencies=True),
-       CMake(library_dependencies=True), Script()])
+       Script()])
 
