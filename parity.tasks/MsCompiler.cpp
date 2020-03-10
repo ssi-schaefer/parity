@@ -269,7 +269,7 @@ namespace parity
 			if(!tsk.execute(executable, vec))
 				throw utils::Exception("cannot execute %s", executable.get().c_str());
 
-            if(!output.get().length() < 1) {
+            if(output.get().length()) {
                 output.toNative();
                 if(!output.waitForAppearance()) {
                     throw utils::Exception("cannot await appearance of %s\n", output.get().c_str());
@@ -405,6 +405,10 @@ namespace parity
 				vec.push_back("/Tc" + sourceFile.get());
 				break;
 			case utils::LanguageCpp:
+				if (ctx.getSupportsZc__cplusplus() && ctx.getCplusPlusMacro())
+					vec.push_back("/Zc:__cplusplus");
+				if (ctx.getSupportsStd() && !ctx.getCxxStandardOption().empty())
+					vec.push_back(ctx.getCxxStandardOption());
 				vec.push_back("/Tp" + sourceFile.get());
 				break;
 			case utils::LanguageUnknown:

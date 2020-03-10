@@ -6,11 +6,10 @@ PACKAGE_VERSION('2.0.0')
 from libconfix.setups.boilerplate import AutoBoilerplate
 from libconfix.setups.c import AutoC
 from libconfix.setups.automake import Automake
-from libconfix.setups.cmake import CMake
 from libconfix.setups.script import Script
 
 SETUP([AutoBoilerplate(),
        AutoC(),
        Automake(use_libtool=False, library_dependencies=True),
-       CMake(library_dependencies=True), Script()])
+       Script()])
 

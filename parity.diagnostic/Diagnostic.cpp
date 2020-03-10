@@ -28,8 +28,6 @@
 
 #include <psapi.h>
 
-#pragma comment(lib, "psapi.lib")
-
 #define BUFSIZE 512
 
 BOOL GetFileNameFromHandle(HANDLE hFile, char* pszFilename, size_t length) 

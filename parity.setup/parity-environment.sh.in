@@ -14,10 +14,10 @@ while test "${__parityenv_arg#*-}" != "${__parityenv_arg}"
 do
 	case ${__parityenv_arg} in
 	x86_64-*)
-		__parityenv_arch=x64
+		__parityenv_arch=x86_64
 		;;
 	i?86-*)
-		__parityenv_arch=x86
+		__parityenv_arch=i686
 		;;
 	msvc*|libcmt*)
 		case ${__parityenv_arg} in
@@ -49,10 +49,10 @@ do
 		__parityenv_confdir=${__parityenv_arg#-mparityconfdir=}
 		;;
 	-m32)
-		__parityenv_arch=x86
+		__parityenv_arch=i686
 		;;
 	-m64)
-		__parityenv_arch=x64
+		__parityenv_arch=x86_64
 		;;
 	-mmsvc*)
 		__parityenv_crtspec=-msvc
@@ -70,23 +70,25 @@ done
 
 set -- "${__parityenv_args[@]}"
 
-if [[ -r ${__parityenv_confdir}/${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}/parity.sh ]]
+__parityenv_chost="${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}-winnt"
+
+if [[ -r ${__parityenv_confdir}/${__parityenv_chost}/parity.sh ]]
 then
-	__parityenv_confdir="${__parityenv_confdir}/${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec}"
+	__parityenv_confdir="${__parityenv_confdir}/${__parityenv_chost}"
 fi
 
 if [[ -r "${__parityenv_confdir}/parity.sh" ]]
 then
 	if . "${__parityenv_confdir}/parity.sh"
 	then
-		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
+		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec __parityenv_chost
 		true
 	else
-		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
+		unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec __parityenv_chost
 		false
 	fi
 else
-	echo "Invalid MSVC version specified (${__parityenv_arch}${__parityenv_crtspec}${__parityenv_verspec})." >&2
-	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec
+	echo "Invalid MSVC version specified (${__parityenv_chost})." >&2
+	unset __parityenv_confdir __parityenv_args __parityenv_arg __parityenv_arch __parityenv_verspec __parityenv_crtspec __parityenv_chost
 	false
 fi

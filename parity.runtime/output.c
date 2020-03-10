@@ -55,8 +55,8 @@ void PcrtOutFormatStringVa(char* buffer, const char* fmt, va_list args)
 				// fall through
 			case 'd':
 				{
-					char buf[2*sizeof(uintptr_t)+1];
-					unsigned char* wh = buf + 2*sizeof(uintptr_t);
+					char buf[3*sizeof(uintptr_t)+1];
+					unsigned char* wh = buf + 3*sizeof(uintptr_t);
 
 					uintptr_t num = va_arg(args, uintptr_t);
 

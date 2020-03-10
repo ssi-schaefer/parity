@@ -155,7 +155,6 @@ namespace parity
 							if(!hdr.isValid())
 								throw utils::Exception("invalid header of image!");
 
-							binary::OptionalHeader ohdr = hdr.getOptionalHeader();
 							binary::Section::IndexedSectionMap vec = hdr.getSections();
 
 							for(binary::Section::IndexedSectionMap::iterator it = vec.begin(); it != vec.end(); ++it)

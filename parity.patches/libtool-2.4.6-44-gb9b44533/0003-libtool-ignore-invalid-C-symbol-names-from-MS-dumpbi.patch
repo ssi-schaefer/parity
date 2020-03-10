@@ -1,0 +1,81 @@
+From 8103602f55b7ba4ec6bf857b258b409c3800cfed Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Thu, 3 Oct 2019 16:17:14 +0200
+Subject: [PATCH 3/8] libtool: ignore invalid C symbol names from MS dumpbin
+
+With 64bit MSVC cl.exe, and since VS 2012 even with 32bit, binary files
+may contain (C)ommon symbols.  Their name likely is not valid to be used
+as symbol name in the C programming language, and should be ignored in
+the global symbol pipe.  This does fix test cases 27-29, 31-37 and 109.
+
+* libtool.m4 (_LT_CMD_GLOBAL_SYMBOLS): For the global symbol pipe,
+accept symbol names that are valid for the C language only.  And when
+parsing MS dumpbin output, decorate symbols from section UNDEF but
+nonzero value as (C)ommon instead of (D)ata, even if they likely are
+ignored later on because of having an invalid C language symbol name.
+---
+ m4/libtool.m4 | 21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
+
+diff --git a/m4/libtool.m4 b/m4/libtool.m4
+index 05bf608c..0d0280d2 100644
+--- a/m4/libtool.m4
++++ b/m4/libtool.m4
+@@ -3977,13 +3977,13 @@ esac
+ 
+ if test "$lt_cv_nm_interface" = "MS dumpbin"; then
+   # Gets list of data symbols to import.
+-  lt_cv_sys_global_symbol_to_import="sed -n -e 's/^I .* \(.*\)$/\1/p'"
++  lt_cv_sys_global_symbol_to_import="sed -n -e 's/^I .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/\1/p'"
+   # Adjust the below global symbol transforms to fixup imported variables.
+-  lt_cdecl_hook=" -e 's/^I .* \(.*\)$/extern __declspec(dllimport) char \1;/p'"
+-  lt_c_name_hook=" -e 's/^I .* \(.*\)$/  {\"\1\", (void *) 0},/p'"
++  lt_cdecl_hook=" -e 's/^I .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/extern __declspec(dllimport) char \1;/p'"
++  lt_c_name_hook=" -e 's/^I .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/  {\"\1\", (void *) 0},/p'"
+   lt_c_name_lib_hook="\
+-  -e 's/^I .* \(lib.*\)$/  {\"\1\", (void *) 0},/p'\
+-  -e 's/^I .* \(.*\)$/  {\"lib\1\", (void *) 0},/p'"
++  -e 's/^I .* \(lib[[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/  {\"\1\", (void *) 0},/p'\
++  -e 's/^I .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/  {\"lib\1\", (void *) 0},/p'"
+ else
+   # Disable hooks by default.
+   lt_cv_sys_global_symbol_to_import=
+@@ -3997,22 +3997,22 @@ fi
+ # so use this general approach.
+ lt_cv_sys_global_symbol_to_cdecl="sed -n"\
+ $lt_cdecl_hook\
+-" -e 's/^T .* \(.*\)$/extern int \1();/p'"\
+-" -e 's/^$symcode$symcode* .* \(.*\)$/extern char \1;/p'"
++" -e 's/^T .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/extern int \1();/p'"\
++" -e 's/^$symcode$symcode* .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/extern char \1;/p'"
+ 
+ # Transform an extracted symbol line into symbol name and symbol address
+ lt_cv_sys_global_symbol_to_c_name_address="sed -n"\
+ $lt_c_name_hook\
+ " -e 's/^: \(.*\) .*$/  {\"\1\", (void *) 0},/p'"\
+-" -e 's/^$symcode$symcode* .* \(.*\)$/  {\"\1\", (void *) \&\1},/p'"
++" -e 's/^$symcode$symcode* .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/  {\"\1\", (void *) \&\1},/p'"
+ 
+ # Transform an extracted symbol line into symbol name with lib prefix and
+ # symbol address.
+ lt_cv_sys_global_symbol_to_c_name_address_lib_prefix="sed -n"\
+ $lt_c_name_lib_hook\
+ " -e 's/^: \(.*\) .*$/  {\"\1\", (void *) 0},/p'"\
+-" -e 's/^$symcode$symcode* .* \(lib.*\)$/  {\"\1\", (void *) \&\1},/p'"\
+-" -e 's/^$symcode$symcode* .* \(.*\)$/  {\"lib\1\", (void *) \&\1},/p'"
++" -e 's/^$symcode$symcode* .* \(lib[[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/  {\"\1\", (void *) \&\1},/p'"\
++" -e 's/^$symcode$symcode* .* \([[a-zA-Z_]][[0-9a-zA-Z_]]*\)$/  {\"lib\1\", (void *) \&\1},/p'"
+ 
+ # Handle CRLF in mingw tool chain
+ opt_cr=
+@@ -4052,6 +4052,7 @@ for ac_symprfx in "" "_"; do
+ "     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};"\
+ "     {if(hide[section]) next};"\
+ "     {f=\"D\"}; \$ 0~/\(\).*\|/{f=\"T\"};"\
++"     \$ 0~/ [0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* UNDEF /{f=\"C\"};"\
+ "     {split(\$ 0,a,/\||\r/); split(a[2],s)};"\
+ "     s[1]~/^[@?]/{print f,s[1],s[1]; next};"\
+ "     s[1]~prfx {split(s[1],t,\"@\"); print f,t[1],substr(t[1],length(prfx))}"\
+-- 
+2.22.0
+

@@ -1,10 +1,128 @@
-parity is an open source project who's goal it is to ease porting applications from UNIX-like systems to Windows. It relies on the presence of a UNIX Layer for Windows such as Interix or Cygwin. parity is most tested on Microsofts Subsystem for UNIX-based Applications, so it will work there best.
+parity is an open source project who's goal is to ease porting applications
+from UNIX-like systems to Windows. It relies on the presence of a UNIX Layer
+for Windows such as Interix or Cygwin. parity is most tested on x86_64 Cygwin,
+so it will work there best.
 
-parity uses Microsoft Tools - like cl.exe, link.exe, etc. - to mimic a GCC like interface, while really compiling natively for Windows. This results in pure and native Windows Libraries and Executables, which can be mixed freely with any existing Software pieces.
+parity uses the Microsoft Toolchain - like cl.exe, link.exe, etc. - to mimic a
+GCC like interface, while really compiling natively for Windows. This results
+in pure and native Windows Libraries and Executables, which can be mixed
+freely with any existing Software pieces.
 
-The most effort has been put into shared library handling, which now behaves nearly the same as on common UNIX-like systems. There also is a patch for libtool, which makes it know about parity (which passes all tests of the libtool test-suite). Advanced Features like a working -rpath option have been added to improve the handling of DLLs on Windows.
+The most effort has been put into shared library handling, which now behaves
+nearly the same as on common UNIX-like systems. There also is a patch for
+libtool, which makes it know about parity (which passes almost all tests of
+the libtool test-suite). Advanced Features like a working -rpath option have
+been added to improve the handling of DLLs on Windows, but they were not
+ported to x86_64 MSVC, and were not really necessary, so these have been
+removed in parity 2.0.0 release.
 
-parity ships with a little runtime enhancement library called parity.runtime. This library abstracts away the need to take care of what kind of paths are used. This means you can now give a UNIX-style path to an executable built with parity, and it will understand it. Previously this was not possible, and all Windows executables would need Windows-style paths to work.
+parity ships with a little runtime enhancement library called parity.runtime.
+This library abstracts away the need to take care of what kind of paths are
+used. This means you can now give a UNIX-style path to an executable built
+with parity, and it will understand it. Previously this was not possible, and
+all Windows executables would need Windows-style paths to work.
+
+parity 2.0.0
+------------
+
+Support up to Visual Studio 2019 (MSVC 16), and Visual Studio Build Tools.
+
+Drop support for Visual Studio 2003 and older.  Visual Studio 2005 (MSVC 8.0)
+is the oldest one that still does run on Windows 10.
+
+Support x86_64 (64bit) MSVC Toolchain.
+
+Switch to Cygwin as build system, Interix and MSVC are unlikely to still work.
+
+Use host triplet to identify the local MSVC Toolchain arch and version to be
+used, and also to distinguish the MSVC runtime library variant.  For example:
+ 32bit (x86) dynamic multithreaded runtime: i686-msvc16-winnt
+ 32bit (x86) static multithreaded runtime: i686-libcmt-winnt
+ 64bit (x64) dynamic multithreaded debug runtime: x86_64-msvcd16-winnt
+ 64bit (x64) static multithreaded debug runtime: x86_64-libcmtd16-winnt
+
+Create symbolic links to MSVC import libraries, to avoid path components being
+invalid as shell string (containing blanks or parentheses), for when the 8dot3
+filename generation is disabled on the underlying file system.
+
+Identify available Visual Studio or Build Tools instances using the registry
+(pre VC15) or vswhere.exe (since VC15) rather than environment variables.
+
+Provide environment values to be used when using MSVC toolchain without
+parity, using the "parity-setup --get-environ i686-msvc16-winnt" command.
+
+Disable concept of default MSVC versions, is hard to maintain. You always have
+to use an MSVC version as part of the CHOST value.
+
+Toolchain wrappers are installed as real executables, so the can run even from
+within native Win32 build systems.
+
+Support binary packaging of parity (using DESTDIR). Compiling the runtime libs
+requiring local MSVC is done using the new parity-setup script after install.
+
+Provide more POSIX/MinGW based wrappers: cpp, nm, strip (as noop), windres.
+
+Provide more MSVC based wrappers (cmd, dumpbin, lib, nmake, rc), for build
+systems that know about the MS toolchain when available via env vars.
+
+Provide libtool patches, creating NAME.lib as the import library along
+NAME.dll, and creating libNAME.lib as the static library.  This implies
+searching for NAME.lib upon the -lNAME linker option.
+
+Support distinct binary packages per CHOST value, to have parity-setup enable
+or disable installed CHOST values only rather than all the compiled in ones.
+To be enabled using the --enable-binpkg-per-chost configure option.
+
+Provide an exemplary parity.cygport, for building Cygwin binary packages.
+
+parity.runtime: Stop switching stdio to binmode, almost everyone does expect 
+and can handle textmode with native winnt programs these days.
+
+parity.runtime: Try to run cygpath from PATH for path conversion rather than
+trying to dynamically load cygwin1.dll.
+
+parity.runtime: Provide stdint.h, not available in older MSVC versions.
+
+parity.runtime: Provide stdbool.h, not available before VS 2012.
+
+parity.runtime: Provide stdarg.h, lacks va_copy() before VS 2012.
+
+parity.runtime: Switch to StackWalk64 API when creating a backtrace.
+
+parity.runtime: Have pid_t of type int, to allow for using pthreads4w
+(https://sourceforge.net/projects/pthreads4w/).
+
+parity.runtime: Provide clock_gettime(), wrapping timespec_get().
+
+parity.loader: Stop caching dll handles. Provide dlclose() instead.
+
+parity.gnu.gcc: Support the -include file option.
+
+parity.gnu.gcc: Support --define, --undefine options.
+
+parity.gnu.gcc: Support -std=c++XX and -ansi compiler options.
+
+parity.gnu.gcc: Distinguish -Dmacro (value 1) from -Dmacro= (empty value).
+
+parity.gnu.gcc: Distinguish --version from -v compiler option.
+
+parity.gnu.gcc: Support -dumpmachine, -dumpversion, -print-prog-name,
+-print-search-dirs commandline options.
+
+parity.gnu.gcc: Improve support for assembly (.S) files.
+
+parity.gnu.ld: Support Module Definition (.def) files when linking.
+
+parity.gnu.ld: Support -Wl,--out-implib linker flag.
+
+parity.gnu.ld: Upon -lNAME, search for NAME.dll.lib, as created by MinGW.
+
+parity.gnu.as: Relax from /Cp to /Cx assembler (ml.exe) flag.
+
+parity.gnu.as: Run C preprocessor before assembling, the preprocessor
+available within ml.exe uses a different syntax.
+
+parity.ms.cl: Distinguish /c from /cygdrive/path compiler arguments.
 
 parity 1.3.0
 ------------

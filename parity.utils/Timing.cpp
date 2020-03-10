@@ -131,7 +131,7 @@ namespace parity
 					continue;
 
 				char buf[20];
-				::snprintf(buf, 19, "%ld", tmp);
+				::snprintf(buf, sizeof(buf), "%ld", tmp);
 
 				std::string col_buf;
 

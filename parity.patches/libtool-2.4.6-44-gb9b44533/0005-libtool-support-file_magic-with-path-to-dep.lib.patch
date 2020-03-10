@@ -1,0 +1,192 @@
+From eb128d54fea5f1bcf88ab239de39c766f5845513 Mon Sep 17 00:00:00 2001
+From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+Date: Wed, 6 Nov 2019 18:30:03 +0100
+Subject: [PATCH 5/8] libtool: support file_magic with /path/to/dep.lib
+
+Some platforms use same file name extension for both static and import
+libraries, and an argument "import.lib" is valid both with or without a
+path component when creating a shared library, and should not be added
+to the static archive when it is an import library.
+
+* build-aux/ltmain.in (func_mode_link): Support deplibs_check_method
+being "file_magic" for a linker argument *.$libext, searching libpath if
+necessary, to detect import libs to be handled like a -lNAME argument.
+---
+ build-aux/ltmain.in | 118 +++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 107 insertions(+), 11 deletions(-)
+
+diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
+index b8ff2fe4..73c51d06 100644
+--- a/build-aux/ltmain.in
++++ b/build-aux/ltmain.in
+@@ -4711,6 +4711,9 @@ func_mode_link ()
+     # See if our shared archives depend on static archives.
+     test -n "$old_archive_from_new_cmds" && build_old_libs=yes
+ 
++    eval sys_lib_search_path=\"$sys_lib_search_path_spec\"
++    eval sys_lib_dlsearch_path=\"$sys_lib_dlsearch_path_spec\"
++
+     # Go through the arguments, transforming them on the way.
+     while test "$#" -gt 0; do
+       arg=$1
+@@ -5506,9 +5509,60 @@ func_mode_link ()
+ 	;;
+ 
+       *.$libext)
+-	# An archive.
+-	func_append deplibs " $arg"
+-	func_append old_deplibs " $arg"
++	# With MSVC cl.exe, even dynamic deplibs are added as NAME.lib,
++	# so we need to distinguish based on their file type whether we
++	# have to treat them as static archive or dynamic import lib.
++	found=
++	case $linkmode,$arg in
++	*,*[\\/]*)
++	  searchdirs=
++	  if test -f "$arg"; then
++	    found=$arg
++	  fi
++	  ;;
++	lib,*)
++	  searchdirs="$newlib_search_path $lib_search_path $compiler_lib_search_dirs $sys_lib_search_path $shlib_search_path"
++	  ;;
++	*)
++	  searchdirs="$newlib_search_path $lib_search_path $sys_lib_search_path $shlib_search_path"
++	  ;;
++	esac
++	for searchdir in $searchdirs; do
++	  if test -f "$searchdir/$arg"; then
++	    found=$searchdir/$arg
++	    break
++	  fi
++	done
++	case $found,$deplibs_check_method in
++	,*) ;; # nothing found
++	*,file_magic*)
++	  file_magic_regex=`set dummy $deplibs_check_method; shift
++	    expr "$deplibs_check_method" : "\$1 \(.*\)"`
++	  while test -h "$found" 2>/dev/null; do
++	    # Follow soft links.
++	    if ls -lLd "$found" 2>/dev/null |
++	       $GREP " -> " >/dev/null; then
++	      break # found a soft link cycle
++	    fi
++	    foundlink=`ls -ld "$found" | $SED 's/.* -> //'`
++	    case $foundlink in
++	    [\\/]* | [A-Za-z]:[\\/]*) found=$foundlink;;
++	    *) found=`$ECHO "$found" | $SED 's|[^/]*$||'`"$foundlink";;
++	    esac
++	  done
++	  if eval $file_magic_cmd \"\$found\" |
++	     $SED -e 10q |
++	     $EGREP "$file_magic_regex" > /dev/null; then
++	    found=implib
++	  fi
++	  ;;
++	esac
++	if test implib = "$found"; then
++	  func_append deplibs " $arg"
++	else
++	  func_append deplibs " $arg"
++	  func_append old_deplibs " $arg"
++	fi
+ 	continue
+ 	;;
+ 
+@@ -5567,8 +5621,6 @@ func_mode_link ()
+     else
+       shlib_search_path=
+     fi
+-    eval sys_lib_search_path=\"$sys_lib_search_path_spec\"
+-    eval sys_lib_dlsearch_path=\"$sys_lib_dlsearch_path_spec\"
+ 
+     # Definition is injected by LT_CONFIG during libtool generation.
+     func_munge_path_list sys_lib_dlsearch_path "$LT_SYS_LIBRARY_PATH"
+@@ -5875,26 +5927,69 @@ func_mode_link ()
+ 	    case " $dlpreconveniencelibs " in
+ 	    *" $deplib "*) ;;
+ 	    *)
+-	      valid_a_lib=false
++	      valid_a_lib=no
+ 	      case $deplibs_check_method in
+ 		match_pattern*)
+ 		  set dummy $deplibs_check_method; shift
+ 		  match_pattern_regex=`expr "$deplibs_check_method" : "$1 \(.*\)"`
+ 		  if eval "\$ECHO \"$deplib\"" 2>/dev/null | $SED 10q \
+ 		    | $EGREP "$match_pattern_regex" > /dev/null; then
+-		    valid_a_lib=:
++		    valid_a_lib=warn
+ 		  fi
+ 		;;
+ 		pass_all)
+-		  valid_a_lib=:
++		  valid_a_lib=warn
++		;;
++		file_magic*)
++		  # Check for import lib having .$libext.
++		  potlib=
++		  case $deplib in
++		    */* | *\\*)
++		      potlib=$deplib
++		      ;;
++		    *)
++		      searchdirs="$newlib_search_path $lib_search_path $compiler_lib_search_dirs $sys_lib_search_path $shlib_search_path"
++		      for searchdir in $searchdirs; do
++		        test -e "$searchdir/$deplib" || continue
++			potlib="$searchdir/$deplib"
++			break
++		      done
++		    ;;
++		  esac
++		  while test -h "$potlib" 2>/dev/null; do
++		    # Follow soft links.
++		    if ls -lLd "$potlib" 2>/dev/null |
++		       $GREP " -> " >/dev/null; then
++		      break # found a soft link cycle
++		    fi
++		    potliblink=`ls -ld "$potlib" | $SED 's/.* -> //'`
++		    case $potliblink in
++		    [\\/]* | [A-Za-z]:[\\/]*) potlib=$potliblink;;
++		    *) potlib=`$ECHO "$potlib" | $SED 's|[^/]*$||'`"$potliblink";;
++		    esac
++		  done
++		  set dummy $deplibs_check_method; shift
++		  file_magic_regex=`expr "$deplibs_check_method" : "$1 \(.*\)"`
++		  if eval $file_magic_cmd \"\$potlib\" 2>/dev/null |
++		     $SED -e 10q |
++		     $EGREP "$file_magic_regex" > /dev/null; then
++		    valid_a_lib=yes
++		  fi
+ 		;;
+ 	      esac
+-	      if $valid_a_lib; then
++	      case $valid_a_lib in
++	      yes)
++		# handle like a shared lib with -lNAME
++		deplibs="$deplib $deplibs"
++		newdependency_libs="$deplib $newdependency_libs"
++		;;
++	      warn)
+ 		echo
+ 		$ECHO "*** Warning: Linking the shared library $output against the"
+ 		$ECHO "*** static library $deplib is not portable!"
+ 		deplibs="$deplib $deplibs"
+-	      else
++	        ;;
++	      *)
+ 		echo
+ 		$ECHO "*** Warning: Trying to link with static lib archive $deplib."
+ 		echo "*** I have the capability to make that library automatically link in when"
+@@ -5902,7 +5997,8 @@ func_mode_link ()
+ 		echo "*** shared version of the library, which you do not appear to have"
+ 		echo "*** because the file extensions .$libext of this argument makes me believe"
+ 		echo "*** that it is just a static archive that I should not use here."
+-	      fi
++		;;
++	      esac
+ 	      ;;
+ 	    esac
+ 	    continue
+-- 
+2.22.0
+

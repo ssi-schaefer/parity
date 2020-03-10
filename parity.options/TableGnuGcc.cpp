@@ -90,6 +90,8 @@ namespace parity
 			{ "-g"			,setDebugable				},
 			{ "-x"			,setForcedLanguage			},
 			{ "-o"			,setOutputFile				},
+			{ "-ansi"		,setCxxStandard				},
+			{ "-std="		,setCxxStandard				},
 			{ "-subsys"		,setSubsystem				},
 			{ "-fshort-wc"	,setShortWchar				},
 			{ "-fnoshort-w"	,setShortWchar				},

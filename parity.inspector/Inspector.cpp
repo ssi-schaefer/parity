@@ -123,7 +123,6 @@ namespace parity
 			utils::SubsystemType	genSubsystem	= utils::SubsystemUnknown;
 			utils::PathVector		genRunPaths;
 			InspectorLibraryVector	genLibs;
-			bool					genSectionFound	= false;
 
 			++indent;
 			for(unsigned int in = 0; in < indent; ++in) utils::Log::verbose("  ");
@@ -136,8 +135,6 @@ namespace parity
 					InspectorPointerLayoutVA* pointers = 0;
 					const char* genRunPathPtr = 0;
 					unsigned int* genTablePtr = 0;
-
-					genSectionFound = true;
 
 					pointers = MAKEPTR(InspectorPointerLayoutVA*, mapping.getBase(), it->second.getPointerToRawData());
 

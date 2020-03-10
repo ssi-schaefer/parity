@@ -68,6 +68,8 @@ namespace parity
 			{ "/TC"			,setForcedLanguage			},
 			{ "/SUBSYSTEM:"	,setSubsystem				},
 			{ "/subsystem:"	,setSubsystem				},
+			{ "/std:"		,setCxxStandard				},
+			{ "/Zc:__cplusplus"	,setCxxStandard			},
 			{ "/MT"			,setRuntime					},
 			{ "/MD"			,setRuntime					},
 			{ ".lib"		,addObjectsLibraries		},

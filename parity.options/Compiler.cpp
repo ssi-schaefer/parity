@@ -88,6 +88,46 @@ namespace parity
 			return true;
 		}
 
+		bool setCxxStandard(const char* option, const char* argument, bool& used)
+		{
+			utils::Context& ctx = utils::Context::getContext();
+			/* no need to map the MS options */
+			if (strcmp(option, "/Zc:__cplusplus-") == 0) {
+				ctx.setCplusPlusMacro(false);
+				return true;
+			}
+			if (strcmp(option, "/Zc:__cplusplus") == 0) {
+				ctx.setCplusPlusMacro(true);
+				return true;
+			}
+			if (strncmp(option, "/std:c++", 8) == 0) {
+				ctx.setCxxStandardOption(option);
+				return true;
+			}
+			/* map the GNU options */
+			static struct {
+				char const *gnuOption;
+				char const *msOption;
+				bool cxxMacro;
+			} const mapping[] = {
+				{ "-ansi",      "",               false },
+				{ "-std=c++98", "",               false },
+				{ "-std=c++03", "",               true },
+				{ "-std=c++11", "",               true },
+				{ "-std=c++14", "/std:c++14",     true },
+				{ "-std=c++17", "/std:c++17",     true },
+				{ "-std=c++2a", "/std:c++latest", true },
+			};
+			for(size_t i = 0; i < sizeof(mapping)/sizeof(mapping[0]); ++i) {
+				if (strcmp(mapping[i].gnuOption, option) == 0) {
+					ctx.setCxxStandardOption(mapping[i].msOption);
+					ctx.setCplusPlusMacro(mapping[i].cxxMacro);
+					return true;
+				}
+			}
+			return false;
+		}
+
 		bool addSource(const char* option, const char* argument, bool& used)
 		{
 			utils::Context& ctx = utils::Context::getContext();

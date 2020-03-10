@@ -58,7 +58,6 @@ namespace parity
 
 		void MsResourceConverter::compileGeneric(const utils::Path& file, utils::Path executable, utils::Task::ArgumentVector& vec)
 		{
-			utils::Context& ctx = utils::Context::getContext();
 			utils::Task tsk;
 			utils::Path output(outputFile_);
 
@@ -88,7 +87,6 @@ namespace parity
 
 		void MsResourceConverter::prepareGenericFile(utils::Path file, utils::Task::ArgumentVector& vec)
 		{
-			utils::Context& ctx = utils::Context::getContext();
 			std::string base = file.file();
 
 			std::string out(outputFile_);
@@ -124,6 +122,8 @@ namespace parity
 					break;
 				case utils::MachineI386:
 					vec.push_back("/MACHINE:X86");
+					break;
+				default:
 					break;
 				}
 			}

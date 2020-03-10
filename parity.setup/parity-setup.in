@@ -18,6 +18,10 @@ PARITYrexsupport="@PARITY_REX_SUPPORT@"
 
 DESTDIR=
 
+# set to "installed" during "make install" when using
+# configure --enable-binpkg-per-chost
+CHOSTS_TO_MANAGE="builtin"
+
 if [[ ${PARITYsysconfdir} == @*@ ]]
 then
 	SELFDIR=$(cd "$(dirname "${SELF}")" && pwd)
@@ -29,10 +33,8 @@ then
 	PARITYincludedir=${SELFDIR}/..
 
 	# <loaded from parity-setup.in by Confix2.dir>
-	PARITYsupported_archs="x86 x64"
+	PARITYsupported_archs="i686 x86_64"
 	PARITYsupported_runtimes="dynamic static dynamicdebug staticdebug"
-	#  7.0:	Visual Studio 2002, cl.exe Version 13.00
-	#  7.1:	Visual Studio 2003, cl.exe Version 13.10
 	#  8.0:	Visual Studio 2005, cl.exe Version 14.00
 	#  9.0:	Visual Studio 2008, cl.exe Version 15.00
 	# 10.0:	Visual Studio 2010, cl.exe Version 16.00
@@ -49,7 +51,7 @@ then
 	# 15: Visual Studio 2017, latest installed minor version
 	# 16: Visual Studio 2019, latest installed minor version
 	#
-	PARITYsupported_versions="7.0 7.1 8.0 9.0 10.0 11.0 12.0 14.0 15 16"
+	PARITYsupported_versions="8.0 9.0 10.0 11.0 12.0 14.0 15 16"
 	# </loaded from parity-setup.in by Confix2.dir>
 
 	CC=${SELFDIR}/../parity.gnu.gcc/parity.gnu.gcc
@@ -285,31 +287,31 @@ unittests+=( test_get-vsver )
 # get-vsarch [begin-of-chost|vsarch[-vsver]]
 #  The argument needs to contain enough information only.
 # Examples:
-#  get-vsarch i686-msvc11.0-winnt      -> x86
-#  get-vsarch i686-msvcd11.0-winnt     -> x86
-#  get-vsarch i686-msvc11.0-mingw32    -> x86
-#  get-vsarch i686-libcmtd11.0-winnt   -> x86
-#  get-vsarch x86-msvc11.0             -> x86
-#  get-vsarch i686                     -> x86
-#  get-vsarch x86_64-libcmtd11.0-winnt -> x64
-#  get-vsarch x86_64                   -> x64
+#  get-vsarch i686-msvc11.0-winnt      -> i686
+#  get-vsarch i686-msvcd11.0-winnt     -> i686
+#  get-vsarch i686-msvc11.0-mingw32    -> i686
+#  get-vsarch i686-libcmtd11.0-winnt   -> i686
+#  get-vsarch x86-msvc11.0             -> i686
+#  get-vsarch i686                     -> i686
+#  get-vsarch x86_64-libcmtd11.0-winnt -> x86_64
+#  get-vsarch x86_64                   -> x86_64
 get-vsarch() {
 	local vsarch=${1%%-*}
 	case ${vsarch} in
-	x64|amd64|x86_64) echo "x64" ;;
-	x86|i?86)         echo "x86" ;;
+	x64|amd64|x86_64) echo "x86_64" ;;
+	x86|i?86)         echo "i686" ;;
 	esac
 	return 0
 }
 test_get-vsarch() {
 	local input expected output ret=0
 	for input in \
-		x86:i686-msvc11.0-winnt      \
-		x86:i686-msvcd11.0-mingw32   \
-		x86:x86-msvc11.0             \
-		x86:i686                     \
-		x64:x86_64                   \
-		x86:i686-libcmtd11.0-winnt   \
+		i686:i686-msvc11.0-winnt      \
+		i686:i686-msvcd11.0-mingw32   \
+		i686:x86-msvc11.0             \
+		i686:i686                     \
+		x86_64:x86_64                  \
+		i686:i686-libcmtd11.0-winnt   \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -373,8 +375,8 @@ get-chost() {
 	local vsver=$(get-vsver "$*")
 	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "i686-${vscrt}${vsver}-winnt" ;;
-	x64) echo "x86_64-${vscrt}${vsver}-winnt" ;;
+	i686)   echo "i686-${vscrt}${vsver}-winnt" ;;
+	x86_64) echo "x86_64-${vscrt}${vsver}-winnt" ;;
 	esac
 	return 0
 }
@@ -394,7 +396,7 @@ test_get-chost() {
 	    i686-msvc-winnt:i686                              \
 	    x86_64-libcmtd11.0-winnt:x86_64-libcmtd11.0-winnt \
 	    x86_64-libcmtd-winnt:x86_64-libcmtd               \
-	    x86_64-msvc-winnt:x64-msvc                        \
+	    x86_64-msvc-winnt:x86_64-msvc                        \
 	; do
 		expected=${input%:*}
 		input=${input#*:}
@@ -411,14 +413,29 @@ test_get-chost() {
 unittests+=( test_get-chost )
 
 get-supported-chosts() {
-	local vsarch vsver vscrt
+	local vsarch vsver vscrt chost
+	if [[ ${CHOSTS_TO_MANAGE} == 'installed' ]]
+	then
+		CHOSTS_TO_MANAGE=" $(echo $(
+			cd "${PARITYlocalstatedir}" || exit 0
+			for chost in i686-*-winnt x86_64-*-winnt
+			do
+				test -r ./${chost}/. && echo ${chost}
+			done
+		) ) "
+	fi
+
 	for vsarch in $(get-supported-vsarchs)
 	do
 		for vsver in $(get-supported-vsvers)
 		do
 			for vscrt in $(get-supported-vscrts)
 			do
-				get-chost "${vsarch}-${vscrt}${vsver}"
+				chost=$(get-chost "${vsarch}-${vscrt}${vsver}")
+				case ${CHOSTS_TO_MANAGE} in
+				'builtin') echo ${chost} ;;
+				*" ${chost} "*) echo ${chost} ;;
+				esac
 			done
 		done
 	done
@@ -447,8 +464,8 @@ get-supported-executables() {
 		'ResourceConverter=cvtres.exe'
 	)
 	case ${vsarch} in
-	x86) vsexes+=( 'Assembler=ml.exe' ) ;;
-	x64) vsexes+=( 'Assembler=ml64.exe' ) ;;
+	i686)   vsexes+=( 'Assembler=ml.exe' ) ;;
+	x86_64) vsexes+=( 'Assembler=ml64.exe' ) ;;
 	esac
 	printf "%s\n" "${vsexes[@]}"
 	return 0
@@ -482,8 +499,8 @@ get-parityflags() {
 	local vsver=$(get-vsver "$*")
 	local vscrt=$(get-vscrt "$*")
 	case ${vsarch} in
-	x86) echo "-m32 -m${vscrt}${vsver}" ;;
-	x64) echo "-m64 -m${vscrt}${vsver}" ;;
+	i686)   echo "-m32 -m${vscrt}${vsver}" ;;
+	x86_64) echo "-m64 -m${vscrt}${vsver}" ;;
 	esac
 	return 0
 }
@@ -707,6 +724,13 @@ query-vcvars() {
 		fi
 	fi
 
+	local vcarch
+	case ${vsarch} in
+	x86_64) vcarch=x64 ;;
+	i686) vcarch=x86 ;;
+	*) vcarch=${vsarch} ;;
+	esac
+
 	local line var val
 	while read line
 	do
@@ -719,7 +743,7 @@ query-vcvars() {
 		esac
 	done < <(
 		INCLUDE= LIB= LIBPATH= \
-		cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vsarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null \
+		cmd "@\"$(cygpath -w "${vcvarsall}")\" ${vcarch} && ( set PATH & set INCLUDE & set LIB )" 2>/dev/null \
 		| sed -nE "s/\\r\$//; s,\\\\,/,g; /^(PATH|INCLUDE|LIB|LIBPATH)=/p"
     )
     vcPATH=${vcPATH%${novcPATH}};          vcPATH=${vcPATH%%;}
@@ -767,7 +791,7 @@ prune-parityconf() {
 	local vsver=$(get-vsver "${chost}")
 	local vsarch=$(get-vsarch "${chost}")
 	local vscrt=$(get-vscrt "${chost}")
-	local conf="${vsarch}-${vscrt}${vsver}"
+	local conf=${chost}
 
 	(
 		confdir="${PARITYlocalstatedir}"
@@ -888,7 +912,7 @@ update-parityconf() {
 	local vscrt=$(get-vscrt "${chost}")
 	local parityflags=$(get-parityflags "${chost}")
 	local confdir="${PARITYlocalstatedir}"
-	local conf="${vsarch}-${vscrt}${vsver}"
+	local conf=${chost}
 
 	(
 		noquiet "Configuring for ${conf} ..."
@@ -1027,7 +1051,7 @@ CompilerVersion = ${vsver}
 KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 "
 			case ${vsarch} in # (
-			x86)
+			i686)
 				echo "TimeT32Bit = true"
 				;; # (
 			*)
@@ -1059,19 +1083,32 @@ KnownProgramsPath = ${PARITYprefix}/${chost}/bin
 # include <sdkddkver.h>
 #endif
 #define PCRTSTR(x) #x
-#define PCRTDEF(n) "Defines = " #n
-#define PCRTDEFV(n, v) "Defines = " #n "=" PCRTSTR(v)
+#define PCRTDEF(n) "conf: Defines = " #n
+#define PCRTDEFV(n, v) "conf: Defines = " #n "=" PCRTSTR(v)
 PCRTDEF(WIN32_LEAN_AND_MEAN)
 #if            defined(_WIN32_WINNT_MAXVER) /* by <winsdkver.h> */
 PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT_MAXVER)
 #elif          defined(_WIN32_WINNT) /* by <sdkddkver.h> */
 PCRTDEFV(_WIN32_WINNT, _WIN32_WINNT)
 #endif
+#if defined(_MSVC_LANG)
+"conf: SupportsStd = true"
+#if __cplusplus - 0 == _MSVC_LANG
+"conf: SupportsZc__cplusplus = true"
+#else
+"conf: SupportsZc__cplusplus = false"
+#endif
+#else
+"conf: SupportsStd = false"
+"conf: SupportsZc__cplusplus = false"
+#endif
 		' | "${DESTDIR}${CC}" \
 				"-mparityconfdir=./${tmpdir}" \
 				${parityflags} \
+				-X /std:c++latest -X /Zc:__cplusplus -xc++ \
 				-E - \
-		  | sed -n -e '/"Defines = "/{s/" "//g;s/"//g;p}' \
+			2>/dev/null \
+		  | sed -n -e '/"conf: /{s/"conf: //;s/" "//g;s/"//g;p}' \
 		  >> "./${tmpdir}/${conf}/parity.conf"
 		[[ ${PIPESTATUS[*]} == '0 0 0' ]]
 
@@ -1189,7 +1226,7 @@ parityconf-list-supported() {
 	verbose() { _verbose "$@" >&2; }
 	noquiet() { _verbose "$@" >&2; }
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		echo "${chost}"
 	done
@@ -1202,7 +1239,7 @@ parityconf-list-available() {
 	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		if query-vcvars "${chost}"
 		then
@@ -1239,7 +1276,7 @@ parityconf-enable-all() {
 	query-novcvars-once || die "Cannot get initial environment."
 
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		update-parityconf "${chost}" &
 	done
@@ -1265,7 +1302,7 @@ parityconf-disable() {
 
 parityconf-disable-all() {
 	local chost
-	for chost in $(get-supported-chosts)
+	for chost in ${SUPPORTED_CHOSTS}
 	do
 		prune-parityconf --reason="disabled" "${chost}"
 	done
