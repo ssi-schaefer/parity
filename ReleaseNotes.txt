@@ -27,6 +27,9 @@ parity 2.0.0
 
 Support up to Visual Studio 2019 (MSVC 16), and Visual Studio Build Tools.
 
+Drop support for Visual Studio 2003 and older.  Visual Studio 2005 (MSVC 8.0)
+is the oldest one that still does run on Windows 10.
+
 Support x86_64 (64bit) MSVC Toolchain.
 
 Switch to Cygwin as build system, Interix and MSVC are unlikely to still work.
@@ -66,6 +69,12 @@ Provide libtool patches, creating NAME.lib as the import library along
 NAME.dll, and creating libNAME.lib as the static library.  This implies
 searching for NAME.lib upon the -lNAME linker option.
 
+Support distinct binary packages per CHOST value, to have parity-setup enable
+or disable installed CHOST values only rather than all the compiled in ones.
+To be enabled using the --enable-binpkg-per-chost configure option.
+
+Provide an exemplary parity.cygport, for building Cygwin binary packages.
+
 parity.runtime: Stop switching stdio to binmode, almost everyone does expect 
 and can handle textmode with native winnt programs these days.
 
@@ -90,6 +99,8 @@ parity.loader: Stop caching dll handles. Provide dlclose() instead.
 parity.gnu.gcc: Support the -include file option.
 
 parity.gnu.gcc: Support --define, --undefine options.
+
+parity.gnu.gcc: Support -std=c++XX and -ansi compiler options.
 
 parity.gnu.gcc: Distinguish -Dmacro (value 1) from -Dmacro= (empty value).
 
