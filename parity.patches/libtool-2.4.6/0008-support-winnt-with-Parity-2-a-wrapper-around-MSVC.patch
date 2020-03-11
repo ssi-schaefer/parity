@@ -1,4 +1,4 @@
-From 445af14334f9ba04930101c208d91e523846d68c Mon Sep 17 00:00:00 2001
+From 1d1a4e9df94ae9a535bae4bd6548b66de321b604 Mon Sep 17 00:00:00 2001
 From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
 Date: Tue, 2 May 2017 14:00:33 +0200
 Subject: [PATCH 8/8] support winnt with Parity-2, a wrapper around MSVC
@@ -18,7 +18,7 @@ create the import library NAME.lib.
  7 files changed, 169 insertions(+), 44 deletions(-)
 
 diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
-index e02d5ea9..8aed79c0 100644
+index 8e172644..d40638ab 100644
 --- a/build-aux/ltmain.in
 +++ b/build-aux/ltmain.in
 @@ -506,7 +506,7 @@ libtool_validate_options ()
@@ -174,7 +174,7 @@ index e02d5ea9..8aed79c0 100644
  	  # The PATH hackery in wrapper scripts is required on Windows
  	  # and Darwin in order for the loader to find any dlls it needs.
  	  func_warning "'-no-install' is ignored for $host"
-@@ -6179,7 +6179,7 @@ func_mode_link ()
+@@ -6185,7 +6185,7 @@ func_mode_link ()
  	  fi
  	  case $host in
  	    # special handling for platforms with PE-DLLs.
@@ -183,7 +183,7 @@ index e02d5ea9..8aed79c0 100644
  	      # Linker will automatically link against shared library if both
  	      # static and shared are present.  Therefore, ensure we extract
  	      # symbols from the import library if a shared library is present
-@@ -6323,7 +6323,7 @@ func_mode_link ()
+@@ -6329,7 +6329,7 @@ func_mode_link ()
  	if test -n "$library_names" &&
  	   { test no = "$use_static_libs" || test -z "$old_library"; }; then
  	  case $host in
@@ -192,7 +192,7 @@ index e02d5ea9..8aed79c0 100644
  	      # No point in relinking DLLs because paths are not encoded
  	      func_append notinst_deplibs " $lib"
  	      need_relink=no
-@@ -6393,7 +6393,7 @@ func_mode_link ()
+@@ -6399,7 +6399,7 @@ func_mode_link ()
  	    elif test -n "$soname_spec"; then
  	      # bleh windows
  	      case $host in
@@ -201,7 +201,7 @@ index e02d5ea9..8aed79c0 100644
  	        func_arith $current - $age
  		major=$func_arith_result
  		versuffix=-$major
-@@ -7303,7 +7303,7 @@ func_mode_link ()
+@@ -7309,7 +7309,7 @@ func_mode_link ()
        if test yes = "$build_libtool_libs"; then
  	if test -n "$rpath"; then
  	  case $host in
@@ -210,7 +210,7 @@ index e02d5ea9..8aed79c0 100644
  	    # these systems don't actually have a c library (as such)!
  	    ;;
  	  *-*-rhapsody* | *-*-darwin1.[012])
-@@ -7826,7 +7826,7 @@ EOF
+@@ -7832,7 +7832,7 @@ EOF
  
  	orig_export_symbols=
  	case $host_os in
@@ -219,7 +219,7 @@ index e02d5ea9..8aed79c0 100644
  	  if test -n "$export_symbols" && test -z "$export_symbols_regex"; then
  	    # exporting using user supplied symfile
  	    func_dll_def_p "$export_symbols" || {
-@@ -8496,7 +8496,7 @@ EOF
+@@ -8502,7 +8502,7 @@ EOF
  	  esac
  	fi
  	case $host in
@@ -228,7 +228,7 @@ index e02d5ea9..8aed79c0 100644
  	  testbindir=`$ECHO "$libdir" | $SED -e 's*/lib$*/bin*'`
  	  case :$dllsearchpath: in
  	  *":$libdir:"*) ;;
-@@ -8574,7 +8574,7 @@ EOF
+@@ -8580,7 +8580,7 @@ EOF
          # Disable wrappers for cegcc and mingw32ce hosts, we are cross compiling anyway.
          wrappers_required=false
          ;;
@@ -237,7 +237,7 @@ index e02d5ea9..8aed79c0 100644
          test yes = "$build_libtool_libs" || wrappers_required=false
          ;;
        *)
-@@ -8727,7 +8727,7 @@ EOF
+@@ -8733,7 +8733,7 @@ EOF
  	  *) exeext= ;;
  	esac
  	case $host in
@@ -246,7 +246,7 @@ index e02d5ea9..8aed79c0 100644
  	    func_dirname_and_basename "$output" "" "."
  	    output_name=$func_basename_result
  	    output_path=$func_dirname_result
-@@ -8754,7 +8754,8 @@ EOF
+@@ -8760,7 +8760,8 @@ EOF
  	    $opt_dry_run || {
  	      # note: this script will not be executed, so do not chmod.
  	      if test "x$build" = "x$host"; then
@@ -256,7 +256,7 @@ index e02d5ea9..8aed79c0 100644
  	      else
  		func_emit_wrapper no > $func_ltwrapper_scriptname_result
  	      fi
-@@ -9059,7 +9060,7 @@ EOF
+@@ -9065,7 +9066,7 @@ EOF
  	  # tests/bindir.at for full details.
  	  tdlname=$dlname
  	  case $host,$output,$installed,$module,$dlname in

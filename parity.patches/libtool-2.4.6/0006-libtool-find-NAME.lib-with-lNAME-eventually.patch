@@ -1,4 +1,4 @@
-From 4155745e11010326aa4a211cbc45f8e5d2206367 Mon Sep 17 00:00:00 2001
+From e39c287916df15bfaeba6d4b3788b8bae0612243 Mon Sep 17 00:00:00 2001
 From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
 Date: Tue, 26 Nov 2019 15:05:45 +0100
 Subject: [PATCH 6/8] libtool: find NAME.lib with -lNAME eventually
@@ -12,25 +12,31 @@ the .la file, we won't find any library with -lNAME.
 addition to the traditional file names when searching for library files
 upon the -lNAME linker option.
 ---
- build-aux/ltmain.in | 30 ++++++++++++++++++++++++------
- 1 file changed, 24 insertions(+), 6 deletions(-)
+ build-aux/ltmain.in | 36 ++++++++++++++++++++++++++++++------
+ 1 file changed, 30 insertions(+), 6 deletions(-)
 
 diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
-index ac3a0411..6f4fdaef 100644
+index ac3a0411..7fcffbd2 100644
 --- a/build-aux/ltmain.in
 +++ b/build-aux/ltmain.in
-@@ -5767,17 +5767,26 @@ func_mode_link ()
+@@ -5767,17 +5767,32 @@ func_mode_link ()
  	  fi
  	  func_stripname '-l' '' "$deplib"
  	  name=$func_stripname_result
++	  release_save=$release
++	  major_save=$major
++	  versuffix_save=$versuffix
++	  module_save=$module
 +	  release=
 +	  major=
 +	  versuffix=
-+	  module_save=$module
 +	  module=no
 +	  eval shared_ext=\"$shrext_cmds\"
 +	  eval libname=\"$libname_spec\"
 +	  eval search_names=\"lib$name.la $library_names_spec lib$name$shared_ext lib$name.so $libname.$libext lib$name.$libext lib$name.a\"
++	  release=$release_save
++	  major=$major_save
++	  versuffix=$versuffix_save
 +	  module=$module_save
  	  if test lib = "$linkmode"; then
  	    searchdirs="$newlib_search_path $lib_search_path $compiler_lib_search_dirs $sys_lib_search_path $shlib_search_path"
@@ -49,7 +55,7 @@ index ac3a0411..6f4fdaef 100644
  		  found=:
  		else
  		  found=false
-@@ -7466,7 +7475,12 @@ EOF
+@@ -7466,7 +7481,12 @@ EOF
  		esac
  	      fi
  	      if test -n "$a_deplib"; then
@@ -63,7 +69,7 @@ index ac3a0411..6f4fdaef 100644
  		if test -n "$file_magic_glob"; then
  		  libnameglob=`func_echo_all "$libname" | $SED -e $file_magic_glob`
  		else
-@@ -7474,12 +7488,16 @@ EOF
+@@ -7474,12 +7494,16 @@ EOF
  		fi
  		test yes = "$want_nocaseglob" && nocaseglob=`shopt -p nocaseglob`
  		for i in $lib_search_path $sys_lib_search_path $shlib_search_path; do
