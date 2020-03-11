@@ -22,6 +22,11 @@ used. This means you can now give a UNIX-style path to an executable built
 with parity, and it will understand it. Previously this was not possible, and
 all Windows executables would need Windows-style paths to work.
 
+parity 2.0.1
+------------
+
+Sync libtool patches to what is currently used at SSI.
+
 parity 2.0.0
 ------------
 

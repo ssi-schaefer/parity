@@ -1,4 +1,4 @@
-From bd6d014bc91b527b3b1a8db02f2758702d7b8e6e Mon Sep 17 00:00:00 2001
+From f16169e45f96f9f74df07f9671a4e4f92b4b5aa4 Mon Sep 17 00:00:00 2001
 From: Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
 Date: Wed, 4 Dec 2019 14:33:51 +0100
 Subject: [PATCH 7/8] libtool: first import sym may be beyond 100th line
@@ -15,7 +15,7 @@ using some POSIX nm to query for the first import symbol listed.
  1 file changed, 4 insertions(+), 6 deletions(-)
 
 diff --git a/build-aux/ltmain.in b/build-aux/ltmain.in
-index 6f4fdaef..e02d5ea9 100644
+index 7fcffbd2..8e172644 100644
 --- a/build-aux/ltmain.in
 +++ b/build-aux/ltmain.in
 @@ -3034,12 +3034,10 @@ func_win32_libid ()
