@@ -34,7 +34,7 @@ int gettimeofday(struct timeval *tv, void* unused)
     ftime(&tb);
 
     tv->tv_sec  = (long)tb.time;
-    tv->tv_usec = (long)tb.millitm;
+    tv->tv_usec = (long)tb.millitm * 1000L;
     return(0);
 }
 
