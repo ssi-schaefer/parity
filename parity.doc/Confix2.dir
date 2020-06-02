@@ -1,3 +1,6 @@
 ADD_EXTRA_DIST('configuration.txt')
 ADD_EXTRA_DIST('environment.txt')
 ADD_EXTRA_DIST('options.txt')
+
+MAKEFILE_AM('''man1_MANS=parity.1''')
+
