@@ -118,6 +118,14 @@ namespace parity
 		{
 			utils::Context& ctx = utils::Context::getContext();
 
+			long warnLevel = ctx.getWarningLevel();
+			if (warnLevel < 0 || warnLevel > 4)
+			{
+				utils::Log::warning("invalid warning level '/W%d'. falling back to default '/W3'.\n", warnLevel);
+				warnLevel = 3;
+			}
+			vec.push_back(std::string("/W") + (char) ('0' + warnLevel));
+
 			//
 			// Decide about which Runtime to use
 			//
