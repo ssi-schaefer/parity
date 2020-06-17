@@ -37,6 +37,7 @@ namespace parity
 			//
 			// parity internal command line switches.
 			//
+			{ "--help"		,showParityHelp				},
 			{ "-dbg"		,setDebugLevel				},
 			{ "-X"			,setCompilerPassthrough		},
 			{ "-Y"			,setLinkerPassthrough		},	// GCC knows -Xlinker here.

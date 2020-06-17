@@ -37,6 +37,7 @@ namespace parity
 		bool setCompilerPassthrough(const char* option, const char* argument, bool& used);
 		bool setUnhandledSourceFilePassthrough(const char* option, const char* argument, bool& used);
 		bool setUnhandledObjectFilePassthrough(const char* option, const char* argument, bool& used);
+		bool showParityHelp(const char* option, const char* argument, bool& used);
 		bool showParityVersion(const char* option, const char* argument, bool& used);
 		bool showParityConfig(const char* option, const char* argument, bool& used);
 		bool printProperty(const char* option, const char* argument, bool& used);

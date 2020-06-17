@@ -30,6 +30,34 @@ namespace parity
 {
 	namespace options
 	{
+		static const char *helpText =
+			"supports many of the common gcc/g++ options and\n"
+			"translates them to the host compiler ones as far as possible.\n"
+			"\n"
+			"everything that can't be mapped accordingly can be forwarded to the\n"
+			"compiler or the linker via the -X and -Y options, respectively.\n"
+			"\n"
+			PACKAGE_NAME " itself has the following options:\n"
+            "\n"
+            "    -v              show " PACKAGE_NAME "'s configuration\n"
+            "    -dbg level      turn on debugging (levels 1 - 4 where 4 is verbose)\n"
+            "    -ctxdump        dump " PACKAGE_NAME "'s internal state\n"
+            "    -cfg value      set a config string e. g. -cfg 'KeepTemporary=1'\n"
+            "                    look for configuration.txt.bz2 in your doc path\n"
+            "                    (most probably \$EPREFIX/usr/share/doc/parity*)\n"
+            "    -X value        forward value to the compiler\n"
+            "    -Y value        forward value to the linker\n"
+            "\n"
+            "to show your toolchain's help, forward the help-request:\n"
+            "\n"
+            "    compiler help:  g++ -X /?\n"
+            "    linker help:    g++ -Y /?\n"
+            "\n"
+            "you probably also may want to have a look at " PACKAGE_NAME "'s man page:\n"
+            "\n"
+            "    man " PACKAGE_NAME "\n"
+			;
+
 		bool setDebugLevel(const char* option, const char* argument, bool& used)
 		{
 			if(!argument)
@@ -86,6 +114,18 @@ namespace parity
 		{
 			bool optused = false;
 			return setLinkerPassthrough("-Y", option, optused);
+		}
+
+		bool showParityHelp(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
+		{
+			std::cout << PACKAGE_NAME << " " << PACKAGE_VERSION << " " << "(" << __DATE__ << ") ";
+			std::cout << helpText << std::endl;
+			exit(0);
+
+			#ifndef _WIN32
+			/* never reached (this is there for some gcc versions)! */
+			return false;
+			#endif
 		}
 
 		bool showParityVersion(const char* OPT_UNUSED(option), const char* OPT_UNUSED(argument), bool& OPT_UNUSED(used))
