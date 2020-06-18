@@ -390,6 +390,20 @@ namespace parity
 					exit(1);
 				}
 			}
+
+			//
+			// to be able to forward a --help request we need to supply a dummy source file.
+			// otherwise one would have to write g++ -X /? dummy.c.
+			//
+			// TODO:
+			// The mechanism works, but after showing the respective help parity
+			// reports an error and I do not know how to avoid this.
+			//
+			if(context.getSources().empty() && !context.getCompilerPassThrough().empty())
+			{
+				context.getSources()[parity::utils::Path("dummy.c")] = utils::LanguageC;
+			}
+
 			//
 			// First task is the Dependency Tracker (in background)
 			// With the GNU Backend, dependency tracking is a real side
