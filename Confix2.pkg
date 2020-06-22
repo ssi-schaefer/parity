@@ -1,7 +1,7 @@
 import re
 
 PACKAGE_NAME('parity')
-PACKAGE_VERSION('2.0.1')
+PACKAGE_VERSION('2.0.2')
 
 from libconfix.setups.boilerplate import AutoBoilerplate
 from libconfix.setups.c import AutoC
