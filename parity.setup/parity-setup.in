@@ -50,8 +50,9 @@ then
 	#
 	# 15: Visual Studio 2017, latest installed minor version
 	# 16: Visual Studio 2019, latest installed minor version
+	# 17: Visual Studio 2022, latest installed minor version
 	#
-	PARITYsupported_versions="8.0 9.0 10.0 11.0 12.0 14.0 15 16"
+	PARITYsupported_versions="8.0 9.0 10.0 11.0 12.0 14.0 15 16 17"
 	# </loaded from parity-setup.in by Confix2.dir>
 
 	CC=${SELFDIR}/../parity.gnu.gcc/parity.gnu.gcc

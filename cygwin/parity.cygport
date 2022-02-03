@@ -1,5 +1,5 @@
 NAME="parity"
-VERSION="2.0.2"
+VERSION="2.0.3"
 RELEASE="0.1"
 CATEGORY="Devel"
 
@@ -15,6 +15,7 @@ MSVC_VERSIONS=(
    "14      'Visual Studio 2015' 14.0"
    "15      'Visual Studio 2017'"
    "16      'Visual Studio 2019'"
+   "17      'Visual Studio 2022'"
 )
 
 HOMEPAGE="https://github.com/mduft/parity"

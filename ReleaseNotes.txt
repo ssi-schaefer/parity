@@ -22,10 +22,17 @@ used. This means you can now give a UNIX-style path to an executable built
 with parity, and it will understand it. Previously this was not possible, and
 all Windows executables would need Windows-style paths to work.
 
+parity 2.0.3
+------------
+
+Support up to Visual Studio 2022 (MSVC 17)
+
+
 parity 2.0.2
 ------------
 
 implemented --help
+
 
 parity 2.0.1
 ------------
